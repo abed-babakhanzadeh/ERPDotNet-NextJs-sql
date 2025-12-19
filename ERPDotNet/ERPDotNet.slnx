@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="ERPDotNet.API/ERPDotNet.API.csproj" />
+  <Project Path="ERPDotNet.Application/ERPDotNet.Application.csproj" />
+  <Project Path="ERPDotNet.Domain/ERPDotNet.Domain.csproj" />
+  <Project Path="ERPDotNet.Infrastructure/ERPDotNet.Infrastructure.csproj" />
+</Solution>

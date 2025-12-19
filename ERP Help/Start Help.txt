@@ -1,0 +1,160 @@
+
+dotnet ef database update
+
+docker compose up -d --build
+docker-compose up -d
+docker-compose up -d db redis
+
+docker-compose down
+---------------------------------------------------
+cd ERPDotNet/ERPDotNet.API  
+
+dotnet watch run 
+dotnet build --startup-project ERPDotNet.API
+dotnet ef database update --project ERPDotNet.Infrastructure --startup-project ERPDotNet.API
+dotnet ef migrations add AddWhereUsedFunction --project ERPDotNet.Infrastructure --startup-project ERPDotNet.API
+---------------------------------------------------
+cd erp-frontend
+
+npm run dev
+
+
+=========================================================================================
+این کوئری را نباید روی خود ERP_DB اجرا کنید! باید روی دیتابیس پیش‌فرض (مثل postgres) کلیک راست کنید و Query Tool را باز کنید و آنجا اجرا کنید.
+
+SELECT pg_terminate_backend(pg_stat_activity.pid)
+FROM pg_stat_activity
+WHERE pg_stat_activity.datname = 'ERP_DB' -- نام دیتابیس هدف
+  AND pid <> pg_backend_pid(); -- این خط باعث می‌شود اتصال خودتان قطع نشود
+=========================================================================================
+
+۱. اجرای کوئری پاک‌سازی (Truncate All)
+در pgAdmin، روی دیتابیس ERP_DB کلیک راست کنید و Query Tool را باز کنید. کد زیر را کپی و اجرا کنید. این کد تمام جداول موجود در اسکیماهای شما را پیدا کرده و خالی می‌کند (بدون حذف خود جداول):
+
+DO $$ 
+DECLARE 
+    r RECORD;
+BEGIN 
+    -- غیرفعال کردن موقت تریگرها برای جلوگیری از خطاهای احتمالی
+    SET session_replication_role = 'replica';
+
+    FOR r IN (
+        SELECT tablename, schemaname 
+        FROM pg_tables 
+        WHERE schemaname IN ('public', 'base', 'eng', 'security') -- لیست اسکیماهای پروژه شما
+    ) LOOP 
+        EXECUTE 'TRUNCATE TABLE "' || r.schemaname || '"."' || r.tablename || '" CASCADE;'; 
+    END LOOP;
+
+    -- برگرداندن تنظیمات به حالت عادی
+    SET session_replication_role = 'origin';
+END $$;
+
+
+=========================================================================================
+
+کوئری ساخت انکشن مصرف مواد:
+
+CREATE OR REPLACE FUNCTION "get_where_used_recursive"(input_product_id INT)
+RETURNS TABLE (
+    "BomHeaderId" INT,
+    "ProductId" INT,
+    "Level" INT,
+    "UsageType" TEXT,
+    "Quantity" DECIMAL,
+    "Path" TEXT
+) AS $$
+BEGIN
+    RETURN QUERY
+    WITH RECURSIVE BOM_CTE AS (
+        -- 1. Anchor Member: استفاده مستقیم
+        SELECT 
+            h."Id" AS "BomHeaderId",
+            h."ProductId",
+            1 AS "Level",
+            'ماده اولیه' AS "UsageType",
+            d."Quantity",
+            CAST(h."ProductId" AS TEXT) AS "Path"
+        FROM "eng"."bom_details" d
+        -- اصلاح شد: BomHeaderId -> BOMHeaderId
+        JOIN "eng"."bom_headers" h ON d."BOMHeaderId" = h."Id"
+        WHERE d."ChildProductId" = input_product_id AND h."IsActive" = TRUE
+
+        UNION ALL
+
+        -- 1.1. Anchor Member: استفاده جایگزین
+        SELECT 
+            h."Id" AS "BomHeaderId",
+            h."ProductId",
+            1 AS "Level",
+            'جایگزین' AS "UsageType",
+            s."Factor" AS "Quantity",
+            CAST(h."ProductId" AS TEXT) AS "Path"
+        FROM "eng"."bom_substitutes" s
+        -- اصلاح شد: BOMDetailId (معمولا EF همه را بزرگ می‌زند اگر در کلاس بزرگ باشد)
+        JOIN "eng"."bom_details" d ON s."BOMDetailId" = d."Id"
+        -- اصلاح شد: BomHeaderId -> BOMHeaderId
+        JOIN "eng"."bom_headers" h ON d."BOMHeaderId" = h."Id"
+        WHERE s."SubstituteProductId" = input_product_id AND h."IsActive" = TRUE
+
+        UNION ALL
+
+        -- 2. Recursive Member: سطوح بالاتر
+        SELECT 
+            h."Id" AS "BomHeaderId",
+            h."ProductId",
+            cte."Level" + 1,
+            'ماده اولیه (غیرمستقیم)' AS "UsageType",
+            d."Quantity",
+            cte."Path" || '->' || CAST(h."ProductId" AS TEXT)
+        FROM "eng"."bom_details" d
+        -- اصلاح شد: BomHeaderId -> BOMHeaderId
+        JOIN "eng"."bom_headers" h ON d."BOMHeaderId" = h."Id"
+        JOIN BOM_CTE cte ON d."ChildProductId" = cte."ProductId"
+        WHERE h."IsActive" = TRUE
+    )
+    SELECT * FROM BOM_CTE;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+----------------------------------------------------------------------------
+
+WITH variables AS (
+    SELECT 
+        10000000 AS record_count,      -- تعداد رکوردی که می‌خواهید بسازید (اینجا ۱۰۰۰ تا)
+        1000 AS start_code        -- کدی که می‌خواهید از آن شروع شود
+)
+INSERT INTO base."products" (
+    "Id", 
+    "Code", 
+    "Name", 
+    "UnitId", 
+    "SupplyType", 
+    "IsActive", 
+    "CreatedAt", 
+    "IsDeleted", 
+    "CreatedBy"
+)
+SELECT 
+    -- تولید ID: آخرین آیدی را میگیرد و یکی یکی اضافه میکند
+    (SELECT COALESCE(MAX("Id"), 0) FROM base."products") + s.i,
+    
+    -- تولید Code: از عدد شروع شما یکی یکی بالا میرود
+    (v.start_code + s.i)::text,
+    
+    -- تولید Name: محصول تستی + آیدی جدید
+    'محصول تستی ' || ((SELECT COALESCE(MAX("Id"), 0) FROM base."products") + s.i)::text,
+    
+    1,          -- UnitId (پیش‌فرض 1)
+    1,          -- SupplyType (پیش‌فرض 1)
+    TRUE,       -- IsActive
+    NOW(),      -- CreatedAt (زمان حال)
+    FALSE,      -- IsDeleted
+    '4844f30a-3dd5-44b3-a187-13758e2cfbab'::uuid -- CreatedBy (از فایل قبلی شما برداشتم)
+
+FROM variables v, generate_series(1, v.record_count) AS s(i);
+
+----------------------------------------------------------
+

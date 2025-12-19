@@ -1,0 +1,6 @@
+@ERPDotNet.API_HostAddress = http://localhost:5249
+
+GET {{ERPDotNet.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

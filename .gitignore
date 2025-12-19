@@ -1,0 +1,22 @@
+# =========================
+# نادیده گرفتن فایل‌های دات‌نت (Backend)
+# =========================
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
+**/*.user
+**/appsettings.Development.json
+**/appsettings.local.json
+*.suo
+**/wwwroot/
+
+# =========================
+# نادیده گرفتن فایل‌های نکست جی‌اس (Frontend)
+# =========================
+**/node_modules/
+**/.next/
+**/build/
+**/out/
+**/npm-debug.log*
+**/.DS_Store

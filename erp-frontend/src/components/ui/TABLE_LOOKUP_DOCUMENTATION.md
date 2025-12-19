@@ -1,0 +1,179 @@
+/\*\*
+
+- ============================================================================
+- TableLookupCombobox - کومبوباکس جامع برای تمام Lookup های سیستم
+- ============================================================================
+-
+- این کامپوننت را مستقیماً در صفحات خود بدون نیاز به wrapper استفاده کنید.
+-
+- ============================================================================
+- چگونه استفاده کنیم؟
+- ============================================================================
+-
+- 1.  فیلدهای داده را تعریف کنید:
+-
+- interface Product {
+-     id: number;
+-     code: string;
+-     name: string;
+-     unitName: string;
+-     supplyType: string;
+- }
+-
+- 2.  ستون‌های جدول را تعریف کنید:
+-
+- const productColumns: ColumnDef[] = [
+-     { key: "code", label: "کد", width: "120px" },
+-     { key: "name", label: "نام", width: "200px" },
+-     { key: "unitName", label: "واحد", width: "100px" },
+-     { key: "supplyType", label: "نوع تامین", width: "150px" },
+- ];
+-
+- 3.  تابع جستجو را نوشتید:
+-
+- const handleProductSearch = useCallback(async (searchTerm: string) => {
+-     setProductLoading(true);
+-     try {
+-       const response = await apiClient.post("/Products/search", {
+-         pageNumber: 1,
+-         pageSize: 100,
+-         searchTerm: searchTerm || "",
+-         sortColumn: "code",
+-         sortDescending: false,
+-         Filters: [],
+-       });
+-       if (response?.data?.items) {
+-         setProducts(response.data.items);
+-       }
+-     } finally {
+-       setProductLoading(false);
+-     }
+- }, []);
+-
+- 4.  کامپوننت را استفاده کنید:
+-
+- <TableLookupCombobox<Product>
+-     value={selectedProduct}
+-     onValueChange={(id, product) => {
+-       setSelectedProduct(id as number);
+-     }}
+-     columns={productColumns}
+-     items={products}
+-     loading={productLoading}
+-     placeholder="جستجو برای محصول..."
+-     searchableFields={["code", "name", "unitName", "supplyType"]}
+-     displayFields={["code", "name"]}
+-     onSearch={handleProductSearch}
+- />
+-
+- ============================================================================
+- Props:
+- ============================================================================
+-
+- - value?: number | string | null
+- آی‌دی آیتم انتخاب‌شده
+-
+- - onValueChange: (value: number | string | null, item?: T) => void
+- تابعی که وقتی آیتم انتخاب شد فراخوانی می‌شود
+-
+- - columns: ColumnDef[]
+- ستون‌های جدول (key, label, width)
+-
+- - items: T[]
+- لیست داده‌ها برای نمایش
+-
+- - loading?: boolean
+- نشان‌دهنده بارگذاری (default: false)
+-
+- - placeholder?: string
+- متن جایگزین (default: "جستجو...")
+-
+- - disabled?: boolean
+- غیرفعال کردن کامپوننت
+-
+- - searchableFields?: string[]
+- فیلدهای قابل جستجو (default: تمام فیلدها)
+-
+- - displayFields?: string[]
+- فیلدهایی که در دکمه نمایش داده می‌شوند (default: دو فیلد اول)
+-
+- - onSearch?: (searchTerm: string) => void | Promise<void>
+- تابع جستجو (فراخوانی می‌شود هنگام تایپ در جستجو)
+-
+- - onOpenChange?: (open: boolean) => void
+- تابع برای ردیابی باز/بسته شدن پوپاور
+-
+- - renderCell?: (item: T, column: ColumnDef) => React.ReactNode
+- تابع custom برای رندر کردن سلول‌های جدول (مثل Badge)
+-
+- ============================================================================
+- مثال‌های پیشرفته:
+- ============================================================================
+-
+- 1.  رندر‌کردن custom برای Badge:
+-
+- const renderProductCell = (item: Product, column: ColumnDef) => {
+-     if (column.key === "supplyType") {
+-       return (
+-         <Badge variant="outline" className="text-xs">
+-           {item[column.key as keyof Product]}
+-         </Badge>
+-       );
+-     }
+-     return <span>{String(item[column.key as keyof Product] ?? "—")}</span>;
+- };
+-
+- <TableLookupCombobox<Product>
+-     ...
+-     renderCell={renderProductCell}
+- />
+-
+- 2.  تغییر عرض ستون‌ها:
+-
+- const productColumns: ColumnDef[] = [
+-     { key: "code", label: "کد", width: "15%" },
+-     { key: "name", label: "نام", width: "45%" },
+-     { key: "unitName", label: "واحد", width: "20%" },
+-     { key: "supplyType", label: "نوع", width: "20%" },
+- ];
+-
+- 3.  فیلتر بر اساس نوع:
+-
+- const handleCategorySearch = useCallback(async (searchTerm: string) => {
+-     setLoading(true);
+-     try {
+-       const response = await apiClient.post("/Categories/search", {
+-         pageNumber: 1,
+-         pageSize: 50,
+-         searchTerm: searchTerm || "",
+-       });
+-       if (response?.data?.items) {
+-         setCategories(response.data.items);
+-       }
+-     } finally {
+-       setLoading(false);
+-     }
+- }, []);
+-
+- ============================================================================
+- فایلهای مربوطه:
+- ============================================================================
+-
+- - src/components/ui/TableLookupCombobox.tsx (کامپوننت اصلی)
+- - src/app/(dashboard)/product-engineering/boms/CreateBOMForm.tsx (مثال استفاده)
+- - EXAMPLE_TableLookupCombobox.tsx (مثالهای کامل)
+-
+- ============================================================================
+- نکات مهم:
+- ============================================================================
+-
+- ✓ Generic type safety: <T extends LookupOption>
+- ✓ بدون نیاز به wrapper component برای هر lookup
+- ✓ سپاه RTL بدون مشکل
+- ✓ جستجو خودکار و فیلتر کلیدواژه
+- ✓ پشتیبانی از Custom rendering برای هر ستون
+- ✓ بارگذاری Async مطمئن
+- ✓ UI ظاهری: Popover + Table Style
+-
+- ============================================================================
+  \*/

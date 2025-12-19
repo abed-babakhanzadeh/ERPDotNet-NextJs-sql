@@ -1,0 +1,45 @@
+ "DefaultConnection": "Host=localhost;Port=5435;Database=ERP_DB;Username=postgres;Password=poolasa@123",
+
+
+
+ services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: erp_db
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=poolasa@123
+      - POSTGRES_DB=ERP_DB
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+
+      backend:
+      build:
+        context: ./ERPDotNet
+        dockerfile: Dockerfile
+      container_name: erp_api
+      restart: always
+      depends_on:
+        - db
+        - redis
+      environment:
+        - ASPNETCORE_ENVIRONMENT=Production
+        # در داکر، این باید روی پورت داخلی کانتینر گوش دهد
+        - ASPNETCORE_URLS=http://+:5000
+        - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=ERP_DB;Username=postgres;Password=poolasa@123
+        - ConnectionStrings__Redis=redis:6379
+        # تنظیمات JWT (لطفا مقادیر واقعی و امن قرار دهید)
+        - JwtSettings__Secret=YourSuperSecretKeyForProductionChangeThisASAP123!
+        - JwtSettings__Issuer=ERPDotNet
+        - JwtSettings__Audience=ERPDotNetClient
+      ports:
+        - "5000:5000"
+
+
+
+        volumes:
+          postgres_data
