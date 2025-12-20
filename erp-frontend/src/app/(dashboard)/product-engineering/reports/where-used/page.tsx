@@ -116,7 +116,7 @@ export default function WhereUsedPage() {
   const handleProductSearch = async (term: string) => {
     setProductLoading(true);
     try {
-      const res = await apiClient.post("/Products/search", {
+      const res = await apiClient.post("/BaseInfo/Products/search", {
         pageNumber: 1,
         pageSize: 20,
         searchTerm: term,
@@ -138,7 +138,7 @@ export default function WhereUsedPage() {
       const isMulti = mode !== "direct";
       const isEndItems = mode === "endItems";
 
-      const res = await apiClient.post("/BOMs/where-used", {
+      const res = await apiClient.post("/ProductEngineering/BOMs/where-used", {
         pageNumber: 1,
         pageSize: 1000,
         productId: prodId,

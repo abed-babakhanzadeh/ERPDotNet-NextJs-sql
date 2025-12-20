@@ -1,9 +1,11 @@
+using Dapper;
 using ERPDotNet.Application.Common.Attributes;
 using ERPDotNet.Application.Common.Interfaces;
 using ERPDotNet.Application.Common.Models;
-using ERPDotNet.Application.Common.Extensions;
+using ERPDotNet.Application.Common.Extensions; // برای ToDisplay
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using ERPDotNet.Domain.Modules.ProductEngineering.Entities; // برای BOMStatus
 
 namespace ERPDotNet.Application.Modules.ProductEngineering.Queries.GetWhereUsed;
 
@@ -24,127 +26,170 @@ public class GetWhereUsedHandler : IRequestHandler<GetWhereUsedQuery, PaginatedR
         _context = context;
     }
 
-   public async Task<PaginatedResult<WhereUsedDto>> Handle(GetWhereUsedQuery request, CancellationToken cancellationToken)
+    public async Task<PaginatedResult<WhereUsedDto>> Handle(GetWhereUsedQuery request, CancellationToken cancellationToken)
     {
-        List<WhereUsedDto> finalDtos = new();
-        int totalCount = 0;
+        var connection = _context.Database.GetDbConnection();
+        IEnumerable<WhereUsedRawDto> rawResult;
 
-        if (request.MultiLevel)
+        if (request.MultiLevel || request.EndItemsOnly)
         {
-            // === حالت چند سطحی (بازگشتی) ===
-            // نکته: تابع 'get_where_used_recursive' باید در SQL Server ایجاد شده باشد (TVF)
-            // در SQL Server فراخوانی به صورت SELECT * FROM Schema.Func() است
-            
-            var rawData = await _context.Set<WhereUsedRecursiveResult>()
-                .FromSqlInterpolated($"SELECT * FROM get_where_used_recursive({request.ProductId})")
-                .ToListAsync(cancellationToken);
+            // === حالت چند سطحی با CTE (بدون نیاز به تابع SQL) ===
+            var sql = @"
+                WITH RecursiveWhereUsed AS (
+                    -- Anchor: مصرف مستقیم (سطح ۱)
+                    SELECT 
+                        H.Id AS BomId,
+                        H.Title AS BomTitle,
+                        H.Version AS BomVersion,
+                        H.Status AS BomStatusId,
+                        H.ProductId AS ParentProductId,
+                        1 AS Level,
+                        CAST(N'ماده اولیه' AS NVARCHAR(50)) AS UsageType,
+                        D.Quantity
+                    FROM [eng].[bom_details] D
+                    JOIN [eng].[bom_headers] H ON D.BOMHeaderId = H.Id
+                    WHERE D.ChildProductId = @ProductId
+                      AND H.IsActive = 1
 
-            // ... (لاجیک فیلتر EndItemsOnly مشابه قبل) ...
-            if (request.EndItemsOnly)
-            {
-                var allParentIds = rawData.Select(x => x.ProductId).Distinct().ToList();
-                var notEndItems = await _context.BOMDetails
-                    .AsNoTracking()
-                    .Where(d => allParentIds.Contains(d.ChildProductId) && d.BOMHeader!.IsActive)
-                    .Select(d => d.ChildProductId)
-                    .Distinct()
-                    .ToListAsync(cancellationToken);
+                    UNION ALL
 
-                rawData = rawData.Where(r => !notEndItems.Contains(r.ProductId)).ToList();
-            }
+                    -- Recursive: سطوح بالاتر (پدرِ پدر)
+                    SELECT 
+                        H.Id,
+                        H.Title,
+                        H.Version,
+                        H.Status,
+                        H.ProductId,
+                        RW.Level + 1,
+                        CAST(N'ماده اولیه' AS NVARCHAR(50)),
+                        D.Quantity
+                    FROM RecursiveWhereUsed RW
+                    JOIN [eng].[bom_details] D ON D.ChildProductId = RW.ParentProductId
+                    JOIN [eng].[bom_headers] H ON D.BOMHeaderId = H.Id
+                    WHERE H.IsActive = 1
+                )
+                SELECT 
+                    R.BomId,
+                    R.BomTitle,
+                    R.BomVersion,
+                    R.BomStatusId,
+                    R.ParentProductId,
+                    P.Name AS ParentProductName,
+                    P.Code AS ParentProductCode,
+                    R.UsageType,
+                    R.Level,
+                    R.Quantity,
+                    U.Title AS UnitName
+                FROM RecursiveWhereUsed R
+                JOIN [base].[Products] P ON R.ParentProductId = P.Id
+                LEFT JOIN [base].[Units] U ON P.UnitId = U.Id
+                ORDER BY R.Level
+            ";
 
-            // مپینگ دستی (Client-side Join)
-            var bomIds = rawData.Select(r => r.BomHeaderId).Distinct().ToList();
-            var bomDetails = await _context.BOMHeaders
-                .AsNoTracking()
-                .Include(b => b.Product).ThenInclude(p => p!.Unit)
-                .Where(b => bomIds.Contains(b.Id))
-                .ToDictionaryAsync(b => b.Id, cancellationToken);
-
-            finalDtos = rawData.Select(r => {
-                var bom = bomDetails.GetValueOrDefault(r.BomHeaderId);
-                return new WhereUsedDto(
-                    r.BomHeaderId,
-                    r.BomHeaderId,
-                    bom?.Title ?? "-",
-                    bom?.Version ?? "-",
-                    bom?.Status.ToDisplay() ?? "-",
-                    r.ProductId,
-                    bom?.Product?.Name ?? "-",
-                    bom?.Product?.Code ?? "-",
-                    r.Level == 1 ? r.UsageType : $"{r.UsageType} (سطح {r.Level})",
-                    r.Quantity,
-                    bom?.Product?.Unit?.Title ?? "-"
-                );
-            }).ToList();
+            rawResult = await connection.QueryAsync<WhereUsedRawDto>(sql, new { ProductId = request.ProductId });
         }
         else
         {
-            // === حالت تک سطحی (بهینه شده با EF Core) ===
-            // به جای فراخوانی تابع SQL، مستقیم کوئری می‌زنیم (سریع‌تر و استانداردتر)
-            
-            var directUsages = await _context.BOMDetails
-                .AsNoTracking()
-                .Include(d => d.BOMHeader).ThenInclude(h => h!.Product).ThenInclude(p => p!.Unit)
-                .Where(d => d.ChildProductId == request.ProductId && d.BOMHeader!.IsActive)
-                .Select(d => new WhereUsedDto(
-                    d.BOMHeaderId,
-                    d.BOMHeaderId,
-                    d.BOMHeader!.Title,
-                    d.BOMHeader.Version,
-                    // برای دسترسی به Enum Display در کوئری LINQ to Entities محدودیت داریم
-                    // بنابراین مقدار خام را می‌گیریم و بعدا اگر لازم شد سمت رم تبدیل می‌کنیم
-                    // یا اینجا ToString می‌کنیم فعلا
-                    d.BOMHeader.Status.ToString(), 
-                    d.BOMHeader.ProductId,
-                    d.BOMHeader.Product!.Name,
-                    d.BOMHeader.Product.Code,
-                    "ماده اولیه",
-                    d.Quantity,
-                    d.BOMHeader.Product.Unit!.Title
-                ))
-                .ToListAsync(cancellationToken);
-                
-            // چک کردن جایگزین‌ها (Substitutes)
-            var substituteUsages = await _context.BOMSubstitutes
-                .AsNoTracking()
-                .Include(s => s.BOMDetail).ThenInclude(d => d!.BOMHeader).ThenInclude(h => h!.Product).ThenInclude(p => p!.Unit)
-                .Where(s => s.SubstituteProductId == request.ProductId && s.BOMDetail!.BOMHeader!.IsActive)
-                .Select(s => new WhereUsedDto(
-                    s.BOMDetail!.BOMHeaderId,
-                    s.BOMDetail.BOMHeaderId,
-                    s.BOMDetail.BOMHeader!.Title,
-                    s.BOMDetail.BOMHeader.Version,
-                    s.BOMDetail.BOMHeader.Status.ToString(),
-                    s.BOMDetail.BOMHeader.ProductId,
-                    s.BOMDetail.BOMHeader.Product!.Name,
-                    s.BOMDetail.BOMHeader.Product.Code,
-                    "جایگزین",
-                    s.Factor, // ضریب جایگزینی
-                    s.BOMDetail.BOMHeader.Product.Unit!.Title
-                ))
-                .ToListAsync(cancellationToken);
+            // === حالت تک سطحی (شامل جایگزین‌ها) ===
+            var sqlDirect = @"
+                SELECT 
+                    H.Id AS BomId,
+                    H.Title AS BomTitle,
+                    H.Version AS BomVersion,
+                    H.Status AS BomStatusId,
+                    H.ProductId AS ParentProductId,
+                    P.Name AS ParentProductName,
+                    P.Code AS ParentProductCode,
+                    1 AS Level,
+                    CAST(N'ماده اولیه' AS NVARCHAR(50)) AS UsageType,
+                    D.Quantity,
+                    U.Title AS UnitName
+                FROM [eng].[bom_details] D
+                JOIN [eng].[bom_headers] H ON D.BOMHeaderId = H.Id
+                JOIN [base].[Products] P ON H.ProductId = P.Id
+                LEFT JOIN [base].[Units] U ON P.UnitId = U.Id
+                WHERE D.ChildProductId = @ProductId AND H.IsActive = 1
 
-            finalDtos.AddRange(directUsages);
-            finalDtos.AddRange(substituteUsages);
-            
-            // رفع مشکل Enum Display (سمت مموری)
-            // چون در دیتابیس Status عدد است و ما ToString گرفتیم (مثلا Active)، اینجا فارسی‌اش می‌کنیم
-            finalDtos = finalDtos.Select(x => x with { 
-                BomStatus = Enum.TryParse<Domain.Modules.ProductEngineering.Entities.BOMStatus>(x.BomStatus, out var st) 
-                            ? st.ToDisplay() 
-                            : x.BomStatus 
-            }).ToList();
+                UNION ALL
+
+                SELECT 
+                    H.Id, H.Title, H.Version, H.Status, H.ProductId, P.Name, P.Code,
+                    1 AS Level,
+                    CAST(N'جایگزین' AS NVARCHAR(50)) AS UsageType,
+                    S.Factor AS Quantity,
+                    U.Title
+                FROM [eng].[bom_substitutes] S
+                JOIN [eng].[bom_details] D ON S.BOMDetailId = D.Id
+                JOIN [eng].[bom_headers] H ON D.BOMHeaderId = H.Id
+                JOIN [base].[Products] P ON H.ProductId = P.Id
+                LEFT JOIN [base].[Units] U ON P.UnitId = U.Id
+                WHERE S.SubstituteProductId = @ProductId AND H.IsActive = 1
+            ";
+
+            rawResult = await connection.QueryAsync<WhereUsedRawDto>(sqlDirect, new { ProductId = request.ProductId });
         }
 
-        totalCount = finalDtos.Count;
-        
-        // صفحه‌بندی (In-Memory)
-        var pagedItems = finalDtos
+        // --- پردازش نهایی در حافظه ---
+        var finalItems = rawResult.ToList();
+
+        // فیلتر محصولات نهایی (End Items Only)
+        if (request.EndItemsOnly)
+        {
+            // محصول نهایی یعنی محصولی که خودش در هیچ BOM فعالی به عنوان زیرمجموعه استفاده نشده باشد
+            // ابتدا تمام ParentId های پیدا شده را لیست می‌کنیم
+            var allFoundParents = finalItems.Select(x => x.ParentProductId).Distinct().ToList();
+            
+            // چک می‌کنیم کدام یک از این‌ها در جدول Details وجود دارند (یعنی مصرف شده‌اند)
+            if (allFoundParents.Any())
+            {
+                var queryCheck = @"SELECT DISTINCT ChildProductId FROM [eng].[bom_details] D 
+                                   JOIN [eng].[bom_headers] H ON D.BOMHeaderId = H.Id 
+                                   WHERE H.IsActive = 1 AND D.ChildProductId IN @Ids";
+                
+                var notEndItemIds = await connection.QueryAsync<int>(queryCheck, new { Ids = allFoundParents });
+                
+                // آن‌هایی را نگه دار که جزو مصرف‌شده‌ها نیستند
+                finalItems = finalItems.Where(x => !notEndItemIds.Contains(x.ParentProductId)).ToList();
+            }
+        }
+
+        // تبدیل به DTO نهایی و فرمت‌دهی
+        var mappedDtos = finalItems.Select(r => new WhereUsedDto(
+            r.BomId, // Id سطر (یکتا سازی برای فرانت)
+            r.BomId,
+            r.BomTitle,
+            r.BomVersion,
+            ((BOMStatus)r.BomStatusId).ToDisplay(), // تبدیل Enum به فارسی
+            r.ParentProductId,
+            r.ParentProductName,
+            r.ParentProductCode,
+            r.Level > 1 ? $"{r.UsageType} (سطح {r.Level})" : r.UsageType,
+            r.Quantity,
+            r.UnitName ?? "-"
+        )).ToList();
+
+        // صفحه‌بندی
+        var pagedItems = mappedDtos
             .Skip((request.PageNumber - 1) * request.PageSize)
             .Take(request.PageSize)
             .ToList();
 
-        return new PaginatedResult<WhereUsedDto>(pagedItems, totalCount, request.PageNumber, request.PageSize);
+        return new PaginatedResult<WhereUsedDto>(pagedItems, mappedDtos.Count, request.PageNumber, request.PageSize);
+    }
+
+    // کلاس کمکی برای دریافت خروجی Dapper
+    private class WhereUsedRawDto
+    {
+        public int BomId { get; set; }
+        public string BomTitle { get; set; } = "";
+        public string BomVersion { get; set; } = "";
+        public int BomStatusId { get; set; }
+        public int ParentProductId { get; set; }
+        public string ParentProductName { get; set; } = "";
+        public string ParentProductCode { get; set; } = "";
+        public int Level { get; set; }
+        public string UsageType { get; set; } = "";
+        public decimal Quantity { get; set; }
+        public string? UnitName { get; set; }
     }
 }

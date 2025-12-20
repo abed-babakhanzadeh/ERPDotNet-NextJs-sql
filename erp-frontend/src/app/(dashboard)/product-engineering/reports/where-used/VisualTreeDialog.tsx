@@ -80,7 +80,7 @@ export default function VisualTreeDialog({
     setPosition({ x: 0, y: 0 });
 
     apiClient
-      .get(`/BOMs/${bomId}/tree`)
+      .get(`/ProductEngineering/BOMs/${bomId}/tree`)
       .then((res) => {
         if (res.data) setData(res.data);
         else setError("داده‌ای یافت نشد");

@@ -82,15 +82,12 @@ function NavParamsItem({
     item.href === pathname ||
     item.submenu?.some((sub) => sub.href === pathname);
 
-  // منطق باز بودن منو: اگر سرچ داریم یا اکتیو است
   const isOpen =
     (!!searchQuery && item.submenu && item.submenu.length > 0) || isActive;
 
   const handleClick = (e: React.MouseEvent) => {
-    // 1. اگر سایدبار بسته است، بازش کن
     if (state === "collapsed") {
       setOpen(true);
-      // اگر زیرمنو دارد، دیگر ادامه نده تا کاربر بتواند زیرمنو را ببیند
       if (item.submenu) {
         e.preventDefault();
         return;
@@ -100,23 +97,40 @@ function NavParamsItem({
     if (item.href) {
       e.preventDefault();
       addTab(item.title, item.href);
-
-      // 2. بستن سایدبار بعد از کلیک (هم در موبایل هم دسکتاپ طبق درخواست شما)
       if (isMobile) {
         setOpenMobile(false);
       } else {
-        // اگر می‌خواهید در دسکتاپ هم بسته شود:
         setOpen(false);
       }
     }
   };
 
+  // --- استایل‌های اصلاح شده ---
+  const menuItemClass = cn(
+    // بیس: ارتفاع مناسب و انیمیشن
+    "relative overflow-hidden transition-all duration-200 ease-in-out h-10 mb-1",
+
+    // بوردر و سایه (درخواست قبلی)
+    "border-b border-sidebar-border/40 shadow-[0_1px_1px_rgba(0,0,0,0.02)]",
+
+    // *** اصلاح هاور (درخواست جدید) ***
+    // 1. رنگ پس‌زمینه مشخص‌تر: bg-primary/5 (نه sidebar-accent که شاید بی‌رنگ باشد)
+    // 2. رنگ متن: text-primary (رنگ اصلی برند)
+    // 3. حرکت: حفظ شد
+    "hover:bg-primary/5 hover:text-primary hover:shadow-sm hover:-translate-x-1",
+
+    // حالت فعال (Active)
+    isActive
+      ? "font-semibold text-primary bg-primary/10 border-b-primary/20 shadow-none"
+      : "text-muted-foreground"
+  );
+
   if (item.submenu && item.submenu.length > 0) {
     return (
       <Collapsible
         asChild
-        defaultOpen={isOpen} // حالت اولیه
-        open={isOpen ? true : undefined} // اجبار به باز بودن هنگام سرچ
+        defaultOpen={isOpen}
+        open={isOpen ? true : undefined}
         className="group/collapsible"
       >
         <SidebarMenuItem>
@@ -130,14 +144,23 @@ function NavParamsItem({
                   setOpen(true);
                 }
               }}
+              className={menuItemClass}
             >
-              {item.icon && <item.icon />}
-              <span>{item.title}</span>
-              <ChevronRight className="mr-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 rtl:rotate-180 rtl:group-data-[state=open]/collapsible:rotate-90" />
+              {item.icon && <item.icon className="shrink-0" />}
+              <span className="truncate flex-1 text-right" title={item.title}>
+                {item.title}
+              </span>
+              <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 rtl:rotate-180 rtl:group-data-[state=open]/collapsible:rotate-90 opacity-50" />
             </SidebarMenuButton>
           </CollapsibleTrigger>
+
           <CollapsibleContent>
-            <SidebarMenuSub>
+            {/* *** اصلاح تورفتگی (Indentation Fix) ***
+               - mr-3.5: فاصله از راست (نه چپ) برای ایجاد پله در RTL
+               - border-r: خط درختی در سمت راست
+               - pr-2: فاصله محتوا از خط
+            */}
+            <SidebarMenuSub className="mr-3.5 border-r border-sidebar-border/60 pr-2 border-l-0 ml-0">
               {item.submenu.map((subItem) => (
                 <NavParamsItem
                   key={subItem.title}
@@ -159,14 +182,18 @@ function NavParamsItem({
         isActive={isActive}
         tooltip={item.title}
         onClick={handleClick}
-        className={cn(
-          isActive &&
-            "font-semibold text-primary bg-primary/10 hover:bg-primary/15 hover:text-primary"
-        )}
+        className={menuItemClass}
       >
         <a href={item.href || "#"}>
-          {item.icon ? <item.icon /> : <Circle className="size-2 opacity-50" />}
-          <span>{item.title}</span>
+          {item.icon ? (
+            <item.icon className="shrink-0" />
+          ) : (
+            // آیکون دایره برای زیرمنوها، کمی کوچک‌تر و کم‌رنگ‌تر
+            <Circle className="size-1.5 opacity-60 shrink-0" />
+          )}
+          <span className="truncate w-full text-right block" title={item.title}>
+            {item.title}
+          </span>
         </a>
       </SidebarMenuButton>
     </SidebarMenuItem>
