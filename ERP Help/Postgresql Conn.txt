@@ -43,3 +43,10 @@
 
         volumes:
           postgres_data
+
+
+
+
+
+
+          // "DefaultConnection": "Server=localhost,1435;Database=ERP_DB;User Id=sa;Password=poolasa@123;TrustServerCertificate=True;",

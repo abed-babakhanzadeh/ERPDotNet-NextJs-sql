@@ -43,8 +43,8 @@ export default function EditUnitPage({ params }: PageProps) {
     const fetchData = async () => {
       try {
         const [unitRes, unitsRes] = await Promise.all([
-          apiClient.get<Unit>(`/Units/${id}`),
-          apiClient.get<Unit[]>("/Units"),
+          apiClient.get<Unit>(`/BaseInfo/Units/${id}`),
+          apiClient.get<Unit[]>("/BaseInfo/Units/lookup"),
         ]);
 
         const fetchedUnit = unitRes.data;
@@ -124,19 +124,41 @@ export default function EditUnitPage({ params }: PageProps) {
 
     setSubmitting(true);
 
+    // دیباگ: لاگ کردن مقادیر قبل از ارسال
+    console.log("Form Data before submit:", formData);
+
     try {
+      // تبدیل ایمن baseUnitId به عدد یا نال
+      const baseUnitIdValue = formData.baseUnitId
+        ? Number(formData.baseUnitId)
+        : null;
+
       const payload = {
         id: unit.id,
-        ...formData,
-        baseUnitId: formData.baseUnitId ? Number(formData.baseUnitId) : null,
-        conversionFactor: formData.baseUnitId
+        title: formData.title,
+        symbol: formData.symbol,
+        precision: Number(formData.precision || 0),
+        isActive: formData.isActive,
+
+        // ارسال BaseUnitId
+        baseUnitId: baseUnitIdValue,
+
+        // اصلاح مهم: وابستگی به baseUnitId را برداشتیم.
+        // اگر کاربر عددی وارد کرده، همان را بفرست، در غیر این صورت 1 بفرست.
+        conversionFactor: formData.conversionFactor
           ? Number(formData.conversionFactor)
-          : null,
+          : 1,
+
+        // اضافه کردن RowVersion برای جلوگیری از خطای احتمالی در آینده
+        rowVersion: unit.rowVersion,
       };
 
-      await apiClient.put(`/Units/${unit.id}`, payload);
-      toast.success("واحد با موفقیت ویرایش شد");
+      console.log("Payload sent to server:", payload); // این را در کنسول مرورگر چک کنید
 
+      // دقت کنید آدرس BaseInfo داشته باشد
+      await apiClient.put(`/BaseInfo/Units/${unit.id}`, payload);
+
+      toast.success("واحد با موفقیت ویرایش شد");
       clearStorage();
       closeTab(activeTabId);
     } catch (error: any) {

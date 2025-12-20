@@ -59,7 +59,7 @@ export default function BOMsListPage() {
   // DataTable Hook
   // دریافت totalCount از هوک
   const { tableProps, refresh, totalCount } = useServerDataTable<BOMListDto>({
-    endpoint: "/BOMs/search",
+    endpoint: "/ProductEngineering/BOMs/search",
     initialPageSize: 30,
   });
 

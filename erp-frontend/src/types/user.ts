@@ -8,4 +8,5 @@ export interface User {
   personnelCode: string;
   isActive: boolean;
   createdAt: string;
+  concurrencyStamp?: string;
 }

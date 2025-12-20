@@ -13,13 +13,12 @@ public record CreateBOMCommand : IRequest<int>
 {
     public required int ProductId { get; set; }
     public required string Title { get; set; }
-    public string Version { get; set; } = "1.0"; // پیش‌فرض
+    public string Version { get; set; } = "1.0"; 
     public BOMType Type { get; set; } = BOMType.Manufacturing;
     public DateTime FromDate { get; set; } = DateTime.UtcNow;
     public DateTime? ToDate { get; set; }
     public bool IsActive { get; set; } = true;
 
-    // لیست مواد اولیه (دیتیل)
     public List<BOMDetailInputDto> Details { get; set; } = new();
 }
 
@@ -27,13 +26,9 @@ public record BOMDetailInputDto
 {
     public required int ChildProductId { get; set; }
     public decimal Quantity { get; set; }
-    // --- فیلدهای جدید ---
     public decimal InputQuantity { get; set; }
     public int InputUnitId { get; set; }
-    // -------------------
     public decimal WastePercentage { get; set; }
-    
-    // لیست جایگزین‌های این ماده
     public List<BOMSubstituteInputDto> Substitutes { get; set; } = new();
 }
 
@@ -42,7 +37,6 @@ public record BOMSubstituteInputDto
     public required int SubstituteProductId { get; set; }
     public int Priority { get; set; }
     public decimal Factor { get; set; }
-    // فیلدهای جدید
     public bool IsMixAllowed { get; set; }
     public decimal MaxMixPercentage { get; set; }
     public string? Note { get; set; }
@@ -65,7 +59,6 @@ public class CreateBOMValidator : AbstractValidator<CreateBOMCommand>
         RuleFor(v => v.Title).NotEmpty().MaximumLength(100);
         RuleFor(v => v.Version).NotEmpty().MaximumLength(20);
         
-        // چک کردن تکراری نبودن ورژن برای این کالا
         RuleFor(v => v)
             .MustAsync(BeUniqueVersion).WithMessage("این نسخه BOM برای این کالا قبلاً ثبت شده است.");
 
@@ -73,10 +66,8 @@ public class CreateBOMValidator : AbstractValidator<CreateBOMCommand>
             d.RuleFor(x => x.ChildProductId).GreaterThan(0);
             d.RuleFor(x => x.Quantity).GreaterThan(0);
             
-            // چک: ماده اولیه نباید خودِ محصول نهایی باشد (سیکل ساده)
-            d.RuleFor(x => x.ChildProductId)
-             .NotEqual(root => root.ChildProductId) // این جا دسترسی به روت سخته، تو هندلر چک میکنیم بهتره
-             .WithMessage("محصول نمی‌تواند زیرمجموعه خودش باشد.");
+            // *** اصلاح مهم: خط باگ‌دار حذف شد ***
+            // چک کردن اینکه فرزند != پدر باشد را در هندلر انجام می‌دهیم
         });
     }
 
@@ -98,15 +89,11 @@ public class CreateBOMHandler : IRequestHandler<CreateBOMCommand, int>
 
     public async Task<int> Handle(CreateBOMCommand request, CancellationToken cancellationToken)
     {
-
-        // --- رفع خطای تاریخ PostgreSQL (UTC Conversion) ---
-        
-        // 1. تبدیل تاریخ شروع به UTC
+        // 1. تبدیل تاریخ‌ها به UTC
         var utcFromDate = request.FromDate.Kind == DateTimeKind.Utc 
             ? request.FromDate 
             : DateTime.SpecifyKind(request.FromDate, DateTimeKind.Utc);
 
-        // 2. تبدیل تاریخ پایان به UTC (اگر مقدار داشت)
         DateTime? utcToDate = null;
         if (request.ToDate.HasValue)
         {
@@ -115,25 +102,21 @@ public class CreateBOMHandler : IRequestHandler<CreateBOMCommand, int>
                 : DateTime.SpecifyKind(request.ToDate.Value, DateTimeKind.Utc);
         }
 
-        // ساخت هدر با تاریخ‌های اصلاح شده
         var bom = new BOMHeader
         {
             ProductId = request.ProductId,
             Title = request.Title,
             Version = request.Version,
             Type = request.Type,
-            
-            FromDate = utcFromDate, // استفاده از متغیر UTC شده
-            ToDate = utcToDate,     // استفاده از متغیر UTC شده (فیلد جدید)
-            
+            FromDate = utcFromDate,
+            ToDate = utcToDate,
             Status = BOMStatus.Active, 
             IsActive = request.IsActive
         };
 
-        // 2. افزودن دیتیل‌ها و جایگزین‌ها
         foreach (var detailInput in request.Details)
         {
-            // جلوگیری از سیکل ساده (خودش فرزند خودش نباشد)
+            // جلوگیری از سیکل ساده (اینجا جایش درست است)
             if (detailInput.ChildProductId == request.ProductId)
             {
                 throw new Exception($"کالای {detailInput.ChildProductId} نمی‌تواند زیرمجموعه خودش باشد.");
@@ -141,22 +124,19 @@ public class CreateBOMHandler : IRequestHandler<CreateBOMCommand, int>
 
             var detail = new BOMDetail
             {
-                // BOMHeaderId خودکار بعد از ذخیره ست می‌شود (چون نویگیشن است)
-                BOMHeaderId = 0, // موقت
+                BOMHeaderId = 0,
                 ChildProductId = detailInput.ChildProductId,
                 Quantity = detailInput.Quantity,
-                // مقادیر ورودی کاربر (برای نمایش بعدی)
                 InputQuantity = detailInput.InputQuantity,
                 InputUnitId = detailInput.InputUnitId,
                 WastePercentage = detailInput.WastePercentage
             };
 
-            // افزودن جایگزین‌ها
             foreach (var subInput in detailInput.Substitutes)
             {
                 detail.Substitutes.Add(new BOMSubstitute
                 {
-                    BOMDetailId = 0, // موقت
+                    BOMDetailId = 0,
                     SubstituteProductId = subInput.SubstituteProductId,
                     Priority = subInput.Priority,
                     Factor = subInput.Factor,
@@ -169,10 +149,7 @@ public class CreateBOMHandler : IRequestHandler<CreateBOMCommand, int>
             bom.Details.Add(detail);
         }
 
-        // 3. ذخیره اتمیک
         _context.BOMHeaders.Add(bom);
-        
-        // EF Core به صورت خودکار همه فرزندان و نوه‌ها را در یک تراکنش ذخیره می‌کند
         await _context.SaveChangesAsync(cancellationToken);
 
         return bom.Id;

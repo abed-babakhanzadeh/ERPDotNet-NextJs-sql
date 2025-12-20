@@ -158,7 +158,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
     productId: number
   ): Promise<UnitOption[]> => {
     try {
-      const { data } = await apiClient.get(`/Products/${productId}`);
+      const { data } = await apiClient.get(`/BaseInfo/Products/${productId}`);
       const options: UnitOption[] = [];
 
       if (data.unitId) {
@@ -189,7 +189,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
 
     setLoadingData(true);
     try {
-      const { data } = await apiClient.get(`/BOMs/${id}`);
+      const { data } = await apiClient.get(`/ProductEngineering/BOMs/${id}`);
 
       setHeaderData({
         productId: data.productId,
@@ -298,7 +298,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
 
   const searchProductsApi = async (term: string) => {
     if (!term && mode === "create") return [];
-    const res = await apiClient.post("/Products/search", {
+    const res = await apiClient.post("/BaseInfo/Products/search", {
       pageNumber: 1,
       pageSize: 20,
       searchTerm: term,
@@ -329,7 +329,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
   const onSearchTemplate = async (term: string) => {
     setTemplateLoading(true);
     try {
-      const res = await apiClient.post("/BOMs/search", {
+      const res = await apiClient.post("/ProductEngineering/BOMs/search", {
         pageNumber: 1,
         pageSize: 20,
         searchTerm: term,
@@ -343,7 +343,9 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
   const handleImportTemplate = async (sourceBomId: number) => {
     setTemplateLoading(true);
     try {
-      const { data } = await apiClient.get(`/BOMs/${sourceBomId}`);
+      const { data } = await apiClient.get(
+        `/ProductEngineering/BOMs/${sourceBomId}`
+      );
 
       if (data.details && data.details.length > 0) {
         const newRows = await mapTemplateToRows(data.details);
@@ -693,14 +695,14 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
         payload.id = Number(bomId);
       }
 
-      console.log("PAYLOAD SENT TO SERVER:", JSON.stringify(payload, null, 2));
+      // console.log("PAYLOAD SENT TO SERVER:", JSON.stringify(payload, null, 2));
 
       if (mode === "create") {
         payload.productId = Number(headerData.productId);
-        await apiClient.post("/BOMs", payload);
+        await apiClient.post("/ProductEngineering/BOMs", payload);
         toast.success("BOM با موفقیت ایجاد شد");
       } else if (mode === "edit" && bomId) {
-        await apiClient.put(`/BOMs/${bomId}`, payload);
+        await apiClient.put(`/ProductEngineering/BOMs/${bomId}`, payload);
         toast.success("تغییرات با موفقیت ذخیره شد");
       }
 

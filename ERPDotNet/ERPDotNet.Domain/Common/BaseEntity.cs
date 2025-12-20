@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace ERPDotNet.Domain.Common;
 
 public abstract class BaseEntity
@@ -15,5 +17,6 @@ public abstract class BaseEntity
     // === افزودن این خط برای کنترل همروندی ===
     // این فیلد را خود SQL Server پر می‌کند و تغییر می‌دهد.
     // در سی‌شارپ به صورت byte[] مپ می‌شود.
+    [Timestamp]
     public byte[]? RowVersion { get; set; } 
 }

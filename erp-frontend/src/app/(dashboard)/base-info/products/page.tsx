@@ -21,7 +21,7 @@ import {
 // 1. فراخوانی لایوت جدید
 import BaseListLayout from "@/components/layout/BaseListLayout";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5249";
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 const PlaceholderWrapper: React.FC<{
   children: React.ReactNode;
@@ -40,9 +40,9 @@ export default function ProductsPage() {
 
   useTabPrefetch(["/base-info/products/create"]);
 
-  // 2. دریافت totalCount از هوک اصلاح شده
   const { tableProps, refresh, totalCount } = useServerDataTable<Product>({
-    endpoint: "/Products/search",
+    // اصلاح شد: اضافه کردن BaseInfo به ابتدای آدرس
+    endpoint: "/BaseInfo/Products/search",
     initialPageSize: 30,
   });
 
@@ -76,7 +76,8 @@ export default function ProductsPage() {
       { key: "unitName", label: "واحد", type: "string" },
       { key: "supplyType", label: "نوع تامین", type: "string" },
       {
-        key: "Descriptions",
+        // اصلاح مهم: حتماً با حرف کوچک بنویسید
+        key: "descriptions",
         label: "مشخصات",
         type: "string",
         render: (value) => (
@@ -88,6 +89,7 @@ export default function ProductsPage() {
           </span>
         ),
       },
+
       {
         key: "conversions",
         label: "فرعی",
@@ -126,7 +128,7 @@ export default function ProductsPage() {
     if (!confirm(`آیا از حذف کالای "${row.name}" اطمینان دارید؟`)) return;
 
     try {
-      await apiClient.delete(`/Products/${row.id}`);
+      await apiClient.delete(`/BaseInfo/Products/${row.id}`);
       toast.success("کالا با موفقیت حذف شد");
       refresh();
     } catch (error: any) {

@@ -34,7 +34,7 @@ export default function CreateUnitPage() {
 
   useEffect(() => {
     apiClient
-      .get<Unit[]>("/Units")
+      .get<Unit[]>("/BaseInfo/Units/lookup")
       .then((res) => setUnits(res.data))
       .catch(() => toast.error("خطا در دریافت واحدها"))
       .finally(() => setLoadingUnits(false));
@@ -100,7 +100,7 @@ export default function CreateUnitPage() {
           : Number(formData.conversionFactor),
       };
 
-      await apiClient.post("/Units", payload);
+      await apiClient.post("/BaseInfo/Units", payload);
       toast.success("واحد با موفقیت ایجاد شد");
 
       clearStorage();

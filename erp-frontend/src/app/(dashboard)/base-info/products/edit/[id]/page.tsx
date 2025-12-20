@@ -49,7 +49,7 @@ export default function ProductDetailsPage({ params }: PageProps) {
   const [formData, setFormData] = useState<any>({
     code: "",
     name: "",
-    Descriptions: "",
+    descriptions: "",
     unitId: "",
     supplyType: 1,
     isActive: true,
@@ -59,9 +59,10 @@ export default function ProductDetailsPage({ params }: PageProps) {
   const [isImageDeleted, setIsImageDeleted] = useState(false);
 
   const { clearStorage } = useFormPersist(
-    `product-${id}`,
+    `product-${id}-v1`, // تغییر نام کلید برای خلاص شدن از کش‌های خراب قدیمی
     formData,
-    setFormData
+    setFormData,
+    !loadingData // <--- نکته طلایی: فقط وقتی لودینگ تمام شد، شروع به کش کردن کن
   );
 
   // --- Fetch Data ---
@@ -69,8 +70,8 @@ export default function ProductDetailsPage({ params }: PageProps) {
     const fetchData = async () => {
       try {
         const [productRes, unitsRes] = await Promise.all([
-          apiClient.get<Product>(`/Products/${id}`),
-          apiClient.get<Unit[]>("/Units"),
+          apiClient.get<Product>(`/BaseInfo/Products/${id}`),
+          apiClient.get<Unit[]>("/BaseInfo/Units/lookup"),
         ]);
         const prod = productRes.data;
         setProduct(prod);
@@ -80,7 +81,7 @@ export default function ProductDetailsPage({ params }: PageProps) {
           ...prev,
           code: prod.code,
           name: prod.name,
-          Descriptions: prod.Descriptions || "",
+          descriptions: prod.descriptions || "",
           unitId: prod.unitId,
           supplyType: prod.supplyTypeId || prod.supplyType,
           isActive: prod.isActive ?? true,
@@ -148,6 +149,7 @@ export default function ProductDetailsPage({ params }: PageProps) {
       const payload = {
         id: product.id,
         ...formData,
+        rowVersion: product.rowVersion,
         unitId: Number(formData.unitId),
         supplyType: Number(formData.supplyType),
         imagePath: finalImagePath,
@@ -161,7 +163,7 @@ export default function ProductDetailsPage({ params }: PageProps) {
           })),
       };
 
-      await apiClient.put(`/Products/${product.id}`, payload);
+      await apiClient.put(`/BaseInfo/Products/${product.id}`, payload);
       toast.success("تغییرات ذخیره شد");
 
       clearStorage();
@@ -237,8 +239,8 @@ export default function ProductDetailsPage({ params }: PageProps) {
         ],
       },
       {
-        name: "Descriptions",
-        label: "مشخصات فنی",
+        name: "descriptions",
+        label: "توضیحات",
         type: "textarea",
         colSpan: 2,
         disabled: !isEditing,

@@ -4,6 +4,7 @@ using ERPDotNet.Domain.Modules.UserAccess.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Infrastructure; // برای DatabaseFacade
+using Microsoft.AspNetCore.Identity;
 
 namespace ERPDotNet.Application.Common.Interfaces;
 
@@ -11,6 +12,8 @@ public interface IApplicationDbContext
 {
     // جداول UserAccess
     DbSet<User> Users { get; }
+    DbSet<IdentityRole> Roles { get; }
+    DbSet<IdentityUserRole<string>> UserRoles { get; }
     DbSet<Permission> Permissions { get; }
     DbSet<RolePermission> RolePermissions { get; }
     DbSet<UserPermission> UserPermissions { get; }

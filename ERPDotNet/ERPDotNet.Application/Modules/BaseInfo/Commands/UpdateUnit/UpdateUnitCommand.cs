@@ -18,7 +18,7 @@ public record UpdateUnitCommand : IRequest<bool>
 
     // فیلدهای واحد فرعی
     public int? BaseUnitId { get; set; }
-    public decimal ConversionFactor { get; set; }
+    public decimal? ConversionFactor { get; set; }
     // === فیلد جدید: ورژن ردیف ===
     // این فیلد باید از سمت کلاینت (فرانت) ارسال شود (همانی که موقع Get خوانده شده)
     public byte[]? RowVersion { get; set; }
@@ -34,7 +34,9 @@ public class UpdateUnitValidator : AbstractValidator<UpdateUnitCommand>
         RuleFor(x => x.Precision).GreaterThanOrEqualTo(0).LessThan(6);
         
         // اگر واحد پایه دارد، ضریب باید معتبر باشد
-        RuleFor(x => x.ConversionFactor).GreaterThan(0);
+        RuleFor(x => x.ConversionFactor)
+            .GreaterThan(0)
+            .When(x => x.ConversionFactor.HasValue);
     }
 }
 
@@ -67,7 +69,17 @@ public class UpdateUnitHandler : IRequestHandler<UpdateUnitCommand, bool>
         entity.Precision = request.Precision;
         entity.IsActive = request.IsActive;
         entity.BaseUnitId = request.BaseUnitId;
-        entity.ConversionFactor = request.ConversionFactor;
+        // اصلاح منطق ضریب تبدیل:
+        // ۱. اگر واحد پایه دارد (زیرمجموعه است) -> از ضریب ارسالی استفاده کن (اگر نال بود ۱ بذار)
+        // ۲. اگر واحد پایه ندارد (واحد اصلی است) -> ضریب باید همیشه ۱ باشد
+        if (request.BaseUnitId.HasValue)
+        {
+            entity.ConversionFactor = request.ConversionFactor ?? 1;
+        }
+        else
+        {
+            entity.ConversionFactor = 1;
+        }
         
         // نکته: LastModifiedAt توسط Interceptor پر می‌شود، نیازی به ست کردن دستی نیست.
 

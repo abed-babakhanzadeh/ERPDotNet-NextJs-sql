@@ -1,5 +1,5 @@
 export interface Product {
-  Descriptions: string;
+  descriptions: string;
   isActive: boolean;
   id: number;
   code: string;
@@ -10,6 +10,7 @@ export interface Product {
   supplyType: string;
   imagePath?: string;
   conversions: ProductConversion[];
+  rowVersion: string;
 }
 
 export interface ProductConversion {

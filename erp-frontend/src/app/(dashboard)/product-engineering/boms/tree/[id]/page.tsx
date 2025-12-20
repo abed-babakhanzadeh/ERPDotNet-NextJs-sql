@@ -31,7 +31,7 @@ export default function BOMTreePage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await apiClient.get(`/BOMs/${id}/tree`);
+        const res = await apiClient.get(`/ProductEngineering/BOMs/${id}/tree`);
         setData(res.data);
       } catch (error) {
         toast.error("خطا در دریافت ساختار درختی");

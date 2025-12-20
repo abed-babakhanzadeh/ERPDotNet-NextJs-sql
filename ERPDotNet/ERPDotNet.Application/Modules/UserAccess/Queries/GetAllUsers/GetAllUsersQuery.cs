@@ -40,7 +40,8 @@ public class GetAllUsersHandler : IRequestHandler<GetAllUsersQuery, PaginatedRes
 
         var totalCount = await query.CountAsync(cancellationToken);
         
-        var items = await query
+        // 1. دریافت کاربران صفحه جاری
+        var users = await query
             .OrderByDescending(u => u.CreatedAt)
             .Skip((request.PageNumber - 1) * request.PageSize)
             .Take(request.PageSize)
@@ -55,12 +56,25 @@ public class GetAllUsersHandler : IRequestHandler<GetAllUsersQuery, PaginatedRes
                 u.PersonnelCode,
                 u.NationalCode,
                 u.ConcurrencyStamp,
-                u.CreatedAt // اینجا DateTime است
+                u.CreatedAt
             })
             .ToListAsync(cancellationToken);
 
-        // مپینگ نهایی
-        var dtos = items.Select(u => new UserDto
+        // 2. دریافت نقش‌های این کاربران (بهینه شده)
+        var userIds = users.Select(u => u.Id).ToList();
+
+        // جوین زدن جدول UserRoles با Roles برای گرفتن نام نقش
+        var userRoles = await _context.UserRoles
+            .AsNoTracking()
+            .Where(ur => userIds.Contains(ur.UserId))
+            .Join(_context.Roles, 
+                  ur => ur.RoleId, 
+                  r => r.Id, 
+                  (ur, r) => new { ur.UserId, RoleName = r.Name })
+            .ToListAsync(cancellationToken);
+
+        // 3. مپ کردن نهایی
+        var dtos = users.Select(u => new UserDto
         {
             Id = u.Id,
             Username = u.UserName!,
@@ -71,9 +85,13 @@ public class GetAllUsersHandler : IRequestHandler<GetAllUsersQuery, PaginatedRes
             PersonnelCode = u.PersonnelCode,
             NationalCode = u.NationalCode,
             ConcurrencyStamp = u.ConcurrencyStamp,
+            CreatedAt = u.CreatedAt,
             
-            // === انتقال مستقیم مقدار DateTime ===
-            CreatedAt = u.CreatedAt 
+            // پیدا کردن نقش‌های این کاربر از لیست حافظه
+            Roles = userRoles
+                    .Where(ur => ur.UserId == u.Id)
+                    .Select(ur => ur.RoleName!)
+                    .ToList()
         }).ToList();
 
         return new PaginatedResult<UserDto>(dtos, totalCount, request.PageNumber, request.PageSize);

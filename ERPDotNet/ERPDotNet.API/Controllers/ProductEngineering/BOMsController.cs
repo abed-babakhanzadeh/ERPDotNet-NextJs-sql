@@ -13,7 +13,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ERPDotNet.API.Controllers.ProductEngineering;
 
-[Route("api/[controller]")]
+// اصلاح روت: اضافه کردن ProductEngineering
+[Route("api/ProductEngineering/[controller]")]
 [ApiController]
 [HasPermission("ProductEngineering")]
 public class BOMsController : ControllerBase
@@ -39,10 +40,11 @@ public class BOMsController : ControllerBase
         return Ok(bom);
     }
 
-    [HttpGet("tree/{id}")]
+    [HttpGet("{id}/tree")]
     public async Task<ActionResult<BOMTreeNodeDto>> GetTree(int id)
     {
-        return Ok(await _mediator.Send(new GetBOMTreeQuery(id)));
+        var result = await _mediator.Send(new GetBOMTreeQuery(id));
+        return Ok(result);
     }
 
     [HttpPost("where-used")]
@@ -60,7 +62,7 @@ public class BOMsController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [HasPermission("ProductEngineering.BOM.Create")] // برای ویرایش هم معمولا دسترسی ساخت یا ادیت چک می‌شود
+    [HasPermission("ProductEngineering.BOM.Create")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateBOMCommand command)
     {
         if (id != command.Id) return BadRequest();
@@ -73,9 +75,6 @@ public class BOMsController : ControllerBase
     [HasPermission("ProductEngineering.BOM.Create")]
     public async Task<IActionResult> Delete(int id)
     {
-        // نکته: ما DeleteBOMCommand را طوری آپدیت کردیم که RowVersion هم می‌تواند بگیرد
-        // اما در حذف ساده (بدون چک همروندی) فقط ID کافی است.
-        // اگر می‌خواهید همروندی چک شود، باید RowVersion را از QueryString بگیرید
         await _mediator.Send(new DeleteBOMCommand { Id = id });
         return NoContent();
     }

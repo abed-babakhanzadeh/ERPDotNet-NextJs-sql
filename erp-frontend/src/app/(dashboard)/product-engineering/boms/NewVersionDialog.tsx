@@ -66,11 +66,14 @@ export default function NewVersionDialog({
     setLoading(true);
     try {
       // ارسال درخواست به API
-      const res = await apiClient.post(`/BOMs/${sourceBomId}/copy`, {
-        sourceBomId: sourceBomId,
-        newVersion: newVersion,
-        newTitle: newTitle || undefined, // اگر خالی بود نفرست
-      });
+      const res = await apiClient.post(
+        `/ProductEngineering/BOMs/${sourceBomId}/copy`,
+        {
+          sourceBomId: sourceBomId,
+          newVersion: newVersion,
+          newTitle: newTitle || undefined, // اگر خالی بود نفرست
+        }
+      );
 
       const newId = res.data.id;
       toast.success(`نسخه ${newVersion} با موفقیت ایجاد شد`);

@@ -1,7 +1,8 @@
+using Dapper;
 using ERPDotNet.Application.Common.Interfaces;
-using ERPDotNet.Domain.Modules.ProductEngineering.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 
 namespace ERPDotNet.Application.Modules.ProductEngineering.Queries.GetBOMTree;
 
@@ -18,94 +19,128 @@ public class GetBOMTreeHandler : IRequestHandler<GetBOMTreeQuery, BOMTreeNodeDto
 
     public async Task<BOMTreeNodeDto?> Handle(GetBOMTreeQuery request, CancellationToken cancellationToken)
     {
-        // 1. دریافت BOM ریشه
-        var rootBom = await _context.BOMHeaders
-            .AsNoTracking()
-            .Include(x => x.Product).ThenInclude(p => p.Unit)
-            .Include(x => x.Details).ThenInclude(d => d.ChildProduct).ThenInclude(cp => cp.Unit)
-            .FirstOrDefaultAsync(x => x.Id == request.BomId, cancellationToken);
+        var connection = _context.Database.GetDbConnection();
 
-        if (rootBom == null) return null;
+        // کوئری نهایی و تست شده (با نام جداول [eng] و [base])
+        var sql = @"
+            WITH ActiveBOMs_Raw AS (
+                SELECT 
+                    Id, 
+                    ProductId, 
+                    ROW_NUMBER() OVER(PARTITION BY ProductId ORDER BY Version DESC) as RowNum
+                FROM [eng].[bom_headers]
+                WHERE IsActive = 1 AND Status = 1
+            ),
+            LatestBOMs AS (
+                SELECT Id AS BomId, ProductId
+                FROM ActiveBOMs_Raw
+                WHERE RowNum = 1
+            ),
+            RecursiveBOM AS (
+                -- Anchor Member: ریشه درخت
+                SELECT 
+                    0 AS Level,
+                    CAST(H.ProductId AS VARCHAR(MAX)) AS Path,
+                    NULL AS ParentProductId,
+                    H.ProductId,
+                    H.Id AS BomId,
+                    CAST(1 AS DECIMAL(18,4)) AS Quantity,
+                    CAST(1 AS DECIMAL(18,4)) AS TotalQuantity,
+                    CAST(0 AS DECIMAL(18,4)) AS WastePercentage
+                FROM [eng].[bom_headers] H
+                WHERE H.Id = @RootBomId
 
-        // 2. شروع ساخت درخت به صورت بازگشتی
-        return await BuildNodeAsync(rootBom, 1, "ROOT", cancellationToken);
+                UNION ALL
+
+                -- Recursive Member: فرزندان
+                SELECT 
+                    RB.Level + 1,
+                    CAST(RB.Path + '-' + CAST(D.ChildProductId AS VARCHAR(MAX)) AS VARCHAR(MAX)),
+                    RB.ProductId AS ParentProductId,
+                    D.ChildProductId,
+                    
+                    (SELECT BomId FROM LatestBOMs LB WHERE LB.ProductId = D.ChildProductId) AS BomId,
+                    
+                    CAST(D.Quantity AS DECIMAL(18,4)), 
+                    CAST(D.Quantity * RB.TotalQuantity AS DECIMAL(18,4)), 
+                    CAST(D.WastePercentage AS DECIMAL(18,4))
+
+                FROM [eng].[bom_details] D
+                JOIN RecursiveBOM RB ON D.BOMHeaderId = RB.BomId
+            )
+
+            SELECT 
+                RB.Level,
+                RB.Path,
+                RB.ParentProductId,
+                RB.ProductId,
+                P.Name AS ProductName,
+                P.Code AS ProductCode,
+                U.Title AS UnitName,
+                RB.Quantity,
+                RB.TotalQuantity,
+                RB.WastePercentage,
+                RB.BomId
+            FROM RecursiveBOM RB
+            JOIN [base].[Products] P ON RB.ProductId = P.Id
+            LEFT JOIN [base].[Units] U ON P.UnitId = U.Id
+            ORDER BY RB.Level, RB.Path;
+        ";
+
+        if (connection.State != ConnectionState.Open) await connection.OpenAsync(cancellationToken);
+
+        // اجرا توسط Dapper
+        var flatNodes = await connection.QueryAsync<BOMFlatNodeDto>(sql, new { RootBomId = request.BomId });
+
+        if (!flatNodes.Any()) return null;
+
+        return BuildTreeFromFlatList(flatNodes.ToList());
     }
 
-    // متد بازگشتی (قلب تپنده ماژول)
-    private async Task<BOMTreeNodeDto> BuildNodeAsync(
-        BOMHeader bom, 
-        decimal parentQuantityMultiplier, 
-        string parentKey,
-        CancellationToken token)
+    // تبدیل لیست تخت به ساختار درختی در حافظه
+    private BOMTreeNodeDto? BuildTreeFromFlatList(List<BOMFlatNodeDto> flatNodes)
     {
-        var children = new List<BOMTreeNodeDto>();
+        var lookup = new Dictionary<string, BOMTreeNodeDto>();
+        BOMTreeNodeDto? root = null;
 
-        foreach (var detail in bom.Details)
+        foreach (var node in flatNodes)
         {
-            // محاسبه مقدار کل: (مقدار این مرحله * ضریب مرحله قبل)
-            var totalQty = detail.Quantity * parentQuantityMultiplier;
-            var currentKey = $"{parentKey}-{detail.ChildProductId}";
+            var treeNode = new BOMTreeNodeDto(
+                node.Path,
+                node.BomId,
+                node.ProductId,
+                node.ProductName,
+                node.ProductCode,
+                node.UnitName ?? "-",
+                node.Quantity,
+                node.TotalQuantity,
+                node.WastePercentage,
+                node.BomId.HasValue ? "نیمه ساخته" : (node.Level == 0 ? "محصول نهایی" : "ماده اولیه"),
+                node.BomId.HasValue || node.Level == 0, // IsRecursive
+                new List<BOMTreeNodeDto>()
+            );
 
-            // 3. جستجو: آیا این ماده اولیه، خودش BOM فعال دارد؟
-            // نکته: ما همیشه آخرین ورژنِ "Active" را برای زیرمجموعه‌ها برمی‌داریم
-            var childBom = await _context.BOMHeaders
-                .AsNoTracking()
-                .Include(x => x.Product).ThenInclude(p => p.Unit)
-                .Include(x => x.Details).ThenInclude(d => d.ChildProduct).ThenInclude(cp => cp.Unit)
-                .Where(x => x.ProductId == detail.ChildProductId && x.Status == BOMStatus.Active)
-                .OrderByDescending(x => x.Version) // آخرین ورژن
-                .FirstOrDefaultAsync(token);
+            lookup[node.Path] = treeNode;
 
-            if (childBom != null)
+            if (node.Level == 0)
             {
-                // اگر BOM داشت، ریکرسیو صدا می‌زنیم (انفجار!)
-                var childNode = await BuildNodeAsync(childBom, totalQty, currentKey, token);
-                
-                // اما مقادیر نود را با مقادیر "مصرف" در این مرحله آپدیت می‌کنیم
-                // (چون BuildNodeAsync مشخصات خود BOM را برمی‌گرداند، ما باید مشخصات مصرف را ست کنیم)
-                children.Add(childNode with 
-                { 
-                    Key = currentKey,
-                    Quantity = detail.Quantity,
-                    TotalQuantity = totalQty,
-                    WastePercentage = detail.WastePercentage,
-                    Type = "نیمه ساخته"
-                });
+                root = treeNode;
             }
             else
             {
-                // اگر BOM نداشت، یعنی "ماده اولیه" است (برگ درخت)
-                children.Add(new BOMTreeNodeDto(
-                    currentKey,
-                    null, // BomId ندارد
-                    detail.ChildProductId,
-                    detail.ChildProduct!.Name,
-                    detail.ChildProduct.Code,
-                    detail.ChildProduct.Unit!.Title,
-                    detail.Quantity,
-                    totalQty,
-                    detail.WastePercentage,
-                    "ماده اولیه",
-                    false,
-                    new List<BOMTreeNodeDto>()
-                ));
+                // پیدا کردن پدر: همه چیز قبل از آخرین خط تیره
+                var lastDashIndex = node.Path.LastIndexOf('-');
+                if (lastDashIndex > 0)
+                {
+                    var parentPath = node.Path.Substring(0, lastDashIndex);
+                    if (lookup.TryGetValue(parentPath, out var parentNode))
+                    {
+                        parentNode.Children.Add(treeNode);
+                    }
+                }
             }
         }
 
-        // بازگشت نود اصلی
-        return new BOMTreeNodeDto(
-            parentKey,
-            bom.Id,
-            bom.ProductId,
-            bom.Product!.Name,
-            bom.Product.Code,
-            bom.Product.Unit!.Title,
-            1, // مقدار پایه همیشه ۱ است
-            parentQuantityMultiplier, // مقدار کل
-            0,
-            "محصول نهایی / نیمه ساخته",
-            true,
-            children
-        );
+        return root;
     }
 }

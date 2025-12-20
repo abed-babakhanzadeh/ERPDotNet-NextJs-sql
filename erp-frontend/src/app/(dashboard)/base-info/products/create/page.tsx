@@ -35,7 +35,7 @@ export default function CreateProductPage() {
   const [formData, setFormData] = useState<any>({
     code: "",
     name: "",
-    Descriptions: "",
+    descriptions: "",
     unitId: null,
     supplyType: 1,
     isActive: true,
@@ -53,14 +53,13 @@ export default function CreateProductPage() {
   useEffect(() => {
     const fetchUnits = async () => {
       try {
-        // آدرس جدید که در کنترلر تنظیم کردیم
         const { data } = await apiClient.get("/BaseInfo/Units/lookup");
         setUnits(data);
       } catch (error) {
         console.error("Error fetching units:", error);
-        // خطای جداگانه ندهیم که کاربر اذیت شود، فقط لیست خالی می‌ماند
       } finally {
-        setLoadingLookups(false);
+        // اصلاح شد: استفاده از setLoadingUnits به جای setLoadingLookups
+        setLoadingUnits(false);
       }
     };
 
@@ -108,8 +107,8 @@ export default function CreateProductPage() {
         ],
       },
       {
-        name: "Descriptions",
-        label: "مشخصات فنی",
+        name: "descriptions",
+        label: "توضیحات",
         type: "textarea",
         colSpan: 2,
       },
@@ -170,7 +169,7 @@ export default function CreateProductPage() {
           })),
       };
 
-      await apiClient.post("/Products", payload);
+      await apiClient.post("/BaseInfo/Products", payload);
       toast.success("کالا با موفقیت ایجاد شد");
 
       clearStorage();
@@ -320,6 +319,8 @@ export default function CreateProductPage() {
     </BaseFormLayout>
   );
 }
-function setLoadingLookups(arg0: boolean) {
+// نکته مهم: آن تابع ساختگی که احتمالا در پایین فایل ایجاد شده را پاک کنید:
+/* function setLoadingLookups(arg0: boolean) {
   throw new Error("Function not implemented.");
 }
+*/

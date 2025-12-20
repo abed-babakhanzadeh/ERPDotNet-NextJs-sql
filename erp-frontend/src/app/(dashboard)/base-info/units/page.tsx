@@ -41,7 +41,7 @@ export default function UnitsPage() {
 
   const { tableProps, refresh, totalCount } = useServerDataTable<Unit>({
     // totalCount اضافه شد
-    endpoint: "/Units/search",
+    endpoint: "/BaseInfo/Units/search",
     initialPageSize: 30,
   });
 

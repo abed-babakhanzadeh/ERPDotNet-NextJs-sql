@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -76,7 +77,7 @@ export default function SubstitutesDialog({
   const handleProductSearch = async (term: string) => {
     setLoadingProducts(true);
     try {
-      const res = await apiClient.post("/Products/search", {
+      const res = await apiClient.post("/BaseInfo/Products/search", {
         pageNumber: 1,
         pageSize: 20,
         searchTerm: term,
@@ -194,6 +195,9 @@ export default function SubstitutesDialog({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl w-[90vw] h-[80vh] flex flex-col p-0">
+        <DialogDescription className="sr-only">
+          پنجره مدیریت کالاهای جایگزین
+        </DialogDescription>
         <DialogHeader className="px-6 py-4 border-b">
           <DialogTitle>
             جایگزین‌ها برای:{" "}
