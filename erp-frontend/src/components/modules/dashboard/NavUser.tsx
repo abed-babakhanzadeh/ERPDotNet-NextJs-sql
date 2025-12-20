@@ -33,6 +33,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import apiClient from "@/services/apiClient";
+import { LockKeyhole, UserCog } from "lucide-react"; // آیکون‌های جدید
+import ChangeOwnPasswordDialog from "./ChangeOwnPasswordDialog";
 
 // این اینترفیس باید دقیقاً با UserDto بک‌اند (فایل GetUserByIdQuery) یکی باشد
 interface UserProfileDto {
@@ -51,6 +53,7 @@ export function NavUser() {
 
   const [user, setUser] = useState<UserProfileDto | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
   // دریافت اطلاعات کاربر لاگین شده
   useEffect(() => {
@@ -90,109 +93,123 @@ export function NavUser() {
   if (!user) return null;
 
   return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-            >
-              <Avatar className="h-8 w-8 rounded-lg">
-                {/* چون در بک‌اند فیلد عکس نداریم، فعلا خالی می‌گذاریم */}
-                <AvatarImage src="" alt={user.username} />
-                <AvatarFallback className="rounded-lg">
-                  {/* نمایش حروف اول نام و نام خانوادگی */}
-                  {user.firstName?.[0]}
-                  {user.lastName?.[0]}
-                </AvatarFallback>
-              </Avatar>
-              <div className="grid flex-1 text-right text-sm leading-tight">
-                <span className="truncate font-semibold">
-                  {user.firstName} {user.lastName}
-                </span>
-                <span className="truncate text-xs text-muted-foreground">
-                  {user.username}
-                </span>
-              </div>
-              <ChevronsUpDown className="mr-auto size-4" />
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-            side={isMobile ? "bottom" : "left"}
-            align="end"
-            sideOffset={4}
-          >
-            <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-2 px-1 py-1.5 text-right text-sm">
+    <>
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <SidebarMenuButton
+                size="lg"
+                className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              >
                 <Avatar className="h-8 w-8 rounded-lg">
+                  {/* چون در بک‌اند فیلد عکس نداریم، فعلا خالی می‌گذاریم */}
+                  <AvatarImage src="" alt={user.username} />
                   <AvatarFallback className="rounded-lg">
+                    {/* نمایش حروف اول نام و نام خانوادگی */}
                     {user.firstName?.[0]}
                     {user.lastName?.[0]}
                   </AvatarFallback>
                 </Avatar>
-                <div className="grid flex-1 text-right">
+                <div className="grid flex-1 text-right text-sm leading-tight">
                   <span className="truncate font-semibold">
                     {user.firstName} {user.lastName}
                   </span>
-                  <span className="truncate text-xs">{user.email}</span>
+                  <span className="truncate text-xs text-muted-foreground">
+                    {user.username}
+                  </span>
                 </div>
-              </div>
-            </DropdownMenuLabel>
-
-            <DropdownMenuSeparator />
-
-            <DropdownMenuGroup>
-              <DropdownMenuItem className="gap-2 cursor-pointer">
-                <User className="size-4" />
-                حساب کاربری
-              </DropdownMenuItem>
-
-              {/* منوی تم (Theme) */}
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger className="gap-2 cursor-pointer">
-                  <Sun className="size-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                  <Moon className="absolute size-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                  <span>تغییر پوسته</span>
-                </DropdownMenuSubTrigger>
-                <DropdownMenuPortal>
-                  <DropdownMenuSubContent>
-                    <DropdownMenuItem
-                      onClick={() => setTheme("light")}
-                      className="gap-2 cursor-pointer"
-                    >
-                      <Sun className="size-4" /> روشن
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => setTheme("dark")}
-                      className="gap-2 cursor-pointer"
-                    >
-                      <Moon className="size-4" /> تیره
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => setTheme("system")}
-                      className="gap-2 cursor-pointer"
-                    >
-                      <Laptop className="size-4" /> سیستم
-                    </DropdownMenuItem>
-                  </DropdownMenuSubContent>
-                </DropdownMenuPortal>
-              </DropdownMenuSub>
-            </DropdownMenuGroup>
-
-            <DropdownMenuSeparator />
-
-            <DropdownMenuItem
-              onClick={handleLogout}
-              className="gap-2 text-destructive focus:text-destructive cursor-pointer bg-red-50 dark:bg-red-950/30"
+                <ChevronsUpDown className="mr-auto size-4" />
+              </SidebarMenuButton>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+              side={isMobile ? "bottom" : "left"}
+              align="end"
+              sideOffset={4}
             >
-              <LogOut className="size-4" />
-              خروج از حساب
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </SidebarMenuItem>
-    </SidebarMenu>
+              <DropdownMenuLabel className="p-0 font-normal">
+                <div className="flex items-center gap-2 px-1 py-1.5 text-right text-sm">
+                  <Avatar className="h-8 w-8 rounded-lg">
+                    <AvatarFallback className="rounded-lg">
+                      {user.firstName?.[0]}
+                      {user.lastName?.[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="grid flex-1 text-right">
+                    <span className="truncate font-semibold">
+                      {user.firstName} {user.lastName}
+                    </span>
+                    <span className="truncate text-xs">{user.email}</span>
+                  </div>
+                </div>
+              </DropdownMenuLabel>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuGroup>
+                <DropdownMenuItem className="gap-2 cursor-pointer">
+                  <UserCog className="size-4" /> {/* آیکون بهتر برای پروفایل */}
+                  پروفایل کاربری
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  className="gap-2 cursor-pointer"
+                  onClick={() => setIsPasswordModalOpen(true)}
+                >
+                  <LockKeyhole className="size-4" />
+                  تغییر رمز عبور
+                </DropdownMenuItem>
+
+                {/* منوی تم (Theme) */}
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="gap-2 cursor-pointer">
+                    <Sun className="size-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                    <Moon className="absolute size-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                    <span>تغییر پوسته</span>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuItem
+                        onClick={() => setTheme("light")}
+                        className="gap-2 cursor-pointer"
+                      >
+                        <Sun className="size-4" /> روشن
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setTheme("dark")}
+                        className="gap-2 cursor-pointer"
+                      >
+                        <Moon className="size-4" /> تیره
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setTheme("system")}
+                        className="gap-2 cursor-pointer"
+                      >
+                        <Laptop className="size-4" /> سیستم
+                      </DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+              </DropdownMenuGroup>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem
+                onClick={handleLogout}
+                className="gap-2 text-destructive focus:text-destructive cursor-pointer bg-red-50 dark:bg-red-950/30"
+              >
+                <LogOut className="size-4" />
+                خروج از حساب
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </SidebarMenuItem>
+      </SidebarMenu>
+      <ChangeOwnPasswordDialog
+        open={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+      />
+    </>
   );
 }

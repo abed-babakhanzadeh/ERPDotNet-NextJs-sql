@@ -1,17 +1,38 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import apiClient from "@/services/apiClient";
 import { User } from "@/types/user";
 import { toast } from "sonner";
-import { Plus, Search, Trash2, Edit, Key } from "lucide-react";
-import Modal from "@/components/ui/Modal"; // <--- اضافه شد
-import CreateUserForm from "./CreateUserForm"; // <--- اضافه شد
+import { Plus, Trash2, Edit, Key, UserCheck, UserX, Users } from "lucide-react";
+import Modal from "@/components/ui/Modal";
+import CreateUserForm from "./CreateUserForm";
 import PermissionGuard from "@/components/ui/PermissionGuard";
 import ProtectedPage from "@/components/ui/ProtectedPage";
 import PermissionTree from "@/components/modules/roles/PermissionTree";
 
-// توابع کمکی برای پیدا کردن فرزندان در درخت
+// Components
+import BaseListLayout from "@/components/layout/BaseListLayout";
+import { DataTable } from "@/components/data-table";
+import { useServerDataTable } from "@/hooks/useServerDataTable";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { ColumnConfig } from "@/types";
+import {
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"; // <--- ایمپورت‌های جدید
+
+import { ShieldCheck } from "lucide-react"; // آیکون جدید
+import ResetPasswordDialog from "./ResetPasswordDialog"; // ایمپورت کامپوننت جدید
+
+// --- توابع کمکی لاجیک دسترسی (بدون تغییر) ---
 const findNodeAndGetChildrenIds = (
   nodes: any[],
   targetId: number
@@ -37,7 +58,6 @@ const getAllChildren = (node: any): number[] => {
   return ids;
 };
 
-// تابع پیدا کردن پدر (برای لاجیک هوشمند تیک زدن)
 const findParentId = (
   nodes: any[],
   childId: number,
@@ -65,35 +85,105 @@ const findNodeById = (nodes: any[], id: number): any | null => {
 };
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false); // <--- State مدال
+  const { tableProps, refresh, totalCount } = useServerDataTable<User>({
+    endpoint: "/Users/search",
+    initialPageSize: 10,
+  });
+
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null); // <--- یوزری که قراره ادیت بشه
+  const [editingUser, setEditingUser] = useState<User | null>(null);
 
+  // --- استیت‌های دسترسی ویژه ---
   const [isPermModalOpen, setIsPermModalOpen] = useState(false);
-  const [permUser, setPermUser] = useState<User | null>(null); // کاربری که داریم دسترسی‌اش را میدیم
-  const [userPermIds, setUserPermIds] = useState<number[]>([]); // تیک‌های زده شده
-  const [treeData, setTreeData] = useState<any[]>([]); // کل درخت (باید لود بشه)
-
-  const [rolePermIds, setRolePermIds] = useState<number[]>([]); // دسترسی‌های نقش (خاکستری)
-  const [finalSelectedIds, setFinalSelectedIds] = useState<number[]>([]); // وضعیت نهایی (تیک‌خورده‌ها)
-
+  const [permUser, setPermUser] = useState<User | null>(null);
+  const [loadingPerms, setLoadingPerms] = useState(false);
+  const [treeData, setTreeData] = useState<any[]>([]);
+  const [rolePermIds, setRolePermIds] = useState<number[]>([]);
+  const [finalSelectedIds, setFinalSelectedIds] = useState<number[]>([]);
   const [copySourceId, setCopySourceId] = useState("");
+  const [allUsersForCopy, setAllUsersForCopy] = useState<User[]>([]);
+  const [resetPassUser, setResetPassUser] = useState<User | null>(null);
+  const [isResetPassOpen, setIsResetPassOpen] = useState(false);
 
-  // تابع باز کردن مدال برای ایجاد
+  // تعریف ستون‌ها
+  const columns: ColumnConfig[] = [
+    {
+      key: "fullName",
+      label: "نام و نام خانوادگی",
+      type: "string",
+      render: (_: any, row: any) => (
+        <span className="font-medium">
+          {row.firstName} {row.lastName}
+        </span>
+      ),
+    },
+    {
+      key: "username",
+      label: "نام کاربری",
+      type: "string",
+    },
+    {
+      key: "personnelCode",
+      label: "کد پرسنلی",
+      type: "string",
+      render: (value: any) => value || "-",
+    },
+    {
+      key: "roles",
+      label: "نقش‌ها",
+      type: "string",
+      render: (roles: string[]) => (
+        <div className="flex flex-wrap gap-1">
+          {roles && roles.length > 0 ? (
+            roles.map((role: string) => (
+              <Badge
+                key={role}
+                variant="secondary"
+                className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200"
+              >
+                {role}
+              </Badge>
+            ))
+          ) : (
+            <span className="text-muted-foreground text-xs">-</span>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "isActive",
+      label: "وضعیت",
+      type: "boolean",
+      render: (isActive: boolean) =>
+        isActive ? (
+          <Badge
+            variant="outline"
+            className="bg-emerald-50 text-emerald-700 border-emerald-200 gap-1"
+          >
+            <UserCheck size={12} /> فعال
+          </Badge>
+        ) : (
+          <Badge
+            variant="outline"
+            className="bg-red-50 text-red-700 border-red-200 gap-1"
+          >
+            <UserX size={12} /> غیرفعال
+          </Badge>
+        ),
+    },
+  ];
+
+  // --- هندلرها ---
   const handleCreate = () => {
-    setEditingUser(null); // خالی می‌کنیم
+    setEditingUser(null);
     setIsModalOpen(true);
   };
 
-  // تابع باز کردن مدال برای ویرایش
   const handleEdit = (user: User) => {
-    setEditingUser(user); // یوزر انتخاب شده را ست می‌کنیم
+    setEditingUser(user);
     setIsModalOpen(true);
   };
 
-  // تابع حذف
   const handleDelete = async (id: string) => {
     if (
       !confirm(
@@ -105,38 +195,24 @@ export default function UsersPage() {
     try {
       await apiClient.delete(`/Users/${id}`);
       toast.success("کاربر با موفقیت حذف شد");
-      fetchUsers(); // رفرش لیست
+      refresh();
     } catch (error: any) {
       toast.error(error.response?.data || "خطا در حذف کاربر");
     }
   };
 
-  const fetchUsers = async () => {
-    try {
-      // اصلاح شد: تغییر از GET به POST و آدرس search
-      const { data } = await apiClient.post("/Users/search", {
-        pageNumber: 1,
-        pageSize: 1000, // فعلاً یک عدد بزرگ می‌گذاریم چون صفحه‌بندی در UI ندارید
-        keyword: "",
-      });
-
-      // اصلاح شد: داده‌های اصلی داخل آرایه items قرار دارند
-      setUsers(data.items);
-    } catch (error) {
-      console.error(error);
-      toast.error("خطا در دریافت اطلاعات");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // تابع باز کردن مودال دسترسی ویژه
-  // 1. باز کردن مودال
   const handleSpecialPermissions = async (user: User) => {
     setPermUser(user);
-    setLoading(true);
+    setLoadingPerms(true);
     try {
-      // لود درخت اگر خالی بود
+      if (allUsersForCopy.length === 0) {
+        const { data } = await apiClient.post("/Users/search", {
+          pageNumber: 1,
+          pageSize: 1000,
+        });
+        setAllUsersForCopy(data.items || []);
+      }
+
       let currentTree = treeData;
       if (currentTree.length === 0) {
         const { data } = await apiClient.get("/Permissions/tree");
@@ -144,7 +220,6 @@ export default function UsersPage() {
         currentTree = data;
       }
 
-      // دریافت جزئیات یوزر
       const { data } = await apiClient.get<any>(
         `/Permissions/user-detail/${user.id}`
       );
@@ -155,7 +230,6 @@ export default function UsersPage() {
 
       setRolePermIds(rIds);
 
-      // محاسبه وضعیت اولیه تیک‌ها (نقش + ویژه‌ها - محرومیت‌ها)
       let initialSelected = new Set(rIds);
       overrides.forEach((ov) => {
         if (ov.isGranted) initialSelected.add(ov.permissionId);
@@ -168,27 +242,22 @@ export default function UsersPage() {
       console.error(err);
       toast.error("خطا در بارگذاری");
     } finally {
-      setLoading(false);
+      setLoadingPerms(false);
     }
   };
 
-  // 2. لاجیک تیک زدن (حیاتی - این باعث می‌شود کلیک کار کند)
   const handleTogglePermission = (targetId: number, checked: boolean) => {
-    // استفاده از treeData که در state داریم
     const childrenIds = findNodeAndGetChildrenIds(treeData, targetId);
     const idsToUpdate = [targetId, ...childrenIds];
 
     setFinalSelectedIds((prev) => {
       let newSet = new Set(prev);
-
-      // اعمال تغییر (تیک زدن یا برداشتن)
       if (checked) {
         idsToUpdate.forEach((id) => newSet.add(id));
       } else {
         idsToUpdate.forEach((id) => newSet.delete(id));
       }
 
-      // لاجیک پدر (اگر همه فرزندان تیک خوردند، پدر هم تیک بخورد)
       const parentId = findParentId(treeData, targetId);
       if (parentId) {
         const parentNode = findNodeById(treeData, parentId);
@@ -201,23 +270,17 @@ export default function UsersPage() {
           else newSet.delete(parentId);
         }
       }
-
       return Array.from(newSet);
     });
   };
 
-  // تابع ذخیره نهایی (شاهکار ماجرا)
   const saveUserPermissions = async () => {
     if (!permUser) return;
-    setLoading(true);
+    setLoadingPerms(true);
 
     try {
-      // محاسبه تفاوت‌ها (The Diff Logic)
       const permissionsToSend: { permissionId: number; isGranted: boolean }[] =
         [];
-
-      // لیست تمام آیدی‌هایی که درگیر هستند (اجتماع نقش و انتخاب شده‌ها)
-      // (تبدیل به Set برای حذف تکراری‌ها)
       const allInvolvedIds = new Set([...rolePermIds, ...finalSelectedIds]);
 
       allInvolvedIds.forEach((id) => {
@@ -225,20 +288,15 @@ export default function UsersPage() {
         const hasInFinal = finalSelectedIds.includes(id);
 
         if (hasInRole && !hasInFinal) {
-          // 🔴 در نقش هست ولی کاربر تیک را برداشته -> یعنی محرومیت (Deny)
           permissionsToSend.push({ permissionId: id, isGranted: false });
         } else if (!hasInRole && hasInFinal) {
-          // 🟢 در نقش نیست ولی کاربر تیک زده -> یعنی دسترسی ویژه (Grant)
           permissionsToSend.push({ permissionId: id, isGranted: true });
         }
-        // اگر (hasInRole && hasInFinal) -> یعنی وضعیت عادی (ارث‌بری)، نیازی به ارسال نیست.
-        // اگر (!hasInRole && !hasInFinal) -> یعنی کلا دسترسی ندارد، نیازی به ارسال نیست.
       });
 
-      // ارسال به API جدید
       await apiClient.post("/Permissions/assign-user", {
         userId: permUser.id,
-        permissions: permissionsToSend, // <--- لیست جدید
+        permissions: permissionsToSend,
       });
 
       toast.success("دسترسی‌های ویژه با موفقیت ذخیره شد");
@@ -247,7 +305,7 @@ export default function UsersPage() {
       console.error(err);
       toast.error("خطا در ذخیره دسترسی‌ها");
     } finally {
-      setLoading(false);
+      setLoadingPerms(false);
     }
   };
 
@@ -260,190 +318,242 @@ export default function UsersPage() {
     )
       return;
 
-    setLoading(true);
+    setLoadingPerms(true);
     try {
       await apiClient.post("/Permissions/copy", {
         sourceUserId: copySourceId,
         targetUserId: permUser.id,
       });
       toast.success("دسترسی‌ها کپی شد");
-
-      // رفرش کردن وضعیت مودال (لود مجدد درخت این کاربر)
-      // ما متد handleSpecialPermissions را دوباره صدا می‌زنیم یا فقط بخش لود دیتا را تکرار می‌کنیم
-      // برای سادگی: مودال را ببندید
       setIsPermModalOpen(false);
     } catch (err) {
       toast.error("خطا در کپی دسترسی");
     } finally {
-      setLoading(false);
+      setLoadingPerms(false);
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  const handleResetPassword = (user: User) => {
+    setResetPassUser(user);
+    setIsResetPassOpen(true);
+  };
+
+  // --- رندر عملیات هر سطر (ستون جدول) ---
+  const renderRowActions = (user: User) => (
+    <div className="flex items-center gap-1 justify-center">
+      <TooltipProvider>
+        <PermissionGuard permission="UserAccess.Edit">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-blue-600 hover:bg-blue-50"
+                onClick={() => handleEdit(user)}
+              >
+                <Edit size={16} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>ویرایش اطلاعات</TooltipContent>
+          </Tooltip>
+        </PermissionGuard>
+
+        <PermissionGuard permission="UserAccess.SpecialPermissions">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-amber-600 hover:bg-amber-50"
+                onClick={() => handleSpecialPermissions(user)}
+              >
+                <Key size={16} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>دسترسی‌های ویژه</TooltipContent>
+          </Tooltip>
+        </PermissionGuard>
+
+        <PermissionGuard permission="UserAccess.ResetPassword">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-slate-600 hover:bg-slate-100"
+                onClick={() => handleResetPassword(user)}
+              >
+                <ShieldCheck size={16} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>تغییر رمز عبور</TooltipContent>
+          </Tooltip>
+        </PermissionGuard>
+
+        <PermissionGuard permission="UserAccess.Delete">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-red-600 hover:bg-red-50 hover:text-red-700"
+                onClick={() => handleDelete(user.id)}
+              >
+                <Trash2 size={16} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>حذف کاربر</TooltipContent>
+          </Tooltip>
+        </PermissionGuard>
+      </TooltipProvider>
+    </div>
+  );
+
+  // --- رندر منوی راست کلیک (Context Menu) ---
+  // این تابع دقیقاً همان عملیات بالا را در قالب منوی دراپ‌داون ارائه می‌دهد
+  const renderContextMenu = (row: any, closeMenu: () => void) => {
+    // cast row to User if needed, or use 'any' if types are loose
+    const user = row as User;
+
+    return (
+      <>
+        <PermissionGuard permission="UserAccess.Edit">
+          <DropdownMenuItem
+            onClick={() => {
+              handleEdit(user);
+              closeMenu();
+            }}
+            className="flex items-center gap-2 cursor-pointer text-right"
+          >
+            <Edit className="w-4 h-4 text-blue-600" />
+            <span>ویرایش اطلاعات</span>
+          </DropdownMenuItem>
+        </PermissionGuard>
+
+        <PermissionGuard permission="UserAccess.SpecialPermissions">
+          <DropdownMenuItem
+            onClick={() => {
+              handleSpecialPermissions(user);
+              closeMenu();
+            }}
+            className="flex items-center gap-2 cursor-pointer text-right"
+          >
+            <Key className="w-4 h-4 text-amber-600" />
+            <span>دسترسی‌های ویژه</span>
+          </DropdownMenuItem>
+        </PermissionGuard>
+
+        <PermissionGuard permission="UserAccess.ResetPassword">
+          <DropdownMenuItem
+            onClick={() => {
+              handleResetPassword(user);
+              closeMenu();
+            }}
+            className="flex items-center gap-2 cursor-pointer text-right"
+          >
+            <ShieldCheck className="w-4 h-4 text-slate-600" />
+            <span>تغییر رمز عبور</span>
+          </DropdownMenuItem>
+        </PermissionGuard>
+
+        {/* خط جداکننده قبل از حذف */}
+        <PermissionGuard permission="UserAccess.Delete">
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => {
+              handleDelete(user.id);
+              closeMenu();
+            }}
+            className="flex items-center gap-2 text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer text-right"
+          >
+            <Trash2 className="w-4 h-4" />
+            <span>حذف کاربر</span>
+          </DropdownMenuItem>
+        </PermissionGuard>
+      </>
+    );
+  };
 
   return (
-    // 👇 کل صفحه داخل این گارد قرار گرفت
     <ProtectedPage permission="UserAccess.View">
-      <div className="page-content space-y-6">
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-          <h1 className="text-2xl font-bold text-foreground">مدیریت کاربران</h1>
+      <BaseListLayout
+        title="مدیریت کاربران"
+        icon={Users}
+        count={totalCount}
+        actions={
           <PermissionGuard permission="UserAccess.Create">
-            <button
-              onClick={handleCreate} // <--- باز کردن مدال
-              className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+            <Button
+              onClick={handleCreate}
+              className="gap-2 bg-blue-600 hover:bg-blue-700 text-white h-9"
             >
-              <Plus size={18} />
+              <Plus size={16} />
               افزودن کاربر جدید
-            </button>
+            </Button>
           </PermissionGuard>
-        </div>
+        }
+      >
+        <DataTable
+          columns={columns}
+          {...tableProps}
+          renderRowActions={renderRowActions as any}
+          renderContextMenu={renderContextMenu} // <--- اتصال منوی راست کلیک
+        />
 
-        {/* ... بخش جستجو و جدول (بدون تغییر) ... */}
-        {/* ... کدهای قبلی جدول ... */}
-        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-          {/* کد جدول مثل قبل */}
-          <table className="w-full text-right text-sm text-foreground">
-            <thead className="bg-card text-xs uppercase text-card-foreground">
-              <tr>
-                <th className="px-6 py-3">نام و نام خانوادگی</th>
-                <th className="px-6 py-3">نام کاربری</th>
-                <th className="px-6 py-3">کد پرسنلی</th>
-                <th className="px-6 py-3">نقش</th>
-                <th className="px-6 py-3">وضعیت</th>
-                <th className="px-6 py-3">عملیات</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr
-                  key={user.id}
-                  className="border-b hover:bg-gray-50 transition-colors"
-                >
-                  <td className="px-6 py-4 font-medium text-foreground">
-                    {user.firstName} {user.lastName}
-                  </td>
-                  <td className="px-6 py-4">{user.username}</td>
-                  <td className="px-6 py-4">{user.personnelCode || "-"}</td>
-
-                  <td className="px-6 py-4">
-                    <div className="flex gap-1">
-                      {user.roles &&
-                        user.roles.map((role) => (
-                          <span
-                            key={role}
-                            className="rounded bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-600 border border-blue-100"
-                          >
-                            {role}
-                          </span>
-                        ))}
-                    </div>
-                  </td>
-
-                  <td className="px-6 py-4">
-                    {user.isActive ? (
-                      <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                        فعال
-                      </span>
-                    ) : (
-                      <span className="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
-                        غیرفعال
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 flex gap-3">
-                    <PermissionGuard permission="UserAccess.Edit">
-                      <button
-                        onClick={() => handleEdit(user)} // <--- اتصال ویرایش
-                        className="text-blue-600 hover:text-blue-800 p-1 hover:bg-blue-50 rounded"
-                        title="ویرایش"
-                      >
-                        <Edit size={18} />
-                      </button>
-                    </PermissionGuard>
-
-                    <PermissionGuard permission="UserAccess.SpecialPermissions">
-                      <button
-                        onClick={() => handleSpecialPermissions(user)}
-                        className="text-amber-600 hover:text-amber-800 p-1 hover:bg-amber-50 rounded"
-                        title="دسترسی‌های ویژه"
-                      >
-                        <Key size={18} />{" "}
-                        {/* آیکون کلید را از lucide ایمپورت کنید */}
-                      </button>
-                    </PermissionGuard>
-
-                    <PermissionGuard permission="UserAccess.Delete">
-                      <button
-                        onClick={() => handleDelete(user.id)} // <--- اتصال حذف
-                        className="text-red-600 hover:text-red-800 p-1 hover:bg-red-50 rounded"
-                        title="حذف"
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </PermissionGuard>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* مودال هوشمند */}
+        {/* --- مودال ویرایش/ایجاد --- */}
         <Modal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          title={editingUser ? "ویرایش مشخصات کاربر" : "افزودن کاربر جدید"} // تایتل پویا
+          title={editingUser ? "ویرایش مشخصات کاربر" : "افزودن کاربر جدید"}
         >
           <CreateUserForm
-            userToEdit={editingUser} // <--- ارسال یوزر برای ویرایش
+            userToEdit={editingUser}
             onCancel={() => setIsModalOpen(false)}
             onSuccess={() => {
               setIsModalOpen(false);
-              fetchUsers();
+              refresh();
             }}
           />
         </Modal>
 
-        {/* مودال دسترسی ویژه */}
+        {/* --- مودال دسترسی ویژه --- */}
         <Modal
           isOpen={isPermModalOpen}
           onClose={() => setIsPermModalOpen(false)}
           title={`دسترسی‌های ویژه: ${permUser?.username}`}
         >
-          {/* بخش کپی دسترسی */}
+          {/* محتویات مودال دسترسی (بدون تغییر) */}
           <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
             <label className="block text-xs font-bold text-gray-700 mb-2">
               کپی دسترسی از کاربر دیگر:
             </label>
             <div className="flex gap-2">
               <select
-                className="flex-1 text-sm border border-gray-300 rounded p-1.5 bg-white"
+                className="flex-1 text-sm border border-gray-300 rounded p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                 onChange={(e) => setCopySourceId(e.target.value)}
               >
                 <option value="">انتخاب کاربر...</option>
-                {users
-                  .filter((u) => u.id !== permUser?.id) // خود کاربر را نشان نده
+                {allUsersForCopy
+                  .filter((u) => u.id !== permUser?.id)
                   .map((u) => (
                     <option key={u.id} value={u.id}>
                       {u.firstName} {u.lastName} ({u.username})
                     </option>
                   ))}
               </select>
-              <button
+              <Button
                 onClick={handleCopyPermissions}
-                disabled={!copySourceId}
-                className="bg-blue-600 text-white text-xs px-3 py-1.5 rounded hover:bg-blue-700 disabled:bg-gray-300"
+                disabled={!copySourceId || loadingPerms}
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700"
               >
                 کپی و اعمال
-              </button>
+              </Button>
             </div>
           </div>
           <hr className="my-4" />
 
           <div className="space-y-4">
-            <div className="bg-yellow-50 p-3 rounded text-xs text-yellow-800">
+            <div className="bg-yellow-50 p-3 rounded text-xs text-yellow-800 border border-yellow-100">
               نکته: تیک‌های{" "}
               <span className="font-bold text-green-700">سبز</span> دسترسی
               اضافه، و موارد{" "}
@@ -451,31 +561,42 @@ export default function UsersPage() {
               محرومیت هستند.
             </div>
 
-            {/* فراخوانی صحیح درخت */}
-            <PermissionTree
-              nodes={treeData}
-              selectedIds={finalSelectedIds} // وضعیت تیک‌ها
-              roleIds={rolePermIds} // وضعیت نقش (برای رنگ‌بندی)
-              onToggle={handleTogglePermission} // تابع کلیک
-            />
+            <div className="max-h-[400px] overflow-y-auto border rounded-md p-2 custom-scrollbar">
+              <PermissionTree
+                nodes={treeData}
+                selectedIds={finalSelectedIds}
+                roleIds={rolePermIds}
+                onToggle={handleTogglePermission}
+              />
+            </div>
 
             <div className="flex justify-end gap-2 pt-4 border-t">
-              <button
+              <Button
+                variant="outline"
                 onClick={() => setIsPermModalOpen(false)}
-                className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg"
+                disabled={loadingPerms}
               >
                 انصراف
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={saveUserPermissions}
-                className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                disabled={loadingPerms}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
               >
-                ذخیره
-              </button>
+                {loadingPerms ? "در حال ذخیره..." : "ذخیره تغییرات"}
+              </Button>
             </div>
           </div>
         </Modal>
-      </div>
+        {resetPassUser && (
+          <ResetPasswordDialog
+            open={isResetPassOpen}
+            onClose={() => setIsResetPassOpen(false)}
+            userId={resetPassUser.id}
+            username={resetPassUser.username}
+          />
+        )}
+      </BaseListLayout>
     </ProtectedPage>
   );
 }

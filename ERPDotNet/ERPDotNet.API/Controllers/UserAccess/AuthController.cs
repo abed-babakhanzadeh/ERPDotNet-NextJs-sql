@@ -5,6 +5,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using ERPDotNet.Application.Modules.UserAccess.Commands.ChangeOwnPassword;
 
 namespace ERPDotNet.API.Controllers.UserAccess;
 
@@ -41,4 +42,25 @@ public class AuthController : ControllerBase
 
         return Ok(userDto);
     }
+
+    [HttpPost("change-password")]
+    [Authorize] // حتماً لاگین باشد
+    public async Task<IActionResult> ChangeOwnPassword([FromBody] ChangeOwnPasswordDto body)
+    {
+        // گرفتن ID کاربر از توکن (Claim)
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+        await _mediator.Send(new ChangeOwnPasswordCommand 
+        { 
+            UserId = userId,
+            CurrentPassword = body.CurrentPassword,
+            NewPassword = body.NewPassword 
+        });
+
+        return NoContent();
+    }
 }
+
+// DTO ورودی
+    public record ChangeOwnPasswordDto(string CurrentPassword, string NewPassword);

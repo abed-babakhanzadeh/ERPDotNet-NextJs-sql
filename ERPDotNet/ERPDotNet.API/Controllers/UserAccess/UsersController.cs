@@ -8,11 +8,14 @@ using ERPDotNet.Application.Modules.UserAccess.Queries.GetUserById;
 using ERPDotNet.Application.Modules.UserAccess.DTOs;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using ERPDotNet.Application.Modules.UserAccess.Commands.ChangePassword;
 
 namespace ERPDotNet.API.Controllers.UserAccess;
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize]
 [HasPermission("UserAccess")] // سطح دسترسی پایه ماژول
 public class UsersController : ControllerBase
 {
@@ -68,4 +71,19 @@ public class UsersController : ControllerBase
         
         return NoContent();
     }
+
+    [HttpPost("{id}/change-password")]
+    // [HasPermission("UserAccess.ResetPassword")] // پیشنهاد: حتماً چک کردن پرمیشن را فعال کنید
+    public async Task<IActionResult> ChangePassword(string id, [FromBody] ChangePasswordDto body)
+    {
+        await _mediator.Send(new ChangeUserPasswordCommand 
+        { 
+            UserId = id, 
+            NewPassword = body.NewPassword 
+        });
+
+        return NoContent(); // 204 Success
+    }
 }
+// DTO ورودی برای بادی درخواست
+public record ChangePasswordDto(string NewPassword);
