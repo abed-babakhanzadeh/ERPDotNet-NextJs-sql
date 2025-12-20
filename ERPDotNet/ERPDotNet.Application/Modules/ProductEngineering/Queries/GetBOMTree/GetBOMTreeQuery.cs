@@ -29,7 +29,7 @@ public class GetBOMTreeHandler : IRequestHandler<GetBOMTreeQuery, BOMTreeNodeDto
                     ProductId, 
                     ROW_NUMBER() OVER(PARTITION BY ProductId ORDER BY Version DESC) as RowNum
                 FROM [eng].[bom_headers]
-                WHERE IsActive = 1 AND Status = 1
+                WHERE IsActive = 1 AND Status = 3
             ),
             LatestBOMs AS (
                 SELECT Id AS BomId, ProductId

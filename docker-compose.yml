@@ -28,7 +28,7 @@ services:
     container_name: erp_api
     restart: always
     depends_on:
-      - db
+      # - db
       - redis
     environment:
       - ASPNETCORE_ENVIRONMENT=Production

@@ -864,8 +864,9 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
               label: "مواد اولیه و قطعات",
               icon: Layers,
               content: (
-                // تغییرات: اضافه کردن wrapper برای اصلاح نشانگر موس در جدول
-                <div className="h-full [&_input:disabled]:cursor-default [&_select:disabled]:cursor-default [&_input:disabled]:opacity-100 [&_select:disabled]:opacity-100">
+                // *** اصلاح شد: overflow-y-auto را بردارید و overflow-hidden بگذارید ***
+                // این باعث می‌شود ارتفاع گرید محدود به صفحه شود و اسکرول داخلی فعال گردد
+                <div className="h-full overflow-hidden [&_input:disabled]:cursor-default [&_select:disabled]:cursor-default">
                   <EditableGrid<BOMRow>
                     columns={detailColumns}
                     data={details}

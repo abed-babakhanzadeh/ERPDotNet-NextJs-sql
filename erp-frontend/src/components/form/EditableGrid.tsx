@@ -1,14 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import {
-  Plus,
-  Trash2,
-  AlertCircle,
-  Eye,
-  Edit,
-  MoreVertical,
-} from "lucide-react";
+import { Plus, Trash2, AlertCircle, Eye, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import PersianDatePicker from "@/components/ui/PersianDatePicker";
@@ -44,7 +37,7 @@ interface EditableGridProps<T> {
   // Actions & Permissions
   onView?: (row: T) => void;
   onEdit?: (row: T) => void;
-  onDelete?: (row: T) => void; // اگر این پاس داده شود، جای حذف سطری عمل می‌کند
+  onDelete?: (row: T) => void;
   permissions?: GridPermissions;
 
   loading?: boolean;
@@ -65,6 +58,10 @@ export default function EditableGrid<T extends { id?: number | string }>({
 }: EditableGridProps<T>) {
   const safeData = Array.isArray(data) ? data : [];
 
+  // --- Refs ---
+  const scrollContainerRef = useRef<HTMLDivElement>(null); // رفرنس به کانتینر اسکرول‌دار
+  const prevDataLengthRef = useRef(safeData.length); // ذخیره طول قبلی دیتا
+
   // --- Context Menu State ---
   const [contextMenu, setContextMenu] = useState<{
     visible: boolean;
@@ -73,6 +70,22 @@ export default function EditableGrid<T extends { id?: number | string }>({
     rowIndex: number;
   } | null>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
+
+  // --- Auto Scroll Logic (تغییر دوم: اسکرول خودکار) ---
+  useEffect(() => {
+    // اگر تعداد سطرها زیاد شده باشد (یعنی سطر جدید اضافه شده)
+    if (safeData.length > prevDataLengthRef.current) {
+      if (scrollContainerRef.current) {
+        // اسکرول به پایین‌ترین نقطه با حالت نرم (Smooth)
+        scrollContainerRef.current.scrollTo({
+          top: scrollContainerRef.current.scrollHeight,
+          behavior: "smooth",
+        });
+      }
+    }
+    // آپدیت طول دیتا برای دفعه بعد
+    prevDataLengthRef.current = safeData.length;
+  }, [safeData.length]);
 
   // بستن منو با کلیک بیرون
   useEffect(() => {
@@ -98,6 +111,7 @@ export default function EditableGrid<T extends { id?: number | string }>({
   const handleAdd = () => {
     if (onAddRow && permissions.add !== false) {
       onChange([...safeData, onAddRow()]);
+      // نکته: اسکرول واقعی توسط useEffect بالا انجام می‌شود
     }
   };
 
@@ -107,7 +121,6 @@ export default function EditableGrid<T extends { id?: number | string }>({
     onChange(newData);
   };
 
-  // هندلر راست کلیک روی سطر
   const handleContextMenu = (e: React.MouseEvent, index: number) => {
     e.preventDefault();
     if (readOnly) return;
@@ -126,19 +139,28 @@ export default function EditableGrid<T extends { id?: number | string }>({
     if (action === "edit" && onEdit) onEdit(row);
     if (action === "delete") {
       if (onDelete) {
-        onDelete(row); // حذف بیزینس لاجیکی (مثلاً API call)
+        onDelete(row);
       } else {
-        handleRemoveRow(index); // حذف لوکال از گرید
+        handleRemoveRow(index);
       }
     }
   };
 
   return (
     <div className="flex flex-col h-full relative" dir="rtl">
-      <div className="border rounded-lg overflow-hidden flex-1 relative bg-card shadow-sm">
-        <div className="overflow-auto max-h-[600px] custom-scrollbar pb-10">
+      <div className="border rounded-lg overflow-hidden flex-1 relative bg-card shadow-sm min-h-0">
+        {/* این div همان کانتینری است که اسکرول می‌شود */}
+        <div
+          ref={scrollContainerRef}
+          className="h-full overflow-auto custom-scrollbar pb-10"
+        >
           <table className="w-full text-xs">
-            <thead className="bg-muted/50 sticky top-0 z-10 border-b">
+            {/* تغییر اول: هدر مات (Solid)
+                1. bg-muted/50 حذف شد و bg-card جایگزین شد (کاملاً مات همرنگ کارت).
+                2. z-20 اضافه شد تا مطمئن شویم روی محتوا قرار می‌گیرد.
+                3. shadow-sm اضافه شد تا مرز هدر با محتوا زیباتر شود.
+            */}
+            <thead className="bg-card sticky top-0 z-20 border-b shadow-sm">
               <tr>
                 <th className="w-10 p-2 text-center text-muted-foreground font-semibold text-[11px]">
                   #
@@ -153,7 +175,6 @@ export default function EditableGrid<T extends { id?: number | string }>({
                     {col.required && <span className="text-red-500">*</span>}
                   </th>
                 ))}
-                {/* ستون عملیات: همیشه هست مگر اینکه ReadOnly باشد */}
                 {!readOnly && (
                   <th className="w-24 p-2 text-center text-muted-foreground text-[11px]">
                     عملیات
@@ -161,6 +182,7 @@ export default function EditableGrid<T extends { id?: number | string }>({
                 )}
               </tr>
             </thead>
+
             <tbody className="divide-y divide-border">
               {safeData.map((row, index) => (
                 <tr
@@ -237,11 +259,9 @@ export default function EditableGrid<T extends { id?: number | string }>({
                     </td>
                   ))}
 
-                  {/* ستون عملیات با آیکون‌ها */}
                   {!readOnly && (
                     <td className="p-1.5 text-center">
                       <div className="flex items-center justify-center gap-1">
-                        {/* دکمه مشاهده */}
                         {permissions.view && onView && (
                           <Button
                             type="button"
@@ -255,7 +275,6 @@ export default function EditableGrid<T extends { id?: number | string }>({
                           </Button>
                         )}
 
-                        {/* دکمه ویرایش */}
                         {permissions.edit && onEdit && (
                           <Button
                             type="button"
@@ -269,7 +288,6 @@ export default function EditableGrid<T extends { id?: number | string }>({
                           </Button>
                         )}
 
-                        {/* دکمه حذف */}
                         {permissions.delete && (
                           <Button
                             type="button"
@@ -288,7 +306,6 @@ export default function EditableGrid<T extends { id?: number | string }>({
                 </tr>
               ))}
 
-              {/* Empty State */}
               {safeData.length === 0 && (
                 <tr>
                   <td
@@ -313,7 +330,6 @@ export default function EditableGrid<T extends { id?: number | string }>({
         )}
       </div>
 
-      {/* دکمه افزودن سطر جدید */}
       {!readOnly && onAddRow && permissions.add !== false && (
         <div className="mt-2">
           <Button
@@ -330,7 +346,7 @@ export default function EditableGrid<T extends { id?: number | string }>({
         </div>
       )}
 
-      {/* --- Custom Context Menu (RTL Fixed) --- */}
+      {/* --- Context Menu --- */}
       {contextMenu && (
         <div
           ref={contextMenuRef}
@@ -351,7 +367,6 @@ export default function EditableGrid<T extends { id?: number | string }>({
                 <span>مشاهده جزئیات</span>
               </button>
             )}
-
             {permissions.edit && onEdit && (
               <button
                 className="flex items-center gap-2 px-2 py-1.5 text-xs text-foreground hover:bg-accent rounded-sm w-full text-right transition-colors"
@@ -361,7 +376,6 @@ export default function EditableGrid<T extends { id?: number | string }>({
                 <span>ویرایش</span>
               </button>
             )}
-
             {permissions.delete && (
               <button
                 className="flex items-center gap-2 px-2 py-1.5 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-sm w-full text-right transition-colors"

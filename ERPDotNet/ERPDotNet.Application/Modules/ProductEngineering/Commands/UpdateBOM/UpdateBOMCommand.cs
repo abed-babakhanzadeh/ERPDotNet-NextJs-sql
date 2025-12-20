@@ -135,7 +135,7 @@ public class UpdateBOMHandler : IRequestHandler<UpdateBOMCommand, bool>
         entity.Title = request.Title;
         entity.Version = request.Version;
         entity.Type = request.Type;
-        entity.Status = request.Status;
+        // entity.Status = request.Status;
         entity.IsActive = request.IsActive;
         entity.FromDate = utcFrom;
         entity.ToDate = utcTo;
