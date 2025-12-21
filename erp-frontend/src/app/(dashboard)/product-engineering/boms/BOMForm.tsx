@@ -636,7 +636,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
     if (isReadOnly) return;
 
     if (!headerData.productId) {
-      toast.error("کالا/قلم/قلم نهایی انتخاب نشده");
+      toast.error("کالا/قلم نهایی انتخاب نشده");
       return;
     }
     if (details.length === 0) {
@@ -742,7 +742,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="space-y-2 col-span-1 md:col-span-2">
           <label className="text-sm font-medium flex gap-1">
-            کالا/قلم/قلم نهایی (Parent)
+            کالا/قلم نهایی (Parent)
           </label>
           <TableLookupCombobox<ProductLookupDto>
             value={headerData.productId}
@@ -806,7 +806,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
                       className="h-9 text-purple-700 border-purple-200 hover:bg-purple-50 flex items-center gap-2"
                       onClick={() =>
                         addTab(
-                          `درخت کالا/قلم/قلم`,
+                          `درخت کالا/قلم`,
                           `/product-engineering/boms/tree/${bomId}`
                         )
                       }
@@ -955,7 +955,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
               items={templateOptions}
               loading={templateLoading}
               columns={[
-                { key: "productName", label: "نام کالا/قلم/قلم", width: "40%" },
+                { key: "productName", label: "نام کالا/قلم", width: "40%" },
                 { key: "version", label: "ورژن", width: "20%" },
                 { key: "title", label: "عنوان", width: "40%" },
               ]}
@@ -969,7 +969,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
               onValueChange={(id) => {
                 if (id) handleImportTemplate(id as number);
               }}
-              placeholder="جستجو بر اساس نام کالا/قلم/قلم یا عنوان فرمول..."
+              placeholder="جستجو بر اساس نام کالا/قلم یا عنوان فرمول..."
             />
             <p className="text-xs text-muted-foreground mt-4 leading-5">
               نکته: با انتخاب یک الگو، تمام ردیف‌های فعلی جدول پاک شده و اقلام
