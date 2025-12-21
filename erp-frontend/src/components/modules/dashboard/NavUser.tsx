@@ -8,8 +8,13 @@ import {
   Moon,
   Sun,
   Laptop,
-  User,
   Loader2,
+  Type,
+  Check,
+  Hash,
+  Minus,
+  Plus,
+  Monitor,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -32,39 +37,38 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
 import apiClient from "@/services/apiClient";
-import { LockKeyhole, UserCog } from "lucide-react"; // آیکون‌های جدید
+import { LockKeyhole, UserCog } from "lucide-react";
 import ChangeOwnPasswordDialog from "./ChangeOwnPasswordDialog";
+import { useFont } from "@/providers/FontProvider";
 
-// این اینترفیس باید دقیقاً با UserDto بک‌اند (فایل GetUserByIdQuery) یکی باشد
 interface UserProfileDto {
   id: string;
   username: string;
   firstName: string;
   lastName: string;
   email: string;
-  roles?: string[]; // لیست نقش‌ها
+  roles?: string[];
 }
 
 export function NavUser() {
   const { isMobile } = useSidebar();
   const { setTheme } = useTheme();
+  const { font, setFont, digit, setDigit, scale, setScale } = useFont(); 
   const router = useRouter();
 
   const [user, setUser] = useState<UserProfileDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
-  // دریافت اطلاعات کاربر لاگین شده
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        // آدرس صحیح بر اساس AuthController: api/Auth/profile
         const response = await apiClient.get<UserProfileDto>("/Auth/profile");
         setUser(response.data);
       } catch (error) {
         console.error("Failed to fetch user profile", error);
-        // اگر خطای 401 باشد، خود apiClient کاربر را بیرون می‌اندازد
       } finally {
         setLoading(false);
       }
@@ -74,10 +78,7 @@ export function NavUser() {
   }, []);
 
   const handleLogout = () => {
-    // پاک کردن توکن (دقت کنید نام کلید با صفحه لاگین یکی باشد)
     localStorage.removeItem("accessToken");
-
-    // هدایت به لاگین
     router.replace("/login");
   };
 
@@ -89,7 +90,6 @@ export function NavUser() {
     );
   }
 
-  // اگر دیتا لود نشد، چیزی نشان نده (یا دکمه ورود نشان بده)
   if (!user) return null;
 
   return (
@@ -103,10 +103,8 @@ export function NavUser() {
                 className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
               >
                 <Avatar className="h-8 w-8 rounded-lg">
-                  {/* چون در بک‌اند فیلد عکس نداریم، فعلا خالی می‌گذاریم */}
                   <AvatarImage src="" alt={user.username} />
                   <AvatarFallback className="rounded-lg">
-                    {/* نمایش حروف اول نام و نام خانوادگی */}
                     {user.firstName?.[0]}
                     {user.lastName?.[0]}
                   </AvatarFallback>
@@ -119,13 +117,14 @@ export function NavUser() {
                     {user.username}
                   </span>
                 </div>
-                <ChevronsUpDown className="mr-auto size-4" />
+                {/* آیکون بازشدن منوی اصلی: سمت چپ قرار می‌گیرد */}
+                <ChevronsUpDown className="mr-auto ml-0 size-4" />
               </SidebarMenuButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent
-              className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+              className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg text-right"
               side={isMobile ? "bottom" : "left"}
-              align="end"
+              align="start"
               sideOffset={4}
             >
               <DropdownMenuLabel className="p-0 font-normal">
@@ -148,43 +147,153 @@ export function NavUser() {
               <DropdownMenuSeparator />
 
               <DropdownMenuGroup>
-                <DropdownMenuItem className="gap-2 cursor-pointer">
-                  <UserCog className="size-4" /> {/* آیکون بهتر برای پروفایل */}
-                  پروفایل کاربری
+                <DropdownMenuItem className="gap-2 cursor-pointer flex flex-row items-center justify-start text-right">
+                  <UserCog className="size-4" />
+                  <span className="flex-1 text-right">پروفایل کاربری</span>
                 </DropdownMenuItem>
 
                 <DropdownMenuItem
-                  className="gap-2 cursor-pointer"
+                  className="gap-2 cursor-pointer flex flex-row items-center justify-start text-right"
                   onClick={() => setIsPasswordModalOpen(true)}
                 >
                   <LockKeyhole className="size-4" />
-                  تغییر رمز عبور
+                  <span className="flex-1 text-right">تغییر رمز عبور</span>
                 </DropdownMenuItem>
+
+                <DropdownMenuSeparator />
+                
+                {/* --- کنترل سایز فونت --- */}
+                <div className="px-2 py-1.5">
+                   {/* تیتر راست چین */}
+                   <div className="flex items-center gap-2 mb-2 text-sm text-muted-foreground px-1 justify-end text-right">
+                      <Monitor className="size-4 monitor-icon-custom" />
+                      <span>اندازه نمایشی</span>
+                   </div>
+                   
+                   {/* کنترلر زوم: دکمه منفی چپ، دکمه مثبت راست */}
+                   <div className="flex flex-row-reverse items-center justify-between rounded-md border bg-background p-1 shadow-sm">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 rounded-sm"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setScale(scale - 5);
+                        }}
+                        disabled={scale <= 70}
+                      >
+                        <Minus className="size-4" />
+                      </Button>
+                      
+                      <span className="min-w-[3rem] text-center text-sm font-medium tabular-nums" dir="ltr">
+                        {scale}%
+                      </span>
+
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 rounded-sm"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setScale(scale + 5);
+                        }}
+                        disabled={scale >= 130}
+                      >
+                        <Plus className="size-4" />
+                      </Button>
+                   </div>
+                </div>
+                {/* ----------------------- */}
+
+                <DropdownMenuSeparator />
+
+                {/* منوی انتخاب فونت */}
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="gap-2 cursor-pointer flex flex-row items-center justify-between text-right">
+                    <span className="flex-1 text-right">تغییر فونت</span>
+                    <Type className="size-4" />
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent 
+                      className="text-right" 
+                      {...({ side: "left", align: "start" } as any)}
+                    >
+                      <DropdownMenuItem
+                        onClick={() => setFont("iransans")}
+                        className="gap-2 cursor-pointer justify-between text-right"
+                      >
+                        <span className="font-[family-name:--font-iransans]">ایران‌سنس</span>
+                        {font === "iransans" && <Check className="size-3" />}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setFont("kharazmi")}
+                        className="gap-2 cursor-pointer justify-between text-right"
+                      >
+                        <span className="font-[family-name:--font-kharazmi] text-base">خوارزمی</span>
+                        {font === "kharazmi" && <Check className="size-3" />}
+                      </DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+
+                {/* منوی نمایش اعداد */}
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="gap-2 cursor-pointer flex flex-row items-center justify-between text-right">
+                    <span className="flex-1 text-right">نمایش اعداد</span>
+                    <Hash className="size-4" />
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent 
+                      className="text-right" 
+                      {...({ side: "left", align: "start" } as any)}
+                    >
+                      <DropdownMenuItem
+                        onClick={() => setDigit("farsi")}
+                        className="gap-2 cursor-pointer justify-between"
+                      >
+                        <span>۱۲۳ (فارسی)</span>
+                        {digit === "farsi" && <Check className="size-3" />}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setDigit("english")}
+                        className="gap-2 cursor-pointer justify-between"
+                      >
+                        <span>123 (انگلیسی)</span>
+                        {digit === "english" && <Check className="size-3" />}
+                      </DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
 
                 {/* منوی تم (Theme) */}
                 <DropdownMenuSub>
-                  <DropdownMenuSubTrigger className="gap-2 cursor-pointer">
-                    <Sun className="size-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                    <Moon className="absolute size-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                    <span>تغییر پوسته</span>
+                  <DropdownMenuSubTrigger className="gap-2 cursor-pointer flex flex-row items-center justify-between text-right">
+                    <span className="flex-1 text-right">تغییر پوسته</span>
+                    <div className="relative size-4">
+                      <Sun className="size-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                      <Moon className="absolute inset-0 size-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                    </div>
                   </DropdownMenuSubTrigger>
                   <DropdownMenuPortal>
-                    <DropdownMenuSubContent>
+                    <DropdownMenuSubContent 
+                      className="text-right" 
+                      {...({ side: "left", align: "start" } as any)}
+                    >
                       <DropdownMenuItem
                         onClick={() => setTheme("light")}
-                        className="gap-2 cursor-pointer"
+                        className="gap-2 cursor-pointer flex-row-reverse justify-end text-right"
                       >
                         <Sun className="size-4" /> روشن
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => setTheme("dark")}
-                        className="gap-2 cursor-pointer"
+                        className="gap-2 cursor-pointer flex-row-reverse justify-end text-right"
                       >
                         <Moon className="size-4" /> تیره
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => setTheme("system")}
-                        className="gap-2 cursor-pointer"
+                        className="gap-2 cursor-pointer flex-row-reverse justify-end text-right"
                       >
                         <Laptop className="size-4" /> سیستم
                       </DropdownMenuItem>
@@ -197,10 +306,10 @@ export function NavUser() {
 
               <DropdownMenuItem
                 onClick={handleLogout}
-                className="gap-2 text-destructive focus:text-destructive cursor-pointer bg-red-50 dark:bg-red-950/30"
+                className="gap-2 text-destructive focus:text-destructive cursor-pointer bg-red-50 dark:bg-red-950/30 flex flex-row items-center justify-start"
               >
                 <LogOut className="size-4" />
-                خروج از حساب
+                <span>خروج از حساب</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

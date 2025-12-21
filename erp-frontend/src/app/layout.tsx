@@ -6,19 +6,19 @@ import { CustomThemeProvider } from "@/providers/CustomThemeProvider";
 import { ThemeCustomizer } from "@/components/theme/ThemeCustomizer";
 import { PermissionProvider } from "@/providers/PermissionProvider";
 import { TabsProvider } from "@/providers/TabsProvider";
+import { FontProvider } from "@/providers/FontProvider"; // اضافه شدن FontProvider
 
 export const metadata: Metadata = {
   title: "ERP System",
   description: "سیستم جامع مدیریت منابع سازمانی",
 };
 
-// --- این قطعه کد را اضافه کنید ---
+// کد تولید UUID برای محیط‌های بدون HTTPS
 if (
   typeof window !== "undefined" &&
   typeof window.crypto !== "undefined" &&
   typeof window.crypto.randomUUID === "undefined"
 ) {
-  // اگر مرورگر این تابع را نداشت (چون روی HTTP هستیم)، ما یک نسخه دستی برایش می‌سازیم
   window.crypto.randomUUID = () => {
     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
       /[xy]/g,
@@ -30,7 +30,6 @@ if (
     ) as `${string}-${string}-${string}-${string}-${string}`;
   };
 }
-// -------------------------------
 
 export default function RootLayout({
   children,
@@ -46,7 +45,8 @@ export default function RootLayout({
           content="width=device-width, initial-scale=1, maximum-scale=1"
         />
       </head>
-      <body className="bg-background text-foreground antialiased font-sans overflow-hidden">
+      {/* نکته مهم: کلاس font-sans حذف شد تا فونت کاستوم اعمال شود */}
+      <body className="bg-background text-foreground antialiased overflow-hidden">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -55,25 +55,27 @@ export default function RootLayout({
           themes={["light", "dark", "custom"]}
         >
           <CustomThemeProvider>
-            <PermissionProvider>
-              <TabsProvider>
-                <div className="h-screen w-screen overflow-hidden">
-                  {children}
-                </div>
+            <FontProvider> {/* اضافه شدن دربرگیرنده فونت */}
+              <PermissionProvider>
+                <TabsProvider>
+                  <div className="h-screen w-screen overflow-hidden">
+                    {children}
+                  </div>
 
-                {/* ابزارهای شناور */}
-                <ThemeCustomizer />
-                <Toaster
-                  position="top-center"
-                  richColors
-                  closeButton
-                  toastOptions={{
-                    className: "text-xs",
-                    duration: 3000,
-                  }}
-                />
-              </TabsProvider>
-            </PermissionProvider>
+                  {/* ابزارهای شناور */}
+                  <ThemeCustomizer />
+                  <Toaster
+                    position="top-center"
+                    richColors
+                    closeButton
+                    toastOptions={{
+                      className: "text-xs",
+                      duration: 3000,
+                    }}
+                  />
+                </TabsProvider>
+              </PermissionProvider>
+            </FontProvider>
           </CustomThemeProvider>
         </ThemeProvider>
       </body>

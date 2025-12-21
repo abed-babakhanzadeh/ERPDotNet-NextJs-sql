@@ -1,9 +1,13 @@
+git clone:
+https://github.com/abed-babakhanzadeh/ERPDotNet-NextJs-sql.git
+
 
 dotnet ef database update
 
 docker compose up -d --build
 docker-compose up -d
 docker-compose up -d db redis
+docker-compose up -d redis
 
 docker-compose down
 ---------------------------------------------------
@@ -15,9 +19,8 @@ dotnet ef database update --project ERPDotNet.Infrastructure --startup-project E
 dotnet ef migrations add AddWhereUsedFunction --project ERPDotNet.Infrastructure --startup-project ERPDotNet.API
 ---------------------------------------------------
 cd erp-frontend
-
 npm run dev
-
+npm install
 
 =========================================================================================
 این کوئری را نباید روی خود ERP_DB اجرا کنید! باید روی دیتابیس پیش‌فرض (مثل postgres) کلیک راست کنید و Query Tool را باز کنید و آنجا اجرا کنید.
@@ -53,7 +56,7 @@ END $$;
 
 =========================================================================================
 
-کوئری ساخت انکشن مصرف مواد:
+کوئری ساخت فانکشن مصرف مواد:
 
 CREATE OR REPLACE FUNCTION "get_where_used_recursive"(input_product_id INT)
 RETURNS TABLE (

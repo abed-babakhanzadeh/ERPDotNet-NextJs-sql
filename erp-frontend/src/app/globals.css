@@ -2,8 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
+
+
+
 @layer base {
   :root {
+
+    /* ایران‌سنس */
+    --font-iransans-fanum: 'IRANSansX-FaNum', system-ui, sans-serif;
+    --font-iransans-ennum: 'IRANSansX-EnNum', system-ui, sans-serif;
+    
+    /* خوارزمی ترکیبی */
+    /* اگر کاربر اعداد فارسی خواست: اول فونت اعداد را چک کن، بعد خوارزمی را */
+    --font-kharazmi-fanum: 'Just-Digits-FaNum', 'IRANKharazmi', serif;
+    /* اگر کاربر اعداد انگلیسی خواست: فقط خوارزمی (که ذاتا انگلیسی است) */
+    --font-kharazmi-ennum: 'IRANKharazmi', serif;
+    
+    --font-body: var(--font-iransans-fanum);
+
     --background: 210 100% 97%;
     --foreground: 222 84% 5%;
 
@@ -33,6 +49,13 @@
     --ring: 217 91% 60%;
 
     --radius: 0.5rem;
+
+    
+    /* ... سایر متغیرهای رنگ ... */
+    --background: 210 100% 97%;
+    /* ادامه کد های قبلی شما... */
+
+
   }
 
   .dark {
@@ -102,9 +125,18 @@
 }
 
 @layer base {
+  /* اعمال فونت با !important برای اطمینان از اعمال روی input و سایر عناصر */
+  html, body, button, input, textarea, select, div, span, p, h1, h2, h3, h4, h5, h6, table, th, td {
+    font-family: var(--font-body) !important;
+  }
+  
+  /* اطمینان از اینکه اعداد به صورت جدولی و صحیح نمایش داده می‌شوند */
+  input[type="number"] {
+    font-variant-numeric: normal;
+  }
+
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-body);
   }
 }
 
@@ -254,6 +286,14 @@
   .permission-tree-inner::-webkit-scrollbar-track {
     background: transparent;
   }
+
+  /* Monitor icon custom styles */
+  .monitor-icon-custom {
+    line-height: 80px;
+    transform: scaleX(-1) rotate(360deg);
+    position: absolute;
+    left: 13px;
+  }
 }
 
 /* اسکرول بار سفارشی */
@@ -395,4 +435,66 @@
   table th {
     font-size: 11px;
   }
+}
+
+@font-face {
+  font-family: 'IRANSansX-FaNum';
+  src: url('/fonts/IRANSansXFaNum-Regular.woff2') format('woff2'),
+       url('/fonts/IRANSansXFaNum-Regular.woff') format('woff');
+  font-weight: 100 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IRANSansX-FaNum';
+  src: url('/fonts/IRANSansXFaNum-Bold.woff2') format('woff2'),
+       url('/fonts/IRANSansXFaNum-Bold.woff') format('woff');
+  font-weight: 600 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* --- 2. ایران‌سنس با اعداد انگلیسی (Standard) --- */
+@font-face {
+  font-family: 'IRANSansX-EnNum';
+  src: url('/fonts/IRANSansX-Regular.woff2') format('woff2'),
+       url('/fonts/IRANSansX-Regular.woff') format('woff');
+  font-weight: 100 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IRANSansX-EnNum';
+  src: url('/fonts/IRANSansX-Bold.woff2') format('woff2'),
+       url('/fonts/IRANSansX-Bold.woff') format('woff');
+  font-weight: 600 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* --- 3. فونت خوارزمی (متن اصلی) --- */
+@font-face {
+  font-family: 'IRANKharazmi';
+  src: url('/fonts/IRAN Kharazmi.woff') format('woff'),
+       url('/fonts/IRAN Kharazmi.eot') format('embedded-opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* --- 4. تعریف فونت کمکی فقط برای اعداد (تزریق اعداد فارسی) --- */
+@font-face {
+  font-family: 'Just-Digits-FaNum';
+  src: url('/fonts/IRANSansXFaNum-Regular.woff2') format('woff2');
+  font-weight: 100 500;
+  /* نکته کلیدی: این فونت فقط روی اعداد 0 تا 9 اعمال می‌شود */
+  unicode-range: U+0030-0039; 
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Just-Digits-FaNum';
+  src: url('/fonts/IRANSansXFaNum-Bold.woff2') format('woff2');
+  font-weight: 600 900;
+  unicode-range: U+0030-0039;
+  font-display: swap;
 }
