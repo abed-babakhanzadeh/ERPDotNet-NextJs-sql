@@ -56,7 +56,7 @@ export default function BOMTreePage() {
 
   if (!data) {
     return (
-      <BaseListLayout title="ساختار درختی محصول" icon={Network}>
+      <BaseListLayout title="ساختار درختی کالا/قلم/قلم" icon={Network}>
         <div className="flex flex-col items-center justify-center h-full gap-4 text-muted-foreground">
           <Layers size={48} className="opacity-20" />
           <p className="text-lg font-semibold">اطلاعاتی یافت نشد</p>
@@ -107,12 +107,12 @@ export default function BOMTreePage() {
   return (
     // 3. استفاده از لایوت استاندارد
     <BaseListLayout
-      title="ساختار درختی محصول"
+      title="ساختار درختی کالا/قلم/قلم"
       icon={Network}
       actions={headerActions}
     >
       <div className="flex flex-col h-full gap-3 p-2 sm:p-4">
-        {/* اینفو بار: نمایش اطلاعات محصول (جایگزین اطلاعات هدر قبلی) */}
+        {/* اینفو بار: نمایش اطلاعات کالا/قلم/قلم (جایگزین اطلاعات هدر قبلی) */}
         <div className="flex flex-wrap items-center justify-between gap-3 bg-card border rounded-lg p-3 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-md text-purple-600 dark:text-purple-400">
@@ -148,7 +148,7 @@ export default function BOMTreePage() {
 function TreeSkeleton() {
   // اسکلتون را هم داخل لایوت می‌گذاریم تا هدر نمایش داده شود
   return (
-    <BaseListLayout title="ساختار درختی محصول" icon={Network}>
+    <BaseListLayout title="ساختار درختی کالا/قلم/قلم" icon={Network}>
       <div className="p-4 space-y-4 h-full">
         <div className="rounded-xl border bg-card p-4 h-20 animate-pulse" />
         <div className="flex-1 rounded-xl border bg-card p-4 space-y-3">

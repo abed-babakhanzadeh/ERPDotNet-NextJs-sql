@@ -176,10 +176,10 @@ export default function WhereUsedPage() {
 
   const columns: ColumnConfig[] = useMemo(
     () => [
-      { key: "parentProductCode", label: "کد محصول نهایی", type: "string" },
+      { key: "parentProductCode", label: "کد کالا/قلم نهایی", type: "string" },
       {
         key: "parentProductName",
-        label: "نام محصول نهایی",
+        label: "نام کالا/قلم نهایی",
         type: "string",
         render: (val, row) => (
           <div className="flex flex-col">
@@ -275,7 +275,7 @@ export default function WhereUsedPage() {
           className="gap-2 cursor-pointer"
         >
           <Network className="w-4 h-4 text-purple-600" />
-          <span>مشاهده در درخت محصول</span>
+          <span>مشاهده در درخت کالا/قلم</span>
         </DropdownMenuItem>
       </>
     );
@@ -317,7 +317,7 @@ export default function WhereUsedPage() {
                     selectedProductId: id as number,
                   }))
                 }
-                placeholder="جستجوی کالا..."
+                placeholder="جستجوی کالا/قلم..."
               />
             </div>
 
@@ -355,7 +355,7 @@ export default function WhereUsedPage() {
               <div className="flex items-center space-x-2 space-x-reverse">
                 <RadioGroupItem value="endItems" id="r3" />
                 <Label htmlFor="r3" className="cursor-pointer">
-                  فقط محصولات نهایی
+                  فقط کالا/قلمات نهایی
                 </Label>
               </div>
             </RadioGroup>
@@ -414,7 +414,7 @@ export default function WhereUsedPage() {
                         <Network className="w-5 h-5" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>مشاهده در درخت محصول</TooltipContent>
+                    <TooltipContent>مشاهده در درخت کالا/قلم</TooltipContent>
                   </Tooltip>
                 </div>
               </TooltipProvider>

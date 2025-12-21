@@ -77,21 +77,14 @@ export default function CreateProductPage() {
       },
       {
         name: "code",
-        label: "کد کالا",
+        label: "کد کالا/قلم",
         type: "text",
         required: true,
         colSpan: 1,
       },
       {
         name: "name",
-        label: "نام کالا",
-        type: "text",
-        required: true,
-        colSpan: 2,
-      },
-      {
-        name: "latinName",
-        label: "نام لاتين کالا",
+        label: "نام کالا/قلم",
         type: "text",
         required: true,
         colSpan: 2,
@@ -177,7 +170,7 @@ export default function CreateProductPage() {
       };
 
       await apiClient.post("/BaseInfo/Products", payload);
-      toast.success("کالا با موفقیت ایجاد شد");
+      toast.success("کالا/قلم با موفقیت ایجاد شد");
 
       clearStorage();
       closeTab(activeTabId);
@@ -185,7 +178,7 @@ export default function CreateProductPage() {
       console.error(error);
       const msg = error.response?.data?.errors
         ? Object.values(error.response.data.errors).flat().join(" - ")
-        : "خطا در ثبت کالا";
+        : "خطا در ثبت کالا/قلم";
       toast.error(msg);
     } finally {
       setSubmitting(false);
@@ -194,7 +187,7 @@ export default function CreateProductPage() {
 
   return (
     <BaseFormLayout
-      title="تعریف کالای جدید"
+      title="تعریف کالا/قلم جدید"
       isLoading={loadingUnits}
       onSubmit={handleSubmit}
       formId={FORM_ID}
@@ -207,7 +200,7 @@ export default function CreateProductPage() {
             <Package className="w-5 h-5 text-white" />
           </div>
           <h3 className="font-semibold text-base text-slate-800 dark:text-slate-200">
-            اطلاعات اصلی کالا
+            اطلاعات اصلی کالا/قلم
           </h3>
         </div>
 

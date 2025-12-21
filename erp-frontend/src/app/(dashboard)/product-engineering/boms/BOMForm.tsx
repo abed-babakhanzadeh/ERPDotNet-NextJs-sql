@@ -364,8 +364,8 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
 
   const productLookupColumns: ColumnDef[] = useMemo(
     () => [
-      { key: "code", label: "کد کالا", width: "30%" },
-      { key: "name", label: "نام کالا", width: "50%" },
+      { key: "code", label: "کد کالا/قلم", width: "30%" },
+      { key: "name", label: "نام کالا/قلم", width: "50%" },
       { key: "unitName", label: "واحد", width: "20%" },
     ],
     []
@@ -636,7 +636,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
     if (isReadOnly) return;
 
     if (!headerData.productId) {
-      toast.error("محصول نهایی انتخاب نشده");
+      toast.error("کالا/قلم/قلم نهایی انتخاب نشده");
       return;
     }
     if (details.length === 0) {
@@ -655,7 +655,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
 
       const cleanDetails = details.map((d) => {
         if (!d.childProductId) {
-          throw new Error("یکی از ردیف‌های جدول فاقد کالا است.");
+          throw new Error("یکی از ردیف‌های جدول فاقد کالا/قلم است.");
         }
 
         const validSubstitutes = (d.substitutes || [])
@@ -710,7 +710,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
     } catch (error: any) {
       console.error("Full Submission Error:", error);
 
-      if (error.message === "یکی از ردیف‌های جدول فاقد کالا است.") {
+      if (error.message === "یکی از ردیف‌های جدول فاقد کالا/قلم است.") {
         toast.error(error.message);
       } else {
         const status = error.response?.status;
@@ -742,7 +742,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="space-y-2 col-span-1 md:col-span-2">
           <label className="text-sm font-medium flex gap-1">
-            محصول نهایی (Parent)
+            کالا/قلم/قلم نهایی (Parent)
           </label>
           <TableLookupCombobox<ProductLookupDto>
             value={headerData.productId}
@@ -806,7 +806,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
                       className="h-9 text-purple-700 border-purple-200 hover:bg-purple-50 flex items-center gap-2"
                       onClick={() =>
                         addTab(
-                          `درخت محصول`,
+                          `درخت کالا/قلم/قلم`,
                           `/product-engineering/boms/tree/${bomId}`
                         )
                       }
@@ -955,7 +955,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
               items={templateOptions}
               loading={templateLoading}
               columns={[
-                { key: "productName", label: "نام محصول", width: "40%" },
+                { key: "productName", label: "نام کالا/قلم/قلم", width: "40%" },
                 { key: "version", label: "ورژن", width: "20%" },
                 { key: "title", label: "عنوان", width: "40%" },
               ]}
@@ -969,7 +969,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
               onValueChange={(id) => {
                 if (id) handleImportTemplate(id as number);
               }}
-              placeholder="جستجو بر اساس نام محصول یا عنوان فرمول..."
+              placeholder="جستجو بر اساس نام کالا/قلم/قلم یا عنوان فرمول..."
             />
             <p className="text-xs text-muted-foreground mt-4 leading-5">
               نکته: با انتخاب یک الگو، تمام ردیف‌های فعلی جدول پاک شده و اقلام

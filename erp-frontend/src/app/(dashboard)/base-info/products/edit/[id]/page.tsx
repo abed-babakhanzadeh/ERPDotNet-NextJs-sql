@@ -201,13 +201,13 @@ export default function ProductDetailsPage({ params }: PageProps) {
       },
       {
         name: "isActive",
-        label: "کالا فعال است",
+        label: "کالا/قلم فعال است",
         type: "checkbox",
         disabled: !isEditing,
       },
       {
         name: "code",
-        label: "کد کالا",
+        label: "کد کالا/قلم",
         type: "text",
         required: true,
         colSpan: 1,
@@ -215,7 +215,7 @@ export default function ProductDetailsPage({ params }: PageProps) {
       },
       {
         name: "name",
-        label: "نام کالا",
+        label: "نام کالا/قلم",
         type: "text",
         required: true,
         colSpan: 2,
@@ -223,7 +223,7 @@ export default function ProductDetailsPage({ params }: PageProps) {
       },
       {
         name: "latinName",
-        label: "نام لاتين کالا",
+        label: "نام لاتين کالا/قلم",
         type: "text",
         required: true,
         colSpan: 2,
@@ -267,8 +267,8 @@ export default function ProductDetailsPage({ params }: PageProps) {
     <BaseFormLayout
       title={
         isEditing
-          ? `ویرایش کالا: ${product?.name}`
-          : `جزئیات کالا: ${product?.name || "..."}`
+          ? `ویرایش کالا/قلم: ${product?.name}`
+          : `جزئیات کالا/قلم: ${product?.name || "..."}`
       }
       isLoading={loadingData}
       onSubmit={isEditing ? handleSubmit : undefined}
@@ -313,7 +313,7 @@ export default function ProductDetailsPage({ params }: PageProps) {
 
             <div className="flex flex-col gap-2 pt-1">
               <div className="text-sm text-muted-foreground">
-                <p className="font-medium text-foreground">تصویر محصول</p>
+                <p className="font-medium text-foreground">تصویر کالا/قلم</p>
                 <p className="text-xs opacity-70">
                   برای بزرگنمایی روی تصویر کلیک کنید.
                 </p>

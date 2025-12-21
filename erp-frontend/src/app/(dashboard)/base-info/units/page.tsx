@@ -89,7 +89,7 @@ export default function UnitsPage() {
       toast.success("واحد با موفقیت حذف شد");
       refresh();
     } catch (error: any) {
-      toast.error("خطا در حذف واحد. ممکن است در کالاها استفاده شده باشد.");
+      toast.error("خطا در حذف واحد. ممکن است در کالا/قلمها استفاده شده باشد.");
     }
   };
 

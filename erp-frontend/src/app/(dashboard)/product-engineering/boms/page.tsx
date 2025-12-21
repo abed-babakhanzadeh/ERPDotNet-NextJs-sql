@@ -68,13 +68,13 @@ export default function BOMsListPage() {
     () => [
       {
         key: "productCode",
-        label: "کد محصول",
+        label: "کد کالا/قلم",
         type: "string",
         width: "10%",
       },
       {
         key: "productName",
-        label: "نام محصول",
+        label: "نام کالا/قلم",
         type: "string",
         width: "20%",
         render: (val) => <span className="font-medium text-sm">{val}</span>,
@@ -212,7 +212,7 @@ export default function BOMsListPage() {
   const handleDelete = async (row: BOMListDto) => {
     if (
       !confirm(
-        `آیا از حذف فرمول نسخه ${row.version} برای محصول "${row.productName}" اطمینان دارید؟`
+        `آیا از حذف فرمول نسخه ${row.version} برای کالا/قلم "${row.productName}" اطمینان دارید؟`
       )
     )
       return;

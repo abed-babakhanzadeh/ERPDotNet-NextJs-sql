@@ -101,7 +101,8 @@ export default function NewVersionDialog({
             ایجاد نسخه جدید (Revision)
           </DialogTitle>
           <DialogDescription>
-            کپی از نسخه <b>{sourceVersion}</b> برای محصول <b>{productName}</b>
+            کپی از نسخه <b>{sourceVersion}</b> برای کالا/قلم{" "}
+            <b>{productName}</b>
           </DialogDescription>
         </DialogHeader>
 

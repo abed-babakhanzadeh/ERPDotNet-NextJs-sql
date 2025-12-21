@@ -220,12 +220,12 @@ export default function EditUnitPage({ params }: PageProps) {
           </div>
         )}
 
-        {/* هشدار اگر واحد در کالاها استفاده شده */}
+        {/* هشدار اگر واحد در کالا/قلمها استفاده شده */}
         {unit && (
           <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 rounded-lg text-sm">
             <p className="text-amber-700 dark:text-amber-400">
               ⚠️ <strong>توجه:</strong> تغییر واحد پایه یا ضریب تبدیل ممکن است
-              بر کالاهای موجود تاثیر بگذارد.
+              بر کالا/قلمهای موجود تاثیر بگذارد.
             </p>
           </div>
         )}

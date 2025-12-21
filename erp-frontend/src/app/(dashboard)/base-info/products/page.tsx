@@ -71,9 +71,9 @@ export default function ProductsPage() {
           );
         },
       },
-      { key: "code", label: "کد کالا", type: "string" },
-      { key: "name", label: "نام کالا", type: "string" },
-      { key: "latinName", label: "نام لاتين کالا", type: "string" },
+      { key: "code", label: "کد کالا/قلم", type: "string" },
+      { key: "name", label: "نام کالا/قلم", type: "string" },
+      { key: "latinName", label: "نام لاتين کالا/قلم", type: "string" },
       { key: "unitName", label: "واحد", type: "string" },
       { key: "supplyType", label: "نوع تامین", type: "string" },
       {
@@ -111,7 +111,7 @@ export default function ProductsPage() {
   );
 
   const handleCreate = () => {
-    addTab("تعریف کالای جدید", "/base-info/products/create");
+    addTab("تعریف کالا/قلمی جدید", "/base-info/products/create");
   };
 
   const handleView = (row: Product) => {
@@ -126,18 +126,18 @@ export default function ProductsPage() {
   };
 
   const handleDelete = async (row: Product) => {
-    if (!confirm(`آیا از حذف کالای "${row.name}" اطمینان دارید؟`)) return;
+    if (!confirm(`آیا از حذف کالا/قلمی "${row.name}" اطمینان دارید؟`)) return;
 
     try {
       await apiClient.delete(`/BaseInfo/Products/${row.id}`);
-      toast.success("کالا با موفقیت حذف شد");
+      toast.success("کالا/قلم با موفقیت حذف شد");
       refresh();
     } catch (error: any) {
-      toast.error("خطا در حذف کالا. ممکن است در اسناد استفاده شده باشد.");
+      toast.error("خطا در حذف کالا/قلم. ممکن است در اسناد استفاده شده باشد.");
     }
   };
 
-  // 3. تعریف دکمه‌های اکشن (کالای جدید) برای ارسال به لایوت
+  // 3. تعریف دکمه‌های اکشن (کالا/قلمی جدید) برای ارسال به لایوت
   const headerActions = (
     <PermissionGuardPlaceholder permission="BaseInfo.Products.Create">
       <TooltipProvider delayDuration={200}>
@@ -149,11 +149,11 @@ export default function ProductsPage() {
               className="h-8 gap-1.5 md:gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
             >
               <Plus size={16} />
-              <span className="hidden sm:inline text-xs">کالای جدید</span>
+              <span className="hidden sm:inline text-xs">کالا/قلمی جدید</span>
             </Button>
           </TooltipTrigger>
           <TooltipContent side="bottom" className="text-[10px] sm:hidden">
-            کالای جدید
+            کالا/قلمی جدید
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -164,7 +164,7 @@ export default function ProductsPage() {
     <ProtectedPagePlaceholder permission="BaseInfo.Products">
       {/* 4. استفاده از BaseListLayout به جای هدر دستی */}
       <BaseListLayout
-        title="مدیریت کالاها"
+        title="مدیریت کالا/قلمها"
         icon={Box}
         actions={headerActions}
         count={totalCount} // نمایش تعداد کل رکوردها

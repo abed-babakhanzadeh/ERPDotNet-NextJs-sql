@@ -56,7 +56,7 @@ export default function SubstitutesDialog({
       setRows(safeData);
 
       // 2. ساختن آپشن‌های اولیه از روی دیتای موجود
-      // تا وقتی مودال باز میشه، اسم کالاها نمایش داده بشه و خالی نباشه
+      // تا وقتی مودال باز میشه، اسم کالا/قلمها نمایش داده بشه و خالی نباشه
       const initialOptions = safeData
         .filter((r: SubstituteRow) => r.substituteProductId)
         .map((r: SubstituteRow) => ({
@@ -65,7 +65,7 @@ export default function SubstitutesDialog({
           name: r.productName || "",
         }));
 
-      // حذف تکراری‌ها (اگر یک کالا چند بار جایگزین شده باشد)
+      // حذف تکراری‌ها (اگر یک کالا/قلم چند بار جایگزین شده باشد)
       const uniqueOptions = Array.from(
         new Map(initialOptions.map((item: any) => [item.id, item])).values()
       );
@@ -92,7 +92,7 @@ export default function SubstitutesDialog({
     () => [
       {
         key: "substituteProductId",
-        title: "کالای جایگزین",
+        title: "کالا/قلمی جایگزین",
         type: "select",
         width: "35%",
         required: true,
@@ -107,7 +107,7 @@ export default function SubstitutesDialog({
             ]}
             searchableFields={["code", "name"]}
             displayFields={["code", "name"]}
-            placeholder="انتخاب کالا..."
+            placeholder="انتخاب کالا/قلم..."
             onSearch={handleProductSearch}
             onOpenChange={(isOpen) => {
               // فقط اگر لیست خالی بود سرچ کن، وگرنه ممکنه مقادیر اولیه رو بپرونه
@@ -196,7 +196,7 @@ export default function SubstitutesDialog({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl w-[90vw] h-[80vh] flex flex-col p-0">
         <DialogDescription className="sr-only">
-          پنجره مدیریت کالاهای جایگزین
+          پنجره مدیریت کالا/قلمهای جایگزین
         </DialogDescription>
         <DialogHeader className="px-6 py-4 border-b">
           <DialogTitle>
