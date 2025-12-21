@@ -90,6 +90,13 @@ export default function CreateProductPage() {
         colSpan: 2,
       },
       {
+        name: "latinName",
+        label: "نام لاتين کالا",
+        type: "text",
+        required: true,
+        colSpan: 2,
+      },
+      {
         name: "unitId",
         label: "واحد سنجش اصلی",
         type: "select",

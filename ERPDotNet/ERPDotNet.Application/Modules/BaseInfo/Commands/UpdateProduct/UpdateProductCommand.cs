@@ -13,6 +13,7 @@ public record UpdateProductCommand : IRequest<bool>
     public int Id { get; set; }
     public required string Code { get; set; }
     public required string Name { get; set; }
+    public string? LatinName { get; set; } 
     
     // تغییر نام فیلد طبق خواسته شما
     public string? Descriptions { get; set; } 
@@ -109,6 +110,7 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, bool>
         // === 4. آپدیت فیلدهای ساده ===
         entity.Code = request.Code;
         entity.Name = request.Name;
+        entity.LatinName = request.LatinName;
         entity.Descriptions = request.Descriptions; // <--- فیلد تغییر نام یافته
         entity.UnitId = request.UnitId;
         entity.SupplyType = request.SupplyType;

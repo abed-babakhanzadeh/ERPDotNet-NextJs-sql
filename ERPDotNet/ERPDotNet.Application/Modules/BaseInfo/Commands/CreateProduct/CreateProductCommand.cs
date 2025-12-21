@@ -13,6 +13,7 @@ public record CreateProductCommand : IRequest<int>
 {
     public required string Code { get; set; }
     public required string Name { get; set; }
+    public string? LatinName { get; set; } 
     public string? Descriptions { get; set; }
     public required int UnitId { get; set; } // واحد اصلی
     public ProductSupplyType SupplyType { get; set; } // 1: خریدنی، 2: تولیدی
@@ -72,6 +73,7 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, int>
         {
             Code = request.Code,
             Name = request.Name,
+            LatinName = request.LatinName,
             Descriptions = request.Descriptions,
             UnitId = request.UnitId, // فقط واحد اصلی را ست می‌کنیم
             SupplyType = request.SupplyType,

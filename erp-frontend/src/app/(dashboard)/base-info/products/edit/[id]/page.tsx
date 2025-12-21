@@ -49,6 +49,7 @@ export default function ProductDetailsPage({ params }: PageProps) {
   const [formData, setFormData] = useState<any>({
     code: "",
     name: "",
+    latinName: "",
     descriptions: "",
     unitId: "",
     supplyType: 1,
@@ -81,6 +82,7 @@ export default function ProductDetailsPage({ params }: PageProps) {
           ...prev,
           code: prod.code,
           name: prod.name,
+          latinName: prod.latinName,
           descriptions: prod.descriptions || "",
           unitId: prod.unitId,
           supplyType: prod.supplyTypeId || prod.supplyType,
@@ -214,6 +216,14 @@ export default function ProductDetailsPage({ params }: PageProps) {
       {
         name: "name",
         label: "نام کالا",
+        type: "text",
+        required: true,
+        colSpan: 2,
+        disabled: !isEditing,
+      },
+      {
+        name: "latinName",
+        label: "نام لاتين کالا",
         type: "text",
         required: true,
         colSpan: 2,

@@ -10,6 +10,7 @@ public class Product : BaseEntity
     // 1. رشته‌ها: چون نباید نال باشند، required می‌کنیم
     public required string Code { get; set; } 
     public required string Name { get; set; } 
+    public string? LatinName { get; set; } 
     public string? Descriptions { get; set; } 
 
     // 2. کلید خارجی (Foreign Key):

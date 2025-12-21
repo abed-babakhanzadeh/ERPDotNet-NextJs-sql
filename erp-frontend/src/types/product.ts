@@ -4,6 +4,7 @@ export interface Product {
   id: number;
   code: string;
   name: string;
+  latinName?: string;
   unitId: number;
   unitName: string;
   supplyTypeId: number;

@@ -24,6 +24,7 @@ public class GetProductByIdQueryHandler : IRequestHandler<GetProductByIdQuery, P
                 p.Id,
                 p.Code,
                 p.Name,
+                p.LatinName,
                 p.Descriptions, // <--- فیلد جدید
                 p.UnitId,
                 p.Unit != null ? p.Unit.Title : "",

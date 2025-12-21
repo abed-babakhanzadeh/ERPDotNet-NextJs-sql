@@ -73,6 +73,7 @@ export default function ProductsPage() {
       },
       { key: "code", label: "کد کالا", type: "string" },
       { key: "name", label: "نام کالا", type: "string" },
+      { key: "latinName", label: "نام لاتين کالا", type: "string" },
       { key: "unitName", label: "واحد", type: "string" },
       { key: "supplyType", label: "نوع تامین", type: "string" },
       {
