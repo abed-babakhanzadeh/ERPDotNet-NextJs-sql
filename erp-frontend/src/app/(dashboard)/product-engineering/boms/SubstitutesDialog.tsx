@@ -92,7 +92,7 @@ export default function SubstitutesDialog({
     () => [
       {
         key: "substituteProductId",
-        title: "کالا/قلمی جایگزین",
+        title: "کالا/قلم جایگزین",
         type: "select",
         width: "35%",
         required: true,

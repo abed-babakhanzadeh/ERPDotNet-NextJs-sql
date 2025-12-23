@@ -742,7 +742,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="space-y-2 col-span-1 md:col-span-2">
           <label className="text-sm font-medium flex gap-1">
-            کالا/قلم نهایی (Parent)
+            کالا/قلم (محصول يا نيمه ساخته)
           </label>
           <TableLookupCombobox<ProductLookupDto>
             value={headerData.productId}
