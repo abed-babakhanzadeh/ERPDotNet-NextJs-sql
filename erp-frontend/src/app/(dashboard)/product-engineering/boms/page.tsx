@@ -67,19 +67,6 @@ export default function BOMsListPage() {
   const columns: ColumnConfig[] = useMemo(
     () => [
       {
-        key: "productCode",
-        label: "کد کالا/قلم",
-        type: "string",
-        width: "10%",
-      },
-      {
-        key: "productName",
-        label: "نام کالا/قلم",
-        type: "string",
-        width: "20%",
-        render: (val) => <span className="font-medium text-sm">{val}</span>,
-      },
-      {
         key: "id",
         label: "شماره فرمول",
         type: "number",
@@ -98,6 +85,19 @@ export default function BOMsListPage() {
         render: (val) => (
           <span className="text-sm text-muted-foreground">{val || "-"}</span>
         ),
+      },
+      {
+        key: "productCode",
+        label: "کد کالا/قلم",
+        type: "string",
+        width: "10%",
+      },
+      {
+        key: "productName",
+        label: "نام کالا/قلم",
+        type: "string",
+        width: "20%",
+        render: (val) => <span className="font-medium text-sm">{val}</span>,
       },
       {
         key: "fromDate",

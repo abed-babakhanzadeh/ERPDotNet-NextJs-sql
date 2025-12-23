@@ -35,6 +35,7 @@ export default function CreateProductPage() {
   const [formData, setFormData] = useState<any>({
     code: "",
     name: "",
+    latinName: "",
     descriptions: "",
     unitId: null,
     supplyType: 1,
@@ -87,6 +88,12 @@ export default function CreateProductPage() {
         label: "نام کالا/قلم",
         type: "text",
         required: true,
+        colSpan: 2,
+      },
+      {
+        name: "name",
+        label: "نام لاتين کالا/قلم",
+        type: "text",
         colSpan: 2,
       },
       {

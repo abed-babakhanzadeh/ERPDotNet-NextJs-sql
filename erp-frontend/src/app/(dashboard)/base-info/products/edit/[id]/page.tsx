@@ -225,7 +225,6 @@ export default function ProductDetailsPage({ params }: PageProps) {
         name: "latinName",
         label: "نام لاتين کالا/قلم",
         type: "text",
-        required: true,
         colSpan: 2,
         disabled: !isEditing,
       },
