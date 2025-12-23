@@ -30,7 +30,6 @@ export default function ProductFormScreen() {
   const [saving, setSaving] = useState(false);
   const [units, setUnits] = useState<Unit[]>([]);
   
-  // Form State
   const [name, setName] = useState('');
   const [latinName, setLatinName] = useState('');
   const [code, setCode] = useState('');
@@ -43,7 +42,6 @@ export default function ProductFormScreen() {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [serverImagePath, setServerImagePath] = useState<string | null>(null);
 
-  // Modals
   const [unitModalVisible, setUnitModalVisible] = useState(false);
   const [currentConversionIndex, setCurrentConversionIndex] = useState<number | null>(null);
 
@@ -126,10 +124,9 @@ export default function ProductFormScreen() {
     }
 
     try {
-      // استفاده از رشته ساده برای جلوگیری از خطای تایپ
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: 'images', 
-        allowsEditing: true,
+        mediaTypes: 'images',
+        allowsEditing: true, // <--- این را true کردیم (با تنظیمات app.json رنگش درست میشود)
         aspect: [1, 1],
         quality: 0.7,
       });
@@ -211,7 +208,6 @@ export default function ProductFormScreen() {
 
   const addConversion = () => {
     setConversions([...conversions, { id: 0, alternativeUnitId: '', factor: '' }]);
-    // اسکرول به پایین با کمی تاخیر تا کیبورد و رندر انجام شود
     setTimeout(() => {
         scrollViewRef.current?.scrollToEnd({ animated: true });
     }, 300);
@@ -227,7 +223,6 @@ export default function ProductFormScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      {/* هدر ثابت در بالا */}
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
           <TouchableOpacity onPress={() => router.back()}>
               <Ionicons name="arrow-back" size={24} color={COLORS.text} />
@@ -236,15 +231,10 @@ export default function ProductFormScreen() {
           <View style={{width: 24}} /> 
       </View>
 
-      {/* کانتینر اصلی: KeyboardAvoidingView 
-         این باعث می‌شود وقتی کیبورد می‌آید بالا، فوتر هم با آن بالا بیاید
-         و محتوای اسکرول ویو جمع شود تا کاربر بتواند اسکرول کند.
-      */}
       <KeyboardAvoidingView 
         style={{ flex: 1 }} 
         behavior={Platform.OS === "ios" ? "padding" : "height"} 
-        // آفست برای هدر در نظر گرفته می‌شود
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0} 
+        keyboardVerticalOffset={0} 
       >
         <ScrollView 
           ref={scrollViewRef}
@@ -354,7 +344,6 @@ export default function ProductFormScreen() {
           </View>
         </ScrollView>
 
-        {/* دکمه‌های فوتر - داخل KeyboardAvoidingView هستند */}
         <View style={[styles.footer, { paddingBottom: insets.bottom > 0 ? insets.bottom + 10 : 20 }]}>
             <TouchableOpacity 
                 style={[styles.cancelButton, saving && {opacity: 0.5}]} 
@@ -380,7 +369,6 @@ export default function ProductFormScreen() {
         </View>
       </KeyboardAvoidingView>
 
-      {/* Modal */}
       <Modal visible={unitModalVisible} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -426,10 +414,7 @@ const styles = StyleSheet.create({
       padding: 16, backgroundColor: COLORS.card, elevation: 3, borderBottomWidth: 1, borderBottomColor: '#f1f5f9'
   },
   headerTitle: { fontSize: 17, fontWeight: 'bold', color: COLORS.text },
-  
-  // فضای پایین اسکرول ویو باید زیاد باشد تا محتوا زیر دکمه‌ها نرود
-  container: { padding: 16, paddingBottom: 40 }, 
-  
+  container: { padding: 16, paddingBottom: 20 }, 
   section: { backgroundColor: COLORS.card, borderRadius: 16, padding: 16, marginBottom: 16, ...SHADOWS.small },
   sectionHeader: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   sectionTitle: { fontSize: 15, fontWeight: 'bold', color: COLORS.primary, textAlign: 'right' },
@@ -445,7 +430,6 @@ const styles = StyleSheet.create({
   },
   switchRow: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', marginTop: 5 },
   
-  // استایل فوتر
   footer: {
     backgroundColor: '#fff',
     borderTopWidth: 1,

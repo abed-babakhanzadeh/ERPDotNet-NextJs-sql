@@ -1,18 +1,31 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, ScrollView, StyleSheet, Image, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { 
+  View, Text, ScrollView, StyleSheet, Image, ActivityIndicator, 
+  TouchableOpacity, Modal, Alert, Dimensions, Platform 
+} from 'react-native';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+// FIX: استفاده از مسیر legacy برای جلوگیری از ارور
+import * as FileSystem from 'expo-file-system/legacy';
+import * as MediaLibrary from 'expo-media-library';
+
 import apiClient from '../../services/apiClient';
 import { COLORS, SHADOWS } from '../../constants/theme';
 import { Product } from '../../types/product';
+
+const { width, height } = Dimensions.get('window');
 
 export default function ProductDetailsScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
+  const [imageModalVisible, setImageModalVisible] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   const BASE_URL = "http://192.168.0.241:5000";
 
@@ -34,6 +47,33 @@ export default function ProductDetailsScreen() {
     }, [id])
   );
 
+  const downloadImage = async () => {
+    if (!product?.imagePath) return;
+
+    setDownloading(true);
+    try {
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('مجوز لازم است', 'برای ذخیره عکس نیاز به دسترسی گالری داریم.');
+        return;
+      }
+
+      const imageUrl = `${BASE_URL}${product.imagePath}`;
+      const fileName = product.imagePath.split('/').pop() || 'product-image.jpg';
+      const fileUri = FileSystem.documentDirectory + fileName;
+
+      const downloadRes = await FileSystem.downloadAsync(imageUrl, fileUri);
+      await MediaLibrary.saveToLibraryAsync(downloadRes.uri);
+      
+      Alert.alert('موفق', 'تصویر با موفقیت در گالری ذخیره شد.');
+    } catch (error) {
+      console.error('Download error:', error);
+      Alert.alert('خطا', 'مشکلی در دانلود تصویر پیش آمد.');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   if (loading) return <View style={styles.center}><ActivityIndicator size="large" color={COLORS.primary}/></View>;
   if (!product) return <View style={styles.center}><Text>کالا یافت نشد</Text></View>;
 
@@ -49,29 +89,32 @@ export default function ProductDetailsScreen() {
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.imageContainer}>
-          <Image
-            source={product.imagePath ? { uri: `${BASE_URL}${product.imagePath}` } : require('../../../assets/images/icon.png')}
-            style={styles.image}
-            resizeMode="cover"
-          />
+          <TouchableOpacity onPress={() => product.imagePath && setImageModalVisible(true)} activeOpacity={0.9}>
+            <Image
+              source={product.imagePath ? { uri: `${BASE_URL}${product.imagePath}` } : require('../../../assets/images/icon.png')}
+              style={styles.image}
+              resizeMode="cover"
+            />
+            {product.imagePath && (
+                <View style={styles.zoomIcon}>
+                    <Ionicons name="expand" size={16} color="#fff" />
+                </View>
+            )}
+          </TouchableOpacity>
         </View>
 
         <View style={styles.card}>
           <Text style={styles.title}>{product.name}</Text>
           {product.latinName ? <Text style={styles.subtitle}>{product.latinName}</Text> : null}
-
           <View style={styles.divider} />
-
           <View style={styles.row}>
             <Text style={styles.value}>{product.code}</Text>
             <Text style={styles.label}>کد کالا:</Text>
           </View>
-
           <View style={styles.row}>
             <Text style={styles.value}>{product.unitName}</Text>
             <Text style={styles.label}>واحد سنجش:</Text>
           </View>
-
           <View style={styles.row}>
              <View style={[styles.badge, { backgroundColor: product.isActive ? '#dcfce7' : '#fee2e2' }]}>
                 <Text style={{ color: product.isActive ? '#166534' : '#991b1b', fontSize: 12 }}>
@@ -103,21 +146,55 @@ export default function ProductDetailsScreen() {
         )}
       </ScrollView>
 
-      {/* دکمه شناور ویرایش - اصلاح شده */}
       <TouchableOpacity 
         style={[
             styles.fab, 
-            { 
-                // تغییر مهم: تغییر ارتفاع پایه از 40 به 90 (دقیقاً مثل صفحه لیست کالاها)
-                // این باعث می‌شود دکمه بالاتر بیاید و زیر فوتر نرود
-                bottom: 90 + (insets.bottom > 0 ? insets.bottom : 0) 
-            }
+            { bottom: 90 + (insets.bottom > 0 ? insets.bottom : 0) }
         ]} 
         activeOpacity={0.7}
         onPress={() => router.push({ pathname: '/(dashboard)/product-form', params: { id: product.id } })}
       >
         <Ionicons name="pencil" size={32} color="#fff" />
       </TouchableOpacity>
+
+      <Modal 
+        visible={imageModalVisible} 
+        transparent={true} 
+        animationType="fade"
+        onRequestClose={() => setImageModalVisible(false)}
+      >
+        <View style={styles.modalBackground}>
+            <TouchableOpacity 
+                style={[styles.closeModalButton, { top: insets.top + 20 }]} 
+                onPress={() => setImageModalVisible(false)}
+            >
+                <Ionicons name="close" size={30} color="#fff" />
+            </TouchableOpacity>
+
+            <Image 
+                source={product?.imagePath ? { uri: `${BASE_URL}${product.imagePath}` } : require('../../../assets/images/icon.png')}
+                style={styles.fullScreenImage}
+                resizeMode="contain"
+            />
+
+            {product?.imagePath && (
+                <TouchableOpacity 
+                    style={[styles.downloadButton, { bottom: insets.bottom + 40 }]} 
+                    onPress={downloadImage}
+                    disabled={downloading}
+                >
+                    {downloading ? (
+                        <ActivityIndicator color="#000" />
+                    ) : (
+                        <>
+                            <Ionicons name="download-outline" size={24} color="#000" />
+                            <Text style={styles.downloadText}>دانلود تصویر</Text>
+                        </>
+                    )}
+                </TouchableOpacity>
+            )}
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -130,9 +207,10 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 18, fontWeight: 'bold', color: COLORS.text },
   backButton: { padding: 5 },
-  content: { padding: 16, paddingBottom: 160 }, // فضای پایین زیاد شد
+  content: { padding: 16, paddingBottom: 160 },
   imageContainer: { alignItems: 'center', marginBottom: 20 },
   image: { width: 120, height: 120, borderRadius: 20, backgroundColor: '#fff', borderWidth: 1, borderColor: '#eee' },
+  zoomIcon: { position: 'absolute', bottom: 5, right: 5, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 10, padding: 4 },
   card: { backgroundColor: COLORS.card, borderRadius: 16, padding: 20, marginBottom: 16, ...SHADOWS.small },
   title: { fontSize: 20, fontWeight: 'bold', color: COLORS.text, textAlign: 'center', marginBottom: 5 },
   subtitle: { fontSize: 14, color: COLORS.textLight, textAlign: 'center', marginBottom: 15 },
@@ -158,5 +236,20 @@ const styles = StyleSheet.create({
     alignItems: 'center', 
     elevation: 5,
     zIndex: 100
-  }
+  },
+
+  modalBackground: { flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' },
+  fullScreenImage: { width: width, height: height * 0.7 },
+  closeModalButton: { position: 'absolute', right: 20, zIndex: 10, padding: 10 },
+  downloadButton: {
+      position: 'absolute', 
+      flexDirection: 'row-reverse',
+      alignItems: 'center', 
+      backgroundColor: '#fff', 
+      paddingHorizontal: 20, 
+      paddingVertical: 12, 
+      borderRadius: 30,
+      gap: 8
+  },
+  downloadText: { fontWeight: 'bold', color: '#000' }
 });
