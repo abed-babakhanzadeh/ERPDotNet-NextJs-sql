@@ -1,22 +1,15 @@
-import React, { useEffect } from 'react';
+import React from 'react'; // useEffect و NavigationBar دیگر نیاز نیستند
 import { Tabs, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Platform, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as NavigationBar from 'expo-navigation-bar';
 import { COLORS } from '../../constants/theme';
 
 export default function DashboardLayout() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
-  useEffect(() => {
-    if (Platform.OS === 'android') {
-      NavigationBar.setVisibilityAsync('hidden');
-      NavigationBar.setBehaviorAsync('overlay-swipe');
-      NavigationBar.setBackgroundColorAsync('#ffffff00');
-    }
-  }, []);
+  // آن کد useEffect که نوار را مخفی می‌کرد را کلاً پاک کردم
 
   const CustomBackButton = () => (
     <TouchableOpacity 
@@ -41,7 +34,10 @@ export default function DashboardLayout() {
           backgroundColor: COLORS.card,
           borderTopWidth: 0,
           elevation: 10, 
-          height: 65 + (insets.bottom > 0 ? insets.bottom : 10), 
+          // --- فرمول داینامیک برای ارتفاع ---
+          // اگر دکمه‌های گوشی باشند، insets.bottom مقدار دارد و ارتفاع زیاد می‌شود
+          // اگر نباشند، مقدارش ۰ است و ارتفاع عادی می‌ماند
+          height: 60 + (insets.bottom > 0 ? insets.bottom : 10), 
           paddingBottom: insets.bottom > 0 ? insets.bottom : 10,
           paddingTop: 10,
         },
@@ -74,35 +70,12 @@ export default function DashboardLayout() {
         }} 
       />
 
-      {/* --- صفحات مخفی (بدون دکمه در فوتر) --- */}
+      {/* صفحات مخفی */}
+      <Tabs.Screen name="product-form" options={{ href: null, tabBarStyle: { display: 'none' }, headerShown: false }} />
+      <Tabs.Screen name="product-details" options={{ href: null, headerShown: false }} />
+      <Tabs.Screen name="submenu" options={{ href: null, headerShown: true, headerTitle: 'منو', headerLeft: () => <CustomBackButton /> }} />
       
-      <Tabs.Screen 
-        name="product-form" 
-        options={{ 
-          href: null, // این خط دکمه را از نوار پایین حذف می‌کند
-          tabBarStyle: { display: 'none' }, // وقتی در فرم هستیم، کل نوار پایین مخفی شود
-          headerShown: false
-        }} 
-      />
-
-      <Tabs.Screen 
-        name="product-details" 
-        options={{ 
-          href: null,
-          headerShown: false
-        }} 
-      />
-
-      <Tabs.Screen 
-        name="submenu" 
-        options={{ 
-          href: null,
-          headerShown: true,
-          headerTitle: 'منو',
-          headerLeft: () => <CustomBackButton />,
-        }} 
-      />
-
+      {/* سایر صفحات */}
       <Tabs.Screen name="features/users" options={{ href: null }} />
       <Tabs.Screen name="features/roles" options={{ href: null }} />
       <Tabs.Screen name="features/units" options={{ href: null }} />

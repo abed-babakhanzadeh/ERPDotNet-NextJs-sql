@@ -126,7 +126,7 @@ export default function ProductFormScreen() {
     }
 
     try {
-      // FIX: استفاده از رشته 'images' به جای Enum که باعث خطا می‌شد
+      // استفاده از رشته ساده برای جلوگیری از خطای تایپ
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: 'images', 
         allowsEditing: true,
@@ -211,7 +211,7 @@ export default function ProductFormScreen() {
 
   const addConversion = () => {
     setConversions([...conversions, { id: 0, alternativeUnitId: '', factor: '' }]);
-    // با کمی تاخیر اسکرول کن تا فیلد جدید دیده شود
+    // اسکرول به پایین با کمی تاخیر تا کیبورد و رندر انجام شود
     setTimeout(() => {
         scrollViewRef.current?.scrollToEnd({ animated: true });
     }, 300);
@@ -227,7 +227,7 @@ export default function ProductFormScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      {/* Header - Outside KeyboardAvoidingView to stay fixed at top */}
+      {/* هدر ثابت در بالا */}
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
           <TouchableOpacity onPress={() => router.back()}>
               <Ionicons name="arrow-back" size={24} color={COLORS.text} />
@@ -236,11 +236,15 @@ export default function ProductFormScreen() {
           <View style={{width: 24}} /> 
       </View>
 
-      {/* Main Content & Footer inside KeyboardAvoidingView */}
+      {/* کانتینر اصلی: KeyboardAvoidingView 
+         این باعث می‌شود وقتی کیبورد می‌آید بالا، فوتر هم با آن بالا بیاید
+         و محتوای اسکرول ویو جمع شود تا کاربر بتواند اسکرول کند.
+      */}
       <KeyboardAvoidingView 
         style={{ flex: 1 }} 
         behavior={Platform.OS === "ios" ? "padding" : "height"} 
-        keyboardVerticalOffset={0} // چون هدر خارج است، آفست نیاز نیست
+        // آفست برای هدر در نظر گرفته می‌شود
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0} 
       >
         <ScrollView 
           ref={scrollViewRef}
@@ -350,8 +354,8 @@ export default function ProductFormScreen() {
           </View>
         </ScrollView>
 
-        {/* Footer Buttons - Inside KeyboardAvoidingView to move up with keyboard */}
-        <View style={[styles.footer, { paddingBottom: insets.bottom > 0 ? insets.bottom : 16 }]}>
+        {/* دکمه‌های فوتر - داخل KeyboardAvoidingView هستند */}
+        <View style={[styles.footer, { paddingBottom: insets.bottom > 0 ? insets.bottom + 10 : 20 }]}>
             <TouchableOpacity 
                 style={[styles.cancelButton, saving && {opacity: 0.5}]} 
                 onPress={() => router.back()}
@@ -422,8 +426,10 @@ const styles = StyleSheet.create({
       padding: 16, backgroundColor: COLORS.card, elevation: 3, borderBottomWidth: 1, borderBottomColor: '#f1f5f9'
   },
   headerTitle: { fontSize: 17, fontWeight: 'bold', color: COLORS.text },
-  // فضای پایین کمتر شده چون دکمه‌ها داخل کیبورد-ویو هستند
-  container: { padding: 16, paddingBottom: 20 }, 
+  
+  // فضای پایین اسکرول ویو باید زیاد باشد تا محتوا زیر دکمه‌ها نرود
+  container: { padding: 16, paddingBottom: 40 }, 
+  
   section: { backgroundColor: COLORS.card, borderRadius: 16, padding: 16, marginBottom: 16, ...SHADOWS.small },
   sectionHeader: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   sectionTitle: { fontSize: 15, fontWeight: 'bold', color: COLORS.primary, textAlign: 'right' },
@@ -439,13 +445,13 @@ const styles = StyleSheet.create({
   },
   switchRow: { flexDirection: 'row-reverse', justifyContent: 'space-between', alignItems: 'center', marginTop: 5 },
   
-  // استایل فوتر ثابت در پایین
+  // استایل فوتر
   footer: {
     backgroundColor: '#fff',
     borderTopWidth: 1,
     borderTopColor: '#f1f5f9',
     padding: 16,
-    flexDirection: 'row-reverse', // راست چین
+    flexDirection: 'row-reverse',
     alignItems: 'center',
     elevation: 10,
     shadowColor: "#000",
@@ -459,7 +465,7 @@ const styles = StyleSheet.create({
       height: 50,
       alignItems: 'center', 
       justifyContent: 'center',
-      flex: 3, // نسبت ۳ (بزرگتر)
+      flex: 3, 
   },
   saveButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   cancelButton: {
@@ -468,7 +474,7 @@ const styles = StyleSheet.create({
     height: 50,
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 1, // نسبت ۱ (کوچکتر)
+    flex: 1, 
     borderWidth: 1,
     borderColor: '#ef4444'
   },

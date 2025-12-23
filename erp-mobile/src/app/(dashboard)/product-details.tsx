@@ -103,9 +103,16 @@ export default function ProductDetailsScreen() {
         )}
       </ScrollView>
 
-      {/* دکمه شناور ویرایش - استایل دقیقاً مشابه صفحه لیست کالا */}
+      {/* دکمه شناور ویرایش - اصلاح شده */}
       <TouchableOpacity 
-        style={styles.fab} 
+        style={[
+            styles.fab, 
+            { 
+                // تغییر مهم: تغییر ارتفاع پایه از 40 به 90 (دقیقاً مثل صفحه لیست کالاها)
+                // این باعث می‌شود دکمه بالاتر بیاید و زیر فوتر نرود
+                bottom: 90 + (insets.bottom > 0 ? insets.bottom : 0) 
+            }
+        ]} 
         activeOpacity={0.7}
         onPress={() => router.push({ pathname: '/(dashboard)/product-form', params: { id: product.id } })}
       >
@@ -123,7 +130,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 18, fontWeight: 'bold', color: COLORS.text },
   backButton: { padding: 5 },
-  content: { padding: 16, paddingBottom: 120 },
+  content: { padding: 16, paddingBottom: 160 }, // فضای پایین زیاد شد
   imageContainer: { alignItems: 'center', marginBottom: 20 },
   image: { width: 120, height: 120, borderRadius: 20, backgroundColor: '#fff', borderWidth: 1, borderColor: '#eee' },
   card: { backgroundColor: COLORS.card, borderRadius: 16, padding: 20, marginBottom: 16, ...SHADOWS.small },
@@ -139,10 +146,8 @@ const styles = StyleSheet.create({
   convRow: { padding: 10, backgroundColor: '#f8fafc', borderRadius: 8, marginBottom: 5 },
   convText: { fontSize: 14, color: '#334155', textAlign: 'center' },
   
-  // دکمه شناور ویرایش (کپی شده از products.tsx)
   fab: {
     position: 'absolute', 
-    bottom: 90, // این عدد را دقیقا مثل صفحه لیست کالاها گذاشتم
     left: 20, 
     width: 56, 
     height: 56, 

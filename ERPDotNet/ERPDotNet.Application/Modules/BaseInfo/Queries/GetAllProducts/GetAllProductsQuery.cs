@@ -72,7 +72,8 @@ public class GetAllProductsHandler : IRequestHandler<GetAllProductsQuery, Pagina
             query = query.Where(p =>
                 p.Name.ToLower().Contains(searchLower) ||
                 p.Code.ToLower().Contains(searchLower) ||
-                (p.Descriptions != null && p.Descriptions.ToLower().Contains(searchLower))); // جستجو در توضیحات
+                (p.LatinName != null && p.LatinName.ToLower().Contains(searchLower)));
+                // (p.Descriptions != null && p.Descriptions.ToLower().Contains(searchLower))); // جستجو در توضیحات
         }
 
         // سورت
