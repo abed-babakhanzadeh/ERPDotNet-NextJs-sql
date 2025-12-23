@@ -32,17 +32,14 @@ builder.Services.AddOpenApi("v1", options =>
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowPublicIP",
-        b => b.WithOrigins(
-                "http://94.182.39.201:3000",
-                "http://localhost:3000",
-                "http://192.168.0.241:3000",
-                "http://192.168.0.190:3000",
-                "http://192.168.1.3:3000"
-             )
+    // نکته مهم برای موبایل:
+    // در حالت توسعه، بهتر است اجازه دسترسی از همه جا را بدهیم تا
+    // موبایل با IPهای مختلف بتواند متصل شود.
+    // در پروداکشن می‌توانید این را محدود کنید.
+    options.AddPolicy("AllowAll",
+        b => b.AllowAnyOrigin()
               .AllowAnyMethod()
-              .AllowAnyHeader()
-              .AllowCredentials());
+              .AllowAnyHeader());
 });
 
 var app = builder.Build();
@@ -74,7 +71,9 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 }
 
-app.UseCors("AllowPublicIP");
+// برای موبایل از پالیسی آزادتر استفاده می‌کنیم تا خطای Network Error نگیریم
+app.UseCors("AllowAll");
+
 app.UseAuthentication();
 app.UseStaticFiles();
 app.UseAuthorization();

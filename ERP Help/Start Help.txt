@@ -21,7 +21,12 @@ dotnet ef migrations add AddWhereUsedFunction --project ERPDotNet.Infrastructure
 cd erp-frontend
 npm run dev
 npm install
+---------------------------------------------------
+cd erp-mobile
 
+
+npx expo start --clear 
+npx expo start --tunnel
 =========================================================================================
 این کوئری را نباید روی خود ERP_DB اجرا کنید! باید روی دیتابیس پیش‌فرض (مثل postgres) کلیک راست کنید و Query Tool را باز کنید و آنجا اجرا کنید.
 

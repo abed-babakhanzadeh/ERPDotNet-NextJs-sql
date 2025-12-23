@@ -1,0 +1,118 @@
+import React, { useEffect } from 'react';
+import { Tabs, usePathname, useSegments } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as NavigationBar from 'expo-navigation-bar';
+import { COLORS } from '../../constants/theme';
+
+export default function DashboardLayout() {
+  const insets = useSafeAreaInsets();
+  const pathname = usePathname();
+  const segments = useSegments();
+
+  // --- LOGGING SYSTEM START ---
+  useEffect(() => {
+    console.log('📍 [NAVIGATION CHANGED]');
+    console.log('   👉 Current Path:', pathname);
+    console.log('   👉 Segments:', JSON.stringify(segments));
+  }, [pathname]);
+  // --- LOGGING SYSTEM END ---
+
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      NavigationBar.setVisibilityAsync('hidden');
+      NavigationBar.setBehaviorAsync('overlay-swipe');
+      NavigationBar.setBackgroundColorAsync('#ffffff00');
+    }
+  }, []);
+
+  return (
+    <Tabs 
+      backBehavior="history"
+      screenOptions={{ 
+        headerShown: false, 
+        tabBarActiveTintColor: COLORS.primary,
+        tabBarInactiveTintColor: COLORS.textLight,
+        tabBarLabelStyle: { fontSize: 12, fontWeight: '600', marginBottom: 4 },
+        tabBarStyle: { 
+          direction: 'rtl',
+          position: 'absolute', 
+          backgroundColor: COLORS.card,
+          borderTopWidth: 0,
+          elevation: 10, 
+          height: 65 + (insets.bottom > 0 ? insets.bottom : 10), 
+          paddingBottom: insets.bottom > 0 ? insets.bottom : 10,
+          paddingTop: 10,
+        },
+      }}
+    >
+      <Tabs.Screen 
+        name="home" 
+        options={{ 
+          title: 'پیشخوان',
+          tabBarLabel: 'خانه',
+          tabBarIcon: ({ color }: { color: string }) => <Ionicons name="home-outline" size={24} color={color} />,
+        }}
+        listeners={{
+          tabPress: () => console.log('🟢 [TAB] Home Pressed'),
+          focus: () => console.log('👁️ [TAB] Home Focused'),
+        }} 
+      />
+
+      <Tabs.Screen 
+        name="submenu" 
+        options={{ 
+          href: null,
+          unmountOnBlur: true, // فعلا این را نگه میداریم چون استاندارد است
+        } as any}
+        listeners={{
+          tabPress: () => console.log('🟢 [TAB] Submenu Pressed'),
+          focus: () => console.log('👁️ [TAB] Submenu Focused'),
+          blur: () => console.log('zzz [TAB] Submenu Blurred (Unmounting...)'),
+        }}
+      />
+      
+      <Tabs.Screen 
+        name="features" 
+        options={{ 
+          href: null,
+          unmountOnBlur: true,
+        } as any} 
+        listeners={{
+          tabPress: () => console.log('🟢 [TAB] Features Pressed'),
+          focus: () => console.log('👁️ [TAB] Features Focused - Stack should be active'),
+          blur: () => console.log('zzz [TAB] Features Blurred (Should Reset)'),
+        }}
+      />
+
+      <Tabs.Screen 
+        name="products" 
+        options={{ 
+          title: 'مدیریت کالاها',
+          tabBarLabel: 'کالاها',
+          tabBarIcon: ({ color }: { color: string }) => <Ionicons name="cube-outline" size={24} color={color} />,
+          unmountOnBlur: true,
+        } as any} 
+        listeners={{
+          tabPress: () => console.log('🟢 [TAB] Products Pressed'),
+          focus: () => console.log('👁️ [TAB] Products Focused'),
+        }}
+      />
+      
+       <Tabs.Screen 
+        name="settings" 
+        options={{ 
+          title: 'تنظیمات',
+          tabBarLabel: 'تنظیمات',
+          tabBarIcon: ({ color }: { color: string }) => <Ionicons name="settings-outline" size={24} color={color} />,
+          unmountOnBlur: true,
+        } as any}
+        listeners={{
+          tabPress: () => console.log('🟢 [TAB] Settings Pressed'),
+          focus: () => console.log('👁️ [TAB] Settings Focused'),
+        }} 
+      />
+    </Tabs>
+  );
+}
