@@ -12,6 +12,7 @@ import { useServerDataTable } from "@/hooks/useServerDataTable";
 import { useTabs } from "@/providers/TabsProvider";
 import { useTabPrefetch } from "@/hooks/useTabPrefetch";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
@@ -79,7 +80,7 @@ export default function ProductsPage() {
       {
         // اصلاح مهم: حتماً با حرف کوچک بنویسید
         key: "descriptions",
-        label: "مشخصات",
+        label: "توضيحات",
         type: "string",
         render: (value) => (
           <span
@@ -105,6 +106,18 @@ export default function ProductsPage() {
             <span className="text-muted-foreground text-[10px]">-</span>
           );
         },
+      },
+
+      {
+        key: "isActive",
+        label: "وضعیت",
+        type: "boolean",
+        render: (val) =>
+          val ? (
+            <Badge className="bg-emerald-500 hover:bg-emerald-600">فعال</Badge>
+          ) : (
+            <Badge variant="destructive">غیرفعال</Badge>
+          ),
       },
     ],
     []

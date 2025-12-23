@@ -32,6 +32,7 @@ public class GetProductByIdQueryHandler : IRequestHandler<GetProductByIdQuery, P
                 p.SupplyType.ToDisplay(),
                 p.ImagePath,
                 p.RowVersion ?? new byte[0], // <--- ارسال RowVersion برای ادیت
+                p.IsActive,
                 p.UnitConversions.Select(c => new ProductConversionDto(
                     c.Id,
                     c.AlternativeUnitId,

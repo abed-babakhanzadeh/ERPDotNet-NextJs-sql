@@ -21,6 +21,7 @@ public record ProductDto(
     string SupplyType,
     string? ImagePath,
     byte[] RowVersion,
+    bool IsActive,
     List<ProductConversionDto> Conversions
 );
 
@@ -107,6 +108,7 @@ public class GetAllProductsHandler : IRequestHandler<GetAllProductsQuery, Pagina
             p.SupplyType.ToDisplay(),
             p.ImagePath,
             p.RowVersion ?? new byte[0], 
+            p.IsActive,
             p.UnitConversions.Select(c => new ProductConversionDto(
                 c.Id,
                 c.AlternativeUnitId,
