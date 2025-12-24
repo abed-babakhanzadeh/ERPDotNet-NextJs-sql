@@ -326,8 +326,3 @@ export default function CreateProductPage() {
     </BaseFormLayout>
   );
 }
-// نکته مهم: آن تابع ساختگی که احتمالا در پایین فایل ایجاد شده را پاک کنید:
-/* function setLoadingLookups(arg0: boolean) {
-  throw new Error("Function not implemented.");
-}
-*/
