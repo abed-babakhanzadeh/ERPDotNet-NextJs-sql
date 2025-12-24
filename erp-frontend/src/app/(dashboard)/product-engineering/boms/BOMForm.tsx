@@ -42,6 +42,7 @@ import SubstitutesDialog, { SubstituteRow } from "./SubstitutesDialog";
 // Hooks & Providers
 import { usePermissions } from "@/providers/PermissionProvider";
 import { useTabs } from "@/providers/TabsProvider";
+import { useFormPersist } from "@/hooks/useFormPersist";
 
 // Types
 type FormMode = "create" | "edit" | "view";
@@ -140,6 +141,9 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
     ProductLookupDto[]
   >([]);
   const [gridLoading, setGridLoading] = useState(false);
+  // کلید اختصاصی برای ذخیره موقت این فرم
+  // اگر در حال ایجاد هستیم یک کلید ثابت و اگر ویرایش، کلید بر اساس ID
+  const persistKey = `temp-bom-${mode}-${bomId || "new"}`;
 
   useEffect(() => {
     if ((mode === "edit" || mode === "view") && bomId) {
@@ -631,6 +635,22 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
     return new Date().toISOString().split("T")[0];
   };
 
+  // ۱. اضافه کردن قابلیت ذخیره خودکار برای هدر
+  useFormPersist(
+    `${persistKey}-header`,
+    headerData,
+    setHeaderData,
+    mode !== "view" // در حالت مشاهده ذخیره نکند
+  );
+
+  // ۲. اضافه کردن قابلیت ذخیره خودکار برای جزئیات (Grid)
+  const { clearStorage: clearDetailsStorage } = useFormPersist(
+    `${persistKey}-details`,
+    details,
+    setDetails,
+    mode !== "view"
+  );
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isReadOnly) return;
@@ -695,8 +715,6 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
         payload.id = Number(bomId);
       }
 
-      // console.log("PAYLOAD SENT TO SERVER:", JSON.stringify(payload, null, 2));
-
       if (mode === "create") {
         payload.productId = Number(headerData.productId);
         await apiClient.post("/ProductEngineering/BOMs", payload);
@@ -705,6 +723,11 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
         await apiClient.put(`/ProductEngineering/BOMs/${bomId}`, payload);
         toast.success("تغییرات با موفقیت ذخیره شد");
       }
+
+      // --- بخش مهم برای سیستم ERP شما: پاکسازی کش پس از ثبت موفق ---
+      // این کار باعث می‌شود اگر کاربر دوباره صفحه ساخت را باز کرد، فرم خالی باشد
+      localStorage.removeItem(`${persistKey}-header`);
+      localStorage.removeItem(`${persistKey}-details`);
 
       safeCloseTab();
     } catch (error: any) {
