@@ -7,36 +7,34 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ERPDotNet.Application.Modules.ProductEngineering.Commands.CreateBOM;
 
-// باطل کردن کش لیست BOMها
-[CacheInvalidation("BOMs")] 
+[CacheInvalidation("BOMs", "BOMTree")]
 public record CreateBOMCommand : IRequest<int>
 {
-    public required int ProductId { get; set; }
     public required string Title { get; set; }
-    public string Version { get; set; } = "1.0"; 
-    public BOMType Type { get; set; } = BOMType.Manufacturing;
-    public DateTime FromDate { get; set; } = DateTime.UtcNow;
+    public required string Version { get; set; }
+    public required int ProductId { get; set; }
+    public int Type { get; set; } // از فرانت int می‌آید
+    public DateTime FromDate { get; set; }
     public DateTime? ToDate { get; set; }
-    public bool IsActive { get; set; } = true;
-
-    public List<BOMDetailInputDto> Details { get; set; } = new();
+    public bool IsActive { get; set; }
+    public List<BOMDetailInput> Details { get; set; } = new();
 }
 
-public record BOMDetailInputDto
+public class BOMDetailInput
 {
-    public required int ChildProductId { get; set; }
+    public int ChildProductId { get; set; }
     public decimal Quantity { get; set; }
-    public decimal InputQuantity { get; set; }
-    public int InputUnitId { get; set; }
+    public decimal InputQuantity { get; set; } // ورودی کاربر
+    public int InputUnitId { get; set; }       // واحد انتخابی کاربر
     public decimal WastePercentage { get; set; }
-    public List<BOMSubstituteInputDto> Substitutes { get; set; } = new();
+    public List<BOMSubstituteInput>? Substitutes { get; set; }
 }
 
-public record BOMSubstituteInputDto
+public class BOMSubstituteInput
 {
-    public required int SubstituteProductId { get; set; }
-    public int Priority { get; set; }
-    public decimal Factor { get; set; }
+    public int SubstituteProductId { get; set; }
+    public decimal Factor { get; set; } = 1;
+    public int Priority { get; set; } = 1;
     public bool IsMixAllowed { get; set; }
     public decimal MaxMixPercentage { get; set; }
     public string? Note { get; set; }
@@ -50,31 +48,43 @@ public class CreateBOMValidator : AbstractValidator<CreateBOMCommand>
     {
         _context = context;
 
-        RuleFor(v => v.ToDate)
-            .GreaterThan(v => v.FromDate)
-            .When(v => v.ToDate.HasValue)
-            .WithMessage("تاریخ پایان باید بعد از تاریخ شروع باشد.");
-
-        RuleFor(v => v.ProductId).GreaterThan(0);
-        RuleFor(v => v.Title).NotEmpty().MaximumLength(100);
-        RuleFor(v => v.Version).NotEmpty().MaximumLength(20);
-        
-        RuleFor(v => v)
-            .MustAsync(BeUniqueVersion).WithMessage("این نسخه BOM برای این کالا قبلاً ثبت شده است.");
-
-        RuleForEach(v => v.Details).ChildRules(d => {
-            d.RuleFor(x => x.ChildProductId).GreaterThan(0);
-            d.RuleFor(x => x.Quantity).GreaterThan(0);
+        RuleFor(v => v.Title).NotEmpty().WithMessage("عنوان فرمول الزامی است.")
+            .MaximumLength(100);
             
-            // *** اصلاح مهم: خط باگ‌دار حذف شد ***
-            // چک کردن اینکه فرزند != پدر باشد را در هندلر انجام می‌دهیم
-        });
-    }
+        RuleFor(v => v.Version).NotEmpty().WithMessage("نسخه فرمول الزامی است.")
+            .MaximumLength(20);
+        
+        // 1. بررسی وجود محصول
+        RuleFor(v => v.ProductId)
+            .GreaterThan(0)
+            .MustAsync(async (id, token) => await _context.Products.AnyAsync(p => p.Id == id, token))
+            .WithMessage("محصول انتخاب شده معتبر نیست.");
 
-    private async Task<bool> BeUniqueVersion(CreateBOMCommand model, CancellationToken token)
-    {
-        return !await _context.BOMHeaders
-            .AnyAsync(x => x.ProductId == model.ProductId && x.Version == model.Version, token);
+        // 2. جلوگیری از BOM تکراری (همان محصول، همان ورژن)
+        RuleFor(v => v)
+            .MustAsync(async (model, token) => 
+            {
+                return !await _context.BOMHeaders
+                    .AnyAsync(b => b.ProductId == model.ProductId && b.Version == model.Version, token);
+            })
+            .WithMessage("برای این محصول قبلاً فرمولی با این شماره نسخه ثبت شده است.");
+
+        // اعتبارسنجی لیست اقلام
+        RuleForEach(v => v.Details).ChildRules(d => {
+            d.RuleFor(x => x.ChildProductId).GreaterThan(0).WithMessage("کالای سازنده (فرزند) انتخاب نشده است.");
+            d.RuleFor(x => x.Quantity).GreaterThan(0).WithMessage("مقدار مصرف باید بیشتر از صفر باشد.");
+            d.RuleFor(x => x.WastePercentage).GreaterThanOrEqualTo(0).LessThan(100).WithMessage("درصد ضایعات نامعتبر است.");
+        });
+
+        // 3. جلوگیری از اقلام تکراری در لیست
+        RuleFor(v => v.Details)
+            .Must(details => details.Select(d => d.ChildProductId).Distinct().Count() == details.Count)
+            .WithMessage("یک کالا نمی‌تواند چند بار در لیست اقلام تکرار شود.");
+
+        // 4. جلوگیری از چرخه ساده (فرزند نباید خود پدر باشد)
+        RuleFor(v => v)
+            .Must(model => !model.Details.Any(d => d.ChildProductId == model.ProductId))
+            .WithMessage("خطای چرخه: محصول نهایی نمی‌تواند به عنوان مواد اولیه خودش استفاده شود.");
     }
 }
 
@@ -89,42 +99,25 @@ public class CreateBOMHandler : IRequestHandler<CreateBOMCommand, int>
 
     public async Task<int> Handle(CreateBOMCommand request, CancellationToken cancellationToken)
     {
-        // 1. تبدیل تاریخ‌ها به UTC
-        var utcFromDate = request.FromDate.Kind == DateTimeKind.Utc 
-            ? request.FromDate 
-            : DateTime.SpecifyKind(request.FromDate, DateTimeKind.Utc);
-
-        DateTime? utcToDate = null;
-        if (request.ToDate.HasValue)
-        {
-            utcToDate = request.ToDate.Value.Kind == DateTimeKind.Utc
-                ? request.ToDate.Value
-                : DateTime.SpecifyKind(request.ToDate.Value, DateTimeKind.Utc);
-        }
-
         var bom = new BOMHeader
         {
-            ProductId = request.ProductId,
             Title = request.Title,
             Version = request.Version,
-            Type = request.Type,
-            FromDate = utcFromDate,
-            ToDate = utcToDate,
-            Status = BOMStatus.Active, 
+            ProductId = request.ProductId,
+            Type = (BOMType)request.Type, // تبدیل int به Enum
+            FromDate = request.FromDate,
+            ToDate = request.ToDate,
             IsActive = request.IsActive
         };
 
         foreach (var detailInput in request.Details)
         {
-            // جلوگیری از سیکل ساده (اینجا جایش درست است)
-            if (detailInput.ChildProductId == request.ProductId)
-            {
-                throw new Exception($"کالای {detailInput.ChildProductId} نمی‌تواند زیرمجموعه خودش باشد.");
-            }
-
             var detail = new BOMDetail
             {
-                BOMHeaderId = 0,
+                // *** نکته کلیدی: مقداردهی 0 برای راضی کردن required ***
+                // EF Core موقع ذخیره، خودش ID واقعی هدر را اینجا قرار می‌دهد
+                BOMHeaderId = 0, 
+                
                 ChildProductId = detailInput.ChildProductId,
                 Quantity = detailInput.Quantity,
                 InputQuantity = detailInput.InputQuantity,
@@ -132,18 +125,23 @@ public class CreateBOMHandler : IRequestHandler<CreateBOMCommand, int>
                 WastePercentage = detailInput.WastePercentage
             };
 
-            foreach (var subInput in detailInput.Substitutes)
+            if (detailInput.Substitutes != null && detailInput.Substitutes.Any())
             {
-                detail.Substitutes.Add(new BOMSubstitute
+                foreach (var sub in detailInput.Substitutes)
                 {
-                    BOMDetailId = 0,
-                    SubstituteProductId = subInput.SubstituteProductId,
-                    Priority = subInput.Priority,
-                    Factor = subInput.Factor,
-                    IsMixAllowed = subInput.IsMixAllowed,
-                    MaxMixPercentage = subInput.MaxMixPercentage,
-                    Note = subInput.Note
-                });
+                    detail.Substitutes.Add(new BOMSubstitute
+                    {
+                        // *** اینجا هم 0 می‌گذاریم ***
+                        BOMDetailId = 0,
+                        
+                        SubstituteProductId = sub.SubstituteProductId,
+                        Factor = sub.Factor,
+                        Priority = sub.Priority,
+                        IsMixAllowed = sub.IsMixAllowed,
+                        MaxMixPercentage = sub.MaxMixPercentage,
+                        Note = sub.Note
+                    });
+                }
             }
 
             bom.Details.Add(detail);

@@ -13,6 +13,20 @@ public record ChangeOwnPasswordCommand : IRequest<bool>
     public required string NewPassword { get; set; }
 }
 
+public class ChangeOwnPasswordValidator : AbstractValidator<ChangeOwnPasswordCommand>
+{
+    public ChangeOwnPasswordValidator()
+    {
+        RuleFor(v => v.CurrentPassword)
+            .NotEmpty().WithMessage("وارد کردن رمز عبور فعلی الزامی است.");
+
+        RuleFor(v => v.NewPassword)
+            .NotEmpty().WithMessage("وارد کردن رمز عبور جدید الزامی است.")
+            .MinimumLength(6).WithMessage("رمز عبور جدید باید حداقل ۶ کاراکتر باشد.")
+            .NotEqual(v => v.CurrentPassword).WithMessage("رمز عبور جدید نمی‌تواند با رمز عبور فعلی یکسان باشد.");
+    }
+}
+
 public class ChangeOwnPasswordHandler : IRequestHandler<ChangeOwnPasswordCommand, bool>
 {
     private readonly UserManager<User> _userManager;
@@ -32,9 +46,15 @@ public class ChangeOwnPasswordHandler : IRequestHandler<ChangeOwnPasswordCommand
 
         if (!result.Succeeded)
         {
-            // اگر رمز فعلی اشتباه باشد، Identity ارور PasswordMismatch می‌دهد
-            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-            throw new ValidationException($"خطا در تغییر رمز: {errors}");
+            // ترجمه خطاهای رایج Identity به فارسی
+            var errors = result.Errors.Select(e =>
+            {
+                if (e.Code == "PasswordMismatch") return "رمز عبور فعلی اشتباه است.";
+                if (e.Code == "PasswordTooShort") return "رمز عبور جدید خیلی کوتاه است.";
+                return e.Description;
+            });
+            
+            throw new ValidationException(string.Join(" | ", errors));
         }
 
         return true;

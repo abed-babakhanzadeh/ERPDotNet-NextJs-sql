@@ -2,16 +2,28 @@ using ERPDotNet.Application.Common.Attributes;
 using ERPDotNet.Domain.Modules.UserAccess.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
-using System.ComponentModel.DataAnnotations;
+using FluentValidation;
 
 namespace ERPDotNet.Application.Modules.UserAccess.Commands.ChangePassword;
 
-// این اتریبیوت اختیاری است، اما اگر لیست کاربران را کش می‌کنید، بهتر است کش را پاک کنید
+// پاک کردن کش کاربران (اگر لیست کاربران را جایی کش کرده‌اید)
 [CacheInvalidation("Users")] 
 public record ChangeUserPasswordCommand : IRequest<bool>
 {
-    public required string UserId { get; set; } // با توجه به IdentityUser، آی‌دی استرینگ است
+    public required string UserId { get; set; }
     public required string NewPassword { get; set; }
+}
+
+public class ChangeUserPasswordValidator : AbstractValidator<ChangeUserPasswordCommand>
+{
+    public ChangeUserPasswordValidator()
+    {
+        RuleFor(v => v.UserId).NotEmpty().WithMessage("شناسه کاربر نامعتبر است.");
+
+        RuleFor(v => v.NewPassword)
+            .NotEmpty().WithMessage("رمز عبور جدید الزامی است.")
+            .MinimumLength(6).WithMessage("رمز عبور باید حداقل ۶ کاراکتر باشد.");
+    }
 }
 
 public class ChangeUserPasswordHandler : IRequestHandler<ChangeUserPasswordCommand, bool>
@@ -46,7 +58,7 @@ public class ChangeUserPasswordHandler : IRequestHandler<ChangeUserPasswordComma
         }
 
         // آپدیت کردن SecurityStamp باعث می‌شود سشن‌های فعال کاربر (اگر لاگین باشد) نامعتبر شوند 
-        // و کاربر مجبور به لاگین مجدد شود (امنیت بیشتر)
+        // و کاربر مجبور شود دوباره لاگین کند (امنیتی)
         await _userManager.UpdateSecurityStampAsync(user);
 
         return true;

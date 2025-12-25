@@ -24,10 +24,31 @@ public class DeleteProductHandler : IRequestHandler<DeleteProductCommand, bool>
 
         if (entity == null) return false;
 
-        // Soft Delete
+        // === اعتبارسنجی وابستگی‌ها (Dependency Check) ===
+
+        // 1. آیا این کالا به عنوان "مواد اولیه" در فرمول ساخت (BOM) کالای دیگری استفاده شده؟
+        var isUsedInBOMs = await _context.BOMDetails
+            .AnyAsync(d => d.ChildProductId == request.Id && !d.BOMHeader.IsDeleted, cancellationToken);
+
+        if (isUsedInBOMs)
+        {
+            throw new Exception("این کالا در فرمول ساخت (BOM) سایر محصولات استفاده شده است و قابل حذف نیست.");
+        }
+
+        // 2. آیا این کالا خودش دارای فرمول ساخت فعال است؟
+        var hasBOM = await _context.BOMHeaders
+            .AnyAsync(h => h.ProductId == request.Id && !h.IsDeleted, cancellationToken);
+
+        if (hasBOM)
+        {
+            throw new Exception("برای این کالا فرمول ساخت (BOM) تعریف شده است. ابتدا باید BOM آن را حذف کنید.");
+        }
+
+        // 3. (اختیاری) چک کردن در سفارشات خرید/فروش اگر ماژولش را دارید
+        // ...
+
+        // انجام عملیات حذف (Soft Delete)
         entity.IsDeleted = true;
-        
-        // چون از Interceptor استفاده می‌کنیم، LastModified و کاربر ویرایش کننده خودکار پر می‌شود
         
         await _context.SaveChangesAsync(cancellationToken);
         return true;
