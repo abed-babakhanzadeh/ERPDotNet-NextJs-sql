@@ -1,9 +1,7 @@
 using ERPDotNet.Application.Common.Attributes;
-using ERPDotNet.Application.Common.Interfaces; // اضافه شده
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore; // اضافه شده
 using ERPDotNet.Domain.Modules.UserAccess.Entities;
 
 namespace ERPDotNet.Application.Modules.UserAccess.Commands.UpdateUser;
@@ -11,7 +9,7 @@ namespace ERPDotNet.Application.Modules.UserAccess.Commands.UpdateUser;
 [CacheInvalidation("Users")]
 public record UpdateUserCommand : IRequest<bool>
 {
-    public required string Id { get; set; }
+    public required string Id { get; set; } // GUID
     public required string FirstName { get; set; }
     public required string LastName { get; set; }
     public required string Email { get; set; }
@@ -19,49 +17,10 @@ public record UpdateUserCommand : IRequest<bool>
     public string? NationalCode { get; set; }
     public bool IsActive { get; set; }
     public List<string> Roles { get; set; } = new();
-    public string? ConcurrencyStamp { get; set; }
-}
 
-public class UpdateUserValidator : AbstractValidator<UpdateUserCommand>
-{
-    private readonly IApplicationDbContext _context;
-
-    public UpdateUserValidator(IApplicationDbContext context)
-    {
-        _context = context;
-
-        RuleFor(v => v.Id).NotEmpty();
-        RuleFor(v => v.FirstName).NotEmpty().MaximumLength(50);
-        RuleFor(v => v.LastName).NotEmpty().MaximumLength(50);
-        
-        // چک یکتایی ایمیل (غیر از خودش)
-        RuleFor(v => v.Email)
-            .NotEmpty().EmailAddress()
-            .MustAsync(async (model, email, token) => 
-            {
-                return !await _context.Users.AnyAsync(u => u.Email == email && u.Id != model.Id, token);
-            })
-            .WithMessage("این ایمیل قبلاً توسط کاربر دیگری استفاده شده است.");
-
-        // چک یکتایی کد پرسنلی (غیر از خودش)
-        RuleFor(v => v.PersonnelCode)
-            .MustAsync(async (model, code, token) =>
-            {
-                if (string.IsNullOrEmpty(code)) return true;
-                return !await _context.Users.AnyAsync(u => u.PersonnelCode == code && u.Id != model.Id, token);
-            })
-            .WithMessage("این کد پرسنلی متعلق به کاربر دیگری است.");
-
-        // چک یکتایی کد ملی (غیر از خودش)
-        RuleFor(v => v.NationalCode)
-            .Length(10).When(x => !string.IsNullOrEmpty(x.NationalCode))
-            .MustAsync(async (model, code, token) =>
-            {
-                if (string.IsNullOrEmpty(code)) return true;
-                return !await _context.Users.AnyAsync(u => u.NationalCode == code && u.Id != model.Id, token);
-            })
-            .WithMessage("این کد ملی متعلق به کاربر دیگری است.");
-    }
+    // === کنترل همروندی ===
+    // در Identity این فیلد string است (GUID) نه byte[]
+    public string? ConcurrencyStamp { get; set; } 
 }
 
 public class UpdateUserHandler : IRequestHandler<UpdateUserCommand, bool>
@@ -78,12 +37,13 @@ public class UpdateUserHandler : IRequestHandler<UpdateUserCommand, bool>
         var user = await _userManager.FindByIdAsync(request.Id);
         if (user == null) return false;
 
-        // چک همروندی
+        // 1. چک کردن همروندی
         if (request.ConcurrencyStamp != null && user.ConcurrencyStamp != request.ConcurrencyStamp)
         {
-            throw new Exception("اطلاعات کاربر توسط شخص دیگری تغییر یافته است. لطفاً صفحه را رفرش کنید.");
+            throw new Exception("اطلاعات کاربر توسط شخص دیگری تغییر یافته است. لطفاً رفرش کنید.");
         }
 
+        // 2. آپدیت فیلدها
         user.FirstName = request.FirstName;
         user.LastName = request.LastName;
         user.Email = request.Email;
@@ -91,13 +51,14 @@ public class UpdateUserHandler : IRequestHandler<UpdateUserCommand, bool>
         user.NationalCode = request.NationalCode;
         user.IsActive = request.IsActive;
 
+        // 3. ذخیره تغییرات (Identity خودش ConcurrencyStamp را آپدیت می‌کند)
         var result = await _userManager.UpdateAsync(user);
         if (!result.Succeeded)
         {
             throw new ValidationException(result.Errors.First().Description);
         }
 
-        // مدیریت نقش‌ها
+        // 4. مدیریت نقش‌ها (حذف قبلی‌ها و افزودن جدیدها)
         var currentRoles = await _userManager.GetRolesAsync(user);
         var rolesToAdd = request.Roles.Except(currentRoles).ToList();
         var rolesToRemove = currentRoles.Except(request.Roles).ToList();

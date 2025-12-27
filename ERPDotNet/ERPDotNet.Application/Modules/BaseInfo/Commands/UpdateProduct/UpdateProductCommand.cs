@@ -49,49 +49,20 @@ public class UpdateProductValidator : AbstractValidator<UpdateProductCommand>
 
         RuleFor(v => v.Id).GreaterThan(0);
 
-        // 1. چک کردن کد تکراری (برای رکوردهای دیگر)
-        RuleFor(v => v.Code)
-            .NotEmpty().WithMessage("کد کالا الزامی است.")
-            .MaximumLength(50)
-            // *** تغییر مهم: استفاده از Lambda برای پاس دادن مدل ***
-            .MustAsync((model, code, token) => BeUniqueCode(model, code, token))
-            .WithMessage("این کد کالا قبلاً برای محصول دیگری ثبت شده است.");
+        RuleFor(v => v.Code).NotEmpty().MaximumLength(50)
+            .MustAsync(BeUniqueCode).WithMessage("این کد کالا قبلاً برای محصول دیگری ثبت شده است.");
 
-        RuleFor(v => v.Name).NotEmpty().WithMessage("نام کالا الزامی است.").MaximumLength(200);
-        
-        // 2. چک کردن وجود واحد سنجش در دیتابیس
-        RuleFor(v => v.UnitId)
-            .GreaterThan(0).WithMessage("واحد سنجش را انتخاب کنید.")
-            .MustAsync(async (id, token) => await _context.Units.AnyAsync(u => u.Id == id, token))
-            .WithMessage("واحد سنجش انتخاب شده نامعتبر است.");
+        RuleFor(v => v.Name).NotEmpty().MaximumLength(200);
+        RuleFor(v => v.UnitId).GreaterThan(0);
 
-        // 3. اعتبارسنجی لیست تبدیل‌ها (مشابه Create)
+        // ولیدیشن برای لیست فرزندان
         RuleForEach(v => v.Conversions).ChildRules(c => {
-            c.RuleFor(x => x.AlternativeUnitId).GreaterThan(0).WithMessage("واحد فرعی نامعتبر است.");
-            c.RuleFor(x => x.Factor).GreaterThan(0).WithMessage("ضریب تبدیل باید بزرگتر از صفر باشد.");
+            c.RuleFor(x => x.AlternativeUnitId).GreaterThan(0);
+            c.RuleFor(x => x.Factor).GreaterThan(0);
         });
-
-        // جلوگیری از واحدهای تکراری در لیست تبدیل
-        RuleFor(x => x.Conversions)
-            .Must(conversions =>
-            {
-                if (conversions == null || !conversions.Any()) return true;
-                var distinctCount = conversions.Select(c => c.AlternativeUnitId).Distinct().Count();
-                return distinctCount == conversions.Count;
-            })
-            .WithMessage("در لیست تبدیل واحدها، نمی‌توانید یک واحد را چند بار تکرار کنید.");
-
-        // جلوگیری از تبدیل واحد به خودش (UnitId نباید در Conversions باشد)
-        RuleFor(x => x)
-            .Must(x =>
-            {
-                if (x.Conversions == null) return true;
-                return !x.Conversions.Any(c => c.AlternativeUnitId == x.UnitId);
-            })
-            .WithMessage("واحد اصلی کالا نمی‌تواند به عنوان واحد فرعی تعریف شود.");
     }
 
-    // متد چک کردن یکتایی با ۳ پارامتر
+    // چک کردن یکتایی کد (باید رکوردهای دیگر را چک کند، نه خودش را)
     private async Task<bool> BeUniqueCode(UpdateProductCommand model, string code, CancellationToken cancellationToken)
     {
         return !await _context.Products
@@ -117,27 +88,30 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, bool>
             .Include(p => p.UnitConversions)
             .FirstOrDefaultAsync(p => p.Id == request.Id, cancellationToken);
 
-        if (entity == null) return false; 
+        if (entity == null) return false; // یا پرتاب NotFoundException
 
         // === 2. کنترل همروندی (Optimistic Concurrency) ===
         if (request.RowVersion != null && request.RowVersion.Length > 0)
         {
+            // به EF می‌گوییم مقدار اورجینال دیتابیس باید این باشد
+            // اگر کسی در این فاصله دیتابیس را تغییر داده باشد، موقع Save خطا می‌خوریم
             _context.Entry(entity).Property(p => p.RowVersion).OriginalValue = request.RowVersion;
         }
 
         // === 3. مدیریت امن فایل (Safe File Handling) ===
         string? oldImagePath = null;
+        // اگر عکس تغییر کرده (چه جدید آمده، چه نال شده)
         if (request.ImagePath != entity.ImagePath)
         {
-            oldImagePath = entity.ImagePath; 
-            entity.ImagePath = request.ImagePath; 
+            oldImagePath = entity.ImagePath; // مسیر قدیمی را نگه دار
+            entity.ImagePath = request.ImagePath; // مسیر جدید را ست کن
         }
 
         // === 4. آپدیت فیلدهای ساده ===
         entity.Code = request.Code;
         entity.Name = request.Name;
         entity.LatinName = request.LatinName;
-        entity.Descriptions = request.Descriptions; 
+        entity.Descriptions = request.Descriptions; // <--- فیلد تغییر نام یافته
         entity.UnitId = request.UnitId;
         entity.SupplyType = request.SupplyType;
         entity.IsActive = request.IsActive;
@@ -145,6 +119,7 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, bool>
         // === 5. مدیریت هوشمند لیست فرزندان (Smart Sync) ===
         
         // الف) حذف موارد حذف شده:
+        // تبدیل‌هایی که در دیتابیس هستند اما در لیست ورودی نیستند
         var requestConversionIds = request.Conversions
             .Where(c => c.Id.HasValue && c.Id.Value > 0)
             .Select(c => c.Id!.Value)
@@ -156,6 +131,7 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, bool>
 
         foreach (var item in toDelete)
         {
+            // حذف از لیست (EF Core خودش Delete را صادر می‌کند)
             _context.ProductUnitConversions.Remove(item);
         }
 
@@ -190,14 +166,23 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, bool>
             // 6. ذخیره در دیتابیس
             await _context.SaveChangesAsync(cancellationToken);
 
-            // 7. پاک کردن تصویر قدیمی بعد از ذخیره موفق
+            // 7. حالا که ذخیره با موفقیت انجام شد، فایل قدیمی را پاک کن
             if (!string.IsNullOrEmpty(oldImagePath))
             {
-                try { _fileService.DeleteFile(oldImagePath); } catch { }
+                try 
+                { 
+                    _fileService.DeleteFile(oldImagePath); 
+                } 
+                catch 
+                { 
+                    // لاگ کردن خطا (چون نباید باعث شکست عملیات اصلی شود)
+                    // _logger.LogWarning("Failed to delete old image...");
+                }
             }
         }
         catch (DbUpdateConcurrencyException)
         {
+            // پرتاب خطا به سمت فرانت برای نمایش پیام مناسب
             throw new Exception("این رکورد توسط کاربر دیگری تغییر یافته است. لطفاً صفحه را رفرش کنید.");
         }
 

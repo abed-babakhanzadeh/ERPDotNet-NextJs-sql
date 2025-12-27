@@ -91,7 +91,7 @@ export default function CreateProductPage() {
         colSpan: 2,
       },
       {
-        name: "latinName",
+        name: "name",
         label: "نام لاتين کالا/قلم",
         type: "text",
         colSpan: 2,

@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ERPDotNet.Application.Modules.UserAccess.Commands.UpdateRolePermissions;
 
+// وقتی دسترسی یک نقش تغییر می‌کند، باید کش دسترسی‌ها پاک شود تا کاربران تغییرات را حس کنند
 [CacheInvalidation("RolePermissions", "UserPermissions")]
 public record UpdateRolePermissionsCommand : IRequest<bool>
 {
@@ -16,36 +17,15 @@ public record UpdateRolePermissionsCommand : IRequest<bool>
 
 public class UpdateRolePermissionsValidator : AbstractValidator<UpdateRolePermissionsCommand>
 {
-    private readonly IApplicationDbContext _context;
-
-    public UpdateRolePermissionsValidator(IApplicationDbContext context)
+    public UpdateRolePermissionsValidator()
     {
-        _context = context;
-
-        RuleFor(v => v.RoleId).NotEmpty()
-            .MustAsync(async (id, token) => await _context.Roles.AnyAsync(r => r.Id == id, token))
-            .WithMessage("نقش انتخاب شده معتبر نیست.");
-
-        // چک کردن اینکه آیا تمام PermissionId های ارسالی معتبر هستند؟
-        RuleFor(v => v.PermissionIds)
-            .MustAsync(async (ids, token) => 
-            {
-                if (!ids.Any()) return true;
-                // تعداد IDهای معتبر در دیتابیس باید برابر با تعداد IDهای یونیک ارسالی باشد
-                var distinctIds = ids.Distinct().ToList();
-                var validCount = await _context.Permissions.CountAsync(p => distinctIds.Contains(p.Id), token);
-                return validCount == distinctIds.Count;
-            })
-            .WithMessage("برخی از دسترسی‌های انتخاب شده در سیستم نامعتبر هستند.");
+        RuleFor(v => v.RoleId).NotEmpty();
+        RuleFor(v => v.PermissionIds).NotNull();
     }
 }
 
-// هندلر نیازی به تغییر خاصی ندارد، همان کد قبلی خوب است
 public class UpdateRolePermissionsHandler : IRequestHandler<UpdateRolePermissionsCommand, bool>
 {
-    // ... (همان کد قبلی)
-    // فقط یادتان باشد در هندلر کدها را Replace کنید (اول حذف قبلی‌ها، بعد افزودن جدیدها)
-    // که در کد ارسالی خودتان درست بود.
     private readonly IApplicationDbContext _context;
 
     public UpdateRolePermissionsHandler(IApplicationDbContext context)
@@ -55,25 +35,39 @@ public class UpdateRolePermissionsHandler : IRequestHandler<UpdateRolePermission
 
     public async Task<bool> Handle(UpdateRolePermissionsCommand request, CancellationToken cancellationToken)
     {
-         // 1. حذف دسترسی‌های قبلی
-        var current = await _context.RolePermissions
+        // 1. بررسی وجود نقش
+        var roleExists = await _context.Roles.AnyAsync(r => r.Id == request.RoleId, cancellationToken);
+        if (!roleExists)
+            throw new KeyNotFoundException("نقش مورد نظر یافت نشد.");
+
+        // 2. حذف تمام دسترسی‌های فعلی این نقش (Clear existing permissions)
+        var currentPermissions = await _context.RolePermissions
             .Where(rp => rp.RoleId == request.RoleId)
             .ToListAsync(cancellationToken);
-        
-        if(current.Any()) _context.RolePermissions.RemoveRange(current);
 
-        // 2. افزودن جدیدها
-        if (request.PermissionIds.Any())
+        if (currentPermissions.Any())
         {
-            var newPerms = request.PermissionIds.Distinct().Select(pid => new RolePermission
-            {
-                RoleId = request.RoleId,
-                PermissionId = pid
-            });
-            await _context.RolePermissions.AddRangeAsync(newPerms, cancellationToken);
+            _context.RolePermissions.RemoveRange(currentPermissions);
         }
 
+        // 3. افزودن دسترسی‌های جدید
+        if (request.PermissionIds.Any())
+        {
+            // حذف تکراری‌ها جهت اطمینان
+            var distinctIds = request.PermissionIds.Distinct();
+
+            var newPermissions = distinctIds.Select(permId => new RolePermission
+            {
+                RoleId = request.RoleId,
+                PermissionId = permId
+            });
+
+            await _context.RolePermissions.AddRangeAsync(newPermissions, cancellationToken);
+        }
+
+        // 4. ذخیره تغییرات
         await _context.SaveChangesAsync(cancellationToken);
+
         return true;
     }
 }
