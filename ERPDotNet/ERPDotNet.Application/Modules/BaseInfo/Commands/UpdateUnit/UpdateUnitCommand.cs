@@ -26,17 +26,28 @@ public record UpdateUnitCommand : IRequest<bool>
 
 public class UpdateUnitValidator : AbstractValidator<UpdateUnitCommand>
 {
-    public UpdateUnitValidator()
+    private readonly IApplicationDbContext _context;
+
+    public UpdateUnitValidator(IApplicationDbContext context)
     {
+        _context = context;
+
         RuleFor(x => x.Id).GreaterThan(0);
-        RuleFor(x => x.Title).NotEmpty().MaximumLength(50);
-        RuleFor(x => x.Symbol).NotEmpty().MaximumLength(10);
-        RuleFor(x => x.Precision).GreaterThanOrEqualTo(0).LessThan(6);
-        
-        // اگر واحد پایه دارد، ضریب باید معتبر باشد
-        RuleFor(x => x.ConversionFactor)
-            .GreaterThan(0)
-            .When(x => x.ConversionFactor.HasValue);
+
+        RuleFor(x => x.Title)
+            .NotEmpty().WithMessage("عنوان واحد الزامی است.")
+            .MustAsync(async (model, title, token) => 
+            {
+                // چک کردن تکراری نبودن (غیر از خودش)
+                return !await _context.Units.AnyAsync(u => u.Title == title && u.Id != model.Id, token);
+            })
+            .WithMessage("این عنوان واحد قبلاً برای واحد دیگری ثبت شده است.");
+
+        // جلوگیری از انتخاب خودش به عنوان واحد پایه
+        RuleFor(x => x.BaseUnitId)
+            .NotEqual(x => x.Id).WithMessage("یک واحد نمی‌تواند زیرمجموعه خودش باشد.");
+            
+        // (پیشرفته) اینجا می‌توان یک متد برای چک کردن Circular Dependency هم نوشت
     }
 }
 

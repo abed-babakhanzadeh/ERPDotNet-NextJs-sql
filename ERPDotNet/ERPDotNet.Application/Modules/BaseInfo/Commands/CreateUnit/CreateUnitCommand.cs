@@ -4,6 +4,7 @@ using ERPDotNet.Application.Common.Interfaces; // استفاده از اینتر
 using FluentValidation;
 using MediatR;
 using ERPDotNet.Application.Common.Attributes;
+using Microsoft.EntityFrameworkCore;
 
 namespace ERPDotNet.Application.Modules.BaseInfo.Commands.CreateUnit;
 
@@ -21,14 +22,45 @@ public record CreateUnitCommand : IRequest<int>
 
 public class CreateUnitValidator : AbstractValidator<CreateUnitCommand>
 {
-    public CreateUnitValidator()
+    private readonly IApplicationDbContext _context;
+
+    // تزریق دیتابیس به Validator
+    public CreateUnitValidator(IApplicationDbContext context)
     {
-        RuleFor(x => x.Title).NotEmpty().MaximumLength(50);
-        RuleFor(x => x.Symbol).NotEmpty().MaximumLength(10);
-        RuleFor(x => x.Precision).GreaterThanOrEqualTo(0).LessThan(6);
-        
-        // اگر واحد پایه انتخاب شده، ضریب نباید 1 یا 0 باشد
-        RuleFor(x => x.ConversionFactor).GreaterThan(0);
+        _context = context;
+
+        RuleFor(x => x.Title)
+            .NotEmpty().WithMessage("عنوان واحد الزامی است.")
+            .MaximumLength(50)
+            .MustAsync(BeUniqueTitle).WithMessage("این عنوان واحد قبلاً ثبت شده است.");
+
+        RuleFor(x => x.Symbol)
+            .NotEmpty().WithMessage("نماد واحد الزامی است.")
+            .MaximumLength(10)
+            .MustAsync(BeUniqueSymbol).WithMessage("این نماد واحد قبلاً ثبت شده است.");
+
+        RuleFor(x => x.Precision)
+            .GreaterThanOrEqualTo(0)
+            .LessThan(6).WithMessage("دقت اعشار باید بین 0 تا 5 باشد.");
+
+        // بررسی وجود واحد پایه (اگر انتخاب شده باشد)
+        RuleFor(x => x.BaseUnitId)
+            .MustAsync(async (id, token) => 
+            {
+                if (!id.HasValue) return true;
+                return await _context.Units.AnyAsync(u => u.Id == id, token);
+            })
+            .WithMessage("واحد پایه انتخاب شده در سیستم وجود ندارد.");
+    }
+
+    private async Task<bool> BeUniqueTitle(string title, CancellationToken token)
+    {
+        return !await _context.Units.AnyAsync(u => u.Title == title, token);
+    }
+
+    private async Task<bool> BeUniqueSymbol(string symbol, CancellationToken token)
+    {
+        return !await _context.Units.AnyAsync(u => u.Symbol == symbol, token);
     }
 }
 

@@ -30,6 +30,7 @@ public class ProductConversionInput
 }
 
 // 2. اعتبارسنجی
+
 public class CreateProductValidator : AbstractValidator<CreateProductCommand>
 {
     private readonly IApplicationDbContext _context;
@@ -38,17 +39,49 @@ public class CreateProductValidator : AbstractValidator<CreateProductCommand>
     {
         _context = context;
 
-        RuleFor(v => v.Code).NotEmpty().MaximumLength(50)
+        // 1. بررسی نام کالا
+        RuleFor(v => v.Name)
+            .NotEmpty().WithMessage("نام کالا نمی‌تواند خالی باشد.")
+            .MaximumLength(200).WithMessage("نام کالا نمی‌تواند بیشتر از 200 کاراکتر باشد.");
+
+        // 2. بررسی یکتایی کد کالا
+        RuleFor(v => v.Code)
+            .NotEmpty().WithMessage("کد کالا الزامی است.")
+            .MaximumLength(50).WithMessage("کد کالا طولانی است.")
             .MustAsync(BeUniqueCode).WithMessage("این کد کالا قبلاً ثبت شده است.");
 
-        RuleFor(v => v.Name).NotEmpty().MaximumLength(200);
-        RuleFor(v => v.UnitId).GreaterThan(0);
-        
-        // اعتبارسنجی تبدیل‌ها
+        // 3. بررسی وجود واحد سنجش (جلوگیری از خطای کلید خارجی)
+        RuleFor(v => v.UnitId)
+            .GreaterThan(0).WithMessage("واحد سنجش را انتخاب کنید.")
+            .MustAsync(async (id, token) => await _context.Units.AnyAsync(u => u.Id == id, token))
+            .WithMessage("واحد سنجش انتخاب شده معتبر نیست (در سیستم یافت نشد).");
+
+        // 4. اعتبارسنجی‌های پیشرفته برای لیست تبدیل‌ها
         RuleForEach(v => v.Conversions).ChildRules(c => {
-            c.RuleFor(x => x.AlternativeUnitId).GreaterThan(0);
-            c.RuleFor(x => x.Factor).GreaterThan(0);
+            c.RuleFor(x => x.AlternativeUnitId).GreaterThan(0).WithMessage("واحد فرعی نامعتبر است.");
+            c.RuleFor(x => x.Factor).GreaterThan(0).WithMessage("ضریب تبدیل باید بزرگتر از صفر باشد.");
         });
+
+        // جلوگیری از تکراری بودن واحد در لیست تبدیل‌ها
+        RuleFor(x => x.Conversions)
+            .Must(conversions =>
+            {
+                if (conversions == null || !conversions.Any()) return true;
+                // آیا واحد تکراری در لیست هست؟
+                var distinctCount = conversions.Select(c => c.AlternativeUnitId).Distinct().Count();
+                return distinctCount == conversions.Count;
+            })
+            .WithMessage("در لیست تبدیل واحدها، یک واحد نمی‌تواند چند بار تکرار شود.");
+
+        // جلوگیری از تبدیل واحد به خودش
+        RuleFor(x => x)
+            .Must(x =>
+            {
+                if (x.Conversions == null) return true;
+                // نباید واحد اصلی در لیست واحدهای فرعی باشد
+                return !x.Conversions.Any(c => c.AlternativeUnitId == x.UnitId);
+            })
+            .WithMessage("نمی‌توانید واحد اصلی کالا را به عنوان واحد فرعی تعریف کنید.");
     }
 
     private async Task<bool> BeUniqueCode(string code, CancellationToken cancellationToken)

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import apiClient from "@/services/apiClient";
 import { toast } from "sonner";
-import { Unit } from "@/types/baseInfo";
+import { Unit } from "@/modules/base-info/units/types";
 
 interface Props {
   unit: Unit; // دیتای ردیف انتخاب شده
