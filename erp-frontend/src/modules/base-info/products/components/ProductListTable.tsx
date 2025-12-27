@@ -2,9 +2,15 @@
 
 import { useMemo } from "react";
 import { DataTable } from "@/components/data-table";
-import { Product, ProductSupplyType } from "../types";
+import { Product } from "../types";
 import { Badge } from "@/components/ui/badge";
-import { ImageIcon } from "lucide-react";
+import { ImageIcon, FileText } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ProductListTableProps {
   tableProps: any;
@@ -25,8 +31,8 @@ export function ProductListTable({
         key: "imagePath",
         label: "تصویر",
         type: "string",
-        filterable: false, // <--- این خط اضافه شد (حذف جستجو)
-        sortable: false, // تصویر نباید سورت شود
+        filterable: false,
+        sortable: false,
         render: (_: any, row: Product) => (
           <div className="flex items-center justify-center w-10 h-10 bg-slate-100 rounded-md border overflow-hidden">
             {row.imagePath ? (
@@ -55,11 +61,28 @@ export function ProductListTable({
         sortable: true,
         filterable: true,
       },
+      // افزودن ستون توضیحات با تولتیپ برای متون طولانی
       {
-        key: "latinName",
-        label: "نام لاتین",
+        key: "descriptions", // دقت کنید: در DTO شما Descriptions با s جمع است
+        label: "توضیحات",
         type: "string",
-        sortable: true,
+        render: (val: string) => {
+          if (!val) return "-";
+          return (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="max-w-[150px] truncate text-xs text-muted-foreground cursor-help">
+                    {val}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs text-wrap">
+                  {val}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          );
+        },
       },
       {
         key: "unitName",
@@ -69,14 +92,11 @@ export function ProductListTable({
       {
         key: "supplyType",
         label: "نوع تامین",
-        type: "string",
-        render: (_: any, row: Product) => {
-          const typeMap: Record<number, string> = {
-            [ProductSupplyType.Buy]: "خریدنی",
-            [ProductSupplyType.Produce]: "تولیدی",
-            [ProductSupplyType.Service]: "خدمات",
-          };
-          return <Badge variant="secondary">{typeMap[row.supplyType]}</Badge>;
+        type: "string", // چون در DTO مقدار supplyType به صورت رشته (مثلا "خریدنی") میاید
+        render: (val: string, row: any) => {
+          // اگر DTO شما فیلد supplyType را رشته برمی‌گرداند، مستقیم نمایش دهید
+          // اگر عدد برمی‌گرداند، باید مپ کنید. طبق فایل GetAllProductsQuery شما supplyType رشته است.
+          return <Badge variant="secondary">{val || row.supplyType}</Badge>;
         },
       },
       {

@@ -20,14 +20,15 @@ export const productService = {
     return data;
   },
 
-  create: async (payload: CreateProductRequest) => {
+  create: async (payload: any) => {
+    // payload 타입을 فعلا any یا تایپ دقیق CreateProductRequest بگذارید
     const { data } = await apiClient.post(BASE_URL, payload);
-    return data;
+    return data; // returns { id: 123 }
   },
 
-  update: async (payload: UpdateProductRequest) => {
-    const { data } = await apiClient.put(`${BASE_URL}/${payload.id}`, payload);
-    return data;
+  update: async (payload: any) => {
+    // کنترلر NoContent (204) برمی‌گرداند که body ندارد، بنابراین فقط await کافی است
+    await apiClient.put(`${BASE_URL}/${payload.id}`, payload);
   },
 
   delete: async (id: number | string) => {
