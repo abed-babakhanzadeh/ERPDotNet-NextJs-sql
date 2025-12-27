@@ -2,15 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import {
-  Box,
-  Layers,
-  Image as ImageIcon,
-  Trash2,
-  Edit,
-  X,
-  Download,
-} from "lucide-react";
+import { Box, Layers, Image as ImageIcon, Trash2 } from "lucide-react";
 
 import MasterDetailForm, {
   MasterDetailTab,
@@ -19,7 +11,6 @@ import AutoForm, { FieldConfig } from "@/components/form/AutoForm";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
 
 import { useTabs } from "@/providers/TabsProvider";
 import apiClient from "@/services/apiClient";
@@ -29,62 +20,41 @@ import {
   ConversionRowUi,
 } from "./ProductConversionList";
 import { productService } from "../services/productService";
-import { Product } from "../types";
-import { handleApiError } from "@/lib/apiErrorHandler";
-import { useEnum } from "@/hooks/useEnum";
+import { Product, ProductSupplyType } from "../types";
 
 interface ProductFormProps {
-  mode: "create" | "edit" | "view";
+  mode: "create" | "edit" | "view"; // <--- اضافه شدن view
   initialData?: Product;
   id?: number;
 }
 
 export function ProductForm({ mode, initialData, id }: ProductFormProps) {
-  const { closeTab, activeTabId, addTab } = useTabs();
-
-  // استیت‌های لودینگ
+  const { closeTab, activeTabId } = useTabs();
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // تشخیص حالت‌ها
+  // تشخیص حالت مشاهده
   const isViewMode = mode === "view";
-  const isEditMode = mode === "edit";
-  const isCreateMode = mode === "create";
 
-  // دریافت لیست نوع تامین (ماژولار)
-  const { items: supplyTypes } = useEnum("ProductSupplyType");
-
-  // --- States ---
-  // نکته مهم: همه مقادیر انتخابی را رشته می‌گیریم تا با Select سازگار باشد
   const [formData, setFormData] = useState<any>({
-    code: "",
-    name: "",
-    latinName: "",
-    descriptions: "",
     isActive: true,
-    supplyType: "1", // پیش‌فرض رشته‌ای
-    unitId: "",
+    supplyType: ProductSupplyType.Buy,
   });
-
   const [units, setUnits] = useState<Unit[]>([]);
   const [conversions, setConversions] = useState<ConversionRowUi[]>([]);
+
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [currentImagePath, setCurrentImagePath] = useState<string | null>(null);
 
-  // مدال تصویر
-  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
-
-  // 1. بارگذاری اطلاعات
   useEffect(() => {
     const init = async () => {
       setLoading(true);
       try {
-        // الف) لیست واحدها
         const unitsRes = await apiClient.get<Unit[]>("/BaseInfo/Units/lookup");
         setUnits(unitsRes.data);
 
-        // ب) دریافت اطلاعات محصول (اگر جدید نیست)
-        if ((isEditMode || isViewMode) && id) {
+        if ((mode === "edit" || mode === "view") && id) {
+          // <--- پشتیبانی از view
           let product = initialData;
           if (!product) {
             product = await productService.getById(id);
@@ -94,11 +64,10 @@ export function ProductForm({ mode, initialData, id }: ProductFormProps) {
             setFormData({
               code: product.code,
               name: product.name,
-              latinName: product.latinName || "",
-              descriptions: product.descriptions || "",
-              // تبدیل به رشته برای بایندینگ صحیح فرم
-              unitId: product.unitId ? String(product.unitId) : "",
-              supplyType: product.supplyType ? String(product.supplyType) : "1",
+              latinName: product.latinName,
+              descriptions: product.descriptions,
+              unitId: product.unitId,
+              supplyType: product.supplyType,
               isActive: product.isActive,
             });
 
@@ -116,7 +85,7 @@ export function ProductForm({ mode, initialData, id }: ProductFormProps) {
           }
         }
       } catch (error) {
-        handleApiError(error, "خطا در بارگذاری اطلاعات");
+        toast.error("خطا در بارگذاری اطلاعات");
       } finally {
         setLoading(false);
       }
@@ -125,136 +94,7 @@ export function ProductForm({ mode, initialData, id }: ProductFormProps) {
     init();
   }, [mode, id, initialData]);
 
-  // 2. هندلر دکمه اصلی (ثبت / ویرایش)
-  const handleMainAction = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // --- اگر در حالت مشاهده هستیم: برو به ویرایش ---
-    if (isViewMode) {
-      if (id) {
-        closeTab(activeTabId); // تب مشاهده بسته شود
-        addTab(`ویرایش ${formData.name}`, `/base-info/products/edit/${id}`); // تب ویرایش باز شود
-      }
-      return;
-    }
-
-    // --- اگر در حالت ثبت/ویرایش هستیم: ذخیره کن ---
-
-    // تبدیل رشته به عدد برای ارسال به سرور
-    const unitIdInt = Number(formData.unitId);
-    const supplyTypeInt = Number(formData.supplyType);
-
-    // ولیدیشن دستی ساده (برای اطمینان)
-    if (!unitIdInt) {
-      toast.error("لطفا واحد سنجش را انتخاب کنید");
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      // 1. آپلود تصویر
-      let finalImagePath = currentImagePath;
-      if (selectedFile) {
-        try {
-          finalImagePath = await productService.uploadImage(selectedFile);
-        } catch (error) {
-          handleApiError(error, "خطا در آپلود تصویر");
-          setSubmitting(false);
-          return;
-        }
-      }
-
-      // 2. ساخت آبجکت نهایی (تبدیل به فرمت بک‌اند)
-      const payloadCommon = {
-        code: formData.code,
-        name: formData.name,
-        latinName: formData.latinName,
-        descriptions: formData.descriptions,
-        unitId: unitIdInt,
-        supplyType: supplyTypeInt,
-        imagePath: finalImagePath || null,
-        isActive: Boolean(formData.isActive),
-      };
-
-      if (isCreateMode) {
-        const createPayload = {
-          ...payloadCommon,
-          conversions: conversions
-            .filter((c) => c.alternativeUnitId && Number(c.factor) > 0)
-            .map((c) => ({
-              alternativeUnitId: Number(c.alternativeUnitId),
-              factor: Number(c.factor),
-            })),
-        };
-        await productService.create(createPayload);
-        toast.success("محصول با موفقیت ایجاد شد");
-      } else {
-        const updatePayload = {
-          id: id!,
-          ...payloadCommon,
-          rowVersion: initialData?.rowVersion,
-          conversions: conversions.map((c) => ({
-            id: c.id && c.id > 0 ? c.id : null,
-            alternativeUnitId: Number(c.alternativeUnitId),
-            factor: Number(c.factor),
-          })),
-        };
-        await productService.update(updatePayload);
-        toast.success("اطلاعات با موفقیت بروزرسانی شد");
-      }
-
-      // بستن تب بعد از موفقیت
-      closeTab(activeTabId);
-    } catch (error: any) {
-      handleApiError(error);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  // 3. هندلر دکمه انصراف
-  const handleCancel = () => {
-    // اگر در حال ویرایش هستیم، به جای بستن تب، به حالت مشاهده برگردیم
-    if (isEditMode && id) {
-      closeTab(activeTabId);
-      addTab(`مشاهده ${formData.name}`, `/base-info/products/view/${id}`);
-    } else {
-      // در حالت ایجاد، فقط تب را ببند
-      closeTab(activeTabId);
-    }
-  };
-
-  // 4. هندلر تغییر فرم
-  const handleFormChange = (name: string, value: any) => {
-    if (isViewMode) return;
-    setFormData((prev: any) => ({ ...prev, [name]: value }));
-  };
-
-  // 5. هندلر دانلود تصویر
-  const handleDownloadImage = async () => {
-    if (!currentImagePath) return;
-    const imageUrl = `${process.env.NEXT_PUBLIC_API_URL}${currentImagePath}`;
-    try {
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `product-${formData.code}.jpg`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch {
-      toast.error("خطا در دانلود تصویر");
-    }
-  };
-
-  const handleDeleteImage = () => {
-    setCurrentImagePath(null);
-    setFormData((prev: any) => ({ ...prev, imagePath: null }));
-  };
-
-  // --- تنظیمات فیلدها (AutoForm) ---
+  // تعریف فیلدها با اعمال شرط غیرفعال بودن در حالت مشاهده
   const generalFields: FieldConfig[] = [
     {
       name: "code",
@@ -262,7 +102,8 @@ export function ProductForm({ mode, initialData, id }: ProductFormProps) {
       type: "text",
       required: true,
       colSpan: 1,
-      disabled: isViewMode,
+      placeholder: "کد را وارد کنید",
+      disabled: isViewMode, // <--- غیرفعال در مشاهده
     },
     {
       name: "name",
@@ -276,25 +117,20 @@ export function ProductForm({ mode, initialData, id }: ProductFormProps) {
       name: "supplyType",
       label: "نوع تامین",
       type: "select",
-      // نکته: value ها حتما رشته باشند
-      options:
-        supplyTypes.length > 0
-          ? supplyTypes.map((st) => ({ label: st.title, value: String(st.id) }))
-          : [
-              { label: "خریدنی", value: "1" },
-              { label: "تولیدی", value: "2" },
-              { label: "خدمات", value: "3" },
-            ],
+      options: [
+        { label: "خریدنی", value: ProductSupplyType.Buy },
+        { label: "تولیدی", value: ProductSupplyType.Produce },
+        { label: "خدمات", value: ProductSupplyType.Service },
+      ],
       colSpan: 1,
       disabled: isViewMode,
-      required: true,
     },
     {
       name: "unitId",
       label: "واحد سنجش اصلی",
       type: "select",
       required: true,
-      options: units.map((u) => ({ label: u.title, value: String(u.id) })),
+      options: units.map((u) => ({ label: u.title, value: u.id })),
       colSpan: 1,
       disabled: isViewMode,
     },
@@ -321,7 +157,69 @@ export function ProductForm({ mode, initialData, id }: ProductFormProps) {
     },
   ];
 
-  // --- تب‌ها ---
+  const handleFormChange = (name: string, value: any) => {
+    if (isViewMode) return; // جلوگیری از تغییر در کد
+    setFormData((prev: any) => ({ ...prev, [name]: value }));
+  };
+
+  const handleDeleteImage = () => {
+    setCurrentImagePath(null);
+    setFormData((prev: any) => ({ ...prev, imagePath: null }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isViewMode) return; // اطمینان حاصل کنیم
+
+    setSubmitting(true);
+    try {
+      let finalImagePath = currentImagePath;
+      if (selectedFile) {
+        try {
+          finalImagePath = await productService.uploadImage(selectedFile);
+        } catch {
+          toast.error("خطا در آپلود تصویر");
+          setSubmitting(false);
+          return;
+        }
+      }
+
+      const validConversions = conversions
+        .filter((c) => c.alternativeUnitId && Number(c.factor) > 0)
+        .map((c) => ({
+          id: c.id || null,
+          alternativeUnitId: Number(c.alternativeUnitId),
+          factor: Number(c.factor),
+        }));
+
+      const payload = {
+        ...formData,
+        unitId: Number(formData.unitId),
+        supplyType: Number(formData.supplyType),
+        imagePath: finalImagePath,
+        conversions: validConversions,
+      };
+
+      if (mode === "create") {
+        await productService.create(payload);
+        toast.success("محصول با موفقیت ایجاد شد");
+      } else {
+        await productService.update({
+          id: id!,
+          ...payload,
+          rowVersion: initialData?.rowVersion,
+        });
+        toast.success("تغییرات با موفقیت ذخیره شد");
+      }
+      closeTab(activeTabId);
+    } catch (error: any) {
+      const msg = error.response?.data?.detail || "خطا در عملیات";
+      toast.error(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const tabs: MasterDetailTab[] = [
     {
       key: "general",
@@ -348,7 +246,7 @@ export function ProductForm({ mode, initialData, id }: ProductFormProps) {
           onChange={setConversions}
           units={units}
           mainUnitId={formData.unitId}
-          readOnly={isViewMode}
+          readOnly={isViewMode} // <--- حالت فقط خواندنی
         />
       ),
     },
@@ -361,56 +259,47 @@ export function ProductForm({ mode, initialData, id }: ProductFormProps) {
           {currentImagePath ? (
             <div className="flex flex-col gap-2 w-fit">
               <Label>تصویر فعلی</Label>
-              <div
-                className={`relative group w-48 h-48 border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all ${
-                  isViewMode ? "cursor-zoom-in" : ""
-                }`}
-                onClick={() => isViewMode && setIsImageModalOpen(true)}
-              >
+              <div className="relative group w-48 h-48 border rounded-lg overflow-hidden">
                 <img
                   src={`${process.env.NEXT_PUBLIC_API_URL}${currentImagePath}`}
                   alt="Product"
                   className="w-full h-full object-cover"
                 />
+                {/* مخفی کردن دکمه حذف در حالت مشاهده */}
                 {!isViewMode && (
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <Button
                       type="button"
                       variant="destructive"
                       size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteImage();
-                      }}
+                      onClick={handleDeleteImage}
                       className="gap-2"
                     >
-                      <Trash2 size={16} /> حذف
+                      <Trash2 size={16} /> حذف تصویر
                     </Button>
                   </div>
                 )}
               </div>
-              {isViewMode && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  برای بزرگنمایی کلیک کنید
-                </p>
-              )}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-10 border-2 border-dashed rounded-lg text-muted-foreground bg-muted/20">
-              <ImageIcon className="w-10 h-10 mb-2 opacity-50" />
-              <span>تصویری وجود ندارد</span>
+            <div className="text-sm text-muted-foreground">
+              تصویری بارگذاری نشده است.
             </div>
           )}
 
+          {/* مخفی کردن اینپوت فایل در حالت مشاهده */}
           {!isViewMode && (
             <div className="w-full md:w-1/2">
-              <Label className="mb-2 block">بارگذاری تصویر جدید</Label>
+              <Label className="mb-2 block">انتخاب تصویر جدید</Label>
               <Input
                 type="file"
                 accept="image/*"
                 className="cursor-pointer"
                 onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                فرمت‌های مجاز: JPG, PNG. حداکثر حجم: 2MB
+              </p>
             </div>
           )}
         </div>
@@ -418,94 +307,29 @@ export function ProductForm({ mode, initialData, id }: ProductFormProps) {
     },
   ];
 
-  let formTitle = "";
-  if (isCreateMode) formTitle = "تعریف محصول جدید";
-  else if (isEditMode) formTitle = `ویرایش محصول: ${formData.name || ""}`;
-  else formTitle = `مشاهده محصول: ${formData.name || ""}`;
+  let title = "";
+  if (mode === "create") title = "تعریف محصول جدید";
+  else if (mode === "edit") title = `ویرایش محصول: ${formData.name || ""}`;
+  else title = `مشاهده محصول: ${formData.name || ""}`; // تایتل حالت مشاهده
 
   return (
-    <>
-      <MasterDetailForm
-        title={formTitle}
-        headerContent={
-          isEditMode || isViewMode ? (
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>
-                کد:{" "}
-                <span className="font-mono text-foreground font-bold">
-                  {formData.code}
-                </span>
-              </span>
-              <span className="w-px h-4 bg-border"></span>
-              <span>
-                وضعیت:{" "}
-                <span
-                  className={
-                    formData.isActive ? "text-emerald-600" : "text-red-600"
-                  }
-                >
-                  {formData.isActive ? "فعال" : "غیرفعال"}
-                </span>
-              </span>
-            </div>
-          ) : null
-        }
-        tabs={tabs}
-        isLoading={loading}
-        submitting={submitting}
-        // --- دکمه‌های اصلی فرم ---
-        // در همه حالت‌ها دکمه داریم، فقط متنش عوض میشه
-        onSubmit={handleMainAction}
-        submitText={isViewMode ? "ویرایش اطلاعات" : "ثبت تغییرات"}
-        // دکمه انصراف: در حالت مشاهده نباید باشد
-        onCancel={isViewMode ? undefined : handleCancel}
-      />
-
-      {/* --- مدال تصویر (Popup) --- */}
-      <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
-        <DialogContent className="max-w-4xl w-full p-0 overflow-hidden bg-black/95 border-zinc-800 focus:outline-none">
-          <div className="relative flex items-center justify-center h-[80vh]">
-            {/* هدر مدال: دکمه‌ها */}
-            <div className="absolute top-4 right-4 left-4 z-50 flex items-center justify-between pointer-events-none">
-              {/* سمت راست: دکمه بستن (RTL - در فرانت معمولا راست میشه شروع) */}
-              {/* چون direction: rtl است، start میشه راست */}
-              <div className="pointer-events-auto">
-                <DialogClose asChild>
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    className="rounded-full h-10 w-10 opacity-90 hover:opacity-100 shadow-md"
-                  >
-                    <X size={20} />
-                  </Button>
-                </DialogClose>
-              </div>
-
-              {/* سمت چپ: دکمه دانلود */}
-              <div className="pointer-events-auto">
-                <Button
-                  variant="secondary"
-                  size="icon"
-                  onClick={handleDownloadImage}
-                  className="rounded-full bg-white/20 hover:bg-white/30 text-white border-none h-10 w-10 backdrop-blur-sm"
-                  title="دانلود تصویر"
-                >
-                  <Download size={20} />
-                </Button>
-              </div>
-            </div>
-
-            {/* تصویر */}
-            {currentImagePath && (
-              <img
-                src={`${process.env.NEXT_PUBLIC_API_URL}${currentImagePath}`}
-                alt={formData.name}
-                className="max-w-full max-h-full object-contain"
-              />
-            )}
+    <MasterDetailForm
+      title={title}
+      headerContent={
+        mode === "edit" || mode === "view" ? (
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <span>کد: {formData.code}</span>
+            <span className="w-px h-4 bg-border"></span>
+            <span>وضعیت: {formData.isActive ? "فعال" : "غیرفعال"}</span>
           </div>
-        </DialogContent>
-      </Dialog>
-    </>
+        ) : null
+      }
+      tabs={tabs}
+      isLoading={loading}
+      submitting={submitting}
+      // اگر در حالت مشاهده باشیم، onSubmit را نال می‌فرستیم تا دکمه ثبت مخفی شود
+      onSubmit={isViewMode ? undefined : handleSubmit}
+      onCancel={() => closeTab(activeTabId)}
+    />
   );
 }
