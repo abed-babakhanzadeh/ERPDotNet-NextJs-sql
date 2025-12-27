@@ -1,42 +1,40 @@
-export interface PaginatedResult<T> {
-  items: T[];
-  pageNumber: number;
-  totalPages: number;
-  totalCount: number;
-  hasPreviousPage: boolean;
-  hasNextPage: boolean;
-}
+import type { Product as ProductType } from "./product";
 
-export interface FilterModel {
-  propertyName: string;
-  operation:
-    | "eq"
-    | "neq"
-    | "gt"
-    | "lt"
-    | "contains"
-    | "startswith"
-    | "endswith";
-  value: string;
-  value2?: string;
-  logic?: "and" | "or";
-}
+export type Unit = {
+  id: number;
+  title: string;
+  symbol: string;
+  precision: number;
+  isActive: boolean;
+  baseUnitId?: number;
+  conversionFactor: number;
+  baseUnitName?: string;
+};
 
-export interface PaginatedRequest {
-  pageNumber: number;
-  pageSize: number;
-  sortColumn?: string;
-  sortDescending?: boolean;
-  searchTerm?: string;
-  filters?: FilterModel[];
-}
+export type Product = ProductType;
 
-export interface ColumnConfig<T = any> {
-  accessorKey: keyof T | string; // کلید دسترسی به دیتا
-  header: string; // عنوان ستون (برای نمایش در هدر)
-  key?: string; // کلید یکتا برای React
-  sortable?: boolean;
-  filterable?: boolean;
-  // تابع رندر: ورودی اول مقدار فیلد، ورودی دوم کل سطر
-  render?: (value: any, row: T) => React.ReactNode;
-}
+export type SortConfig = {
+  key: string; // Allow any property name for flexibility across different entity types
+  direction: "ascending" | "descending";
+} | null;
+
+export type FilterCondition = {
+  id: string;
+  operator: string;
+  value: any;
+  value2?: any; // For between operator
+};
+
+export type ColumnFilter = {
+  key: string; // Allow any property name for flexibility
+  logic: "and" | "or";
+  conditions: FilterCondition[];
+};
+
+// types.ts
+export type ColumnConfig = {
+  key: string;
+  label: string;
+  type: "string" | "number" | "boolean" | "date"; // اضافه شدن date
+  render?: (value: any, row: any) => React.ReactNode;
+};

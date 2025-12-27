@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, use } from "react";
 import apiClient from "@/services/apiClient";
 import { toast } from "sonner";
-import { Unit } from "@/modules/base-info/units/types";
+import { Unit } from "@/types/baseInfo";
 import { Ruler } from "lucide-react";
 import BaseFormLayout from "@/components/layout/BaseFormLayout";
 import { useTabs } from "@/providers/TabsProvider";
