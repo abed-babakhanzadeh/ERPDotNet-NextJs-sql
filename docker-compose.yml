@@ -32,6 +32,7 @@ services:
       - redis
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
+      # - ASPNETCORE_ENVIRONMENT=Development
       # در داکر، این باید روی پورت داخلی کانتینر گوش دهد
       - ASPNETCORE_URLS=http://+:5000
       - ConnectionStrings__DefaultConnection=Server=host.docker.internal,1433;Database=ERP_DB;User Id=sa;Password=poolasa@123;TrustServerCertificate=True;
