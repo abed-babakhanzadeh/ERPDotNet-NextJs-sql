@@ -10,9 +10,17 @@ namespace ERPDotNet.Application.Modules.ProductEngineering.Commands.CopyBOM;
 [CacheInvalidation("BOMs")]
 public record CopyBOMCommand : IRequest<int>
 {
-    public int SourceBomId { get; set; }      // آی‌دی فرمول مبدا
-    public required string NewVersion { get; set; } // ورژن جدید (مثلا 1.1)
-    public string? NewTitle { get; set; }     // عنوان جدید (اختیاری)
+    public int SourceBomId { get; set; }
+    
+    // تغییر ۱: ورژن به عدد تبدیل شد
+    public int NewVersion { get; set; } 
+    
+    public string? NewTitle { get; set; }
+    
+    // تغییر ۲: کاربر باید تعیین کند این کپی، اصلی است یا فرعی
+    public BOMUsage TargetUsage { get; set; } = BOMUsage.Main;
+    
+    public bool IsActive { get; set; } = true;
 }
 
 public class CopyBOMValidator : AbstractValidator<CopyBOMCommand>
@@ -24,29 +32,57 @@ public class CopyBOMValidator : AbstractValidator<CopyBOMCommand>
         _context = context;
 
         RuleFor(v => v.SourceBomId).GreaterThan(0);
-        RuleFor(v => v.NewVersion).NotEmpty().MaximumLength(20);
+        RuleFor(v => v.NewVersion).GreaterThan(0);
 
-        // ولیدیشن پیچیده: آیا برای "محصولِ این BOM"، قبلاً این ورژن ثبت شده؟
+        // ولیدیشن ۱: آیا ورژن تکراری است؟
         RuleFor(v => v)
             .MustAsync(BeUniqueVersionForProduct)
-            .WithMessage("این نسخه برای کالای مورد نظر قبلاً وجود دارد.");
+            .WithMessage("این شماره نسخه برای کالای مورد نظر قبلاً ثبت شده است.");
+
+        // ولیدیشن ۲: جلوگیری از ثبت دو فرمول اصلی فعال (Business Rule)
+        RuleFor(v => v)
+            .MustAsync(NotHaveDuplicateActiveMain)
+            .WithMessage("برای این محصول یک فرمول 'اصلی' فعال وجود دارد. لطفاً فرمول جدید را 'فرعی' ثبت کنید یا قبلی را غیرفعال نمایید.");
     }
 
     private async Task<bool> BeUniqueVersionForProduct(CopyBOMCommand command, CancellationToken token)
     {
-        // 1. پیدا کردن محصول پدر از روی BOM مبدا
-        var sourceBomProductId = await _context.BOMHeaders
-            .Where(b => b.Id == command.SourceBomId)
-            .Select(b => b.ProductId)
-            .FirstOrDefaultAsync(token);
+        var sourceBomProductId = await GetProductId(command.SourceBomId, token);
+        if (sourceBomProductId == 0) return true; // اگر سورس نیست، بگذار هندلر ارور 404 بدهد
 
-        if (sourceBomProductId == 0) return false; // اصلا BOM مبدا وجود ندارد
-
-        // 2. چک کردن تکراری بودن ورژن برای آن محصول
+        // چک می‌کنیم آیا ورژن تکراری هست یا نه (حتی حذف شده‌ها را هم چک می‌کنیم چون Unique Index داریم)
         var exists = await _context.BOMHeaders
+            .IgnoreQueryFilters()
             .AnyAsync(b => b.ProductId == sourceBomProductId && b.Version == command.NewVersion, token);
         
         return !exists;
+    }
+
+    private async Task<bool> NotHaveDuplicateActiveMain(CopyBOMCommand command, CancellationToken token)
+    {
+        // اگر کاربر می‌خواهد "فرعی" بسازد یا "غیرفعال" بسازد، مشکلی نیست
+        if (command.TargetUsage != BOMUsage.Main || !command.IsActive) return true;
+
+        var sourceBomProductId = await GetProductId(command.SourceBomId, token);
+        
+        // چک می‌کنیم آیا "اصلیِ فعالِ دیگری" وجود دارد؟
+        var hasActiveMain = await _context.BOMHeaders
+            .AnyAsync(b => b.ProductId == sourceBomProductId 
+                           && b.Usage == BOMUsage.Main 
+                           && b.IsActive == true
+                           && b.IsDeleted == false, token); // اینجا IsDeleted مهم است
+
+        return !hasActiveMain;
+    }
+
+    // متد کمکی برای گرفتن ProductId
+    private async Task<int> GetProductId(int bomId, CancellationToken token)
+    {
+        return await _context.BOMHeaders
+            .IgnoreQueryFilters()
+            .Where(b => b.Id == bomId)
+            .Select(b => b.ProductId)
+            .FirstOrDefaultAsync(token);
     }
 }
 
@@ -61,41 +97,47 @@ public class CopyBOMHandler : IRequestHandler<CopyBOMCommand, int>
 
     public async Task<int> Handle(CopyBOMCommand request, CancellationToken cancellationToken)
     {
-        // 1. لود کردن کامل BOM مبدا (Deep Load)
-        // نکته حیاتی: AsNoTracking برای کپی کردن الزامی است
+        // 1. لود کردن کامل BOM مبدا
         var sourceBom = await _context.BOMHeaders
             .AsNoTracking()
+            .IgnoreQueryFilters() // اجازه کپی از فرمول‌های حذف شده یا غیرفعال
             .Include(x => x.Details)
                 .ThenInclude(d => d.Substitutes)
-                .AsSplitQuery() // <--- این خط اضافه شد برای پرفورمنس SQL Server
+            .AsSplitQuery()
             .FirstOrDefaultAsync(x => x.Id == request.SourceBomId, cancellationToken);
 
         if (sourceBom == null) 
             throw new KeyNotFoundException("فرمول مبدا یافت نشد.");
 
-        // 2. ساخت هدر جدید (مپ کردن دستی)
+        // 2. ساخت هدر جدید
         var newBom = new BOMHeader
         {
-            ProductId = sourceBom.ProductId, // محصول همان است
-            Title = request.NewTitle ?? sourceBom.Title, // اگر عنوان جدید نداد، قبلی را بگذار
-            Version = request.NewVersion,    // ورژن جدید
+            ProductId = sourceBom.ProductId,
+            Title = request.NewTitle ?? sourceBom.Title + $" (v{request.NewVersion})",
+            Version = request.NewVersion,
+            Usage = request.TargetUsage, // تنظیم اصلی/فرعی بودن
             
             Type = sourceBom.Type,
-            Status = BOMStatus.Active,       // طبق قانون پروژه فعلی، فعال ایجاد می‌شود
+            Status = BOMStatus.Draft, // معمولاً کپی جدید به صورت Draft ایجاد می‌شود تا بررسی شود
             FromDate = DateTime.UtcNow,
-            IsActive = true
+            IsActive = request.IsActive 
         };
 
-        // 3. کپی کردن دیتیل‌ها (Deep Copy)
+        // 3. کپی کردن دیتیل‌ها (با تمام فیلدهای جدید)
         foreach (var sourceDetail in sourceBom.Details)
         {
             var newDetail = new BOMDetail
             {
-                // ID ها را ست نمی‌کنیم تا دیتابیس جدید بسازد
-                BOMHeaderId = 0, 
+                BOMHeaderId = 0,
                 ChildProductId = sourceDetail.ChildProductId,
+                
+                // مقادیر محاسباتی
                 Quantity = sourceDetail.Quantity,
-                WastePercentage = sourceDetail.WastePercentage
+                WastePercentage = sourceDetail.WastePercentage,
+                
+                // مقادیر ورودی کاربر (طبق فایل BOMDetail.cs)
+                InputQuantity = sourceDetail.InputQuantity,
+                InputUnitId = sourceDetail.InputUnitId
             };
 
             // 4. کپی کردن جایگزین‌ها
@@ -106,14 +148,18 @@ public class CopyBOMHandler : IRequestHandler<CopyBOMCommand, int>
                     BOMDetailId = 0,
                     SubstituteProductId = sourceSub.SubstituteProductId,
                     Priority = sourceSub.Priority,
-                    Factor = sourceSub.Factor
+                    Factor = sourceSub.Factor,
+                    
+                    // فیلدهای پیشرفته (طبق فایل BOMSubstitute.cs)
+                    IsMixAllowed = sourceSub.IsMixAllowed,
+                    MaxMixPercentage = sourceSub.MaxMixPercentage,
+                    Note = sourceSub.Note
                 });
             }
 
             newBom.Details.Add(newDetail);
         }
 
-        // 5. ذخیره نهایی
         _context.BOMHeaders.Add(newBom);
         await _context.SaveChangesAsync(cancellationToken);
 

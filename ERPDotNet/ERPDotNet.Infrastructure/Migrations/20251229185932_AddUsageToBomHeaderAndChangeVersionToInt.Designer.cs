@@ -4,6 +4,7 @@ using ERPDotNet.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ERPDotNet.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251229185932_AddUsageToBomHeaderAndChangeVersionToInt")]
+    partial class AddUsageToBomHeaderAndChangeVersionToInt
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -725,30 +728,6 @@ namespace ERPDotNet.Infrastructure.Migrations
                         new
                         {
                             Id = 202,
-                            IsMenu = false,
-                            Name = "ProductEngineering.BOM.View",
-                            ParentId = 200,
-                            Title = "مشاهده BOM"
-                        },
-                        new
-                        {
-                            Id = 203,
-                            IsMenu = false,
-                            Name = "ProductEngineering.BOM.Edit",
-                            ParentId = 200,
-                            Title = "ویرایش BOM"
-                        },
-                        new
-                        {
-                            Id = 204,
-                            IsMenu = false,
-                            Name = "ProductEngineering.BOM.Delete",
-                            ParentId = 200,
-                            Title = "حذف BOM"
-                        },
-                        new
-                        {
-                            Id = 205,
                             IsMenu = true,
                             Name = "ProductEngineering.BOM.Reports",
                             ParentId = 200,

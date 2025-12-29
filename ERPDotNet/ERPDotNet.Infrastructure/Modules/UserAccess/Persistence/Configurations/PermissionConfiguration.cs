@@ -64,7 +64,10 @@ public class PermissionConfiguration : IEntityTypeConfiguration<Permission>
             // Bom
             new Permission { Id = 200, Name = "ProductEngineering.BOM", Title = "مدیریت BOM", IsMenu = true, ParentId = 2000 },
             new Permission { Id = 201, Name = "ProductEngineering.BOM.Create",  Title = "تعریف BOM", IsMenu = true, ParentId = 200 , Url = "/product-engineering/boms" },
-            new Permission { Id = 202, Name = "ProductEngineering.BOM.Reports", Title = "گزارش BOM", IsMenu = true, ParentId = 200 , Url = "/product-engineering/boms" }
+            new Permission { Id = 202, Name = "ProductEngineering.BOM.View",  Title = "مشاهده BOM", IsMenu = false, ParentId = 200 },
+            new Permission { Id = 203, Name = "ProductEngineering.BOM.Edit",  Title = "ویرایش BOM", IsMenu = false, ParentId = 200 },
+            new Permission { Id = 204, Name = "ProductEngineering.BOM.Delete",  Title = "حذف BOM", IsMenu = false, ParentId = 200 },
+            new Permission { Id = 205, Name = "ProductEngineering.BOM.Reports", Title = "گزارش BOM", IsMenu = true, ParentId = 200 , Url = "/product-engineering/boms" }
 
         );
     }

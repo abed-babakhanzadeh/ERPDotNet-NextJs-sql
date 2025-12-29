@@ -9,11 +9,13 @@ namespace ERPDotNet.Application.Modules.ProductEngineering.Queries.GetBOMsList;
 
 public record BOMListDto(
     int Id,
+    int ProductId,
     string ProductName,
     string ProductCode,
     string? ProductDescription, // <--- اضافه شد
-    string Version,
+    int Version,
     string Title,
+    string Usage,
     string Type,
     string Status,
     bool IsActive,
@@ -46,7 +48,6 @@ public class GetBOMsListHandler : IRequestHandler<GetBOMsListQuery, PaginatedRes
             var term = request.SearchTerm.Trim();
             query = query.Where(x => 
                 x.Title.Contains(term) || 
-                x.Version.Contains(term) ||
                 x.Product!.Name.Contains(term) ||
                 x.Product.Code.Contains(term) ||
                 (x.Product.Descriptions != null && x.Product.Descriptions.Contains(term)) // <--- سرچ در توضیحات
@@ -106,10 +107,12 @@ public class GetBOMsListHandler : IRequestHandler<GetBOMsListQuery, PaginatedRes
             .Take(request.PageSize)
             .Select(x => new BOMListDto(
                 x.Id,
+                x.ProductId,
                 x.Product!.Name,
                 x.Product.Code,
                 x.Product.Descriptions, // <--- پر کردن توضیحات
                 x.Version,
+                x.Usage.ToDisplay(),
                 x.Title,
                 x.Type.ToDisplay(),
                 x.Status.ToDisplay(),

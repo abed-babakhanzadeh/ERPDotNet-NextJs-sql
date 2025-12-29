@@ -6,10 +6,7 @@ import { toast } from "sonner";
 import {
   Layers,
   FileText,
-  // Save, // حذف شد (توسط BaseFormLayout مدیریت می‌شود)
   Pencil,
-  // X, // حذف شد (توسط BaseFormLayout مدیریت می‌شود)
-  // Loader2, // حذف شد
   CopyPlus,
   Network,
   FileSearch,
@@ -36,7 +33,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip"; // اضافه شده برای موبایل
+} from "@/components/ui/tooltip";
 import SubstitutesDialog, { SubstituteRow } from "./SubstitutesDialog";
 
 // Hooks & Providers
@@ -67,11 +64,13 @@ interface BOMLookupDto {
   productCode: string;
 }
 
+// اینترفیس استیت هدر (اصلاح شده)
 interface BOMHeaderState {
   productId: number | null;
   productName?: string;
   title: string;
-  version: string;
+  version: number; // int شد
+  usage: number; // اضافه شد (1=Main, 2=Alternate)
   type: number;
   fromDate: string;
   toDate?: string;
@@ -112,16 +111,18 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
 
   const [loadingData, setLoadingData] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [fetchingVersion, setFetchingVersion] = useState(false);
 
-  // --- State مدیریت فرم ---
+  // --- State مدیریت فرم (با مقادیر پیش‌فرض جدید) ---
   const [headerData, setHeaderData] = useState<BOMHeaderState>({
     productId: null,
     title: "",
-    version: "1.0",
+    version: 1, // پیش‌فرض 1
+    usage: 1, // پیش‌فرض اصلی (Main)
     type: 1,
     fromDate: new Date().toISOString().split("T")[0],
     toDate: undefined,
-    isActive: true, // <--- پیش‌فرض true
+    isActive: true,
   });
 
   const [details, setDetails] = useState<BOMRow[]>([]);
@@ -141,8 +142,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
     ProductLookupDto[]
   >([]);
   const [gridLoading, setGridLoading] = useState(false);
-  // کلید اختصاصی برای ذخیره موقت این فرم
-  // اگر در حال ایجاد هستیم یک کلید ثابت و اگر ویرایش، کلید بر اساس ID
+
   const persistKey = `temp-bom-${mode}-${bomId || "new"}`;
 
   useEffect(() => {
@@ -151,8 +151,27 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
     }
   }, [mode, bomId]);
 
+  // افکت جدید: دریافت ورژن بعدی هنگام انتخاب کالا (فقط در حالت ایجاد)
+  useEffect(() => {
+    if (mode === "create" && headerData.productId) {
+      const fetchNext = async () => {
+        setFetchingVersion(true);
+        try {
+          const res = await apiClient.get(
+            `/ProductEngineering/BOMs/products/${headerData.productId}/next-version`
+          );
+          setHeaderData((prev) => ({ ...prev, version: res.data }));
+        } catch (error) {
+          console.error("Error fetching next version:", error);
+        } finally {
+          setFetchingVersion(false);
+        }
+      };
+      fetchNext();
+    }
+  }, [headerData.productId, mode]);
+
   const safeCloseTab = () => {
-    // تابع کمکی برای بستن تب با کمی تاخیر جهت جلوگیری از تداخل
     setTimeout(() => {
       closeTab(activeTabId);
     }, 0);
@@ -199,7 +218,8 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
         productId: data.productId,
         productName: data.productName,
         title: data.title || "",
-        version: data.version,
+        version: data.version, // سرور عدد برمی‌گرداند
+        usage: data.usageId || 1, // سرور usageId برمی‌گرداند
         type: data.typeId,
         fromDate: data.fromDate
           ? data.fromDate.split("T")[0]
@@ -382,27 +402,31 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
         label: "فرمول فعال است",
         type: "checkbox",
         disabled: isReadOnly,
-        colSpan: 1, // یا بسته به لی‌اوت شما
-      },
-      {
-        name: "version",
-        label: "نسخه",
-        type: "text",
-        required: true,
-        disabled: isReadOnly,
         colSpan: 1,
       },
       {
-        name: "title",
-        label: "عنوان فرمول",
-        type: "text",
+        name: "version",
+        label: "شماره نسخه",
+        type: "number", // ورودی عددی شد
+        required: true,
+        disabled: isReadOnly || fetchingVersion, // هنگام دریافت از سرور غیرفعال شود
+        colSpan: 1,
+      },
+      {
+        name: "usage", // فیلد جدید کاربرد
+        label: "کاربرد فرمول",
+        type: "select",
         required: true,
         disabled: isReadOnly,
-        colSpan: 2,
+        options: [
+          { label: "فرمول اصلی (Main)", value: 1 },
+          { label: "فرمول جایگزین (Alternate)", value: 2 },
+        ],
+        colSpan: 1,
       },
       {
         name: "type",
-        label: "نوع فرمول",
+        label: "ماهیت",
         type: "select",
         required: true,
         disabled: isReadOnly,
@@ -412,6 +436,14 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
           { label: "کیت فروش (Sales)", value: 3 },
         ],
         colSpan: 1,
+      },
+      {
+        name: "title",
+        label: "عنوان فرمول",
+        type: "text",
+        required: true,
+        disabled: isReadOnly,
+        colSpan: 2,
       },
       {
         name: "fromDate",
@@ -430,7 +462,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
         colSpan: 1,
       },
     ],
-    [isReadOnly]
+    [isReadOnly, fetchingVersion]
   );
 
   const detailColumns: GridColumn<BOMRow>[] = useMemo(
@@ -635,21 +667,14 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
     return new Date().toISOString().split("T")[0];
   };
 
-  // ۱. اضافه کردن قابلیت ذخیره خودکار برای هدر
   useFormPersist(
     `${persistKey}-header`,
     headerData,
     setHeaderData,
-    mode !== "view" // در حالت مشاهده ذخیره نکند
-  );
-
-  // ۲. اضافه کردن قابلیت ذخیره خودکار برای جزئیات (Grid)
-  const { clearStorage: clearDetailsStorage } = useFormPersist(
-    `${persistKey}-details`,
-    details,
-    setDetails,
     mode !== "view"
   );
+
+  useFormPersist(`${persistKey}-details`, details, setDetails, mode !== "view");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -703,7 +728,8 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
 
       const payload: any = {
         title: headerData.title || "",
-        version: headerData.version || "1.0",
+        version: Number(headerData.version), // به عدد تبدیل شد
+        usage: Number(headerData.usage), // به عدد تبدیل شد
         type: Number(headerData.type) || 1,
         fromDate: safeFromDate,
         toDate: cleanToDate,
@@ -724,8 +750,6 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
         toast.success("تغییرات با موفقیت ذخیره شد");
       }
 
-      // --- بخش مهم برای سیستم ERP شما: پاکسازی کش پس از ثبت موفق ---
-      // این کار باعث می‌شود اگر کاربر دوباره صفحه ساخت را باز کرد، فرم خالی باشد
       localStorage.removeItem(`${persistKey}-header`);
       localStorage.removeItem(`${persistKey}-details`);
 
@@ -760,7 +784,6 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
   };
 
   const headerContent = (
-    // تغییرات: اضافه کردن کلاس‌های [&_...] برای تغییر استایل فیلدهای غیرفعال
     <div className="space-y-4 [&_input:disabled]:cursor-default [&_select:disabled]:cursor-default [&_textarea:disabled]:cursor-default [&_input:disabled]:opacity-85 [&_select:disabled]:opacity-85 [&_textarea:disabled]:opacity-85">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="space-y-2 col-span-1 md:col-span-2">
@@ -808,8 +831,6 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
               ? `مشاهده BOM: ${headerData.version}`
               : `ویرایش BOM: ${headerData.version}`
           }
-          // ارسال onSubmit و onCancel فقط در حالت‌های غیر مشاهده
-          // این کار باعث می‌شود دکمه‌های پیش‌فرض BaseFormLayout به درستی کنترل شوند
           onSubmit={isReadOnly ? undefined : handleSubmit}
           onCancel={isReadOnly ? undefined : safeCloseTab}
           formId="bom-form"
@@ -818,7 +839,6 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
           headerContent={headerContent}
           headerActions={
             <div className="flex items-center gap-2">
-              {/* دکمه ساختار درختی (در حالت مشاهده و ویرایش) */}
               {(mode === "view" || mode === "edit") && bomId && (
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -842,7 +862,6 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
                 </Tooltip>
               )}
 
-              {/* دکمه فراخوانی از الگو (فقط ایجاد و ویرایش با دسترسی) */}
               {(mode === "create" || (mode === "edit" && canEdit)) && (
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -862,7 +881,6 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
                 </Tooltip>
               )}
 
-              {/* دکمه رفتن به حالت ویرایش (فقط در حالت مشاهده) */}
               {mode === "view" && canEdit && (
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -887,8 +905,6 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
               label: "مواد اولیه و قطعات",
               icon: Layers,
               content: (
-                // *** اصلاح شد: overflow-y-auto را بردارید و overflow-hidden بگذارید ***
-                // این باعث می‌شود ارتفاع گرید محدود به صفحه شود و اسکرول داخلی فعال گردد
                 <div className="h-full overflow-hidden [&_input:disabled]:cursor-default [&_select:disabled]:cursor-default">
                   <EditableGrid<BOMRow>
                     columns={detailColumns}
@@ -942,7 +958,6 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
         />
       </TooltipProvider>
 
-      {/* مودال‌ها تغییری نکردند */}
       {activeRowIndex !== null && (
         <SubstitutesDialog
           open={dialogOpen}

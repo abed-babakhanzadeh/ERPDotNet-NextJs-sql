@@ -12,36 +12,38 @@ public record UpdateBOMCommand : IRequest<bool>
 {
     public int Id { get; set; }
     public required string Title { get; set; }
-    public required string Version { get; set; }
+    
+    // تغییر ۱: ورژن عددی شد
+    public int Version { get; set; }
+    
+    // تغییر ۲: اضافه شدن قابلیت تغییر وضعیت (اصلی/فرعی)
+    public BOMUsage Usage { get; set; }
+
     public BOMType Type { get; set; }
     public BOMStatus Status { get; set; }
     public bool IsActive { get; set; }
     public DateTime FromDate { get; set; }
     public DateTime? ToDate { get; set; }
 
-    // کنترل همروندی
     public byte[]? RowVersion { get; set; }
 
-    // لیست اقلام (مواد اولیه)
     public List<BOMDetailUpdateDto> Details { get; set; } = new();
 }
 
 public record BOMDetailUpdateDto
 {
-    public int? Id { get; set; } // اگر نال یا صفر باشد = رکورد جدید
+    public int? Id { get; set; } 
     public int ChildProductId { get; set; }
     public decimal Quantity { get; set; }
     public decimal InputQuantity { get; set; }
     public int InputUnitId { get; set; }
     public decimal WastePercentage { get; set; }
-
-    // لیست جایگزین‌ها
     public List<BOMSubstituteUpdateDto> Substitutes { get; set; } = new();
 }
 
 public record BOMSubstituteUpdateDto
 {
-    public int? Id { get; set; } // اگر نال یا صفر باشد = رکورد جدید
+    public int? Id { get; set; }
     public int SubstituteProductId { get; set; }
     public int Priority { get; set; }
     public decimal Factor { get; set; }
@@ -58,45 +60,120 @@ public class UpdateBOMValidator : AbstractValidator<UpdateBOMCommand>
     {
         _context = context;
 
-        RuleFor(v => v.Id).GreaterThan(0);
-        RuleFor(v => v.Title).NotEmpty().MaximumLength(100);
-        RuleFor(v => v.Version).NotEmpty().MaximumLength(20);
+        // 1. ولیدیشن‌های سطح هدر (Header)
+        RuleFor(x => x.Id).GreaterThan(0);
+        
+        RuleFor(x => x.Title)
+            .NotEmpty().WithMessage("عنوان فرمول نمی‌تواند خالی باشد.")
+            .MaximumLength(100).WithMessage("عنوان فرمول نمی‌تواند بیشتر از 100 کاراکتر باشد.");
 
-        // چک کردن یکتایی ورژن (غیر از خودش)
-        RuleFor(v => v)
-            .MustAsync(BeUniqueVersion)
-            .WithMessage("این نسخه BOM برای این کالا قبلاً ثبت شده است.");
+        RuleFor(x => x.Version)
+            .GreaterThan(0).WithMessage("شماره نسخه باید بزرگتر از صفر باشد.");
 
-        // ولیدیشن اقلام
-        RuleForEach(v => v.Details).ChildRules(d => {
-            d.RuleFor(x => x.ChildProductId).GreaterThan(0);
-            d.RuleFor(x => x.Quantity).GreaterThan(0);
+        // تاریخ پایان نباید قبل از تاریخ شروع باشد (اگر تاریخ پایان پر شده باشد)
+        RuleFor(x => x)
+            .Must(x => !x.ToDate.HasValue || x.ToDate >= x.FromDate)
+            .WithMessage("تاریخ پایان اعتبار نمی‌تواند قبل از تاریخ شروع باشد.");
+
+        // --- قانون تجاری مهم: یکتایی فرمول اصلی ---
+        // اگر کاربر دارد فرمول را "Main" و "Active" می‌کند، باید چک کنیم فرمول اصلی دیگری وجود نداشته باشد.
+        RuleFor(x => x)
+            .MustAsync(NotHaveDuplicateActiveMain)
+            .WithMessage("برای این محصول قبلاً یک فرمول 'اصلی' فعال ثبت شده است. لطفاً ابتدا فرمول قبلی را غیرفعال کنید یا این فرمول را به عنوان 'فرعی' ثبت نمایید.");
+
+        // 2. ولیدیشن‌های لیست مواد اولیه (Details)
+        RuleForEach(x => x.Details).SetValidator(new BOMDetailUpdateValidator());
+
+        // جلوگیری از تکرار یک کالا در لیست مواد اولیه
+        RuleFor(x => x.Details)
+            .Must(details => details.Select(d => d.ChildProductId).Distinct().Count() == details.Count)
+            .WithMessage("یک کالا نمی‌تواند چند بار در لیست مواد اولیه تکرار شود (موارد تکراری را ادغام کنید).");
             
-            // === رفع ارور دسترسی به ChildProductId ===
-            // استفاده از Must روی کل آبجکت DetailDto برای دسترسی همزمان به ChildProductId و لیست Substitutes
-            d.RuleFor(detail => detail)
-             .Must(detail => !detail.Substitutes.Any(s => s.SubstituteProductId == detail.ChildProductId))
-             .WithMessage("کالای جایگزین نمی‌تواند همان کالای اصلی باشد.");
-
-            // ولیدیشن داخلی جایگزین‌ها
-            d.RuleForEach(s => s.Substitutes).ChildRules(sub => {
-                sub.RuleFor(x => x.SubstituteProductId).GreaterThan(0);
-            });
-        });
+        // جلوگیری از لوپ: پدر نمی‌تواند فرزند خودش باشد
+        // (این نیاز به کوئری دارد تا ProductId پدر را پیدا کنیم)
+        RuleFor(x => x)
+            .MustAsync(NotBeCircularDependency)
+            .WithMessage("خطای مهندسی: محصول نهایی نمی‌تواند به عنوان زیرمجموعه خودش استفاده شود (لوپ تولید).");
     }
 
-    private async Task<bool> BeUniqueVersion(UpdateBOMCommand model, CancellationToken token)
+    // لاجیک چک کردن فرمول اصلی تکراری
+    private async Task<bool> NotHaveDuplicateActiveMain(UpdateBOMCommand command, CancellationToken token)
+    {
+        // اگر این فرمول قرار نیست "اصلی" باشد یا "فعال" باشد، مشکلی نیست
+        if (command.Usage != BOMUsage.Main || !command.IsActive) return true;
+
+        // 1. پیدا کردن ProductId فرمول جاری (چون در کامند آپدیت ProductId نداریم)
+        var currentBom = await _context.BOMHeaders
+            .AsNoTracking()
+            .Select(b => new { b.Id, b.ProductId })
+            .FirstOrDefaultAsync(b => b.Id == command.Id, token);
+
+        if (currentBom == null) return true; // اگر BOM پیدا نشد، ولیدیتور 404 نمی‌دهد (هندلر می‌دهد)
+
+        // 2. آیا فرمول اصلیِ فعالِ دیگری برای این محصول وجود دارد؟
+        // (خودش را از جستجو استثنا می‌کنیم: x.Id != command.Id)
+        var hasOtherActiveMain = await _context.BOMHeaders
+            .AnyAsync(b => b.ProductId == currentBom.ProductId 
+                           && b.Id != command.Id // <--- مهم: خودش نباشد
+                           && b.Usage == BOMUsage.Main 
+                           && b.IsActive == true 
+                           && b.IsDeleted == false, token);
+
+        return !hasOtherActiveMain;
+    }
+
+    // لاجیک جلوگیری از لوپ (پدر در فرزندان نباشد)
+    private async Task<bool> NotBeCircularDependency(UpdateBOMCommand command, CancellationToken token)
     {
         var currentBom = await _context.BOMHeaders
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == model.Id, token);
+            .Select(b => new { b.Id, b.ProductId })
+            .FirstOrDefaultAsync(b => b.Id == command.Id, token);
 
         if (currentBom == null) return true;
 
-        return !await _context.BOMHeaders
-            .AnyAsync(x => x.ProductId == currentBom.ProductId && 
-                           x.Version == model.Version && 
-                           x.Id != model.Id, token);
+        // چک می‌کنیم آیا ProductId پدر، در لیست ChildProductIdهای ارسالی وجود دارد؟
+        bool isParentInChildren = command.Details.Any(d => d.ChildProductId == currentBom.ProductId);
+        
+        return !isParentInChildren;
+    }
+}
+
+// ولیدیتور داخلی برای اقلام (Detail)
+public class BOMDetailUpdateValidator : AbstractValidator<BOMDetailUpdateDto>
+{
+    public BOMDetailUpdateValidator()
+    {
+        RuleFor(x => x.ChildProductId).GreaterThan(0)
+            .WithMessage("انتخاب کالای مواد اولیه الزامی است.");
+
+        RuleFor(x => x.Quantity)
+            .GreaterThan(0).WithMessage("مقدار مصرف باید بزرگتر از صفر باشد.");
+
+        RuleFor(x => x.WastePercentage)
+            .InclusiveBetween(0, 100).WithMessage("درصد ضایعات باید بین 0 تا 100 باشد.");
+
+        RuleFor(x => x.InputQuantity)
+            .GreaterThanOrEqualTo(0).WithMessage("مقدار ورودی نمی‌تواند منفی باشد.");
+
+        // ولیدیشن جایگزین‌ها
+        RuleForEach(x => x.Substitutes).SetValidator(new BOMSubstituteUpdateValidator());
+    }
+}
+
+// ولیدیتور داخلی برای جایگزین‌ها (Substitute)
+public class BOMSubstituteUpdateValidator : AbstractValidator<BOMSubstituteUpdateDto>
+{
+    public BOMSubstituteUpdateValidator()
+    {
+        RuleFor(x => x.SubstituteProductId).GreaterThan(0)
+            .WithMessage("کالای جایگزین نامعتبر است.");
+
+        RuleFor(x => x.Factor)
+            .GreaterThan(0).WithMessage("ضریب تبدیل جایگزین باید بزرگتر از صفر باشد.");
+            
+        RuleFor(x => x.MaxMixPercentage)
+            .InclusiveBetween(0, 100).WithMessage("درصد مجاز میکس باید بین 0 تا 100 باشد.");
     }
 }
 
@@ -111,121 +188,73 @@ public class UpdateBOMHandler : IRequestHandler<UpdateBOMCommand, bool>
 
     public async Task<bool> Handle(UpdateBOMCommand request, CancellationToken cancellationToken)
     {
-        // 1. لود کردن کامل (Deep Load) با AsSplitQuery برای پرفورمنس SQL Server
+        // لود کردن کامل هدر و دیتیل‌ها برای ویرایش
         var entity = await _context.BOMHeaders
             .Include(x => x.Details)
-                .ThenInclude(d => d.Substitutes)
-            .AsSplitQuery() // بهینه‌سازی کوئری
+            .ThenInclude(d => d.Substitutes)
             .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
 
-        if (entity == null) return false;
+        if (entity == null) throw new KeyNotFoundException($"BOM with id {request.Id} not found.");
 
-        // 2. کنترل همروندی (Optimistic Concurrency)
-        if (request.RowVersion != null && request.RowVersion.Length > 0)
+        // کنترل همروندی (Optimistic Concurrency)
+        if (request.RowVersion != null && !entity.RowVersion.SequenceEqual(request.RowVersion))
         {
-            _context.Entry(entity).Property(x => x.RowVersion).OriginalValue = request.RowVersion;
+            throw new DbUpdateConcurrencyException("The record has been modified by another user.");
         }
 
-        // 3. آپدیت هدر
-        var utcFrom = request.FromDate.Kind == DateTimeKind.Utc ? request.FromDate : DateTime.SpecifyKind(request.FromDate, DateTimeKind.Utc);
-        DateTime? utcTo = null;
-        if (request.ToDate.HasValue)
-            utcTo = request.ToDate.Value.Kind == DateTimeKind.Utc ? request.ToDate.Value : DateTime.SpecifyKind(request.ToDate.Value, DateTimeKind.Utc);
-
+        // --- آپدیت فیلدهای هدر ---
         entity.Title = request.Title;
         entity.Version = request.Version;
+        entity.Usage = request.Usage; // اضافه شد
         entity.Type = request.Type;
-        // entity.Status = request.Status;
+        entity.Status = request.Status;
         entity.IsActive = request.IsActive;
-        entity.FromDate = utcFrom;
-        entity.ToDate = utcTo;
+        entity.FromDate = request.FromDate;
+        entity.ToDate = request.ToDate;
 
-        // 4. سینک کردن اقلام (Smart Sync)
-        var requestDetailIds = request.Details
-            .Where(d => d.Id.HasValue && d.Id.Value > 0)
-            .Select(d => d.Id!.Value)
-            .ToList();
+        // --- آپدیت دیتیل‌ها (منطق قبلی شما حفظ شد) ---
+        // 1. حذف شده‌ها
+        var requestDetailIds = request.Details.Where(x => x.Id.HasValue).Select(x => x.Id!.Value).ToList();
+        var detailsToDelete = entity.Details.Where(x => !requestDetailIds.Contains(x.Id)).ToList();
+        foreach (var d in detailsToDelete) _context.BOMDetails.Remove(d);
 
-        // الف) حذف شده‌ها
-        var detailsToDelete = entity.Details.Where(d => !requestDetailIds.Contains(d.Id)).ToList();
-        foreach (var del in detailsToDelete)
-        {
-            _context.BOMDetails.Remove(del);
-        }
-
-        // ب) افزودن یا ویرایش
+        // 2. افزوده یا ویرایش شده‌ها
         foreach (var detailDto in request.Details)
         {
-            BOMDetail currentDetail;
-
-            if (detailDto.Id.HasValue && detailDto.Id.Value > 0)
+            if (detailDto.Id.HasValue && detailDto.Id > 0)
             {
-                // --- ویرایش سطر موجود ---
-                currentDetail = entity.Details.FirstOrDefault(d => d.Id == detailDto.Id.Value)!;
-                if (currentDetail == null) continue;
+                // ویرایش
+                var existingDetail = entity.Details.FirstOrDefault(x => x.Id == detailDto.Id.Value);
+                if (existingDetail != null)
+                {
+                    existingDetail.ChildProductId = detailDto.ChildProductId;
+                    existingDetail.Quantity = detailDto.Quantity;
+                    existingDetail.InputQuantity = detailDto.InputQuantity;
+                    existingDetail.InputUnitId = detailDto.InputUnitId;
+                    existingDetail.WastePercentage = detailDto.WastePercentage;
 
-                currentDetail.ChildProductId = detailDto.ChildProductId;
-                currentDetail.Quantity = detailDto.Quantity;
-                currentDetail.InputQuantity = detailDto.InputQuantity;
-                currentDetail.InputUnitId = detailDto.InputUnitId;
-                currentDetail.WastePercentage = detailDto.WastePercentage;
+                    UpdateSubstitutes(existingDetail, detailDto.Substitutes);
+                }
             }
             else
             {
-                // --- افزودن سطر جدید ---
-                currentDetail = new BOMDetail
+                // جدید
+                var newDetail = new BOMDetail
                 {
-                    // === رفع ارور Required Member ===
-                    BOMHeaderId = entity.Id, // اتصال به هدر فعلی
-                    
+                    BOMHeaderId = entity.Id,
                     ChildProductId = detailDto.ChildProductId,
                     Quantity = detailDto.Quantity,
                     InputQuantity = detailDto.InputQuantity,
                     InputUnitId = detailDto.InputUnitId,
                     WastePercentage = detailDto.WastePercentage
                 };
-                entity.Details.Add(currentDetail);
-            }
-
-            // 5. سینک کردن جایگزین‌ها (Smart Sync سطح دوم)
-            var requestSubIds = detailDto.Substitutes
-                .Where(s => s.Id.HasValue && s.Id.Value > 0)
-                .Select(s => s.Id!.Value)
-                .ToList();
-
-            var subsToDelete = currentDetail.Substitutes
-                .Where(s => !requestSubIds.Contains(s.Id))
-                .ToList();
-            
-            foreach (var subDel in subsToDelete)
-            {
-                _context.BOMSubstitutes.Remove(subDel);
-            }
-
-            foreach (var subDto in detailDto.Substitutes)
-            {
-                if (subDto.Id.HasValue && subDto.Id.Value > 0)
+                
+                // افزودن جایگزین‌های جدید
+                foreach (var subDto in detailDto.Substitutes)
                 {
-                    // ویرایش جایگزین
-                    var existingSub = currentDetail.Substitutes.FirstOrDefault(s => s.Id == subDto.Id.Value);
-                    if (existingSub != null)
+                    newDetail.Substitutes.Add(new BOMSubstitute
                     {
-                        existingSub.SubstituteProductId = subDto.SubstituteProductId;
-                        existingSub.Priority = subDto.Priority;
-                        existingSub.Factor = subDto.Factor;
-                        existingSub.IsMixAllowed = subDto.IsMixAllowed;
-                        existingSub.MaxMixPercentage = subDto.MaxMixPercentage;
-                        existingSub.Note = subDto.Note;
-                    }
-                }
-                else
-                {
-                    // افزودن جایگزین جدید
-                    currentDetail.Substitutes.Add(new BOMSubstitute
-                    {
-                        // === رفع ارور Required Member ===
-                        BOMDetailId = 0, // مقدار موقت (چون هنوز ID دیتیل جدید قطعی نیست یا EF هندل میکند)
-                        
+                        BOMDetailId = 0,
                         SubstituteProductId = subDto.SubstituteProductId,
                         Priority = subDto.Priority,
                         Factor = subDto.Factor,
@@ -234,6 +263,8 @@ public class UpdateBOMHandler : IRequestHandler<UpdateBOMCommand, bool>
                         Note = subDto.Note
                     });
                 }
+                
+                entity.Details.Add(newDetail);
             }
         }
 
@@ -241,11 +272,57 @@ public class UpdateBOMHandler : IRequestHandler<UpdateBOMCommand, bool>
         {
             await _context.SaveChangesAsync(cancellationToken);
         }
-        catch (DbUpdateConcurrencyException)
+        catch (DbUpdateException ex)
         {
-            throw new Exception("این فرمول توسط کاربر دیگری ویرایش شده است. لطفاً صفحه را رفرش کنید.");
+            // هندل کردن خطای Unique Constraint (اگر کاربر سعی کرد دوتا Main فعال داشته باشد)
+            if (ex.InnerException != null && ex.InnerException.Message.Contains("IX_")) 
+            {
+                throw new Exception("امکان ثبت دو فرمول 'اصلی' فعال برای یک محصول وجود ندارد.");
+            }
+            throw;
         }
 
         return true;
+    }
+
+    private void UpdateSubstitutes(BOMDetail currentDetail, List<BOMSubstituteUpdateDto> substituteDtos)
+    {
+        var reqSubIds = substituteDtos.Where(x => x.Id.HasValue).Select(x => x.Id!.Value).ToList();
+        
+        // حذف
+        var toDelete = currentDetail.Substitutes.Where(x => !reqSubIds.Contains(x.Id)).ToList();
+        foreach (var sub in toDelete) 
+            currentDetail.Substitutes.Remove(sub); // چون رابطه Cascade نیست شاید لازم باشد دستی Remove کنید یا کانتکست هندل کند
+
+        // افزودن/ویرایش
+        foreach (var subDto in substituteDtos)
+        {
+            if (subDto.Id.HasValue && subDto.Id > 0)
+            {
+                var existing = currentDetail.Substitutes.FirstOrDefault(x => x.Id == subDto.Id);
+                if (existing != null)
+                {
+                    existing.SubstituteProductId = subDto.SubstituteProductId;
+                    existing.Priority = subDto.Priority;
+                    existing.Factor = subDto.Factor;
+                    existing.IsMixAllowed = subDto.IsMixAllowed;
+                    existing.MaxMixPercentage = subDto.MaxMixPercentage;
+                    existing.Note = subDto.Note;
+                }
+            }
+            else
+            {
+                currentDetail.Substitutes.Add(new BOMSubstitute
+                {
+                    BOMDetailId = currentDetail.Id,
+                    SubstituteProductId = subDto.SubstituteProductId,
+                    Priority = subDto.Priority,
+                    Factor = subDto.Factor,
+                    IsMixAllowed = subDto.IsMixAllowed,
+                    MaxMixPercentage = subDto.MaxMixPercentage,
+                    Note = subDto.Note
+                });
+            }
+        }
     }
 }

@@ -23,11 +23,9 @@ public class GetBOMHandler : IRequestHandler<GetBOMQuery, BOMDto?>
         var bom = await _context.BOMHeaders
             .AsNoTracking()
             .Include(x => x.Product)
-                // اصلاح ۱: استفاده از ! برای p
                 .ThenInclude(p => p!.Unit) 
             .Include(x => x.Details)
                 .ThenInclude(d => d.ChildProduct)
-                    // اصلاح ۲: استفاده از ! برای cp
                     .ThenInclude(cp => cp!.Unit) 
             .Include(x => x.Details)
                 .ThenInclude(d => d.Substitutes)
@@ -37,8 +35,6 @@ public class GetBOMHandler : IRequestHandler<GetBOMQuery, BOMDto?>
 
         if (bom == null) return null;
 
-        // در مپینگ هم از ! استفاده می‌کنیم چون با توجه به لاجیک دیتابیس (Foreign Keys)
-        // مطمئن هستیم که کالا و واحد آن وجود دارند.
         return new BOMDto(
             bom.Id,
             bom.ProductId,
@@ -48,7 +44,13 @@ public class GetBOMHandler : IRequestHandler<GetBOMQuery, BOMDto?>
             bom.Product.Unit!.Title,
 
             bom.Title,
-            bom.Version,
+            bom.Version, // نوع int
+            
+            // --- اصلاحات: اضافه کردن فیلدهای Usage ---
+            (int)bom.Usage,           // UsageId
+            bom.Usage.ToDisplay(),    // UsageTitle
+            // ----------------------------------------
+
             (int)bom.Status,
             bom.Status.ToDisplay(),
             (int)bom.Type,
@@ -71,9 +73,6 @@ public class GetBOMHandler : IRequestHandler<GetBOMQuery, BOMDto?>
                 d.Quantity,
                 d.InputQuantity,
                 d.InputUnitId,
-                // در اینجا چک می‌کنیم اگر واحد ورودی همان واحد کالا بود، نامش را بگذاریم
-                // در غیر این صورت چون Join نزدیم، فعلا متن ثابت یا نال می‌گذاریم
-                // (البته اگر نیاز باشد می‌توان Unit ورودی را هم Include کرد)
                 d.InputUnitId == d.ChildProduct.UnitId ? d.ChildProduct.Unit.Title : "واحد فرعی",
                 d.WastePercentage,
 

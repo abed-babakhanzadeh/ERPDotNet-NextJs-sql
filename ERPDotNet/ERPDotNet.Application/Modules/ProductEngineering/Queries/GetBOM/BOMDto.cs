@@ -1,3 +1,6 @@
+using ERPDotNet.Application.Common.Extensions; // فرض بر وجود متد ToDisplay برای Enum
+using ERPDotNet.Domain.Modules.ProductEngineering.Entities;
+
 namespace ERPDotNet.Application.Modules.ProductEngineering.Queries.GetBOM;
 
 public record BOMDto(
@@ -5,11 +8,15 @@ public record BOMDto(
     int ProductId,
     string ProductName,
     string ProductCode,
-    string? ProductDescription, // <--- اضافه شد
+    string? ProductDescription,
     string UnitName, 
     
     string Title,
-    string Version,
+    int Version, // int شد
+    
+    int UsageId,        // اضافه شد
+    string UsageTitle,  // اضافه شد
+    
     int StatusId,
     string StatusTitle,
     int TypeId,
@@ -19,25 +26,24 @@ public record BOMDto(
     string? ToDate,
     bool IsActive,
     
-    byte[] RowVersion, // <--- حیاتی برای کنترل همروندی
+    byte[] RowVersion, 
     
     List<BOMDetailDto> Details
 );
 
+// بقیه کلاس‌ها (BOMDetailDto و ...) تغییری نمی‌کنند مگر اینکه بخواهید ورژن را در آن‌ها هم نشان دهید
 public record BOMDetailDto(
     int Id,
     int ChildProductId,
     string ChildProductName,
     string ChildProductCode,
-    string? ChildProductDescription, // <--- اضافه شد
+    string? ChildProductDescription,
     string UnitName, 
-    
     decimal Quantity,
     decimal InputQuantity, 
     int InputUnitId,       
     string InputUnitName,  
     decimal WastePercentage,
-    
     List<BOMSubstituteDto> Substitutes
 );
 

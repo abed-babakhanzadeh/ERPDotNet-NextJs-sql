@@ -18,21 +18,26 @@ public class BOMHeaderConfiguration : IEntityTypeConfiguration<BOMHeader>
 
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Title).HasMaxLength(100).IsRequired();
-        builder.Property(x => x.Version).HasMaxLength(20).IsRequired();
-        // تنظیم همروندی
+        
+        // --- تغییر: حذف محدودیت طول رشته برای ورژن ---
+        builder.Property(x => x.Version).IsRequired();
+        // ---------------------------------------------
+        
         builder.Property(x => x.RowVersion).IsRowVersion();
 
-        // چالش ۴: جلوگیری از ثبت ورژن تکراری برای یک کالا
-        // (نمی‌توانیم دو تا نسخه 1.0 برای کالای A داشته باشیم)
+        // ایندکس ترکیبی برای جلوگیری از ورژن تکراری (همچنان لازم است)
         builder.HasIndex(x => new { x.ProductId, x.Version }).IsUnique();
 
-        // رابطه با محصول نهایی
+        // فیلتر هوشمند برای جلوگیری از دو فرمول اصلی فعال
+        builder.HasIndex(x => x.ProductId)
+               .IsUnique()
+               .HasFilter($"[Usage] = {(int)BOMUsage.Main} AND [IsDeleted] = 0 AND [IsActive] = 1");
+
         builder.HasOne(x => x.Product)
                .WithMany()
                .HasForeignKey(x => x.ProductId)
-               .OnDelete(DeleteBehavior.Restrict); // اگر کالا BOM داشت، نباید کالا پاک شود
+               .OnDelete(DeleteBehavior.Restrict);
 
-        // رابطه با جزئیات (اگر هدر پاک شد، جزئیاتش هم پاک شود چون بی‌معنی هستند)
         builder.HasMany(x => x.Details)
                .WithOne(x => x.BOMHeader)
                .HasForeignKey(x => x.BOMHeaderId)

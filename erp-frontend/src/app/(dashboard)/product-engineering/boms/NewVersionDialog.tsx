@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -12,16 +12,19 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Copy } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Loader2, Copy, AlertTriangle } from "lucide-react";
 import apiClient from "@/services/apiClient";
 import { toast } from "sonner";
 import { useTabs } from "@/providers/TabsProvider";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface NewVersionDialogProps {
   open: boolean;
   onClose: () => void;
   sourceBomId: number;
-  sourceVersion: string;
+  sourceVersion: number; // اصلاح شد: number
+  sourceProductId: number; // اضافه شد: برای گرفتن ورژن بعدی
   productName: string;
 }
 
@@ -30,50 +33,59 @@ export default function NewVersionDialog({
   onClose,
   sourceBomId,
   sourceVersion,
+  sourceProductId,
   productName,
 }: NewVersionDialogProps) {
   const { addTab } = useTabs();
   const [loading, setLoading] = useState(false);
+  const [fetchingVersion, setFetchingVersion] = useState(false);
 
-  // محاسبه نسخه پیشنهادی (ساده: افزودن به عدد آخر)
-  const suggestVersion = (ver: string) => {
-    const parts = ver.split(".");
-    if (parts.length > 0) {
-      const last = parseInt(parts[parts.length - 1]);
-      if (!isNaN(last)) {
-        parts[parts.length - 1] = (last + 1).toString();
-        return parts.join(".");
-      }
-    }
-    return ver + ".1";
-  };
-
-  const [newVersion, setNewVersion] = useState("");
+  // State
+  const [newVersion, setNewVersion] = useState<number>(0);
   const [newTitle, setNewTitle] = useState("");
+  const [targetUsage, setTargetUsage] = useState<number>(1); // 1=Main, 2=Alternate
 
-  // وقتی مودال باز می‌شود، مقادیر پیش‌فرض را ست کن
-  React.useEffect(() => {
-    if (open) {
-      setNewVersion(suggestVersion(sourceVersion));
-      setNewTitle(""); // یا عنوان قبلی را بگذارید
+  // دریافت نسخه پیشنهادی از سرور به محض باز شدن مودال
+  useEffect(() => {
+    if (open && sourceProductId) {
+      fetchNextVersion();
     }
-  }, [open, sourceVersion]);
+  }, [open, sourceProductId]);
+
+  const fetchNextVersion = async () => {
+    setFetchingVersion(true);
+    try {
+      // دریافت ورژن بعدی از بک‌اند
+      const verRes = await apiClient.get(
+        `/ProductEngineering/BOMs/products/${sourceProductId}/next-version`
+      );
+      setNewVersion(verRes.data); // data is int
+      setNewTitle(""); // پاک کردن عنوان قبلی یا گذاشتن مقدار پیش‌فرض
+    } catch (error) {
+      console.error(error);
+      // در صورت خطا، یک واحد به نسخه قبلی اضافه می‌کنیم (Fallback)
+      setNewVersion(sourceVersion + 1);
+    } finally {
+      setFetchingVersion(false);
+    }
+  };
 
   const handleCopy = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newVersion) return;
+    if (!newVersion || newVersion <= 0) {
+      toast.error("شماره نسخه نامعتبر است");
+      return;
+    }
 
     setLoading(true);
     try {
-      // ارسال درخواست به API
-      const res = await apiClient.post(
-        `/ProductEngineering/BOMs/${sourceBomId}/copy`,
-        {
-          sourceBomId: sourceBomId,
-          newVersion: newVersion,
-          newTitle: newTitle || undefined, // اگر خالی بود نفرست
-        }
-      );
+      const res = await apiClient.post(`/ProductEngineering/BOMs/copy`, {
+        sourceBomId: sourceBomId,
+        newVersion: Number(newVersion), // int
+        newTitle: newTitle || undefined,
+        targetUsage: targetUsage, // 1 or 2
+        isActive: true,
+      });
 
       const newId = res.data.id;
       toast.success(`نسخه ${newVersion} با موفقیت ایجاد شد`);
@@ -81,7 +93,7 @@ export default function NewVersionDialog({
 
       // هدایت کاربر به صفحه ویرایشِ نسخه جدید
       addTab(
-        `ویرایش BOM ${newVersion}`,
+        `ویرایش BOM v${newVersion}`,
         `/product-engineering/boms/edit/${newId}`
       );
     } catch (error: any) {
@@ -106,28 +118,72 @@ export default function NewVersionDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleCopy} className="space-y-4 py-2">
-          <div className="space-y-2">
-            <Label>
-              شماره نسخه جدید <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              value={newVersion}
-              onChange={(e) => setNewVersion(e.target.value)}
-              placeholder="مثال: 1.2"
-              className="font-mono dir-ltr text-left"
-              autoFocus
-              required
-            />
+        <form onSubmit={handleCopy} className="space-y-5 py-2">
+          {/* انتخاب نوع کاربرد (Usage) */}
+          <div className="space-y-3 border p-3 rounded-md bg-slate-50">
+            <Label className="text-sm font-medium">نوع فرمول جدید:</Label>
+            <RadioGroup
+              value={targetUsage.toString()}
+              onValueChange={(v) => setTargetUsage(Number(v))}
+              className="flex gap-4"
+            >
+              <div className="flex items-center space-x-2 space-x-reverse">
+                <RadioGroupItem value="1" id="u-main" />
+                <Label htmlFor="u-main" className="cursor-pointer text-sm">
+                  فرمول اصلی (Main)
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2 space-x-reverse">
+                <RadioGroupItem value="2" id="u-alt" />
+                <Label htmlFor="u-alt" className="cursor-pointer text-sm">
+                  فرمول فرعی (Alternate)
+                </Label>
+              </div>
+            </RadioGroup>
+
+            {targetUsage === 1 && (
+              <Alert
+                variant="default"
+                className="bg-yellow-50 border-yellow-200 text-yellow-800 py-2 mt-2"
+              >
+                <AlertTriangle className="h-4 w-4 text-yellow-600 ml-2" />
+                <AlertDescription className="text-xs leading-5">
+                  توجه: هر کالا فقط می‌تواند <b>یک</b> فرمول اصلیِ فعال داشته
+                  باشد.
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
 
-          <div className="space-y-2">
-            <Label>عنوان جدید (اختیاری)</Label>
-            <Input
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              placeholder="مثال: فرمول بهبود یافته تابستان"
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2 relative">
+              <Label>شماره نسخه (Next)</Label>
+              <div className="relative">
+                <Input
+                  type="number"
+                  value={newVersion}
+                  onChange={(e) => setNewVersion(Number(e.target.value))}
+                  className="font-mono dir-ltr text-center pl-8"
+                  required
+                  min={1}
+                  disabled={fetchingVersion}
+                />
+                {fetchingVersion && (
+                  <div className="absolute left-2 top-2.5">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>عنوان جدید</Label>
+              <Input
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                placeholder="عنوان اختیاری..."
+              />
+            </div>
           </div>
 
           <DialogFooter className="gap-2 pt-2">
@@ -141,7 +197,7 @@ export default function NewVersionDialog({
             </Button>
             <Button
               type="submit"
-              disabled={loading}
+              disabled={loading || fetchingVersion}
               className="gap-2 bg-blue-600 hover:bg-blue-700"
             >
               {loading ? (
@@ -149,7 +205,7 @@ export default function NewVersionDialog({
               ) : (
                 <Copy className="w-4 h-4" />
               )}
-              ایجاد نسخه جدید
+              ایجاد نسخه
             </Button>
           </DialogFooter>
         </form>
