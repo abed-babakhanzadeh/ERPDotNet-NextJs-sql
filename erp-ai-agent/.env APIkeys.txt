@@ -1,0 +1,13 @@
+# تنظیمات سرور پایتون
+PORT=8000
+
+# تنظیمات دیتابیس
+DB_HOST=192.168.0.241
+DB_NAME=ERPDotNetDB
+DB_USER=sa
+DB_PASSWORD=poolasa@123
+
+# تنظیمات هوش مصنوعی (OpenAI)
+OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxx  # کلید واقعی شما
+OPENAI_API_BASE=https://api.openai.com/v1
+AI_MODEL=gpt-3.5-turbo

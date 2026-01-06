@@ -1,0 +1,28 @@
+
+erp-ai-agent/
+├── src/
+│   ├── api/                 <-- (Controllers) لایه ورودی مثل کنترلرهای دات‌نت
+│   │   └── routes.py
+│   │
+│   ├── core/                <-- تنظیمات و کانفیگ‌های اصلی
+│   │   ├── config.py
+│   │   └── database.py      <-- مدیریت کانکشن SQL Server
+│   │
+│   ├── services/            <-- (Application Layer) مغز هوشمند ایجنت
+│   │   ├── agent_runner.py  <-- اجرای حلقه ReAct
+│   │   └── llm_provider.py  <-- مدیریت ارتباط با OpenAI
+│   │
+│   └── modules/             <-- (Domain/Infrastructure) ***نکته اصلی اینجاست***
+│       ├── base_info/       <-- دقیقاً منطبق با ماژول BaseInfo شما
+│       │   └── tools.py     <-- ابزارهای جستجوی کالا و واحدها
+│       │
+│       ├── product_engineering/ <-- دقیقاً منطبق با ماژول مهندسی محصول
+│       │   └── tools.py     <-- ابزارهای BOM و فرمول ساخت
+│       │
+│       └── user_access/     <-- ماژول دسترسی کاربران
+│           └── tools.py     <-- مثلا ابزار چک کردن پرمیشن‌ها
+│
+├── main.py                  <-- نقطه شروع برنامه (فقط راه‌اندازی)
+├── requirements.txt
+├── Dockerfile
+└── .env

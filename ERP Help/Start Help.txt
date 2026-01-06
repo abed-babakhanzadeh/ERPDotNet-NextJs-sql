@@ -22,6 +22,9 @@ cd erp-frontend
 npm run dev
 npm install
 ---------------------------------------------------
+cd erp-ai-agent
+python main.py
+---------------------------------------------------
 cd erp-mobile
 
 
