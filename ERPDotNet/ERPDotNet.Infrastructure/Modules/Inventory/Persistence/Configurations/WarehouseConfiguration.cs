@@ -14,6 +14,7 @@ public class WarehouseConfiguration : IEntityTypeConfiguration<Warehouse>
 
         builder.Property(x => x.Title).HasMaxLength(100).IsRequired();
         builder.Property(x => x.Code).HasMaxLength(50).IsRequired();
+        builder.Property(x => x.Address).HasMaxLength(500);
         
         // کد انبار باید یکتا باشد
         builder.HasIndex(x => x.Code).IsUnique();

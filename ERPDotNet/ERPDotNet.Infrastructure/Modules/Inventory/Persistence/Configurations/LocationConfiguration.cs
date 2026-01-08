@@ -8,14 +8,21 @@ public class LocationConfiguration : IEntityTypeConfiguration<Location>
 {
     public void Configure(EntityTypeBuilder<Location> builder)
     {
-        builder.ToTable("Locations", "inventory");
-
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.Code).HasMaxLength(50).IsRequired();
-        builder.Property(x => x.Title).HasMaxLength(100);
+        // ایندکس روی ParentId (برای جوین‌ها)
+        builder.HasIndex(x => x.ParentId);
 
-        // ترکیب کد لوکیشن و انبار باید یکتا باشد
+        // === Tier-0 Performance ===
+        // ایندکس روی Path برای جستجوی سریع زیرمجموعه‌ها (LIKE 'Root/%')
+        builder.HasIndex(x => x.Path);
+        
+        // کد در هر انبار یکتاست
         builder.HasIndex(x => new { x.WarehouseId, x.Code }).IsUnique();
+
+        builder.HasOne(x => x.Warehouse)
+            .WithMany(w => w.Locations)
+            .HasForeignKey(x => x.WarehouseId)
+            .OnDelete(DeleteBehavior.Restrict); // حذف انبار نباید آبشاری لوکیشن‌ها را پاک کند (امنیت)
     }
 }

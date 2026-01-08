@@ -8,7 +8,7 @@ public class InventoryItemProfileConfiguration : IEntityTypeConfiguration<Invent
 {
     public void Configure(EntityTypeBuilder<InventoryItemProfile> builder)
     {
-        builder.ToTable("InventoryItemProfiles", "inventory");
+        builder.ToTable("InventoryItemProfiles", "inventory", b => b.IsTemporal()); // <--- جادوی Tier-0
 
         builder.HasKey(x => x.Id);
 

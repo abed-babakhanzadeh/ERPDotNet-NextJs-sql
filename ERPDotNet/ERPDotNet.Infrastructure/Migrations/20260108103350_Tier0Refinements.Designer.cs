@@ -4,16 +4,19 @@ using ERPDotNet.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace ERPDotNet.Infrastructure.Migrations
+namespace ERPDotNet.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260108103350_Tier0Refinements")]
+    partial class Tier0Refinements
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -343,12 +346,6 @@ namespace ERPDotNet.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("BatchId");
-
-                    b.HasIndex("LocationId");
-
-                    b.HasIndex("ProductId");
 
                     b.HasIndex("WarehouseId", "ProductId", "LocationId", "BatchId")
                         .IsUnique()
@@ -904,6 +901,9 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.Property<int>("InventoryItemProfileId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("InventoryItemProfileId1")
+                        .HasColumnType("int");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
@@ -914,12 +914,10 @@ namespace ERPDotNet.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("MaxStock")
-                        .HasPrecision(18, 3)
-                        .HasColumnType("decimal(18,3)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("MinStock")
-                        .HasPrecision(18, 3)
-                        .HasColumnType("decimal(18,3)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("PeriodEnd")
                         .ValueGeneratedOnAddOrUpdate()
@@ -932,8 +930,7 @@ namespace ERPDotNet.Infrastructure.Migrations
                         .HasColumnName("PeriodStart");
 
                     b.Property<decimal>("ReorderPoint")
-                        .HasPrecision(18, 3)
-                        .HasColumnType("decimal(18,3)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
@@ -948,6 +945,8 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.HasIndex("DefaultLocationId");
 
                     b.HasIndex("InventoryItemProfileId");
+
+                    b.HasIndex("InventoryItemProfileId1");
 
                     b.HasIndex("WarehouseId", "InventoryItemProfileId")
                         .IsUnique();
@@ -2008,37 +2007,6 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.Navigation("BaseUnit");
                 });
 
-            modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.CurrentStock", b =>
-                {
-                    b.HasOne("ERPDotNet.Domain.Modules.Inventory.Entities.InventoryBatch", "Batch")
-                        .WithMany()
-                        .HasForeignKey("BatchId");
-
-                    b.HasOne("ERPDotNet.Domain.Modules.Inventory.Entities.Location", "Location")
-                        .WithMany()
-                        .HasForeignKey("LocationId");
-
-                    b.HasOne("ERPDotNet.Domain.Modules.BaseInfo.Entities.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ERPDotNet.Domain.Modules.Inventory.Entities.Warehouse", "Warehouse")
-                        .WithMany()
-                        .HasForeignKey("WarehouseId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Batch");
-
-                    b.Navigation("Location");
-
-                    b.Navigation("Product");
-
-                    b.Navigation("Warehouse");
-                });
-
             modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.InventoryDocDetail", b =>
                 {
                     b.HasOne("ERPDotNet.Domain.Modules.Inventory.Entities.InventoryBatch", "Batch")
@@ -2146,10 +2114,14 @@ namespace ERPDotNet.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("ERPDotNet.Domain.Modules.Inventory.Entities.InventoryItemProfile", "InventoryItemProfile")
-                        .WithMany("WarehouseSettings")
+                        .WithMany()
                         .HasForeignKey("InventoryItemProfileId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("ERPDotNet.Domain.Modules.Inventory.Entities.InventoryItemProfile", null)
+                        .WithMany("WarehouseSettings")
+                        .HasForeignKey("InventoryItemProfileId1");
 
                     b.HasOne("ERPDotNet.Domain.Modules.Inventory.Entities.Warehouse", "Warehouse")
                         .WithMany()

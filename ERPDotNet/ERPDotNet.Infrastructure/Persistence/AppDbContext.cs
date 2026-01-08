@@ -5,9 +5,11 @@ using System.Reflection;
 using ERPDotNet.Application.Common.Interfaces;
 using ERPDotNet.Domain.Modules.BaseInfo.Entities;
 using ERPDotNet.Domain.Modules.ProductEngineering.Entities;
-using ERPDotNet.Domain.Common; // <--- این را برای دسترسی به BaseEntity اضافه کنید
+using ERPDotNet.Domain.Common;
 using System.Linq.Expressions;
-using ERPDotNet.Application.Modules.ProductEngineering.Queries.GetWhereUsed; // <--- برای کار با Expression Tree
+using ERPDotNet.Application.Modules.ProductEngineering.Queries.GetWhereUsed;
+// فضای نام انبار را اضافه کنید:
+using ERPDotNet.Domain.Modules.Inventory.Entities;
 
 namespace ERPDotNet.Infrastructure.Persistence;
 
@@ -19,6 +21,8 @@ public class AppDbContext : IdentityDbContext<User>, IApplicationDbContext
     public DbSet<Permission> Permissions { get; set; }
     public DbSet<RolePermission> RolePermissions { get; set; }
     public DbSet<UserPermission> UserPermissions { get; set; }
+    
+    // جداول ماژول اطلاعات پایه
     public DbSet<Unit> Units { get; set; }
     public DbSet<Product> Products { get; set; }
     public DbSet<ProductUnitConversion> ProductUnitConversions { get; set; }
@@ -27,7 +31,25 @@ public class AppDbContext : IdentityDbContext<User>, IApplicationDbContext
     public DbSet<BOMHeader> BOMHeaders { get; set; }
     public DbSet<BOMDetail> BOMDetails { get; set; }
     public DbSet<BOMSubstitute> BOMSubstitutes { get; set; }
+
+    // ==========================================================
+    // جداول ماژول انبار (Inventory) - این بخش باید اضافه شود
+    // ==========================================================
+    public DbSet<Warehouse> Warehouses { get; set; }
+    public DbSet<Location> Locations { get; set; }
     
+    public DbSet<InventoryItemProfile> InventoryItemProfiles { get; set; }
+    public DbSet<ItemWarehouseSetting> ItemWarehouseSettings { get; set; }
+    public DbSet<InventoryBatch> InventoryBatches { get; set; }
+    
+    public DbSet<InventoryDocType> InventoryDocTypes { get; set; }
+    public DbSet<InventoryDocHeader> InventoryDocHeaders { get; set; }
+    public DbSet<InventoryDocDetail> InventoryDocDetails { get; set; }
+    
+    public DbSet<InventoryTransaction> InventoryTransactions { get; set; }
+    public DbSet<CurrentStock> CurrentStocks { get; set; }
+    public DbSet<DocumentSequence> DocumentSequences { get; set; }
+    // ==========================================================
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
@@ -37,12 +59,13 @@ public class AppDbContext : IdentityDbContext<User>, IApplicationDbContext
     {
         base.OnModelCreating(builder);
 
-        // اعمال کانفیگ‌های جداگانه (مثل UnitConfiguration)
+        // اعمال کانفیگ‌های جداگانه (مثل UnitConfiguration و کانفیگ‌های انبار)
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+        
+        // کانفیگ خاص برای کوئری WhereUsed (بدون کلید)
         builder.Entity<WhereUsedRecursiveResult>(e =>
         {
             e.HasNoKey();
-            // دقت 18 رقم کل، 3 رقم اعشار (برای مقدار مصرف)
             e.Property(x => x.Quantity).HasPrecision(18, 3);
         });
 
@@ -52,19 +75,16 @@ public class AppDbContext : IdentityDbContext<User>, IApplicationDbContext
         {
             if (typeof(BaseEntity).IsAssignableFrom(entityType.ClrType))
             {
-                // فراخوانی متد تنظیم فیلتر برای هر موجودیت
                 var method = SetGlobalQueryFilterMethod.MakeGenericMethod(entityType.ClrType);
                 method.Invoke(this, new object[] { builder });
             }
         }
     }
 
-    // این متد رفلکشن برای ساختن متد جنریک است
     static readonly MethodInfo SetGlobalQueryFilterMethod = typeof(AppDbContext)
         .GetMethods(BindingFlags.NonPublic | BindingFlags.Instance)
         .Single(t => t.IsGenericMethod && t.Name == nameof(SetGlobalQueryFilter));
 
-    // این متد فیلتر را اعمال می‌کند
     private void SetGlobalQueryFilter<T>(ModelBuilder builder) where T : BaseEntity
     {
         builder.Entity<T>().HasQueryFilter(e => !e.IsDeleted);

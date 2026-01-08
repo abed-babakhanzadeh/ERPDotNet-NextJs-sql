@@ -4,16 +4,19 @@ using ERPDotNet.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace ERPDotNet.Infrastructure.Migrations
+namespace ERPDotNet.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260108090102_EnhanceInventoryEntities")]
+    partial class EnhanceInventoryEntities
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -343,12 +346,6 @@ namespace ERPDotNet.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("BatchId");
-
-                    b.HasIndex("LocationId");
-
-                    b.HasIndex("ProductId");
 
                     b.HasIndex("WarehouseId", "ProductId", "LocationId", "BatchId")
                         .IsUnique()
@@ -947,9 +944,9 @@ namespace ERPDotNet.Infrastructure.Migrations
 
                     b.HasIndex("DefaultLocationId");
 
-                    b.HasIndex("InventoryItemProfileId");
+                    b.HasIndex("WarehouseId");
 
-                    b.HasIndex("WarehouseId", "InventoryItemProfileId")
+                    b.HasIndex("InventoryItemProfileId", "WarehouseId")
                         .IsUnique();
 
                     b.ToTable("ItemWarehouseSettings", "inventory");
@@ -1000,11 +997,6 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.Property<int?>("ParentId")
                         .HasColumnType("int");
 
-                    b.Property<string>("Path")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
@@ -1021,12 +1013,10 @@ namespace ERPDotNet.Infrastructure.Migrations
 
                     b.HasIndex("ParentId");
 
-                    b.HasIndex("Path");
-
                     b.HasIndex("WarehouseId", "Code")
                         .IsUnique();
 
-                    b.ToTable("Locations");
+                    b.ToTable("Locations", "inventory");
                 });
 
             modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.Warehouse", b =>
@@ -2008,37 +1998,6 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.Navigation("BaseUnit");
                 });
 
-            modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.CurrentStock", b =>
-                {
-                    b.HasOne("ERPDotNet.Domain.Modules.Inventory.Entities.InventoryBatch", "Batch")
-                        .WithMany()
-                        .HasForeignKey("BatchId");
-
-                    b.HasOne("ERPDotNet.Domain.Modules.Inventory.Entities.Location", "Location")
-                        .WithMany()
-                        .HasForeignKey("LocationId");
-
-                    b.HasOne("ERPDotNet.Domain.Modules.BaseInfo.Entities.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ERPDotNet.Domain.Modules.Inventory.Entities.Warehouse", "Warehouse")
-                        .WithMany()
-                        .HasForeignKey("WarehouseId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Batch");
-
-                    b.Navigation("Location");
-
-                    b.Navigation("Product");
-
-                    b.Navigation("Warehouse");
-                });
-
             modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.InventoryDocDetail", b =>
                 {
                     b.HasOne("ERPDotNet.Domain.Modules.Inventory.Entities.InventoryBatch", "Batch")
@@ -2142,19 +2101,18 @@ namespace ERPDotNet.Infrastructure.Migrations
                 {
                     b.HasOne("ERPDotNet.Domain.Modules.Inventory.Entities.Location", "DefaultLocation")
                         .WithMany()
-                        .HasForeignKey("DefaultLocationId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .HasForeignKey("DefaultLocationId");
 
                     b.HasOne("ERPDotNet.Domain.Modules.Inventory.Entities.InventoryItemProfile", "InventoryItemProfile")
                         .WithMany("WarehouseSettings")
                         .HasForeignKey("InventoryItemProfileId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("ERPDotNet.Domain.Modules.Inventory.Entities.Warehouse", "Warehouse")
                         .WithMany()
                         .HasForeignKey("WarehouseId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("DefaultLocation");
