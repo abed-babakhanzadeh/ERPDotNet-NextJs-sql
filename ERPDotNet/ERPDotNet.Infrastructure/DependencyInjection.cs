@@ -5,6 +5,12 @@ using ERPDotNet.Infrastructure.Common.Services;
 using ERPDotNet.Infrastructure.Modules.UserAccess.Services;
 using ERPDotNet.Infrastructure.Persistence;
 using ERPDotNet.Infrastructure.Persistence.Interceptors;
+// === 1. این سه خط را برای ماژول انبار اضافه کنید ===
+using ERPDotNet.Domain.Modules.Inventory.Interfaces;
+using ERPDotNet.Domain.Modules.Inventory.Services;
+using ERPDotNet.Infrastructure.Modules.Inventory.Services;
+using ERPDotNet.Infrastructure.Modules.Inventory.Persistence.Repositories;
+// ==================================================
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -22,6 +28,7 @@ public static class DependencyInjection
         this IServiceCollection services, 
         IConfiguration configuration)
     {
+
         // 1. Database Configuration
         AddDatabaseServices(services, configuration);
 
@@ -36,7 +43,13 @@ public static class DependencyInjection
 
         // 5. Application Services
         AddApplicationServices(services);
+        // === 6. اضافه کردن سرویس‌های انبار (خط جدید) ===
+        AddInventoryServices(services);
+        // ==============================================
+
         services.AddScoped<ApplicationDbContextInitialiser>();
+
+        
 
         return services;
     }
@@ -126,5 +139,18 @@ public static class DependencyInjection
     {
         services.AddScoped<IPermissionService, PermissionService>();
         
+    }
+
+    private static void AddInventoryServices(IServiceCollection services)
+    {
+        // ریپازیتوری دیتابیس (خواندن موجودی و ...)
+        services.AddScoped<IInventoryDomainRepository, InventoryDomainRepository>();
+
+        // سیاست‌گذاری‌ها (قوانین انبار)
+        services.AddScoped<IInventoryPostingPolicy, DefaultInventoryPostingPolicy>();
+
+        // سرویس دامنه (مغز متفکر انبار)
+        // نکته: این سرویس در لایه دامین است اما اینجا به کانتینر معرفی می‌شود
+        services.AddScoped<IInventoryPostingService, InventoryPostingService>();
     }
 }
