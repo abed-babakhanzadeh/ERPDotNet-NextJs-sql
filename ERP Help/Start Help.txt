@@ -21,6 +21,8 @@ dotnet ef migrations add AddWhereUsedFunction --project ERPDotNet.Infrastructure
 cd erp-frontend
 npm run dev
 npm install
+
+npm audit fix --force
 ---------------------------------------------------
 cd erp-ai-agent
 python main.py
