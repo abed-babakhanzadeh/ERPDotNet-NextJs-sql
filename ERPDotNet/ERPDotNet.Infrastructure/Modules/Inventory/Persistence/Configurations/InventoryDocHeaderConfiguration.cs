@@ -12,17 +12,16 @@ public class InventoryDocHeaderConfiguration : IEntityTypeConfiguration<Inventor
 
         builder.HasKey(x => x.Id);
 
-        // ایندکس برای جستجو
+        // ایندکس‌ها
         builder.HasIndex(x => x.DocNumber);
-        
-        // ایندکس ترکیبی برای کنترل یکتایی شماره سند در سال مالی (بسیار مهم)
         builder.HasIndex(x => new { x.DocNumber, x.FiscalYearId });
 
+        // پراپرتی‌ها
         builder.Property(x => x.ReferenceEntityName).HasMaxLength(100);
         builder.Property(x => x.ReferenceExternalCode).HasMaxLength(100);
         builder.Property(x => x.TargetPartyName).HasMaxLength(200);
 
-        // روابط کلیدی (همه Restrict برای حفظ یکپارچگی)
+        // روابط کلیدی (همه Restrict)
         builder.HasOne(x => x.DocType)
                .WithMany()
                .HasForeignKey(x => x.DocTypeId)
@@ -37,5 +36,11 @@ public class InventoryDocHeaderConfiguration : IEntityTypeConfiguration<Inventor
                .WithMany()
                .HasForeignKey(x => x.DestinationWarehouseId)
                .OnDelete(DeleteBehavior.Restrict);
+
+        // === اصلاح حیاتی: تعریف صریح رابطه با اقلام ===
+        builder.HasMany(x => x.Details)
+               .WithOne(x => x.Header)
+               .HasForeignKey(x => x.HeaderId)
+               .OnDelete(DeleteBehavior.Cascade);
     }
 }

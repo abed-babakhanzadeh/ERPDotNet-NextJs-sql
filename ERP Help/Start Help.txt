@@ -33,6 +33,18 @@ cd erp-mobile
 npx expo start --clear 
 npx expo start --tunnel
 =========================================================================================
+
+کوئری SQL برای دریافت مقدار صحیح Base64: این کوئری را در دیتابیس اجرا کنید تا مقدار آماده برای جیسون را به شما بدهد:
+
+SQL
+
+SELECT 
+    Id, 
+    CAST('' AS XML).value('xs:base64Binary(sql:column("RowVersion"))', 'varchar(max)') AS RowVersionBase64
+FROM [inventory].[InventoryDocHeaders]
+WHERE Id = 1000 -- شناسه سند خود را بزنید
+
+=========================================================================================
 این کوئری را نباید روی خود ERP_DB اجرا کنید! باید روی دیتابیس پیش‌فرض (مثل postgres) کلیک راست کنید و Query Tool را باز کنید و آنجا اجرا کنید.
 
 SELECT pg_terminate_backend(pg_stat_activity.pid)
