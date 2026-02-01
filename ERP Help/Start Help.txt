@@ -14,12 +14,17 @@ docker-compose down
 cd ERPDotNet/ERPDotNet.API  
 
 dotnet watch run 
+
+cd ERPDotNet
 dotnet build --startup-project ERPDotNet.API
 dotnet ef database update --project ERPDotNet.Infrastructure --startup-project ERPDotNet.API
-dotnet ef migrations add AddWhereUsedFunction --project ERPDotNet.Infrastructure --startup-project ERPDotNet.API
+dotnet ef migrations add FixDocumentSequence_Nullable --project ERPDotNet.Infrastructure --startup-project ERPDotNet.API
 ---------------------------------------------------
 cd erp-frontend
+
 npm run dev
+
+
 npm install
 
 npm audit fix --force

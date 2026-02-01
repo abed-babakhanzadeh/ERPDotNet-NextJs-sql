@@ -1,15 +1,10 @@
 using ERPDotNet.Application.Common.Interfaces;
+using ERPDotNet.Application.Modules.Inventory.Interfaces; // استفاده از اینترفیس لایه اپلیکیشن
 using ERPDotNet.Domain.Modules.Inventory.Entities;
 using ERPDotNet.Domain.Modules.Inventory.Enums;
 using Microsoft.EntityFrameworkCore;
-using System.Data;
 
 namespace ERPDotNet.Infrastructure.Modules.Inventory.Services;
-
-public interface IDocumentNumberingService
-{
-    Task<long> GetNextDocNumberAsync(int docTypeId, int? fiscalYearId, CancellationToken token);
-}
 
 public class DocumentNumberingService : IDocumentNumberingService
 {
@@ -20,51 +15,77 @@ public class DocumentNumberingService : IDocumentNumberingService
         _context = context;
     }
 
-    public async Task<long> GetNextDocNumberAsync(int docTypeId, int? fiscalYearId, CancellationToken token)
+    public async Task<long> GetNextDocNumberAsync(int docTypeId, int? fiscalYearId, NumberingScope scope, CancellationToken token)
     {
-        // استراتژی Retry برای برخورد (Collision)
-        // اگر دو نفر همزمان شماره بخواهند، یکی خطا می‌خورد. ما اینجا ۳ بار تلاش مجدد می‌کنیم.
+        // استفاده از int? برای متغیرها تا با دیتابیس همخوانی داشته باشند
+        int? targetDocTypeId = null;
+        int? targetFiscalYearId = null;
+
+        switch (scope)
+        {
+            case NumberingScope.PerDocType:
+                targetDocTypeId = docTypeId;
+                targetFiscalYearId = null; // سال مهم نیست
+                break;
+
+            case NumberingScope.PerFiscalYear:
+                if (fiscalYearId == null) throw new ArgumentNullException("سال مالی الزامی است");
+                targetDocTypeId = null; // نوع مهم نیست
+                targetFiscalYearId = fiscalYearId;
+                break;
+
+            case NumberingScope.Global:
+                targetDocTypeId = null;
+                targetFiscalYearId = null;
+                break;
+            
+            // === این کیس جدید را اضافه کنید ===
+            case NumberingScope.PerDocTypeAndYear:
+                if (fiscalYearId == null) throw new ArgumentNullException("سال مالی الزامی است");
+                // اینجا هم نوع سند مهم است و هم سال مالی
+                // سیستم دنبال رکوردی می‌گردد که هر دو مقدار را داشته باشد
+                targetDocTypeId = docTypeId;
+                targetFiscalYearId = fiscalYearId;
+                break;
+
+            default:
+                throw new NotImplementedException("روش شماره‌گذاری ناشناخته است.");
+        }
+
         int retries = 3;
         while (retries > 0)
         {
             try
             {
-                // 1. پیدا کردن رکورد شمارنده
+                // جستجو: چون در انتیتی هم فیلدها int? هستند، مقایسه مشکلی ندارد
                 var sequence = await _context.Set<DocumentSequence>()
-                    .FirstOrDefaultAsync(x => x.DocTypeId == docTypeId && x.FiscalYearId == fiscalYearId, token);
+                    .FirstOrDefaultAsync(x => x.DocTypeId == targetDocTypeId && x.FiscalYearId == targetFiscalYearId, token);
 
                 if (sequence == null)
                 {
-                    // اگر اولین بار است، رکورد را می‌سازیم
                     sequence = new DocumentSequence
                     {
-                        DocTypeId = docTypeId,
-                        FiscalYearId = fiscalYearId,
+                        // اینجا مقداردهی بدون مشکل انجام می‌شود چون پراپرتی‌ها int? هستند
+                        DocTypeId = targetDocTypeId,
+                        FiscalYearId = targetFiscalYearId,
                         LastValue = 0
                     };
                     _context.Set<DocumentSequence>().Add(sequence);
                 }
 
-                // 2. افزایش مقدار (Atomic Increment)
                 sequence.LastValue++;
-                
-                // 3. ذخیره با استفاده از RowVersion
-                // اگر در این فاصله کس دیگری عدد را زیاد کرده باشد، اینجا DbUpdateConcurrencyException می‌خوریم
                 await _context.SaveChangesAsync(token);
 
                 return sequence.LastValue;
             }
             catch (DbUpdateConcurrencyException)
             {
-                // برخورد رخ داد! دوباره تلاش کن (شماره بعدی را بگیر)
                 retries--;
-                if (retries == 0) throw new Exception("ترافیک بالای سیستم: لطفاً مجدد تلاش کنید.");
-                
-                // پاک کردن State کانتکست برای تلاش مجدد تمیز
+                if (retries == 0) throw new Exception("ترافیک بالای ثبت سند: سیستم قادر به تولید شماره سند نیست.");
                 _context.ChangeTracker.Clear();
             }
         }
         
-        throw new Exception("خطای سیستمی در تولید شماره سند.");
+        throw new Exception("خطای نامشخص در تولید شماره سند.");
     }
 }

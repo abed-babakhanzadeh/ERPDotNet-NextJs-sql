@@ -19,6 +19,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
 using System.Text;
+using ERPDotNet.Application.Modules.Inventory.Interfaces;
 
 namespace ERPDotNet.Infrastructure;
 
@@ -152,5 +153,6 @@ public static class DependencyInjection
         // سرویس دامنه (مغز متفکر انبار)
         // نکته: این سرویس در لایه دامین است اما اینجا به کانتینر معرفی می‌شود
         services.AddScoped<IInventoryPostingService, InventoryPostingService>();
+        services.AddScoped<IDocumentNumberingService, DocumentNumberingService>();
     }
 }
