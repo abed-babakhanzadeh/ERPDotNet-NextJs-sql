@@ -16,6 +16,7 @@ using ERPDotNet.Application.Modules.Inventory.Queries.GetCurrentStock;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ERPDotNet.Application.Modules.Inventory.Queries.GetProductCardex;
 
 namespace ERPDotNet.API.Controllers.Inventory;
 
@@ -132,4 +133,13 @@ public class InventoryController : ControllerBase
         var result = await _mediator.Send(query);
         return Ok(result);
     }
+
+    // === متد جدید کاردکس ===
+    [HttpGet("reports/cardex")]
+    // [HasPermission("Inventory.Reports.Cardex")]
+    public async Task<ActionResult<PaginatedResult<ProductCardexDto>>> GetProductCardex([FromQuery] GetProductCardexQuery query)
+    {
+        return Ok(await _mediator.Send(query));
+    }
+
 }
