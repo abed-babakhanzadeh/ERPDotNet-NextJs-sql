@@ -52,9 +52,38 @@ public class RolePermissionConfiguration : IEntityTypeConfiguration<RolePermissi
             // BOM
             new RolePermission { RoleId = "1", PermissionId = 200 },  // View
             new RolePermission { RoleId = "1", PermissionId = 201 },  // Create
-            new RolePermission { RoleId = "1", PermissionId = 202 }  // Rports
+            new RolePermission { RoleId = "1", PermissionId = 202 } , // Rports
         //     new RolePermission { RoleId = "1", PermissionId = 38 },  // Edit
         //     new RolePermission { RoleId = "1", PermissionId = 38 }  // Delete
+
+        // ===================================
+            // === دسترسی‌های انبار برای Admin ===
+            // ===================================
+            
+            // 1. دسترسی‌های منو
+            new RolePermission { RoleId = "1", PermissionId = 3000 }, // Inventory Module
+            new RolePermission { RoleId = "1", PermissionId = 3100 }, // BaseInfo Group
+            new RolePermission { RoleId = "1", PermissionId = 3200 }, // Operations Group
+            new RolePermission { RoleId = "1", PermissionId = 3300 }, // Reports Group
+            
+            // 2. صفحات
+            new RolePermission { RoleId = "1", PermissionId = 3101 }, // Warehouses Page
+            new RolePermission { RoleId = "1", PermissionId = 3105 }, // DocTypes Page
+            new RolePermission { RoleId = "1", PermissionId = 3201 }, // Docs Page
+            new RolePermission { RoleId = "1", PermissionId = 3301 }, // Stock Report
+            new RolePermission { RoleId = "1", PermissionId = 3302 }, // Cardex Report
+
+            // 3. عملیات (دکمه‌ها)
+            new RolePermission { RoleId = "1", PermissionId = 3102 }, // Warehouse Define
+            new RolePermission { RoleId = "1", PermissionId = 3103 }, // Location Define
+            new RolePermission { RoleId = "1", PermissionId = 3106 }, // DocType Define
+            
+            new RolePermission { RoleId = "1", PermissionId = 3202 }, // Create Doc
+            new RolePermission { RoleId = "1", PermissionId = 3203 }, // Edit Doc
+            new RolePermission { RoleId = "1", PermissionId = 3204 }, // Delete Doc
+            new RolePermission { RoleId = "1", PermissionId = 3205 }, // Approve Doc
+            new RolePermission { RoleId = "1", PermissionId = 3206 }, // Revert Doc
+            new RolePermission { RoleId = "1", PermissionId = 3207 }  // Post Doc
         );
     }
 }

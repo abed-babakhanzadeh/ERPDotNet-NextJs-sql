@@ -1,7 +1,6 @@
 using ERPDotNet.API.Attributes;
 using ERPDotNet.Application.Common.Models;
-// === اصلاح نیم‌اسپیس‌ها طبق فایل‌های آپلود شده ===
-using ERPDotNet.Application.Modules.Inventory.Commands.ApproveInventoryDoc; 
+using ERPDotNet.Application.Modules.Inventory.Commands.ApproveInventoryDoc;
 using ERPDotNet.Application.Modules.Inventory.Commands.CreateBatch;
 using ERPDotNet.Application.Modules.Inventory.Commands.CreateInventoryDoc;
 using ERPDotNet.Application.Modules.Inventory.Commands.CreateLocation;
@@ -10,7 +9,6 @@ using ERPDotNet.Application.Modules.Inventory.Commands.DefineWarehouse;
 using ERPDotNet.Application.Modules.Inventory.Commands.PostInventoryDoc;
 using ERPDotNet.Application.Modules.Inventory.Commands.SetItemWarehouseSetting;
 using ERPDotNet.Application.Modules.Inventory.Commands.ConfigureItemProfile;
-// ==================================================
 using ERPDotNet.Application.Modules.Inventory.DTOs;
 using ERPDotNet.Application.Modules.Inventory.Queries.GetCurrentStock;
 using MediatR;
@@ -40,7 +38,8 @@ public class InventoryController : ControllerBase
     // ==========================================
 
     [HttpPost("warehouses")]
-    // [HasPermission("Inventory.Warehouses.Create")] 
+    // اصلاح شد: منطبق با Inventory.Warehouses.Define
+    [HasPermission("Inventory.Warehouses.Define")] 
     public async Task<ActionResult<int>> DefineWarehouse([FromBody] DefineWarehouseCommand command)
     {
         var id = await _mediator.Send(command);
@@ -48,7 +47,9 @@ public class InventoryController : ControllerBase
     }
 
     [HttpPost("doc-types")]
-    // [HasPermission("Inventory.DocTypes.Create")]
+    // اصلاح شد: منطبق با Inventory.DocTypes.Define
+    [HasPermission("Inventory.DocTypes.Define")]
+    // نکته: نام کامند را طبق کد خودتان حفظ کردم
     public async Task<ActionResult<int>> DefineDocType([FromBody] DefineInventoryDocTypeCommand command)
     {
         var id = await _mediator.Send(command);
@@ -56,7 +57,8 @@ public class InventoryController : ControllerBase
     }
 
     [HttpPost("locations")]
-    // [HasPermission("Inventory.Locations.Create")]
+    // اصلاح شد: منطبق با Inventory.Locations.Define
+    [HasPermission("Inventory.Locations.Define")]
     public async Task<ActionResult<int>> CreateLocation([FromBody] CreateLocationCommand command)
     {
         var id = await _mediator.Send(command);
@@ -64,7 +66,8 @@ public class InventoryController : ControllerBase
     }
 
     [HttpPost("batches")]
-    // [HasPermission("Inventory.Batches.Create")]
+    // اصلاح شد: چون بچ معمولا موقع سند زدن ساخته می‌شود، دسترسی سند را دادم (یا می‌توانید Inventory.BaseInfo بدهید)
+    [HasPermission("Inventory.Docs.Create")]
     public async Task<ActionResult<int>> CreateBatch([FromBody] CreateInventoryBatchCommand command)
     {
         var id = await _mediator.Send(command);
@@ -72,7 +75,8 @@ public class InventoryController : ControllerBase
     }
 
     [HttpPost("settings/item")]
-    // [HasPermission("Inventory.Settings.Edit")]
+    // اصلاح شد: دسترسی کلی اطلاعات پایه
+    [HasPermission("Inventory.BaseInfo")]
     public async Task<ActionResult<int>> SetItemWarehouseSetting([FromBody] SetItemWarehouseSettingCommand command)
     {
         var id = await _mediator.Send(command);
@@ -80,7 +84,8 @@ public class InventoryController : ControllerBase
     }
 
     [HttpPost("profiles")]
-    // [HasPermission("Inventory.Profiles.Edit")]
+    // اصلاح شد: دسترسی کلی اطلاعات پایه
+    [HasPermission("Inventory.BaseInfo")]
     public async Task<ActionResult<int>> ConfigureProfile([FromBody] ConfigureInventoryItemProfileCommand command)
     {
         var id = await _mediator.Send(command);
@@ -93,7 +98,8 @@ public class InventoryController : ControllerBase
 
     // ثبت سند پیش‌نویس (Draft)
     [HttpPost("docs")]
-    // [HasPermission("Inventory.Docs.Create")]
+    // اصلاح شد: منطبق با Inventory.Docs.Create
+    [HasPermission("Inventory.Docs.Create")]
     public async Task<ActionResult<int>> CreateDocument([FromBody] CreateInventoryDocCommand command)
     {
         var id = await _mediator.Send(command);
@@ -102,25 +108,24 @@ public class InventoryController : ControllerBase
 
     // تایید سند (Approve)
     [HttpPost("docs/{id}/approve")]
-    // [HasPermission("Inventory.Docs.Approve")]
+    // اصلاح شد: منطبق با Inventory.Docs.Approve
+    [HasPermission("Inventory.Docs.Approve")]
     public async Task<IActionResult> ApproveDocument(long id, [FromBody] ApproveInventoryDocCommand command)
     {
-        // چک کردن تطابق شناسه URL با بدنه درخواست
         if (id != command.Id) return BadRequest("شناسه سند در آدرس و بدنه درخواست مغایرت دارد.");
         
-        // نکته: در بادی درخواست باید RowVersion هم ارسال شود تا ولیدیشن پاس شود
         await _mediator.Send(command);
         return Ok(new { message = "سند با موفقیت تایید شد." });
     }
 
     // قطعی سازی سند (Post)
     [HttpPost("docs/{id}/post")]
-    // [HasPermission("Inventory.Docs.Post")]
+    // اصلاح شد: منطبق با Inventory.Docs.Post
+    [HasPermission("Inventory.Docs.Post")]
     public async Task<IActionResult> PostDocument(long id, [FromBody] PostInventoryDocCommand command)
     {
         if (id != command.Id) return BadRequest("شناسه سند در آدرس و بدنه درخواست مغایرت دارد.");
 
-        // نکته: RowVersion اجباری است
         await _mediator.Send(command);
         return Ok(new { message = "سند با موفقیت در کاردکس قطعی شد." });
     }
@@ -130,29 +135,27 @@ public class InventoryController : ControllerBase
     // ==========================================
 
     [HttpPost("stock/current")] 
-    // [HasPermission("Inventory.Reports.CurrentStock")]
+    // اصلاح شد: منطبق با Inventory.Reports.CurrentStock
+    [HasPermission("Inventory.Reports.CurrentStock")]
     public async Task<ActionResult<PaginatedResult<InventoryStockDto>>> GetCurrentStock([FromBody] GetCurrentStockQuery query)
     {
         var result = await _mediator.Send(query);
         return Ok(result);
     }
 
-    // === متد جدید کاردکس ===
     [HttpGet("reports/cardex")]
-    // [HasPermission("Inventory.Reports.Cardex")]
+    // اصلاح شد: منطبق با Inventory.Reports.Cardex
+    [HasPermission("Inventory.Reports.Cardex")]
     public async Task<ActionResult<PaginatedResult<ProductCardexDto>>> GetProductCardex([FromQuery] GetProductCardexQuery query)
     {
         return Ok(await _mediator.Send(query));
     }
 
     [HttpDelete("docs/{id}")]
-    // [HasPermission("Inventory.Docs.Delete")]
-    // حذف (تغییر مهم: RowVersion معمولاً در هدر یا کوئری می‌آید چون Delete بادی ندارد)
-    // اما برای سادگی فعلاً از Query String می‌گیریم
+    // اصلاح شد: منطبق با Inventory.Docs.Delete
+    [HasPermission("Inventory.Docs.Delete")]
     public async Task<IActionResult> DeleteDocument(long id, [FromQuery] string rowVersion)
     {
-        // تبدیل فضای خالی احتمالی در URL (چون + در URL به فاصله تبدیل می‌شود)
-        // البته بهتر است فرانت آن را URL Encode کند
         rowVersion = rowVersion.Replace(" ", "+"); 
         
         await _mediator.Send(new DeleteInventoryDocCommand(id, rowVersion));
@@ -161,22 +164,22 @@ public class InventoryController : ControllerBase
 
     // ویرایش سند (فقط Draft)
     [HttpPut("docs/{id}")]
-    // [HasPermission("Inventory.Docs.Edit")]
+    // اصلاح شد: منطبق با Inventory.Docs.Edit
+    [HasPermission("Inventory.Docs.Edit")]
     public async Task<IActionResult> UpdateDocument(long id, [FromBody] UpdateInventoryDocCommand command)
     {
         if (id != command.Id) return BadRequest("مغایرت شناسه.");
-        // RowVersion باید داخل Body جیسون باشد
         await _mediator.Send(command);
         return Ok(new { message = "سند با موفقیت ویرایش شد." });
     }
 
     // بازگشت از تایید (Un-Approve)
     [HttpPost("docs/{id}/revert")]
-    // [HasPermission("Inventory.Docs.Revert")]
+    // اصلاح شد: منطبق با Inventory.Docs.Revert
+    [HasPermission("Inventory.Docs.Revert")]
     public async Task<IActionResult> RevertDocument(long id)
     {
         await _mediator.Send(new RevertInventoryDocCommand(id));
         return Ok(new { message = "سند به وضعیت پیش‌نویس برگشت." });
     }
-
 }

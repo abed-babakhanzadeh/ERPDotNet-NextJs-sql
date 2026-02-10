@@ -9,8 +9,17 @@ import {
   ListTree,
   FilePlus,
   ClipboardList,
+  Database,
+  Ruler,
+  // --- آیکون‌های جدید برای انبار ---
+  Warehouse,
+  Box,
+  FileType,
+  FileText,
+  BarChart3,
+  Activity,
+  ScrollText,
 } from "lucide-react";
-import { Database, Ruler } from "lucide-react";
 
 export interface MenuItem {
   title: string;
@@ -24,6 +33,7 @@ export const MENU_ITEMS: MenuItem[] = [
   {
     title: "داشبورد",
     // href: "/",
+    href: "/dashboard", // معمولا این مسیر درست است
     icon: LayoutDashboard,
   },
 
@@ -109,6 +119,73 @@ export const MENU_ITEMS: MenuItem[] = [
             href: "/product-engineering/reports/where-used",
             icon: ClipboardList,
             permission: "ProductEngineering.BOM.Reports",
+          },
+        ],
+      },
+    ],
+  },
+
+  // =======================================================
+  // === ماژول مدیریت انبار (اضافه شده) ===
+  // =======================================================
+  {
+    title: "مدیریت انبار",
+    icon: Warehouse,
+    permission: "Inventory",
+    submenu: [
+      // 1. اطلاعات پایه انبار
+      {
+        title: "اطلاعات پایه",
+        icon: Settings,
+        permission: "Inventory.BaseInfo",
+        submenu: [
+          {
+            title: "تعریف انبارها",
+            href: "/inventory/warehouses",
+            icon: Box,
+            permission: "Inventory.Warehouses",
+          },
+          {
+            title: "انواع سند",
+            href: "/inventory/doc-types",
+            icon: FileType,
+            permission: "Inventory.DocTypes",
+          },
+        ],
+      },
+
+      // 2. عملیات انبار
+      {
+        title: "عملیات انبار",
+        icon: ClipboardList,
+        permission: "Inventory.Operations",
+        submenu: [
+          {
+            title: "اسناد انبار",
+            href: "/inventory/docs",
+            icon: FileText,
+            permission: "Inventory.Docs",
+          },
+        ],
+      },
+
+      // 3. گزارشات
+      {
+        title: "گزارشات",
+        icon: BarChart3,
+        permission: "Inventory.Reports",
+        submenu: [
+          {
+            title: "موجودی لحظه‌ای",
+            href: "/inventory/reports/current-stock",
+            icon: Activity,
+            permission: "Inventory.Reports.CurrentStock",
+          },
+          {
+            title: "کاردکس کالا",
+            href: "/inventory/reports/cardex",
+            icon: ScrollText,
+            permission: "Inventory.Reports.Cardex",
           },
         ],
       },
