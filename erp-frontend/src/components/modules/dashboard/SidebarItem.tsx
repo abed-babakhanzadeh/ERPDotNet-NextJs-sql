@@ -35,7 +35,7 @@ export default function SidebarItem({
     ? hasPermission(item.permission)
     : true;
   const hasChildAccess = item.submenu?.some((sub) =>
-    sub && sub.permission ? hasPermission(sub.permission) : true
+    sub && sub.permission ? hasPermission(sub.permission) : true,
   );
   const isVisible = item.submenu
     ? hasDirectAccess || hasChildAccess
@@ -128,7 +128,7 @@ export default function SidebarItem({
           marginClass,
           isActive
             ? clsx(colors.bgActive, colors.textActive, "font-semibold")
-            : clsx(colors.bg, colors.bgHover, colors.text)
+            : clsx(colors.bg, colors.bgHover, colors.text),
         )}
         title={isCollapsed ? item.title : ""}
       >
@@ -136,7 +136,7 @@ export default function SidebarItem({
           className={clsx(
             "flex items-center justify-center w-5 h-5 rounded-md transition-all duration-200",
             isActive ? "scale-110" : "group-hover:scale-105",
-            colors.icon
+            colors.icon,
           )}
         >
           <item.icon size={18} className="shrink-0" />
@@ -170,7 +170,7 @@ export default function SidebarItem({
           isCollapsed ? "rounded-md px-1.5 py-2" : "rounded-lg px-3 py-2.5",
           isActive
             ? clsx(colors.bgActive, colors.textActive, "font-semibold")
-            : clsx(colors.bg, colors.bgHover, colors.text)
+            : clsx(colors.bg, colors.bgHover, colors.text),
         )}
         title={isCollapsed ? item.title : ""}
       >
@@ -179,7 +179,7 @@ export default function SidebarItem({
             className={clsx(
               "flex items-center justify-center w-5 h-5 rounded-md transition-all duration-200 shrink-0",
               isActive ? "scale-110" : "group-hover:scale-105",
-              colors.icon
+              colors.icon,
             )}
           >
             <item.icon size={18} className="shrink-0" />
@@ -195,7 +195,7 @@ export default function SidebarItem({
             className={clsx(
               "transition-transform duration-300 shrink-0 ml-2",
               isOpen ? "rotate-180" : "",
-              colors.text
+              colors.text,
             )}
           />
         )}
@@ -205,7 +205,7 @@ export default function SidebarItem({
             className={clsx(
               "transition-transform duration-300 shrink-0 ml-2",
               isOpen ? "rotate-180" : "",
-              colors.text
+              colors.text,
             )}
           />
         )}
@@ -216,14 +216,14 @@ export default function SidebarItem({
         <div
           className={clsx(
             "overflow-hidden transition-all duration-300 ease-in-out",
-            isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+            isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0",
           )}
         >
           <div
             className={clsx(
               "pt-2 pb-1 space-y-1",
               !isCollapsed && "border-r-2 border-emerald-200/40 mr-2 pr-0",
-              isCollapsed && "space-y-0.5"
+              isCollapsed && "space-y-0.5",
             )}
           >
             {item.submenu.map((sub, index) => (
