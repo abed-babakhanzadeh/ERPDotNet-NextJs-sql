@@ -17,6 +17,9 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ERPDotNet.Application.Modules.Inventory.Queries.GetProductCardex;
+using ERPDotNet.Application.Modules.Inventory.Commands.DeleteInventoryDoc;
+using ERPDotNet.Application.Modules.Inventory.Commands.RevertInventoryDoc;
+using ERPDotNet.Application.Modules.Inventory.Commands.UpdateInventoryDoc;
 
 namespace ERPDotNet.API.Controllers.Inventory;
 
@@ -140,6 +143,40 @@ public class InventoryController : ControllerBase
     public async Task<ActionResult<PaginatedResult<ProductCardexDto>>> GetProductCardex([FromQuery] GetProductCardexQuery query)
     {
         return Ok(await _mediator.Send(query));
+    }
+
+    [HttpDelete("docs/{id}")]
+    // [HasPermission("Inventory.Docs.Delete")]
+    // حذف (تغییر مهم: RowVersion معمولاً در هدر یا کوئری می‌آید چون Delete بادی ندارد)
+    // اما برای سادگی فعلاً از Query String می‌گیریم
+    public async Task<IActionResult> DeleteDocument(long id, [FromQuery] string rowVersion)
+    {
+        // تبدیل فضای خالی احتمالی در URL (چون + در URL به فاصله تبدیل می‌شود)
+        // البته بهتر است فرانت آن را URL Encode کند
+        rowVersion = rowVersion.Replace(" ", "+"); 
+        
+        await _mediator.Send(new DeleteInventoryDocCommand(id, rowVersion));
+        return NoContent();
+    }
+
+    // ویرایش سند (فقط Draft)
+    [HttpPut("docs/{id}")]
+    // [HasPermission("Inventory.Docs.Edit")]
+    public async Task<IActionResult> UpdateDocument(long id, [FromBody] UpdateInventoryDocCommand command)
+    {
+        if (id != command.Id) return BadRequest("مغایرت شناسه.");
+        // RowVersion باید داخل Body جیسون باشد
+        await _mediator.Send(command);
+        return Ok(new { message = "سند با موفقیت ویرایش شد." });
+    }
+
+    // بازگشت از تایید (Un-Approve)
+    [HttpPost("docs/{id}/revert")]
+    // [HasPermission("Inventory.Docs.Revert")]
+    public async Task<IActionResult> RevertDocument(long id)
+    {
+        await _mediator.Send(new RevertInventoryDocCommand(id));
+        return Ok(new { message = "سند به وضعیت پیش‌نویس برگشت." });
     }
 
 }
