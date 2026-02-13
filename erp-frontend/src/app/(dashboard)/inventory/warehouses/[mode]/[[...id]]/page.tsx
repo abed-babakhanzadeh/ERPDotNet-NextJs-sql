@@ -1,160 +1,311 @@
 ﻿"use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, useParams } from "next/navigation";
+import { useSWRConfig } from "swr";
 import { toast } from "sonner";
-import { Box, Edit3 } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Save, Undo2, Pencil, List, Loader2 } from "lucide-react";
+
 import BaseFormLayout from "@/components/layout/BaseFormLayout";
-import { useTabs } from "@/providers/TabsProvider";
-import AutoForm, { FieldConfig, Option } from "@/components/form/AutoForm";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+
 import inventoryService from "@/services/inventoryService";
+import { WarehouseDto } from "@/types/inventory";
 
-export default function WarehouseFormPage() {
-  const { closeTab, activeTabId } = useTabs();
+const warehouseSchema = z.object({
+  title: z.string().min(1, "عنوان الزامی است"),
+  code: z.string().min(1, "کد الزامی است"),
+  manager: z.string().optional(),
+  tel: z.string().optional(),
+  address: z.string().optional(),
+  capacity: z.coerce.number().optional(),
+  isActive: z.boolean().default(true),
+});
+
+type WarehouseFormValues = z.infer<typeof warehouseSchema>;
+
+export default function WarehousePage() {
+  const router = useRouter();
   const params = useParams();
+  const { mutate } = useSWRConfig();
 
-  // استخراج وضعیت (mode) و شناسه (id) از آدرس
   const mode = params.mode as "create" | "edit" | "view";
   const id = params.id?.[0];
 
-  const [currentMode, setCurrentMode] = useState(mode);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [typeOptions, setTypeOptions] = useState<Option[]>([]);
-  const [formData, setFormData] = useState<any>({
-    title: "",
-    code: "",
-    type: 1,
-    address: "",
-    isActive: true,
+  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState<WarehouseDto | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm<WarehouseFormValues>({
+    resolver: zodResolver(warehouseSchema),
+    defaultValues: {
+      title: "",
+      code: "",
+      manager: "",
+      tel: "",
+      address: "",
+      capacity: 0,
+      isActive: true,
+    },
   });
 
   useEffect(() => {
-    const init = async () => {
-      try {
-        // ۱. دریافت انواع انبار از بک‌ایند
-        const types = await inventoryService.getWarehouseTypes();
-        setTypeOptions(types);
+    if ((mode === "edit" || mode === "view") && id) {
+      loadData(Number(id));
+    }
+  }, [mode, id]);
 
-        // ۲. اگر حالت ویرایش یا نمایش است، اطلاعات را لود کن
-        if (id && currentMode !== "create") {
-          const data = await inventoryService.getWarehouseById(id);
-          setFormData(data);
-        }
-      } catch (error) {
-        toast.error("خطا در بارگذاری اطلاعات اولیه");
-      } finally {
-        setLoading(false);
-      }
-    };
-    init();
-  }, [id, currentMode]);
-
-  // تنظیمات فیلدها با قابلیت Read-only در حالت View
-  const fields: FieldConfig[] = useMemo(
-    () => [
-      {
-        name: "title",
-        label: "عنوان انبار",
-        type: "text",
-        required: true,
-        disabled: currentMode === "view",
-      },
-      {
-        name: "code",
-        label: "کد انبار",
-        type: "text",
-        required: true,
-        disabled: currentMode === "view",
-      },
-      {
-        name: "type",
-        label: "نوع انبار",
-        type: "select",
-        options: typeOptions,
-        disabled: currentMode === "view",
-      },
-      {
-        name: "isActive",
-        label: "وضعیت فعال",
-        type: "checkbox",
-        disabled: currentMode === "view",
-      },
-      {
-        name: "address",
-        label: "آدرس",
-        type: "textarea",
-        colSpan: 2,
-        disabled: currentMode === "view",
-      },
-    ],
-    [typeOptions, currentMode],
-  );
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
+  const loadData = async (warehouseId: number) => {
+    setLoading(true);
     try {
-      if (currentMode === "create") {
-        await inventoryService.defineWarehouse(formData);
-        toast.success("انبار با موفقیت تعریف شد");
-      } else {
-        // ۱. تبدیل رشته به عدد برای رفع خطای id
-        const numericId = Number(id);
-        if (isNaN(numericId)) throw new Error("شناسه نامعتبر است");
-
-        // ۲. ارسال آیدی عددی به سرویس
-        await inventoryService.updateWarehouse(numericId, formData);
-        toast.success("تغییرات با موفقیت ذخیره شد");
-      }
-
-      // ۳. رفع خطای closeTab با ارسال activeTabId
-      if (activeTabId) {
-        closeTab(activeTabId);
-      }
-    } catch (error: any) {
-      toast.error(error.response?.data?.Message || "خطا در انجام عملیات");
+      const result = await inventoryService.getWarehouseById(warehouseId);
+      setData(result);
+      form.reset({
+        title: result.title,
+        code: result.code,
+        manager: result.manager || "",
+        tel: result.tel || "",
+        address: result.address || "",
+        capacity: result.capacity || 0,
+        isActive: result.isActive,
+      });
+    } catch (error) {
+      toast.error("خطا در دریافت اطلاعات انبار");
+      router.push("/inventory/warehouses");
     } finally {
-      setSubmitting(false);
+      setLoading(false);
     }
   };
+
+  const onSubmit = async (values: WarehouseFormValues) => {
+    setIsSubmitting(true);
+    try {
+      if (mode === "create") {
+        await inventoryService.createWarehouse(values);
+        toast.success("انبار با موفقیت ایجاد شد");
+      } else {
+        await inventoryService.updateWarehouse(Number(id), {
+          ...values,
+          id: Number(id),
+          rowVersion: data?.rowVersion || "",
+        });
+        toast.success("انبار با موفقیت ویرایش شد");
+      }
+
+      mutate("/api/inventory/warehouses");
+      router.push("/inventory/warehouses");
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "خطا در عملیات");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCancel = () => {
+    if (mode === "edit") {
+      form.reset();
+      if (id) loadData(Number(id));
+      router.push(`/inventory/warehouses/view/${id}`);
+    } else {
+      router.push("/inventory/warehouses");
+    }
+  };
+
+  const isReadOnly = mode === "view";
 
   return (
     <BaseFormLayout
       title={
-        currentMode === "create"
-          ? "ایجاد انبار"
-          : currentMode === "edit"
-            ? "ویرایش انبار"
-            : "جزئیات انبار"
+        mode === "create"
+          ? "تعریف انبار جدید"
+          : mode === "edit"
+            ? `ویرایش انبار: ${data?.title || ""}`
+            : `مشاهده انبار: ${data?.title || ""}`
       }
-      isLoading={loading}
-      isSubmitting={submitting}
-      onSubmit={handleSubmit}
-      submitText={currentMode === "create" ? "ثبت نهایی" : "ذخیره تغییرات"}
-      formId="warehouse-form" // اضافه شد برای هماهنگی با دکمه Save در لایوت [cite: 67]
-    >
-      {/* استفاده از استایل فرم Unit برای ظاهر بهتر  */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow max-w-5xl mx-auto">
-        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
-          <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
-            <Box className="w-5 h-5 text-white" />
-          </div>
-          <h3 className="font-semibold text-base text-slate-800 dark:text-slate-200">
-            اطلاعات اصلی انبار
-          </h3>
-        </div>
+      isLoading={loading} // استفاده از پراپ استاندارد loading
+      headerActions={
+        <>
+          {mode === "view" ? (
+            <>
+              <Button
+                onClick={() => router.push(`/inventory/warehouses/edit/${id}`)}
+                className="gap-2"
+              >
+                <Pencil className="h-4 w-4" />
+                ویرایش
+              </Button>
 
-        <AutoForm
-          fields={fields}
-          data={formData}
-          onChange={(name, value) =>
-            setFormData((prev: any) => ({ ...prev, [name]: value }))
-          }
-          loading={submitting}
-        />
-      </div>
+              <Button
+                onClick={() => router.push("/inventory/warehouses")}
+                variant="outline"
+                className="gap-2"
+              >
+                <List className="h-4 w-4" />
+                فهرست
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                onClick={form.handleSubmit(onSubmit)}
+                disabled={isSubmitting}
+                className="gap-2"
+              >
+                {isSubmitting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                ثبت نهایی
+              </Button>
+
+              <Button
+                onClick={handleCancel}
+                variant="outline"
+                disabled={isSubmitting}
+                className="gap-2"
+              >
+                <Undo2 className="h-4 w-4" />
+                انصراف
+              </Button>
+            </>
+          )}
+          {/* دکمه تمام صفحه توسط خود BaseFormLayout رندر می‌شود */}
+        </>
+      }
+    >
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-1">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>عنوان انبار</FormLabel>
+                  <FormControl>
+                    <Input {...field} disabled={isReadOnly} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="code"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>کد انبار</FormLabel>
+                  <FormControl>
+                    <Input {...field} disabled={isReadOnly} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="manager"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>مسئول انبار</FormLabel>
+                  <FormControl>
+                    <Input {...field} disabled={isReadOnly} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="tel"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>تلفن</FormLabel>
+                  <FormControl>
+                    <Input {...field} disabled={isReadOnly} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="capacity"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>ظرفیت (تعداد پالت/قفسه)</FormLabel>
+                  <FormControl>
+                    <Input type="number" {...field} disabled={isReadOnly} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="isActive"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm mt-8 bg-card">
+                  <div className="space-y-0.5">
+                    <FormLabel>وضعیت انبار</FormLabel>
+                    <FormDescription>
+                      آیا این انبار فعال و قابل استفاده است؟
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      disabled={isReadOnly}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <div className="col-span-1 md:col-span-2 lg:col-span-3">
+              <FormField
+                control={form.control}
+                name="address"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>آدرس کامل</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        disabled={isReadOnly}
+                        className="resize-none min-h-[100px]"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+        </form>
+      </Form>
     </BaseFormLayout>
   );
 }

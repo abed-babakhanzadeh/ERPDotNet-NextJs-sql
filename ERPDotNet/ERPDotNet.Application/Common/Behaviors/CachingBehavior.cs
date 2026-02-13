@@ -19,44 +19,48 @@ public class CachingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, 
 
     public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
-        // 1. آیا این درخواست ویژگی [Cached] دارد؟
-        var cacheAttribute = request.GetType().GetCustomAttribute<CachedAttribute>();
+        // 1. بررسی وجود اتریبیوت [Cached] روی کوئری
+        var cacheAttribute = typeof(TRequest).GetCustomAttribute<CachedAttribute>();
         
-        // اگر نداشت، معمولی اجرا کن و برو بعدی
         if (cacheAttribute == null)
         {
             return await next();
         }
 
-        // 2. ساخت کلید منحصر به فرد برای کش
-        // مثال: "GetAllUnitsQuery|{Page:1,Size:10}"
+        // 2. تولید کلید یکتا
         var cacheKey = GenerateCacheKey(request);
 
-        // 3. آیا در کش هست؟
+        // 3. تلاش برای خواندن از ردیس
         var cachedResponse = await _cacheService.GetAsync<TResponse>(cacheKey, cancellationToken);
         if (cachedResponse != null)
         {
-            return cachedResponse; // سریع برگردان (بدون دیتابیس)
+            return cachedResponse;
         }
 
-        // 4. اگر نبود، اجرا کن (از دیتابیس بگیر)
+        // 4. اگر در کش نبود، اجرا کن (برو دیتابیس)
         var response = await next();
 
-        // 5. حالا ذخیره کن برای دفعه بعد
-        await _cacheService.SetAsync(
-            cacheKey, 
-            response, 
-            TimeSpan.FromSeconds(cacheAttribute.TimeToLiveSeconds), 
-            cacheAttribute.Tags?.ToList(), // <--- ارسال تگ‌ها
-            cancellationToken
-        );
+        // 5. ذخیره پاسخ در ردیس با تگ‌های مربوطه
+        if (response != null)
+        {
+            await _cacheService.SetAsync(
+                cacheKey, 
+                response, 
+                TimeSpan.FromSeconds(cacheAttribute.TimeToLiveSeconds), 
+                cacheAttribute.Tags?.ToList(),
+                cancellationToken
+            );
+        }
+
         return response;
     }
 
     private string GenerateCacheKey(TRequest request)
     {
         var requestName = typeof(TRequest).Name;
-        var requestData = JsonSerializer.Serialize(request);
+        // تنظیمات سریالایزر برای کلیدهای کش ثابت
+        var options = new JsonSerializerOptions { WriteIndented = false };
+        var requestData = JsonSerializer.Serialize(request, options);
         return $"{requestName}|{requestData}";
     }
 }

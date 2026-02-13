@@ -6,18 +6,13 @@ using Microsoft.EntityFrameworkCore;
 namespace ERPDotNet.Application.Modules.Inventory.Commands.DeleteWarehouse;
 
 [CacheInvalidation("Warehouses", "WarehousesLookup")]
-public record DeleteWarehouseCommand(int Id, string RowVersion) : IRequest;
+public record DeleteWarehouseCommand(int Id, string RowVersion) : IRequest<int>; // تغییر به int
 
-public class DeleteWarehouseHandler : IRequestHandler<DeleteWarehouseCommand>
+public class DeleteWarehouseCommandHandler(IApplicationDbContext context) : IRequestHandler<DeleteWarehouseCommand, int>
 {
-    private readonly IApplicationDbContext _context;
+    private readonly IApplicationDbContext _context = context;
 
-    public DeleteWarehouseHandler(IApplicationDbContext context)
-    {
-        _context = context;
-    }
-
-    public async Task Handle(DeleteWarehouseCommand request, CancellationToken cancellationToken)
+    public async Task<int> Handle(DeleteWarehouseCommand request, CancellationToken cancellationToken)
     {
         var entity = await _context.Warehouses
             .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
@@ -33,5 +28,6 @@ public class DeleteWarehouseHandler : IRequestHandler<DeleteWarehouseCommand>
         entity.IsDeleted = true; // 
         
         await _context.SaveChangesAsync(cancellationToken);
+        return request.Id;
     }
 }
