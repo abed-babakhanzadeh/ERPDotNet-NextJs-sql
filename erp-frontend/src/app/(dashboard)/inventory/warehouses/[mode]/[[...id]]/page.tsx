@@ -124,7 +124,9 @@ export default function WarehousePage() {
     setIsSubmitting(true);
     try {
       if (mode === "create") {
-        await inventoryService.createWarehouse(values);
+        // اصلاح شد: استفاده از متد defineWarehouse به جای createWarehouse
+        // همچنین برای اطمینان از تطابق تایپ، values را پاس می‌دهیم (تایپ نامبر با enum سازگار است)
+        await inventoryService.defineWarehouse(values as any);
         toast.success("انبار با موفقیت ایجاد شد");
       } else {
         await inventoryService.updateWarehouse(Number(id), {
