@@ -81,8 +81,12 @@ public class PermissionConfiguration : IEntityTypeConfiguration<Permission>
             
             // مدیریت انبارها (صفحه)
             new Permission { Id = 3101, Name = "Inventory.Warehouses", Title = "تعریف انبارها", IsMenu = true, ParentId = 3100, Url = "/inventory/warehouses" },
-            new Permission { Id = 3102, Name = "Inventory.Warehouses.Define", Title = "افزودن/ویرایش انبار", IsMenu = false, ParentId = 3101 },
+            new Permission { Id = 3102, Name = "Inventory.Warehouses.Define", Title = "افزودن انبار", IsMenu = false, ParentId = 3101 },
             new Permission { Id = 3103, Name = "Inventory.Locations.Define", Title = "مدیریت قفسه/لوکیشن", IsMenu = false, ParentId = 3101 },
+            // پرمیشن مشاهده لیست (دکمه یا اکشن) - اضافه شد
+            new Permission { Id = 3104, Name = "Inventory.Warehouses.View", Title = "مشاهده لیست انبارها", IsMenu = false, ParentId = 3101 },
+            new Permission { Id = 3107, Name = "Inventory.Warehouses.Edit", Title = "ویرایش لیست انبارها", IsMenu = false, ParentId = 3101 },
+            new Permission { Id = 3108, Name = "Inventory.Warehouses.Delete", Title = "حذف لیست انبارها", IsMenu = false, ParentId = 3101 },
             
             // مدیریت انواع سند (صفحه)
             new Permission { Id = 3105, Name = "Inventory.DocTypes", Title = "انواع سند", IsMenu = true, ParentId = 3100, Url = "/inventory/doc-types" },

@@ -18,6 +18,12 @@ using ERPDotNet.Application.Modules.Inventory.Queries.GetProductCardex;
 using ERPDotNet.Application.Modules.Inventory.Commands.DeleteInventoryDoc;
 using ERPDotNet.Application.Modules.Inventory.Commands.RevertInventoryDoc;
 using ERPDotNet.Application.Modules.Inventory.Commands.UpdateInventoryDoc;
+using ERPDotNet.Application.Modules.Inventory.Queries.GetWarehouses;
+using ERPDotNet.Application.Modules.Inventory.Queries.GetWarehouseById;
+using ERPDotNet.Application.Modules.Inventory.Commands.DeleteWarehouse;
+using ERPDotNet.Application.Common.Extensions;
+using ERPDotNet.Domain.Modules.Inventory.Entities;
+using ERPDotNet.Application.Modules.Inventory.Commands.UpdateWarehouse;
 
 namespace ERPDotNet.API.Controllers.Inventory;
 
@@ -38,12 +44,18 @@ public class InventoryController : ControllerBase
     // ==========================================
 
     [HttpPost("warehouses")]
-    // اصلاح شد: منطبق با Inventory.Warehouses.Define
     [HasPermission("Inventory.Warehouses.Define")] 
     public async Task<ActionResult<int>> DefineWarehouse([FromBody] DefineWarehouseCommand command)
     {
         var id = await _mediator.Send(command);
         return Ok(new { id });
+    }
+
+    [HttpPost("warehouses/list")] // استفاده از Post برای ارسال مدل پیچیده PaginatedRequest
+    [HasPermission("Inventory.Warehouses.View")] 
+    public async Task<ActionResult<PaginatedResult<WarehouseDto>>> GetWarehouses([FromBody] GetWarehousesQuery query)
+    {
+        return Ok(await _mediator.Send(query));
     }
 
     [HttpPost("doc-types")]
@@ -181,5 +193,39 @@ public class InventoryController : ControllerBase
     {
         await _mediator.Send(new RevertInventoryDocCommand(id));
         return Ok(new { message = "سند به وضعیت پیش‌نویس برگشت." });
+    }
+
+    [HttpGet("warehouses/{id}")]
+    [HasPermission("Inventory.Warehouses.View")]
+    public async Task<ActionResult<WarehouseDetailsDto>> GetWarehouse(int id)
+    {
+        return Ok(await _mediator.Send(new GetWarehouseByIdQuery(id)));
+    }
+
+    [HttpDelete("warehouses/{id}")]
+    [HasPermission("Inventory.Warehouses.Delete")]
+    public async Task<IActionResult> DeleteWarehouse(int id, [FromQuery] string rowVersion)
+    {
+        var cleanRowVersion = rowVersion.Replace(" ", "+");
+        await _mediator.Send(new DeleteWarehouseCommand(id, cleanRowVersion));
+        return NoContent();
+    }
+
+    [HttpGet("warehouse-types")]
+    [HasPermission("Inventory.Warehouses.View")] // یا هر پرمیشنی که برای مشاهده اطلاعات پایه در نظر دارید
+    public IActionResult GetWarehouseTypes()
+    {
+        // استفاده از متد ToList در EnumExtensions برای دریافت لیست مقادیر و عناوین فارسی
+        var types = EnumExtensions.ToList<WarehouseType>(); 
+        return Ok(types);
+    }
+
+    [HttpPut("warehouses/{id}")]
+    [HasPermission("Inventory.Warehouses.Edit")]
+    public async Task<IActionResult> UpdateWarehouse(int id, [FromBody] UpdateWarehouseCommand command)
+    {
+        if (id != command.Id) return BadRequest("مغایرت شناسه.");
+        await _mediator.Send(command);
+        return Ok(new { message = "انبار با موفقیت ویرایش شد." });
     }
 }

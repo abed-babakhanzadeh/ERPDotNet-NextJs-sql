@@ -4,16 +4,19 @@ using ERPDotNet.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace ERPDotNet.Infrastructure.Migrations
+namespace ERPDotNet.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260213162100_NewPermissionInventory1")]
+    partial class NewPermissionInventory1
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1580,7 +1583,7 @@ namespace ERPDotNet.Infrastructure.Migrations
                             IsMenu = false,
                             Name = "Inventory.Warehouses.Define",
                             ParentId = 3101,
-                            Title = "افزودن انبار"
+                            Title = "افزودن/ویرایش انبار"
                         },
                         new
                         {
@@ -1597,22 +1600,6 @@ namespace ERPDotNet.Infrastructure.Migrations
                             Name = "Inventory.Warehouses.View",
                             ParentId = 3101,
                             Title = "مشاهده لیست انبارها"
-                        },
-                        new
-                        {
-                            Id = 3107,
-                            IsMenu = false,
-                            Name = "Inventory.Warehouses.Edit",
-                            ParentId = 3101,
-                            Title = "ویرایش لیست انبارها"
-                        },
-                        new
-                        {
-                            Id = 3108,
-                            IsMenu = false,
-                            Name = "Inventory.Warehouses.Delete",
-                            ParentId = 3101,
-                            Title = "حذف لیست انبارها"
                         },
                         new
                         {

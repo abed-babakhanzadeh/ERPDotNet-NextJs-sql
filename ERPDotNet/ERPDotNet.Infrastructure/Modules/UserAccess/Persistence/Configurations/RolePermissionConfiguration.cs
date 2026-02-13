@@ -76,6 +76,7 @@ public class RolePermissionConfiguration : IEntityTypeConfiguration<RolePermissi
             // 3. عملیات (دکمه‌ها)
             new RolePermission { RoleId = "1", PermissionId = 3102 }, // Warehouse Define
             new RolePermission { RoleId = "1", PermissionId = 3103 }, // Location Define
+            new RolePermission { RoleId = "1", PermissionId = 3104 }, // دسترسی مشاهده لیست (جدید)
             new RolePermission { RoleId = "1", PermissionId = 3106 }, // DocType Define
             
             new RolePermission { RoleId = "1", PermissionId = 3202 }, // Create Doc

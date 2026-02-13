@@ -1,10 +1,15 @@
-
-import React from 'react';
+import React from "react";
 
 // این یک کامپوننت placeholder است
-const PermissionGuard = ({ children, permission }: { children: React.ReactNode, permission: string }) => {
-    console.log(`Checking permission: ${permission}`);
-    return <>{children}</>;
+const PermissionGuard = ({
+  children,
+  permission,
+}: {
+  children: React.ReactNode;
+  permission: string;
+}) => {
+  // console.log(`Checking permission: ${permission}`);
+  return <>{children}</>;
 };
 
 export default PermissionGuard;

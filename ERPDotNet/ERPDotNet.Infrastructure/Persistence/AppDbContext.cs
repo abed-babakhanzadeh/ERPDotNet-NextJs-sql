@@ -8,7 +8,6 @@ using ERPDotNet.Domain.Modules.ProductEngineering.Entities;
 using ERPDotNet.Domain.Common;
 using System.Linq.Expressions;
 using ERPDotNet.Application.Modules.ProductEngineering.Queries.GetWhereUsed;
-// فضای نام انبار را اضافه کنید:
 using ERPDotNet.Domain.Modules.Inventory.Entities;
 
 namespace ERPDotNet.Infrastructure.Persistence;
@@ -32,24 +31,18 @@ public class AppDbContext : IdentityDbContext<User>, IApplicationDbContext
     public DbSet<BOMDetail> BOMDetails { get; set; }
     public DbSet<BOMSubstitute> BOMSubstitutes { get; set; }
 
-    // ==========================================================
-    // جداول ماژول انبار (Inventory) - این بخش باید اضافه شود
-    // ==========================================================
+    // جداول ماژول انبار (Inventory)
     public DbSet<Warehouse> Warehouses { get; set; }
     public DbSet<Location> Locations { get; set; }
-    
     public DbSet<InventoryItemProfile> InventoryItemProfiles { get; set; }
     public DbSet<ItemWarehouseSetting> ItemWarehouseSettings { get; set; }
     public DbSet<InventoryBatch> InventoryBatches { get; set; }
-    
     public DbSet<InventoryDocType> InventoryDocTypes { get; set; }
     public DbSet<InventoryDocHeader> InventoryDocHeaders { get; set; }
     public DbSet<InventoryDocDetail> InventoryDocDetails { get; set; }
-    
     public DbSet<InventoryTransaction> InventoryTransactions { get; set; }
     public DbSet<CurrentStock> CurrentStocks { get; set; }
     public DbSet<DocumentSequence> DocumentSequences { get; set; }
-    // ==========================================================
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
@@ -57,36 +50,47 @@ public class AppDbContext : IdentityDbContext<User>, IApplicationDbContext
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
+        // 1. ابتدا تنظیمات Identity
         base.OnModelCreating(builder);
 
-        // اعمال کانفیگ‌های جداگانه (مثل UnitConfiguration و کانفیگ‌های انبار)
+        // 2. اعمال تمام کانفیگ‌های موجود در اسمبلی (Configurations)
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         
-        // کانفیگ خاص برای کوئری WhereUsed (بدون کلید)
+        // 3. کانفیگ خاص برای کوئری WhereUsed (بدون کلید)
         builder.Entity<WhereUsedRecursiveResult>(e =>
         {
             e.HasNoKey();
             e.Property(x => x.Quantity).HasPrecision(18, 3);
         });
 
-        // === اعمال Global Query Filter به صورت خودکار ===
-        // روی تمام موجودیت‌هایی که از BaseEntity ارث برده‌اند
+        // 4. === اصلاحیه اصلی: اعمال Global Query Filter به صورت قطعی ===
+        // این بخش باید بعد از تمام کانفیگ‌ها باشد تا اورراید نشود
         foreach (var entityType in builder.Model.GetEntityTypes())
         {
+            // بررسی ارث‌بری از BaseEntity
             if (typeof(BaseEntity).IsAssignableFrom(entityType.ClrType))
             {
-                var method = SetGlobalQueryFilterMethod.MakeGenericMethod(entityType.ClrType);
-                method.Invoke(this, new object[] { builder });
+                // ساخت عبارت e => !e.IsDeleted به صورت داینامیک
+                var parameter = Expression.Parameter(entityType.ClrType, "e");
+                
+                // دسترسی به پروپرتی IsDeleted
+                var propertyAccess = Expression.Property(parameter, nameof(BaseEntity.IsDeleted));
+                
+                // ساخت شرط e.IsDeleted == false
+                var equalExpression = Expression.Equal(propertyAccess, Expression.Constant(false));
+                
+                // تبدیل به Lambda
+                var lambda = Expression.Lambda(equalExpression, parameter);
+
+                // اعمال فیلتر روی مدل
+                builder.Entity(entityType.ClrType).HasQueryFilter(lambda);
             }
         }
     }
 
-    static readonly MethodInfo SetGlobalQueryFilterMethod = typeof(AppDbContext)
-        .GetMethods(BindingFlags.NonPublic | BindingFlags.Instance)
-        .Single(t => t.IsGenericMethod && t.Name == nameof(SetGlobalQueryFilter));
-
-    private void SetGlobalQueryFilter<T>(ModelBuilder builder) where T : BaseEntity
+    // متد ذخیره تغییرات (پیش‌فرض IApplicationDbContext)
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        builder.Entity<T>().HasQueryFilter(e => !e.IsDeleted);
+        return await base.SaveChangesAsync(cancellationToken);
     }
 }

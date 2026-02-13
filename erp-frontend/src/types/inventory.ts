@@ -66,3 +66,33 @@ export interface InventoryDocDto {
 
   rowVersion: string; // برای حذف و ویرایش ضروری است
 }
+
+// 1. تعریف انواع انبار (طبق Backend)
+export enum WarehouseType {
+  Physical = 1, // فیزیکی
+  Scrap = 2, // ضایعات
+  Quarantine = 3, // قرنطینه
+  ShopFloor = 4, // پای خط
+  ConsignmentOut = 5, // امانی ما نزد دیگران
+}
+
+// 2. کامند ایجاد انبار (طبق DefineWarehouseCommand)
+export interface DefineWarehouseCommand {
+  title: string;
+  code: string;
+  type: WarehouseType;
+  address?: string;
+  isActive: boolean;
+}
+
+export interface WarehouseDto {
+  id: number;
+  title: string;
+  code: string;
+  address?: string;
+  type: string; // این رشته عنوان فارسی Enum است که بک‌ند می‌فرستد
+  isActive: boolean;
+  createdBy?: string;
+  createdAt: string;
+  rowVersion: string;
+}

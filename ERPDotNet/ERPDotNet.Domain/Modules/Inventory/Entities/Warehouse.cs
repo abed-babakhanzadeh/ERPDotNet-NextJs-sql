@@ -13,9 +13,7 @@ public class Warehouse : BaseEntity
     
     public WarehouseType Type { get; set; } = WarehouseType.Physical;
 
-    // === این خط را اضافه کنید ===
     public string? Address { get; set; } 
-    // ===========================
 
     public bool IsActive { get; set; } = true;
 

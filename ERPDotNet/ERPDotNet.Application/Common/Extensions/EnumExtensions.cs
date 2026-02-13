@@ -23,4 +23,22 @@ public static class EnumExtensions
 
         return value.ToString();
     }
+
+    public static List<OptionDto> ToList<TEnum>() where TEnum : Enum
+    {
+        return Enum.GetValues(typeof(TEnum))
+            .Cast<TEnum>()
+            .Select(e => new OptionDto 
+            { 
+                Value = Convert.ToInt32(e), 
+                Label = e.ToDisplay() // از متد ToDisplay موجود در پروژه شما استفاده می‌کند
+            })
+            .ToList();
+    }
+
+    public class OptionDto
+    {
+        public int Value { get; set; }
+        public string Label { get; set; } = string.Empty;
+    }
 }

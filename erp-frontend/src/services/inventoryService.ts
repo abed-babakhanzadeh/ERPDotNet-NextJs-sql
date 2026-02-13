@@ -1,4 +1,5 @@
 // src/services/inventoryService.ts
+import { DefineWarehouseCommand } from "@/types/inventory";
 import apiClient from "./apiClient";
 
 const BASE_URL = "/Inventory/Inventory";
@@ -10,6 +11,46 @@ const inventoryService = {
     return apiClient.delete(`${BASE_URL}/docs/${id}`, {
       params: { rowVersion },
     });
+  },
+
+  // تعریف انبار جدید
+  defineWarehouse: async (data: DefineWarehouseCommand) => {
+    const response = await apiClient.post(`${BASE_URL}/warehouses`, data);
+    return response.data;
+  },
+
+  // دریافت لیست انبارها با فیلتر و صفحه‌بندی
+  getWarehouses: async (payload: any) => {
+    const response = await apiClient.post(
+      `${BASE_URL}/warehouses/list`,
+      payload,
+    );
+    return response.data;
+  },
+
+  // دریافت اطلاعات یک انبار
+  getWarehouseById: async (id: number | string) => {
+    const response = await apiClient.get(`${BASE_URL}/warehouses/${id}`);
+    return response.data;
+  },
+
+  // حذف منطقی انبار
+  deleteWarehouse: async (id: number, rowVersion: string) => {
+    return apiClient.delete(`${BASE_URL}/warehouses/${id}`, {
+      params: { rowVersion },
+    });
+  },
+
+  // دریافت انواع انبار از بک‌اند برای نمایش در Combo
+  getWarehouseTypes: async () => {
+    const response = await apiClient.get(`${BASE_URL}/warehouse-types`);
+    return response.data;
+  },
+
+  // ویرایش انبار
+  updateWarehouse: async (id: number, data: any) => {
+    const response = await apiClient.put(`${BASE_URL}/warehouses/${id}`, data);
+    return response.data;
   },
 
   // سایر متدها که بعدا در فرم استفاده می‌شوند
