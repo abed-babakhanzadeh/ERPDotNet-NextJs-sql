@@ -96,3 +96,36 @@ export interface WarehouseDto {
   createdAt: string;
   rowVersion: string;
 }
+
+// === Location Types ===
+
+export interface LocationDto {
+  id: number;
+  title: string;
+  code: string;
+  parentId?: number | null; // می‌تواند نال باشد (ریشه)
+  path: string;
+  isBlocked: boolean;
+  level: number;
+  rowVersion: string;
+
+  // این فیلد در دیتابیس نیست اما برای نمایش درختی در فرانت ممکن است پر شود
+  children?: LocationDto[];
+}
+
+export interface CreateLocationCommand {
+  warehouseId: number;
+  title: string;
+  code: string;
+  parentId?: number | null;
+  isBlocked: boolean;
+}
+
+export interface UpdateLocationCommand {
+  id: number;
+  title: string;
+  code: string;
+  parentId?: number | null;
+  isBlocked: boolean;
+  rowVersion: string;
+}

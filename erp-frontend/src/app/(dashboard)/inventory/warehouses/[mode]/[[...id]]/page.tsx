@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
+import LocationTree from "@/components/inventory/LocationTree";
 import {
   Form,
   FormControl,
@@ -305,6 +306,13 @@ export default function WarehousePage() {
           </div>
         </div>
       </Form>
+
+      {/* === اضافه کردن بخش لوکیشن‌ها === */}
+      {mode === "view" && id && (
+        <div className="mt-8">
+          <LocationTree warehouseId={Number(id)} />
+        </div>
+      )}
     </BaseFormLayout>
   );
 }

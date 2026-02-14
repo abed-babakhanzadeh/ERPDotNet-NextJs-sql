@@ -1,5 +1,9 @@
 // src/services/inventoryService.ts
-import { DefineWarehouseCommand } from "@/types/inventory";
+import {
+  CreateLocationCommand,
+  DefineWarehouseCommand,
+  UpdateLocationCommand,
+} from "@/types/inventory";
 import apiClient from "./apiClient";
 
 const BASE_URL = "/Inventory/Inventory";
@@ -60,6 +64,41 @@ const inventoryService = {
 
   updateDoc: (id: number, data: any) =>
     apiClient.put(`${BASE_URL}/docs/${id}`, data),
+
+  // === Locations Methods ===
+
+  // دریافت لیست تمام لوکیشن‌های یک انبار (به صورت فلت که بعدا درختی می‌شود)
+  getLocations: async (warehouseId: number) => {
+    const response = await apiClient.get(
+      `${BASE_URL}/warehouses/${warehouseId}/locations`,
+    );
+    return response.data;
+  },
+
+  // دریافت یک لوکیشن خاص برای ویرایش
+  getLocationById: async (id: number) => {
+    const response = await apiClient.get(`${BASE_URL}/locations/${id}`);
+    return response.data;
+  },
+
+  // ایجاد لوکیشن جدید
+  createLocation: async (data: CreateLocationCommand) => {
+    const response = await apiClient.post(`${BASE_URL}/locations`, data);
+    return response.data;
+  },
+
+  // ویرایش لوکیشن
+  updateLocation: async (id: number, data: UpdateLocationCommand) => {
+    const response = await apiClient.put(`${BASE_URL}/locations/${id}`, data);
+    return response.data;
+  },
+
+  // حذف لوکیشن (با کنترل همروندی)
+  deleteLocation: async (id: number, rowVersion: string) => {
+    return apiClient.delete(`${BASE_URL}/locations/${id}`, {
+      params: { rowVersion },
+    });
+  },
 };
 
 export default inventoryService;

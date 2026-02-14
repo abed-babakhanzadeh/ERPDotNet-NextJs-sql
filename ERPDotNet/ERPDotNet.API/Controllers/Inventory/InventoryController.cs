@@ -24,6 +24,10 @@ using ERPDotNet.Application.Modules.Inventory.Commands.DeleteWarehouse;
 using ERPDotNet.Application.Common.Extensions;
 using ERPDotNet.Domain.Modules.Inventory.Entities;
 using ERPDotNet.Application.Modules.Inventory.Commands.UpdateWarehouse;
+using ERPDotNet.Application.Modules.Inventory.Queries.GetLocations;
+using ERPDotNet.Application.Modules.Inventory.Queries.GetLocationById;
+using ERPDotNet.Application.Modules.Inventory.Commands.UpdateLocation;
+using ERPDotNet.Application.Modules.Inventory.Commands.DeleteLocation;
 
 namespace ERPDotNet.API.Controllers.Inventory;
 
@@ -63,15 +67,6 @@ public class InventoryController : ControllerBase
     [HasPermission("Inventory.DocTypes.Define")]
     // نکته: نام کامند را طبق کد خودتان حفظ کردم
     public async Task<ActionResult<int>> DefineDocType([FromBody] DefineInventoryDocTypeCommand command)
-    {
-        var id = await _mediator.Send(command);
-        return Ok(new { id });
-    }
-
-    [HttpPost("locations")]
-    // اصلاح شد: منطبق با Inventory.Locations.Define
-    [HasPermission("Inventory.Locations.Define")]
-    public async Task<ActionResult<int>> CreateLocation([FromBody] CreateLocationCommand command)
     {
         var id = await _mediator.Send(command);
         return Ok(new { id });
@@ -228,4 +223,53 @@ public class InventoryController : ControllerBase
         await _mediator.Send(command);
         return Ok(new { message = "انبار با موفقیت ویرایش شد." });
     }
+
+// === Locations ===
+
+    [HttpGet("warehouses/{warehouseId}/locations")]
+    [HasPermission("Inventory.Warehouses.View")] // دسترسی مشاهده انبار برای دیدن لوکیشن‌ها کافی است
+    public async Task<ActionResult<List<LocationDto>>> GetLocations(int warehouseId)
+    {
+        return Ok(await _mediator.Send(new GetLocationsQuery(warehouseId)));
+    }
+
+    [HttpGet("locations/{id}")]
+    [HasPermission("Inventory.Warehouses.View")]
+    public async Task<ActionResult<LocationDto>> GetLocationById(int id)
+    {
+        return Ok(await _mediator.Send(new GetLocationByIdQuery(id)));
+    }
+
+    [HttpPost("locations")]
+    // اصلاح شد: منطبق با Inventory.Locations.Define
+    [HasPermission("Inventory.Locations.Define")]
+    public async Task<ActionResult<int>> CreateLocation([FromBody] CreateLocationCommand command)
+    {
+        var id = await _mediator.Send(command);
+        return Ok(new { id });
+    }
+
+    [HttpPut("locations/{id}")]
+    [HasPermission("Inventory.Warehouses.Edit")]
+    public async Task<IActionResult> UpdateLocation(int id, [FromBody] UpdateLocationCommand command)
+    {
+        if (id != command.Id) return BadRequest("مغایرت شناسه.");
+        
+        await _mediator.Send(command);
+        return NoContent();
+    }
+
+    [HttpDelete("locations/{id}")]
+    [HasPermission("Inventory.Warehouses.Delete")]
+    public async Task<IActionResult> DeleteLocation(int id, [FromQuery] string rowVersion)
+    {
+        if (string.IsNullOrEmpty(rowVersion)) return BadRequest("ارسال نسخه ردیف (RowVersion) الزامی است.");
+        
+        // جایگزینی کاراکتر فاصله با + که در انتقال URL ممکن است تغییر کرده باشد
+        var cleanRowVersion = rowVersion.Replace(" ", "+");
+        
+        await _mediator.Send(new DeleteLocationCommand(id, cleanRowVersion));
+        return NoContent();
+    }
+    
 }
