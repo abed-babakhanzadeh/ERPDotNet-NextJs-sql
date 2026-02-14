@@ -33,6 +33,9 @@ using ERPDotNet.Application.Modules.Inventory.Queries.GetInventoryDocTypeById;
 using ERPDotNet.Application.Modules.Inventory.Commands.UpdateInventoryDocType;
 using ERPDotNet.Application.Modules.Inventory.Commands.DeleteInventoryDocType;
 using ERPDotNet.Domain.Modules.Inventory.Enums;
+using ERPDotNet.Application.Modules.Inventory.Queries.GetItemProfile;
+using ERPDotNet.Application.Modules.Inventory.Queries.GetBatches;
+using ERPDotNet.Application.Modules.Inventory.Commands.UpdateBatch;
 
 namespace ERPDotNet.API.Controllers.Inventory;
 
@@ -67,32 +70,6 @@ public class InventoryController : ControllerBase
         return Ok(await _mediator.Send(query));
     }
 
-    [HttpPost("batches")]
-    // اصلاح شد: چون بچ معمولا موقع سند زدن ساخته می‌شود، دسترسی سند را دادم (یا می‌توانید Inventory.BaseInfo بدهید)
-    [HasPermission("Inventory.Docs.Create")]
-    public async Task<ActionResult<int>> CreateBatch([FromBody] CreateInventoryBatchCommand command)
-    {
-        var id = await _mediator.Send(command);
-        return Ok(new { id });
-    }
-
-    [HttpPost("settings/item")]
-    // اصلاح شد: دسترسی کلی اطلاعات پایه
-    [HasPermission("Inventory.BaseInfo")]
-    public async Task<ActionResult<int>> SetItemWarehouseSetting([FromBody] SetItemWarehouseSettingCommand command)
-    {
-        var id = await _mediator.Send(command);
-        return Ok(new { id });
-    }
-
-    [HttpPost("profiles")]
-    // اصلاح شد: دسترسی کلی اطلاعات پایه
-    [HasPermission("Inventory.BaseInfo")]
-    public async Task<ActionResult<int>> ConfigureProfile([FromBody] ConfigureInventoryItemProfileCommand command)
-    {
-        var id = await _mediator.Send(command);
-        return Ok(new { id });
-    }
 
     // ==========================================
     // 2. عملیات اسناد (Operations)
@@ -345,5 +322,70 @@ public class InventoryController : ControllerBase
         
         return Ok(entities);
     }
+
+    // === Product Inventory Profile (تنظیمات انبار کالا) ===
+
+    [HttpGet("products/{productId}/profile")]
+    [HasPermission("Inventory.ProductProfiles.View")] // یا پرمیشن مشاهده کالا
+    public async Task<ActionResult<InventoryItemProfileDto?>> GetProductInventoryProfile(int productId)
+    {
+        var result = await _mediator.Send(new GetInventoryItemProfileQuery(productId));
+        // اگر نال بود یعنی هنوز تنظیم نشده، فرانت می‌تواند فرم خالی نشان دهد یا هندل کند
+        return Ok(result);
+    }
+
+    [HttpPost("products/profile")]
+    [HasPermission("Inventory.ProductProfiles.Edit")]
+    public async Task<ActionResult<int>> ConfigureProductProfile([FromBody] ConfigureInventoryItemProfileCommand command)
+    {
+        return Ok(await _mediator.Send(command));
+    }
+
+    [HttpPost("products/warehouse-settings")]
+    [HasPermission("Inventory.ProductProfiles.Edit")]
+    public async Task<ActionResult<int>> SetProductWarehouseSetting([FromBody] SetItemWarehouseSettingCommand command)
+    {
+        return Ok(await _mediator.Send(command));
+    }
+
+    // === Batch Management ===
+
+    [HttpGet("products/{productId}/batches")]
+    [HasPermission("Inventory.ProductProfiles.View")]
+    public async Task<ActionResult<List<InventoryBatchDto>>> GetProductBatches(int productId, [FromQuery] bool includeBlocked = false)
+    {
+        return Ok(await _mediator.Send(new GetInventoryBatchesQuery(productId, includeBlocked)));
+    }
+
+    [HttpPut("batches/{id}")]
+    [HasPermission("Inventory.ProductProfiles.Edit")]
+    public async Task<IActionResult> UpdateBatch(int id, [FromBody] UpdateInventoryBatchCommand command)
+    {
+        if (id != command.Id) return BadRequest("مغایرت شناسه.");
+        await _mediator.Send(command);
+        return NoContent();
+    }
+
+    // متد Create که قبلاً داشتید (فقط جهت یادآوری که باید باشد)
+    [HttpPost("batches")]
+    [HasPermission("Inventory.ProductProfiles.Edit")]
+    public async Task<ActionResult<int>> CreateBatch([FromBody] CreateInventoryBatchCommand command)
+    {
+        return Ok(await _mediator.Send(command));
+    }
+
+    // === Warehouse Settings Delete ===
     
+    [HttpDelete("products/warehouse-settings/{id}")]
+    [HasPermission("Inventory.ProductProfiles.Edit")]
+    public async Task<IActionResult> DeleteWarehouseSetting(int id, [FromQuery] string rowVersion)
+    {
+        if (string.IsNullOrEmpty(rowVersion)) return BadRequest("RowVersion الزامی است.");
+        
+        var cleanRowVersion = rowVersion.Replace(" ", "+");
+        await _mediator.Send(new DeleteItemWarehouseSettingCommand(id, cleanRowVersion));
+        
+        return NoContent();
+    }
+
 }

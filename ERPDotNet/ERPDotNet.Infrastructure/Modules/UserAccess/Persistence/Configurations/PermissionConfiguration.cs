@@ -85,12 +85,18 @@ public class PermissionConfiguration : IEntityTypeConfiguration<Permission>
             new Permission { Id = 3105, Name = "Inventory.Warehouses.Delete", Title = "حذف انبار", IsMenu = false, ParentId = 3101 },
             new Permission { Id = 3106, Name = "Inventory.Warehouses.Locations", Title = "مدیریت قفسه‌بندی (Locations)", IsMenu = false, ParentId = 3101 },
             
-            // 2. مدیریت انواع سند (DocTypes) - آپدیت شده
+            // 2. مدیریت انواع سند (DocTypes)
             new Permission { Id = 3110, Name = "Inventory.DocTypes", Title = "انواع سند", IsMenu = true, ParentId = 3100, Url = "/inventory/doc-types" },
             new Permission { Id = 3111, Name = "Inventory.DocTypes.View", Title = "مشاهده انواع سند", IsMenu = false, ParentId = 3110 },
             new Permission { Id = 3112, Name = "Inventory.DocTypes.Create", Title = "تعریف نوع سند", IsMenu = false, ParentId = 3110 },
             new Permission { Id = 3113, Name = "Inventory.DocTypes.Edit", Title = "ویرایش نوع سند", IsMenu = false, ParentId = 3110 },
             new Permission { Id = 3114, Name = "Inventory.DocTypes.Delete", Title = "حذف نوع سند", IsMenu = false, ParentId = 3110 },
+
+            // 3. تنظیمات انبار کالا (پروفایل، بچ، نقطه سفارش) - جدید
+            // این بخش منو ندارد چون داخل فرم کالا است، اما پرمیشن جدا دارد
+            new Permission { Id = 3120, Name = "Inventory.ProductProfiles", Title = "تنظیمات کالا و بچ", IsMenu = false, ParentId = 3100 },
+            new Permission { Id = 3121, Name = "Inventory.ProductProfiles.View", Title = "مشاهده تنظیمات انبار کالا", IsMenu = false, ParentId = 3120 },
+            new Permission { Id = 3122, Name = "Inventory.ProductProfiles.Edit", Title = "ویرایش تنظیمات و بچ‌ها", IsMenu = false, ParentId = 3120 },
 
             // --- ب) عملیات انبار (Operations) ---
             new Permission { Id = 3200, Name = "Inventory.Operations", Title = "عملیات انبار", IsMenu = true, ParentId = 3000 },
