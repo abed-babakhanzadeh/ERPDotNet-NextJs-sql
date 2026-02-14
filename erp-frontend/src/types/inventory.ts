@@ -129,3 +129,76 @@ export interface UpdateLocationCommand {
   isBlocked: boolean;
   rowVersion: string;
 }
+
+// === Doc Types ===
+
+export enum InventoryNature {
+  Input = 1,
+  Output = 2,
+  Transfer = 3,
+}
+
+// ✅ مپینگ استاندارد فارسی برای ماهیت سند
+export const InventoryNatureLabels: Record<number, string> = {
+  [InventoryNature.Input]: "وارده (رسید)",
+  [InventoryNature.Output]: "صادره (حواله)",
+  [InventoryNature.Transfer]: "انتقال / جابجایی",
+};
+
+export enum NumberingScope {
+  Global = 1,
+  PerFiscalYear = 2,
+  PerDocType = 3,
+  PerDocTypeAndYear = 4,
+}
+
+// ✅ اضافه کردن مپینگ استاندارد برای نمایش
+export const NumberingScopeLabels: Record<number, string> = {
+  [NumberingScope.Global]: "سراسری (کلی)",
+  [NumberingScope.PerFiscalYear]: "به تفکیک سال مالی",
+  [NumberingScope.PerDocType]: "به تفکیک نوع سند",
+  [NumberingScope.PerDocTypeAndYear]: "نوع سند + سال مالی",
+};
+
+export interface InventoryDocTypeDto {
+  id: number;
+  title: string;
+  nature: string; // نمایشی (فارسی)
+  natureValue: number; // عددی (برای فرم)
+
+  parentId?: number | null;
+  parentTitle?: string;
+
+  requiredPermissionName?: string;
+  affectsCost: boolean;
+  numberingScope: NumberingScope;
+  isReferenceRequired: boolean;
+
+  // لیست نام موجودیت‌های مجاز (مثلاً: Project, CostCenter)
+  allowedReferenceEntityNames: string[];
+
+  rowVersion: string;
+}
+
+export interface DefineDocTypeCommand {
+  title: string;
+  nature: InventoryNature;
+  parentId?: number | null;
+  requiredPermissionName?: string;
+  affectsCost: boolean;
+  numberingScope: NumberingScope;
+  isReferenceRequired: boolean;
+  allowedReferenceEntityNames: string[];
+}
+
+export interface UpdateDocTypeCommand extends DefineDocTypeCommand {
+  id: number;
+  rowVersion: string;
+}
+
+// برای پر کردن کمبوها
+export interface EnumLookupDto {
+  value: number;
+  name: string; // نام سیستمی
+  title?: string; // اگر سمت سرور تایتل فارسی بفرستید، وگرنه از مپینگ استفاده می‌کنیم
+}

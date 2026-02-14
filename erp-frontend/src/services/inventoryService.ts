@@ -99,6 +99,52 @@ const inventoryService = {
       params: { rowVersion },
     });
   },
+
+  // === Doc Types Methods ===
+
+  getDocTypes: async () => {
+    const response = await apiClient.get(`${BASE_URL}/doc-types`);
+    return response.data;
+  },
+
+  getDocTypeById: async (id: number) => {
+    const response = await apiClient.get(`${BASE_URL}/doc-types/${id}`);
+    return response.data;
+  },
+
+  createDocType: async (data: any) => {
+    // تایپ DefineDocTypeCommand
+    const response = await apiClient.post(`${BASE_URL}/doc-types`, data);
+    return response.data;
+  },
+
+  updateDocType: async (id: number, data: any) => {
+    // تایپ UpdateDocTypeCommand
+    const response = await apiClient.put(`${BASE_URL}/doc-types/${id}`, data);
+    return response.data;
+  },
+
+  deleteDocType: async (id: number, rowVersion: string) => {
+    return apiClient.delete(`${BASE_URL}/doc-types/${id}`, {
+      params: { rowVersion },
+    });
+  },
+
+  // دریافت لیست Enumها برای پر کردن کمبوها
+  getNumberingScopes: async () => {
+    const response = await apiClient.get(`${BASE_URL}/enums/numbering-scopes`);
+    return response.data; // آرایه‌ای از {key, value} برمی‌گرداند
+  },
+
+  getInventoryNatures: async () => {
+    const response = await apiClient.get(`${BASE_URL}/enums/inventory-natures`);
+    return response.data;
+  },
+  // دریافت لیست موجودیت‌های سیستم برای عطف
+  getSystemEntities: async () => {
+    const response = await apiClient.get(`${BASE_URL}/enums/system-entities`);
+    return response.data;
+  },
 };
 
 export default inventoryService;

@@ -35,6 +35,10 @@ export type ColumnFilter = {
 export type ColumnConfig = {
   key: string;
   label: string;
-  type: "string" | "number" | "boolean" | "date"; // اضافه شدن date
+  type: "string" | "number" | "boolean" | "date" | "text" | "custom"; // اضافه شدن date
   render?: (value: any, row: any) => React.ReactNode;
+  sortable?: boolean;
+  filterable?: boolean;
+  width?: number;
+  minWidth?: number;
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Maximize2, Minimize2, ArrowRight } from "lucide-react";
+import { Maximize2, Minimize2, ArrowRight, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTabs } from "@/providers/TabsProvider";
 import {
@@ -14,14 +14,16 @@ import { cn } from "@/lib/utils";
 
 interface BaseListLayoutProps {
   title: string;
-  icon?: React.ElementType; // آیکون کنار تایتل (مثل Ruler)
+  description?: string; // اضافه شد
+  icon?: React.ElementType;
   children: React.ReactNode;
-  actions?: React.ReactNode; // دکمه‌های سمت چپ (مثل "واحد جدید")
-  count?: number; // تعداد رکوردها (اختیاری)
+  actions?: React.ReactNode;
+  count?: number;
 }
 
 export default function BaseListLayout({
   title,
+  description, // اضافه شد
   icon: Icon,
   children,
   actions,
@@ -34,8 +36,7 @@ export default function BaseListLayout({
     <div
       className={cn(
         "flex flex-col h-full bg-background transition-all duration-300",
-        // منطق تمام صفحه:
-        isFullscreen ? "fixed inset-0 z-[100]" : "relative"
+        isFullscreen ? "fixed inset-0 z-[100]" : "relative",
       )}
     >
       {/* Header */}
@@ -65,9 +66,26 @@ export default function BaseListLayout({
 
           <div className="flex items-center gap-2">
             {Icon && <Icon className="h-5 w-5 text-primary" />}
-            <h1 className="text-sm font-bold text-foreground truncate bg-gradient-to-l from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              {title}
-            </h1>
+
+            {/* نمایش تایتل با تولتیپ توضیحات */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <h1 className="text-sm font-bold text-foreground truncate bg-gradient-to-l from-blue-600 to-purple-600 bg-clip-text text-transparent cursor-default">
+                    {title}
+                  </h1>
+                </TooltipTrigger>
+                {description && (
+                  <TooltipContent
+                    side="bottom"
+                    className="text-xs max-w-[300px]"
+                  >
+                    {description}
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
+
             {count !== undefined && (
               <span className="text-xs bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full text-slate-600 dark:text-slate-400 font-mono">
                 {count}
@@ -78,12 +96,10 @@ export default function BaseListLayout({
 
         {/* Left Side: Actions & Fullscreen */}
         <div className="flex items-center gap-2 shrink-0">
-          {/* دکمه‌های سفارشی (مثل دکمه افزودن جدید) */}
           {actions}
 
           <div className="w-px h-5 bg-slate-200 dark:bg-slate-700 mx-1 hidden sm:block" />
 
-          {/* دکمه تمام صفحه */}
           <TooltipProvider delayDuration={200}>
             <Tooltip>
               <TooltipTrigger asChild>

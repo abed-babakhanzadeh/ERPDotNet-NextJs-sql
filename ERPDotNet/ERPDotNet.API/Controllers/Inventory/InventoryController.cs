@@ -324,5 +324,26 @@ public class InventoryController : ControllerBase
     {
         return Ok(EnumExtensions.ToList<InventoryNature>());
     }
+
+    [HttpGet("enums/system-entities")]
+    public IActionResult GetSystemEntities()
+    {
+        // این لیست باید بازتاب‌دهنده موجودیت‌هایی باشد که سیستم شما ساپورت می‌کند.
+        // در یک سیستم پیشرفته، این می‌تواند از طریق Reflection یا یک سرویس Metadata پر شود.
+        // فعلاً به صورت دستی اما سمت سرور لیست می‌کنیم تا فرانت داینامیک شود.
+        var entities = new List<object>
+        {
+            new { Value = "Project", Label = "پروژه" },
+            new { Value = "CostCenter", Label = "مرکز هزینه" },
+            new { Value = "Vendor", Label = "تأمین‌کننده" },
+            new { Value = "Customer", Label = "مشتری" },
+            new { Value = "Personnel", Label = "پرسنل" },
+            new { Value = "WorkOrder", Label = "دستور کار تولید" },
+            new { Value = "SalesOrder", Label = "سفارش فروش" },
+            new { Value = "ReturnRequest", Label = "درخواست مرجوعی" }
+        };
+        
+        return Ok(entities);
+    }
     
 }
