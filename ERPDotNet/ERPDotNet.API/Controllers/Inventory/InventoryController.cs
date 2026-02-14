@@ -28,6 +28,11 @@ using ERPDotNet.Application.Modules.Inventory.Queries.GetLocations;
 using ERPDotNet.Application.Modules.Inventory.Queries.GetLocationById;
 using ERPDotNet.Application.Modules.Inventory.Commands.UpdateLocation;
 using ERPDotNet.Application.Modules.Inventory.Commands.DeleteLocation;
+using ERPDotNet.Application.Modules.Inventory.Queries.GetInventoryDocTypes;
+using ERPDotNet.Application.Modules.Inventory.Queries.GetInventoryDocTypeById;
+using ERPDotNet.Application.Modules.Inventory.Commands.UpdateInventoryDocType;
+using ERPDotNet.Application.Modules.Inventory.Commands.DeleteInventoryDocType;
+using ERPDotNet.Domain.Modules.Inventory.Enums;
 
 namespace ERPDotNet.API.Controllers.Inventory;
 
@@ -60,16 +65,6 @@ public class InventoryController : ControllerBase
     public async Task<ActionResult<PaginatedResult<WarehouseDto>>> GetWarehouses([FromBody] GetWarehousesQuery query)
     {
         return Ok(await _mediator.Send(query));
-    }
-
-    [HttpPost("doc-types")]
-    // اصلاح شد: منطبق با Inventory.DocTypes.Define
-    [HasPermission("Inventory.DocTypes.Define")]
-    // نکته: نام کامند را طبق کد خودتان حفظ کردم
-    public async Task<ActionResult<int>> DefineDocType([FromBody] DefineInventoryDocTypeCommand command)
-    {
-        var id = await _mediator.Send(command);
-        return Ok(new { id });
     }
 
     [HttpPost("batches")]
@@ -270,6 +265,64 @@ public class InventoryController : ControllerBase
         
         await _mediator.Send(new DeleteLocationCommand(id, cleanRowVersion));
         return NoContent();
+    }
+
+    // === Doc Types (انواع سند) ===
+
+    [HttpGet("doc-types")]
+    [HasPermission("Inventory.DocTypes.View")]
+    public async Task<ActionResult<List<InventoryDocTypeDto>>> GetDocTypes()
+    {
+        return Ok(await _mediator.Send(new GetInventoryDocTypesQuery()));
+    }
+
+    [HttpGet("doc-types/{id}")]
+    [HasPermission("Inventory.DocTypes.View")]
+    public async Task<ActionResult<InventoryDocTypeDto>> GetDocTypeById(int id)
+    {
+        return Ok(await _mediator.Send(new GetInventoryDocTypeByIdQuery(id)));
+    }
+
+    [HttpPost("doc-types")]
+    [HasPermission("Inventory.DocTypes.Create")]
+    public async Task<ActionResult<int>> DefineDocType([FromBody] DefineInventoryDocTypeCommand command)
+    {
+        return Ok(await _mediator.Send(command));
+    }
+
+    [HttpPut("doc-types/{id}")]
+    [HasPermission("Inventory.DocTypes.Edit")]
+    public async Task<IActionResult> UpdateDocType(int id, [FromBody] UpdateInventoryDocTypeCommand command)
+    {
+        if (id != command.Id) return BadRequest("مغایرت شناسه.");
+        await _mediator.Send(command);
+        return NoContent();
+    }
+
+    [HttpDelete("doc-types/{id}")]
+    [HasPermission("Inventory.DocTypes.Delete")]
+    public async Task<IActionResult> DeleteDocType(int id, [FromQuery] string rowVersion)
+    {
+        if (string.IsNullOrEmpty(rowVersion)) return BadRequest("RowVersion الزامی است.");
+        var cleanRowVersion = rowVersion.Replace(" ", "+");
+        
+        await _mediator.Send(new DeleteInventoryDocTypeCommand(id, cleanRowVersion));
+        return NoContent();
+    }
+
+    // === Helper Enums for Frontend ===
+    
+    [HttpGet("enums/numbering-scopes")]
+    public IActionResult GetNumberingScopes()
+    {
+        // فرض بر این است که اکستنشن متد ToList شما لیست Key/Value برمی‌گرداند
+        return Ok(EnumExtensions.ToList<NumberingScope>());
+    }
+
+    [HttpGet("enums/inventory-natures")]
+    public IActionResult GetInventoryNatures()
+    {
+        return Ok(EnumExtensions.ToList<InventoryNature>());
     }
     
 }
