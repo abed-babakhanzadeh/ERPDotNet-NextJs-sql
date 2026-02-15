@@ -1,22 +1,15 @@
 "use client";
 
 import React, { useMemo } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { Plus, ArrowDownCircle, ArrowUpCircle, FileOutput } from "lucide-react";
 import { toast } from "sonner";
-import { FileText, Plus, Eye, Trash2, Pencil } from "lucide-react";
 
-// Components
-import ProtectedPage from "@/components/ui/ProtectedPage";
-import PermissionGuard from "@/components/ui/PermissionGuard";
 import BaseListLayout from "@/components/layout/BaseListLayout";
-import { DataTable } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
+import { DataTable } from "@/components/data-table";
+import PermissionGuard from "@/components/ui/PermissionGuard";
+import ProtectedPage from "@/components/ui/ProtectedPage";
 import {
   Tooltip,
   TooltipContent,
@@ -24,74 +17,138 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-// Hooks & Types
-import { useServerDataTable } from "@/hooks/useServerDataTable";
+import { useTabs } from "@/providers/TabsProvider";
 import inventoryService from "@/services/inventoryService";
+import { useServerDataTable } from "@/hooks/useServerDataTable"; // ✅ استفاده صحیح
 import {
   InventoryDocDto,
   InventoryDocStatus,
-  InventoryDocStatusMap,
+  InventoryNature,
 } from "@/types/inventory";
-import { ColumnConfig, ColumnFilter } from "@/types";
+import { ColumnConfig } from "@/types";
 
-export default function InventoryDocsPage() {
-  const router = useRouter();
+const statusMap: Record<
+  number,
+  {
+    label: string;
+    variant: "default" | "secondary" | "outline" | "destructive";
+    className?: string;
+  }
+> = {
+  [InventoryDocStatus.Draft]: {
+    label: "پیش‌نویس",
+    variant: "secondary",
+    className: "bg-slate-100 text-slate-600",
+  },
+  [InventoryDocStatus.Submitted]: {
+    label: "ارسال شده",
+    variant: "outline",
+    className: "border-blue-200 text-blue-600 bg-blue-50",
+  },
+  [InventoryDocStatus.Approved]: {
+    label: "تایید شده",
+    variant: "outline",
+    className: "border-emerald-200 text-emerald-600 bg-emerald-50",
+  },
+  [InventoryDocStatus.Rejected]: {
+    label: "رد شده",
+    variant: "destructive",
+    className: "",
+  },
+  [InventoryDocStatus.Posted]: {
+    label: "قطعی شده",
+    variant: "default",
+    className: "bg-emerald-600 hover:bg-emerald-700",
+  },
+  [InventoryDocStatus.Cancelled]: {
+    label: "ابطال شده",
+    variant: "destructive",
+    className: "bg-red-100 text-red-700 hover:bg-red-200",
+  },
+};
 
-  // 1. فراخوانی هوک با Endpoint رشته‌ای (طبق فایل useServerDataTable شما)
-  const { tableProps, refresh } = useServerDataTable<InventoryDocDto>({
-    endpoint: "/Inventory/Inventory/docs",
-    initialPageSize: 10,
-  });
+export default function InventoryDocsListPage() {
+  const { addTab } = useTabs();
 
-  // 2. تعریف ستون‌ها
-  const columns = useMemo<ColumnConfig[]>(
+  // ✅ 1. استفاده خالص از هوک (بدون بازنویسی دستی)
+  const { tableProps, refresh, totalCount } =
+    useServerDataTable<InventoryDocDto>({
+      endpoint: "/Inventory/Inventory/docs/search",
+      initialPageSize: 10,
+    });
+
+  // 2. ستون‌ها
+  const columns: ColumnConfig[] = useMemo(
     () => [
       {
-        key: "docNumber",
-        label: "شماره سند",
-        type: "number",
-        render: (val, row) => (
-          <span className="font-mono font-bold">{val}</span>
+        key: "nature",
+        label: "نوع",
+        type: "custom",
+        width: 60,
+        render: (_: any, row: InventoryDocDto) => (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                {row.nature === InventoryNature.Input ? (
+                  <ArrowDownCircle className="w-5 h-5 text-emerald-500" />
+                ) : (
+                  <ArrowUpCircle className="w-5 h-5 text-orange-500" />
+                )}
+              </TooltipTrigger>
+              <TooltipContent>
+                {row.nature === InventoryNature.Input
+                  ? "وارده (رسید)"
+                  : "صادره (حواله)"}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         ),
-      },
-      {
-        key: "docTypeTitle",
-        label: "نوع سند",
-        type: "string",
-      },
-      {
-        key: "warehouseTitle",
-        label: "انبار",
-        type: "string",
-      },
-      {
-        key: "docDate",
-        label: "تاریخ",
-        type: "date", // کامپوننت DataTable شما تاریخ را خودش هندل می‌کند
       },
       {
         key: "status",
         label: "وضعیت",
-        type: "number", // برای فیلتر
-        render: (val: number) => {
-          const status = InventoryDocStatusMap[val];
+        type: "custom",
+        width: 100,
+        render: (value: number) => {
+          const status = statusMap[value] || {
+            label: "نامشخص",
+            variant: "secondary",
+          };
           return (
             <Badge
-              variant={status?.variant || "outline"}
-              className={`whitespace-nowrap ${status?.color}`}
+              variant={status.variant}
+              className={`font-normal text-xs ${status.className || ""}`}
             >
-              {status?.label || "ناشناخته"}
+              {status.label}
             </Badge>
           );
         },
       },
+      {
+        key: "docNumber",
+        label: "شماره سند",
+        type: "string", // مهم: تایپ string باشد تا فیلتر متنی فعال شود
+        sortable: true,
+      },
+      {
+        key: "docDate",
+        label: "تاریخ",
+        type: "string", // مهم: تایپ string باشد تا کاربر بتواند تاریخ شمسی تایپ کند
+        sortable: true,
+        render: (date: string) => (
+          <span dir="ltr">{new Date(date).toLocaleDateString("fa-IR")}</span>
+        ),
+      },
+      { key: "docTypeTitle", label: "نوع سند", type: "string" },
+      { key: "warehouseTitle", label: "انبار", type: "string" },
+      { key: "targetPartyName", label: "طرف حساب", type: "string" },
       {
         key: "description",
         label: "توضیحات",
         type: "string",
         render: (val: string) => (
           <span
-            className="truncate max-w-[150px] inline-block text-muted-foreground text-xs"
+            className="text-muted-foreground text-xs truncate max-w-[150px] block"
             title={val}
           >
             {val}
@@ -102,137 +159,69 @@ export default function InventoryDocsPage() {
     [],
   );
 
-  // 3. هندلر حذف
+  // 3. هندلرها
+  const handleCreate = () => addTab("ثبت سند جدید", "/inventory/docs/create");
+  const handleEdit = (row: InventoryDocDto) =>
+    addTab(`ویرایش سند ${row.docNumber}`, `/inventory/docs/edit/${row.id}`);
+  const handleView = (row: InventoryDocDto) =>
+    addTab(`مشاهده سند ${row.docNumber}`, `/inventory/docs/edit/${row.id}`);
+
   const handleDelete = async (row: InventoryDocDto) => {
     if (row.status === InventoryDocStatus.Posted) {
-      toast.error("حذف سند قطعی شده امکان‌پذیر نیست.");
+      toast.error("امکان حذف سند قطعی شده وجود ندارد.");
       return;
     }
-
     if (!confirm(`آیا از حذف سند شماره ${row.docNumber} اطمینان دارید؟`))
       return;
-
     try {
       await inventoryService.deleteDoc(row.id, row.rowVersion);
-      toast.success("سند با موفقیت حذف شد");
-      refresh(); // رفرش لیست
-    } catch (error) {
-      console.error(error);
-      // خطا توسط اینترسپتور apiClient هندل و نمایش داده می‌شود
+      toast.success("سند حذف شد");
+      refresh();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "خطا در حذف");
     }
   };
 
-  // 4. دکمه افزودن (هدر)
   const headerActions = (
     <PermissionGuard permission="Inventory.Docs.Create">
-      <Link href="/inventory/docs/create">
-        <Button size="sm" className="gap-2 h-9">
-          <Plus size={16} />
-          سند جدید
-        </Button>
-      </Link>
+      <TooltipProvider delayDuration={200}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              onClick={handleCreate}
+              size="sm"
+              className="h-8 gap-1.5 bg-primary text-primary-foreground"
+            >
+              <Plus size={16} />
+              <span className="hidden sm:inline text-xs">سند جدید</span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>ثبت سند جدید</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </PermissionGuard>
   );
 
-  // 5. منوی راست کلیک (Context Menu)
-  // 5. منوی راست کلیک (Context Menu)
-  // اصلاح تایپ: row را any می‌گیریم تا با TableRow کامپوننت تداخل نکند
-  const renderContextMenu = (row: any, close: () => void) => {
-    // اینجا به سیستم می‌گوییم که مطمئنیم این row از نوع سند انبار است
-    const doc = row as InventoryDocDto;
-
-    const isLocked = doc.status === InventoryDocStatus.Posted;
-
-    return (
-      <>
-        <DropdownMenuItem
-          onClick={() => router.push(`/inventory/docs/${doc.id}`)}
-        >
-          <Eye className="w-4 h-4 ml-2 text-blue-500" />
-          مشاهده / ویرایش
-        </DropdownMenuItem>
-
-        {!isLocked && (
-          <PermissionGuard permission="Inventory.Docs.Delete">
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => {
-                handleDelete(doc);
-                close();
-              }}
-              className="text-red-600 focus:text-red-600 focus:bg-red-50"
-            >
-              <Trash2 className="w-4 h-4 ml-2" />
-              حذف سند
-            </DropdownMenuItem>
-          </PermissionGuard>
-        )}
-      </>
-    );
-  };
-
   return (
-    <ProtectedPage permission="Inventory.Docs">
+    <ProtectedPage permission="Inventory.Docs.View">
       <BaseListLayout
-        title="مدیریت اسناد انبار"
-        icon={FileText}
+        title="اسناد انبار"
+        description="مدیریت رسیدها، حواله‌ها و نقل و انتقالات"
+        icon={FileOutput}
+        count={totalCount}
         actions={headerActions}
-        count={tableProps.rowCount}
       >
-        <DataTable
-          // مپ کردن دستی پراپرتی‌ها برای رفع تداخل نام‌گذاری
-          columns={columns}
-          data={tableProps.data}
-          isLoading={tableProps.isLoading} // مپ isLoading به loading
-          pagination={tableProps.pagination}
-          onPaginationChange={tableProps.onPaginationChange}
-          pageCount={tableProps.pageCount}
-          rowCount={tableProps.rowCount}
-          sortConfig={tableProps.sortConfig} // مپ sortConfig
-          onSortChange={tableProps.onSortChange} // مپ onSortChange
-          globalFilter={tableProps.globalFilter}
-          onGlobalFilterChange={tableProps.onGlobalFilterChange}
-          // ستون فیلترها (اگر کامپوننت ساپورت کند)
-          columnFilters={tableProps.columnFilters}
-          onColumnFilterChange={tableProps.onColumnFilterChange}
-          onRefresh={refresh}
-          // اکشن‌های ردیف
-          renderRowActions={(row) => (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => router.push(`/inventory/docs/${row.id}`)}
-                  >
-                    {row.status === InventoryDocStatus.Draft ? (
-                      <Pencil className="w-4 h-4 text-amber-600" />
-                    ) : (
-                      <Eye className="w-4 h-4 text-blue-500" />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {row.status === InventoryDocStatus.Draft
-                    ? "ویرایش"
-                    : "مشاهده"}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-          renderContextMenu={renderContextMenu}
-          advancedFilters={[]}
-          onAdvancedFilterChange={function (
-            newFilter: ColumnFilter | null,
-          ): void {
-            throw new Error("Function not implemented.");
-          }}
-          onClearAllFilters={function (): void {
-            throw new Error("Function not implemented.");
-          }}
-        />
+        <div className="bg-card rounded-md border h-[calc(100vh-180px)]">
+          {/* ✅ پاس دادن مستقیم tableProps بدون دخالت دستی در فیلترها */}
+          <DataTable
+            columns={columns}
+            {...tableProps}
+            onView={handleView}
+            onRowDoubleClick={handleView}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        </div>
       </BaseListLayout>
     </ProtectedPage>
   );

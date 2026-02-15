@@ -50,23 +50,6 @@ export const InventoryDocStatusMap: Record<
   },
 };
 
-export interface InventoryDocDto {
-  id: number;
-  docNumber: number;
-  docDate: string;
-  description: string;
-
-  status: InventoryDocStatus;
-
-  docTypeId: number;
-  docTypeTitle: string;
-
-  warehouseId: number;
-  warehouseTitle: string;
-
-  rowVersion: string; // برای حذف و ویرایش ضروری است
-}
-
 // 1. تعریف انواع انبار (طبق Backend)
 export enum WarehouseType {
   Physical = 1, // فیزیکی
@@ -286,4 +269,103 @@ export interface UpdateBatchCommand {
   isBlocked: boolean;
   blockReason?: string | null;
   rowVersion: string;
+}
+
+// === Document DTOs (Read) ===
+
+export interface InventoryDocDetailDto {
+  id: number;
+  productId: number;
+  productCode: string;
+  productName: string;
+  unitTitle: string;
+
+  mainUnitQuantity: number;
+  subUnitQuantity: number;
+
+  locationId?: number | null;
+  locationCode?: string;
+
+  batchId?: number | null;
+  batchNumber?: string;
+
+  description?: string;
+}
+
+export interface InventoryDocDto {
+  id: number;
+  docNumber: number;
+  docDate: string; // ISO String
+  docTypeId: number;
+  docTypeTitle: string;
+  nature: InventoryNature;
+
+  warehouseId: number;
+  warehouseTitle: string;
+  destinationWarehouseId?: number | null;
+  destinationWarehouseTitle?: string;
+
+  status: InventoryDocStatus;
+  description?: string;
+
+  // Party Info
+  referenceExternalCode?: string;
+  targetPartyName?: string;
+  targetPartyId?: string;
+  targetPartyType?: string; // "Customer", "Vendor", etc.
+
+  rowVersion: string;
+
+  details: InventoryDocDetailDto[];
+}
+
+// === Commands (Write) ===
+
+export interface CreateInventoryDocDetailDto {
+  productId: number;
+  mainUnitQuantity: number;
+  subUnitQuantity: number;
+  locationId?: number | null;
+  batchId?: number | null;
+  description?: string | null;
+}
+
+export interface CreateInventoryDocCommand {
+  docTypeId: number;
+  warehouseId: number;
+  destinationWarehouseId?: number | null;
+  docDate: Date; // در ارسال تبدیل به ISO می‌شود
+  fiscalYearId?: number | null;
+
+  referenceEntityName?: string;
+  referenceEntityId?: number | null;
+  referenceExternalCode?: string;
+
+  targetPartyType?: string;
+  targetPartyId?: string;
+  targetPartyName?: string;
+
+  description?: string;
+
+  details: CreateInventoryDocDetailDto[];
+}
+
+export interface UpdateInventoryDocDetailDto {
+  id?: number | null; // null برای ردیف‌های جدید
+  productId: number;
+  mainUnitQuantity: number;
+  subUnitQuantity: number;
+  locationId?: number | null;
+  batchId?: number | null;
+  description?: string | null;
+}
+
+export interface UpdateInventoryDocCommand {
+  id: number;
+  docDate: Date;
+  description?: string;
+  warehouseId: number; // معمولاً انبار در ویرایش عوض نمی‌شود اما در DTO هست
+  rowVersion: string;
+
+  details: UpdateInventoryDocDetailDto[];
 }

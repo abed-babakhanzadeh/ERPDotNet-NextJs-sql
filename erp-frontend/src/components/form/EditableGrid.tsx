@@ -189,7 +189,7 @@ export default function EditableGrid<T extends { id?: number | string }>({
                   key={row.id || index}
                   className={cn(
                     "group hover:bg-muted/20 transition-colors cursor-default",
-                    contextMenu?.rowIndex === index && "bg-muted/30"
+                    contextMenu?.rowIndex === index && "bg-muted/30",
                   )}
                   onContextMenu={(e) => handleContextMenu(e, index)}
                 >
@@ -212,7 +212,7 @@ export default function EditableGrid<T extends { id?: number | string }>({
                             "w-full h-7 rounded border border-input bg-background px-2 text-xs focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary disabled:opacity-50 text-right transition-all",
                             !row[col.key] &&
                               col.required &&
-                              "border-red-300 bg-red-50/50 dark:bg-red-900/10"
+                              "border-red-300 bg-red-50/50 dark:bg-red-900/10",
                           )}
                         >
                           <option value="">انتخاب...</option>
@@ -252,7 +252,7 @@ export default function EditableGrid<T extends { id?: number | string }>({
                               : "text-right",
                             !row[col.key] &&
                               col.required &&
-                              "border-red-300 bg-red-50/50 dark:bg-red-900/10"
+                              "border-red-300 bg-red-50/50 dark:bg-red-900/10",
                           )}
                         />
                       )}

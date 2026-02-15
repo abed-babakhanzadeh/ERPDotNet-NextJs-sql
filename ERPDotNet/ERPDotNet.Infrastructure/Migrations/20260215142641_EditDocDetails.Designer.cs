@@ -4,16 +4,19 @@ using ERPDotNet.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace ERPDotNet.Infrastructure.Migrations
+namespace ERPDotNet.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260215142641_EditDocDetails")]
+    partial class EditDocDetails
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1745,14 +1748,6 @@ namespace ERPDotNet.Infrastructure.Migrations
                             Name = "Inventory.Docs.Post",
                             ParentId = 3201,
                             Title = "قطعی سازی (Post)"
-                        },
-                        new
-                        {
-                            Id = 3208,
-                            IsMenu = false,
-                            Name = "Inventory.Docs.View",
-                            ParentId = 3201,
-                            Title = "مشاهده اسناد"
                         },
                         new
                         {

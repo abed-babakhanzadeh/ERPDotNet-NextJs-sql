@@ -36,6 +36,8 @@ using ERPDotNet.Domain.Modules.Inventory.Enums;
 using ERPDotNet.Application.Modules.Inventory.Queries.GetItemProfile;
 using ERPDotNet.Application.Modules.Inventory.Queries.GetBatches;
 using ERPDotNet.Application.Modules.Inventory.Commands.UpdateBatch;
+using ERPDotNet.Application.Modules.Inventory.Queries.GetInventoryDocById;
+using ERPDotNet.Application.Modules.Inventory.Queries.GetInventoryDocs;
 
 namespace ERPDotNet.API.Controllers.Inventory;
 
@@ -107,6 +109,24 @@ public class InventoryController : ControllerBase
 
         await _mediator.Send(command);
         return Ok(new { message = "سند با موفقیت در کاردکس قطعی شد." });
+    }
+
+    // دریافت لیست اسناد (Grid)
+    [HttpPost("docs/search")]
+    [HasPermission("Inventory.Docs.View")] // یا هر پرمیشن مشاهده
+    public async Task<ActionResult<PaginatedResult<InventoryDocDto>>> SearchDocs([FromBody] GetInventoryDocsQuery query)
+    {
+        return Ok(await _mediator.Send(query));
+    }
+
+    // دریافت یک سند برای ویرایش/مشاهده
+    [HttpGet("docs/{id}")]
+    [HasPermission("Inventory.Docs.View")]
+    public async Task<ActionResult<InventoryDocDto>> GetDocById(long id)
+    {
+        var doc = await _mediator.Send(new GetInventoryDocByIdQuery(id));
+        if (doc == null) return NotFound();
+        return Ok(doc);
     }
 
     // ==========================================

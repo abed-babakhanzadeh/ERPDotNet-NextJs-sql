@@ -1,5 +1,7 @@
 using ERPDotNet.Domain.Common;
+using ERPDotNet.Domain.Modules.BaseInfo.Entities;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ERPDotNet.Domain.Modules.Inventory.Entities;
 
@@ -11,6 +13,9 @@ public class InventoryDocDetail : BaseEntity
     public InventoryDocHeader? Header { get; set; }
 
     public required int ProductId { get; set; }
+
+    [ForeignKey("ProductId")]
+    public Product? Product { get; set; }
 
     // === دو واحدی (Dual Unit Support) ===
     // مقدار در واحد اصلی (مبنای محاسبه کاردکس)

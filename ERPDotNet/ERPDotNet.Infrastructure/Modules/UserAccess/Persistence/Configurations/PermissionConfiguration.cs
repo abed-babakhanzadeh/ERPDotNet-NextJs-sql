@@ -109,6 +109,7 @@ public class PermissionConfiguration : IEntityTypeConfiguration<Permission>
             new Permission { Id = 3205, Name = "Inventory.Docs.Approve", Title = "تایید سند (Approve)", IsMenu = false, ParentId = 3201 },
             new Permission { Id = 3206, Name = "Inventory.Docs.Revert", Title = "برگشت از تایید", IsMenu = false, ParentId = 3201 },
             new Permission { Id = 3207, Name = "Inventory.Docs.Post", Title = "قطعی سازی (Post)", IsMenu = false, ParentId = 3201 },
+            new Permission { Id = 3208, Name = "Inventory.Docs.View", Title = "مشاهده اسناد", IsMenu = false, ParentId = 3201 },
 
             // --- ج) گزارشات (Reports) ---
             new Permission { Id = 3300, Name = "Inventory.Reports", Title = "گزارشات", IsMenu = true, ParentId = 3000 },

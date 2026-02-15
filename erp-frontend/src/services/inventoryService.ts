@@ -2,32 +2,31 @@
 import {
   ConfigureItemProfileCommand,
   CreateBatchCommand,
+  CreateInventoryDocCommand,
   CreateLocationCommand,
   DefineWarehouseCommand,
+  InventoryDocDto,
   SetItemWarehouseSettingCommand,
   UpdateBatchCommand,
+  UpdateInventoryDocCommand,
   UpdateLocationCommand,
 } from "@/types/inventory";
 import apiClient from "./apiClient";
 
 const BASE_URL = "/Inventory/Inventory";
+const BASE_INFO_URL = "/BaseInfo"; // آدرس ماژول اطلاعات پایه
 
 const inventoryService = {
-  // حذف سند
-  deleteDoc: async (id: number, rowVersion: string) => {
-    // طبق بک‌ند، rowVersion در کوئری استرینگ ارسال می‌شود
-    return apiClient.delete(`${BASE_URL}/docs/${id}`, {
-      params: { rowVersion },
-    });
-  },
+  // ==========================================
+  // 1. Warehouses (انبارها)
+  // ==========================================
 
-  // تعریف انبار جدید
   defineWarehouse: async (data: DefineWarehouseCommand) => {
     const response = await apiClient.post(`${BASE_URL}/warehouses`, data);
     return response.data;
   },
 
-  // دریافت لیست انبارها با فیلتر و صفحه‌بندی
+  // متد اصلی برای گرید (با پیجینیشن)
   getWarehouses: async (payload: any) => {
     const response = await apiClient.post(
       `${BASE_URL}/warehouses/list`,
@@ -36,42 +35,49 @@ const inventoryService = {
     return response.data;
   },
 
-  // دریافت اطلاعات یک انبار
+  // ✅ متد جدید: دریافت لیست همه انبارها (برای Dropdown)
+  // این متد مشکل Expected 1 arguments را در صفحات Create/Edit حل می‌کند
+  getAllWarehouses: async () => {
+    // فرض می‌کنیم تعداد انبارها خیلی زیاد نیست، ۱۰۰۰ تا می‌گیریم
+    const payload = {
+      pageNumber: 1,
+      pageSize: 1000,
+      orderBy: "Id",
+      isDescending: false,
+    };
+    const response = await apiClient.post(
+      `${BASE_URL}/warehouses/list`,
+      payload,
+    );
+    // اگر خروجی PaginatedResult است، باید items را برگردانیم
+    return response.data.items || [];
+  },
+
   getWarehouseById: async (id: number | string) => {
     const response = await apiClient.get(`${BASE_URL}/warehouses/${id}`);
     return response.data;
   },
 
-  // حذف منطقی انبار
   deleteWarehouse: async (id: number, rowVersion: string) => {
     return apiClient.delete(`${BASE_URL}/warehouses/${id}`, {
       params: { rowVersion },
     });
   },
 
-  // دریافت انواع انبار از بک‌اند برای نمایش در Combo
   getWarehouseTypes: async () => {
     const response = await apiClient.get(`${BASE_URL}/warehouse-types`);
     return response.data;
   },
 
-  // ویرایش انبار
   updateWarehouse: async (id: number, data: any) => {
     const response = await apiClient.put(`${BASE_URL}/warehouses/${id}`, data);
     return response.data;
   },
 
-  // سایر متدها که بعدا در فرم استفاده می‌شوند
-  getDocById: (id: number | string) => apiClient.get(`${BASE_URL}/docs/${id}`),
+  // ==========================================
+  // 2. Locations (لوکیشن‌ها)
+  // ==========================================
 
-  createDoc: (data: any) => apiClient.post(`${BASE_URL}/docs`, data),
-
-  updateDoc: (id: number, data: any) =>
-    apiClient.put(`${BASE_URL}/docs/${id}`, data),
-
-  // === Locations Methods ===
-
-  // دریافت لیست تمام لوکیشن‌های یک انبار (به صورت فلت که بعدا درختی می‌شود)
   getLocations: async (warehouseId: number) => {
     const response = await apiClient.get(
       `${BASE_URL}/warehouses/${warehouseId}/locations`,
@@ -79,34 +85,39 @@ const inventoryService = {
     return response.data;
   },
 
-  // دریافت یک لوکیشن خاص برای ویرایش
   getLocationById: async (id: number) => {
     const response = await apiClient.get(`${BASE_URL}/locations/${id}`);
     return response.data;
   },
 
-  // ایجاد لوکیشن جدید
   createLocation: async (data: CreateLocationCommand) => {
     const response = await apiClient.post(`${BASE_URL}/locations`, data);
     return response.data;
   },
 
-  // ویرایش لوکیشن
   updateLocation: async (id: number, data: UpdateLocationCommand) => {
     const response = await apiClient.put(`${BASE_URL}/locations/${id}`, data);
     return response.data;
   },
 
-  // حذف لوکیشن (با کنترل همروندی)
   deleteLocation: async (id: number, rowVersion: string) => {
     return apiClient.delete(`${BASE_URL}/locations/${id}`, {
       params: { rowVersion },
     });
   },
 
-  // === Doc Types Methods ===
+  // ==========================================
+  // 3. Doc Types (انواع سند)
+  // ==========================================
 
+  // متد اصلی
   getDocTypes: async () => {
+    const response = await apiClient.get(`${BASE_URL}/doc-types`);
+    return response.data;
+  },
+
+  // ✅ متد کمکی: آلیایس برای هماهنگی با نام‌گذاری صفحات
+  getAllDocTypes: async () => {
     const response = await apiClient.get(`${BASE_URL}/doc-types`);
     return response.data;
   },
@@ -117,13 +128,11 @@ const inventoryService = {
   },
 
   createDocType: async (data: any) => {
-    // تایپ DefineDocTypeCommand
     const response = await apiClient.post(`${BASE_URL}/doc-types`, data);
     return response.data;
   },
 
   updateDocType: async (id: number, data: any) => {
-    // تایپ UpdateDocTypeCommand
     const response = await apiClient.put(`${BASE_URL}/doc-types/${id}`, data);
     return response.data;
   },
@@ -134,39 +143,55 @@ const inventoryService = {
     });
   },
 
-  // دریافت لیست Enumها برای پر کردن کمبوها
+  // ==========================================
+  // 4. Products Integration (اتصال به کالاها)
+  // ==========================================
+
+  // ✅ متد جدید: جستجوی کالا (حل خطای DocForm)
+  // وصل می‌شود به ProductsController در BaseInfo
+  searchProducts: async (payload: any) => {
+    const response = await apiClient.post(
+      `${BASE_INFO_URL}/Products/search`,
+      payload,
+    );
+    return response.data;
+  },
+
+  // ==========================================
+  // 5. Enums & Helpers
+  // ==========================================
+
   getNumberingScopes: async () => {
     const response = await apiClient.get(`${BASE_URL}/enums/numbering-scopes`);
-    return response.data; // آرایه‌ای از {key, value} برمی‌گرداند
+    return response.data;
   },
 
   getInventoryNatures: async () => {
     const response = await apiClient.get(`${BASE_URL}/enums/inventory-natures`);
     return response.data;
   },
-  // دریافت لیست موجودیت‌های سیستم برای عطف
+
   getSystemEntities: async () => {
     const response = await apiClient.get(`${BASE_URL}/enums/system-entities`);
     return response.data;
   },
 
-  // === Product Inventory Profile ===
+  // ==========================================
+  // 6. Profiles & Settings
+  // ==========================================
 
-  // دریافت پروفایل انبارداری یک کالا
   getProductProfile: async (productId: number) => {
     const response = await apiClient.get(
       `${BASE_URL}/products/${productId}/profile`,
     );
-    return response.data; // ممکن است null باشد
+    return response.data;
   },
 
-  // ایجاد یا ویرایش تنظیمات کلی پروفایل (بچ، سریال، واحد)
   configureProductProfile: async (data: ConfigureItemProfileCommand) => {
     const response = await apiClient.post(`${BASE_URL}/products/profile`, data);
     return response.data;
   },
 
-  // تنظیم نقطه سفارش و ... برای یک انبار خاص
   setWarehouseSetting: async (data: SetItemWarehouseSettingCommand) => {
     const response = await apiClient.post(
       `${BASE_URL}/products/warehouse-settings`,
@@ -175,16 +200,16 @@ const inventoryService = {
     return response.data;
   },
 
-  // حذف تنظیمات یک انبار
   deleteWarehouseSetting: async (id: number, rowVersion: string) => {
     return apiClient.delete(`${BASE_URL}/products/warehouse-settings/${id}`, {
       params: { rowVersion },
     });
   },
 
-  // === Batch Management ===
+  // ==========================================
+  // 7. Batches
+  // ==========================================
 
-  // دریافت لیست بچ‌های یک کالا
   getProductBatches: async (productId: number, includeBlocked = false) => {
     const response = await apiClient.get(
       `${BASE_URL}/products/${productId}/batches`,
@@ -195,15 +220,66 @@ const inventoryService = {
     return response.data;
   },
 
-  // ایجاد بچ جدید
   createBatch: async (data: CreateBatchCommand) => {
     const response = await apiClient.post(`${BASE_URL}/batches`, data);
     return response.data;
   },
 
-  // ویرایش بچ
   updateBatch: async (id: number, data: UpdateBatchCommand) => {
     const response = await apiClient.put(`${BASE_URL}/batches/${id}`, data);
+    return response.data;
+  },
+
+  // ==========================================
+  // 8. Inventory Documents (اسناد)
+  // ==========================================
+
+  searchDocs: async (payload: any) => {
+    const response = await apiClient.post(`${BASE_URL}/docs/search`, payload);
+    return response.data;
+  },
+
+  getDocById: async (id: number | string) => {
+    const response = await apiClient.get(`${BASE_URL}/docs/${id}`);
+    return response.data as InventoryDocDto;
+  },
+
+  createDoc: async (data: CreateInventoryDocCommand) => {
+    const response = await apiClient.post(`${BASE_URL}/docs`, data);
+    return response.data;
+  },
+
+  updateDoc: async (id: number, data: UpdateInventoryDocCommand) => {
+    const response = await apiClient.put(`${BASE_URL}/docs/${id}`, data);
+    return response.data;
+  },
+
+  deleteDoc: async (id: number, rowVersion: string) => {
+    return apiClient.delete(`${BASE_URL}/docs/${id}`, {
+      params: { rowVersion },
+    });
+  },
+
+  approveDoc: async (id: number, rowVersion: string) => {
+    const response = await apiClient.post(`${BASE_URL}/docs/${id}/approve`, {
+      id,
+      rowVersion,
+    });
+    return response.data;
+  },
+
+  postDoc: async (id: number, rowVersion: string) => {
+    const response = await apiClient.post(`${BASE_URL}/docs/${id}/post`, {
+      id,
+      rowVersion,
+    });
+    return response.data;
+  },
+
+  revertDoc: async (id: number) => {
+    const response = await apiClient.post(`${BASE_URL}/docs/${id}/revert`, {
+      id,
+    });
     return response.data;
   },
 };
