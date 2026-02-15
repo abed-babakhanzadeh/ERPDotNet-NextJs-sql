@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { Loader2, Plus, Save, Trash2, Warehouse, Pencil } from "lucide-react"; // Pencil اضافه شد
+import { Loader2, Plus, Save, Trash2, Warehouse, Pencil } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,18 +50,19 @@ interface Props {
   productId: number;
   units: Unit[];
   isViewMode: boolean;
+  // کالبک جدید برای اطلاع‌رسانی به والد
+  onProfileUpdate?: (profile: InventoryItemProfileDto) => void;
 }
 
 export default function InventorySettingsTab({
   productId,
   units,
   isViewMode,
+  onProfileUpdate,
 }: Props) {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<InventoryItemProfileDto | null>(null);
   const [warehouses, setWarehouses] = useState<any[]>([]);
-
-  // استیت برای حالت ویرایش تنظیمات انبار
   const [editingSettingId, setEditingSettingId] = useState<number | null>(null);
 
   const profileForm = useForm({
@@ -96,6 +97,9 @@ export default function InventorySettingsTab({
 
         if (profileData) {
           setProfile(profileData);
+          // اطلاع به والد در بارگذاری اولیه
+          if (onProfileUpdate) onProfileUpdate(profileData);
+
           profileForm.reset({
             isBatchManaged: profileData.isBatchManaged,
             isSerialManaged: profileData.isSerialManaged,
@@ -120,10 +124,22 @@ export default function InventorySettingsTab({
         mainInventoryUnitId: Number(values.mainInventoryUnitId),
       });
       toast.success("تنظیمات عمومی انبار ذخیره شد");
+
+      // دریافت دیتای بروز شده
       const updated = await inventoryService.getProductProfile(productId);
       setProfile(updated);
+
+      // === اطلاع‌رسانی به کامپوننت والد برای نمایش/مخفی کردن تب بچ ===
+      if (onProfileUpdate && updated) {
+        onProfileUpdate(updated);
+      }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "خطا در ذخیره پروفایل");
+      // نمایش خطای دقیق
+      const msg =
+        error.response?.data?.detail ||
+        error.response?.data?.message ||
+        "خطا در ذخیره پروفایل";
+      toast.error(msg);
     }
   };
 
@@ -140,8 +156,6 @@ export default function InventorySettingsTab({
           ? "تنظیمات انبار بروزرسانی شد"
           : "تنظیمات انبار اضافه شد",
       );
-
-      // ریست کردن فرم
       settingForm.reset({
         warehouseId: 0,
         minStock: 0,
@@ -154,9 +168,8 @@ export default function InventorySettingsTab({
       const updated = await inventoryService.getProductProfile(productId);
       setProfile(updated);
     } catch (error: any) {
-      toast.error(
-        error.response?.data?.message || "خطا در ذخیره تنظیمات انبار",
-      );
+      const msg = error.response?.data?.detail || "خطا در ذخیره تنظیمات انبار";
+      toast.error(msg);
     }
   };
 
@@ -169,8 +182,6 @@ export default function InventorySettingsTab({
       reorderPoint: setting.reorderPoint,
       defaultLocationId: setting.defaultLocationId,
     });
-    // اسکرول به فرم (اختیاری)
-    window.scrollTo({ top: 200, behavior: "smooth" });
   };
 
   const onDeleteSetting = async (id: number, rowVersion: string) => {
@@ -207,7 +218,6 @@ export default function InventorySettingsTab({
             onSubmit={profileForm.handleSubmit(onSaveProfile)}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-end"
           >
-            {/* ... فیلدهای قبلی ... */}
             <FormField
               control={profileForm.control}
               name="mainInventoryUnitId"
@@ -236,7 +246,12 @@ export default function InventorySettingsTab({
                 <FormItem>
                   <FormLabel>عمر قفسه‌ای (روز)</FormLabel>
                   <FormControl>
-                    <Input type="number" {...field} disabled={isViewMode} />
+                    <Input
+                      type="number"
+                      {...field}
+                      value={field.value ?? 0}
+                      disabled={isViewMode}
+                    />
                   </FormControl>
                 </FormItem>
               )}
@@ -246,7 +261,7 @@ export default function InventorySettingsTab({
               control={profileForm.control}
               name="isBatchManaged"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-x-reverse rounded-md border p-3 h-10 shadow-sm">
+                <FormItem className="flex flex-row items-center space-x-3 space-x-reverse rounded-md border p-3 h-10 shadow-sm transition-colors hover:bg-muted/50">
                   <FormControl>
                     <Checkbox
                       checked={field.value}
@@ -255,7 +270,7 @@ export default function InventorySettingsTab({
                     />
                   </FormControl>
                   <div className="leading-none mr-2">
-                    <FormLabel className="cursor-pointer">
+                    <FormLabel className="cursor-pointer font-medium">
                       مدیریت بچ (Batch)
                     </FormLabel>
                   </div>
@@ -267,7 +282,7 @@ export default function InventorySettingsTab({
               control={profileForm.control}
               name="isSerialManaged"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-x-reverse rounded-md border p-3 h-10 shadow-sm">
+                <FormItem className="flex flex-row items-center space-x-3 space-x-reverse rounded-md border p-3 h-10 shadow-sm transition-colors hover:bg-muted/50">
                   <FormControl>
                     <Checkbox
                       checked={field.value}
@@ -276,7 +291,7 @@ export default function InventorySettingsTab({
                     />
                   </FormControl>
                   <div className="leading-none mr-2">
-                    <FormLabel className="cursor-pointer">
+                    <FormLabel className="cursor-pointer font-medium">
                       مدیریت سریال
                     </FormLabel>
                   </div>
@@ -300,15 +315,12 @@ export default function InventorySettingsTab({
             نقطه سفارش و موجودی در انبارها
           </h3>
 
-          {/* فرم افزودن/ویرایش */}
           {!isViewMode && (
             <div
               className={`p-4 rounded-md mb-6 border border-dashed transition-colors ${editingSettingId ? "bg-orange-50 border-orange-200" : "bg-muted/30"}`}
             >
               <div className="text-xs font-bold mb-2 text-muted-foreground">
-                {editingSettingId
-                  ? "ویرایش تنظیمات انبار"
-                  : "افزودن انبار جدید"}
+                {editingSettingId ? "ویرایش تنظیمات" : "افزودن تنظیمات جدید"}
               </div>
               <Form {...settingForm}>
                 <form
@@ -326,7 +338,7 @@ export default function InventorySettingsTab({
                           value={
                             field.value ? field.value.toString() : undefined
                           }
-                          disabled={!!editingSettingId} // در ویرایش نمیتوان انبار را عوض کرد
+                          disabled={!!editingSettingId}
                         >
                           <FormControl>
                             <SelectTrigger className="h-9">
@@ -355,6 +367,7 @@ export default function InventorySettingsTab({
                           type="number"
                           className="h-9 text-center"
                           {...field}
+                          value={field.value ?? 0}
                         />
                       </FormItem>
                     )}
@@ -369,6 +382,7 @@ export default function InventorySettingsTab({
                           type="number"
                           className="h-9 text-center"
                           {...field}
+                          value={field.value ?? 0}
                         />
                       </FormItem>
                     )}
@@ -383,6 +397,7 @@ export default function InventorySettingsTab({
                           type="number"
                           className="h-9 text-center"
                           {...field}
+                          value={field.value ?? 0}
                         />
                       </FormItem>
                     )}

@@ -18,8 +18,10 @@ import {
 } from "lucide-react";
 
 import apiClient from "@/services/apiClient";
+import inventoryService from "@/services/inventoryService";
 import { Unit } from "@/types/baseInfo";
 import { Product } from "@/types/product";
+import { InventoryItemProfileDto } from "@/types/inventory";
 
 import BaseFormLayout from "@/components/layout/BaseFormLayout";
 import { Button } from "@/components/ui/button";
@@ -63,6 +65,7 @@ interface ProductFormProps {
 
 export default function ProductForm({ mode, productId }: ProductFormProps) {
   const router = useRouter();
+
   const isView = mode === "view";
   const isCreate = mode === "create";
 
@@ -71,10 +74,15 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
   const [units, setUnits] = useState<Unit[]>([]);
   const [conversions, setConversions] = useState<any[]>([]);
 
+  const [isBatchManaged, setIsBatchManaged] = useState(false);
+
   // مدیریت تصویر
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [deleteImage, setDeleteImage] = useState(false);
+
+  // نگهداری مسیر تصویر فعلی برای اینکه اگر تغییری نکرد همان را بفرستیم
+  const [currentImagePath, setCurrentImagePath] = useState<string | null>(null);
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
@@ -102,6 +110,11 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
           );
           const prod = productRes.data;
 
+          const profile = await inventoryService.getProductProfile(productId);
+          if (profile) {
+            setIsBatchManaged(profile.isBatchManaged);
+          }
+
           form.reset({
             code: prod.code ?? "",
             name: prod.name ?? "",
@@ -118,6 +131,7 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
           }
 
           if (prod.imagePath) {
+            setCurrentImagePath(prod.imagePath); // ذخیره مسیر فعلی
             setImagePreview(
               `${process.env.NEXT_PUBLIC_API_URL}${prod.imagePath}`,
             );
@@ -132,93 +146,88 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
     init();
   }, [mode, productId, isCreate, form]);
 
+  const handleProfileUpdate = (profile: InventoryItemProfileDto) => {
+    setIsBatchManaged(profile.isBatchManaged);
+  };
+
   const onSubmitGeneral = async (values: ProductFormValues) => {
     setLoading(true);
     try {
-      const formData = new FormData();
+      // 1. مدیریت آپلود تصویر (اگر فایلی انتخاب شده باشد)
+      let finalImagePath = currentImagePath;
 
-      // 1. اضافه کردن فیلدهای متنی
-      formData.append("code", values.code);
-      formData.append("name", values.name);
-      formData.append("unitId", values.unitId.toString());
-      formData.append("supplyType", values.supplyType.toString());
-      formData.append("productNature", values.productNature.toString());
-      formData.append("isActive", values.isActive.toString());
+      if (deleteImage) {
+        finalImagePath = null;
+      }
 
-      if (values.latinName) formData.append("latinName", values.latinName);
-      if (values.descriptions)
-        formData.append("descriptions", values.descriptions);
-      if (values.productGroupId)
-        formData.append("productGroupId", values.productGroupId.toString());
-      if (productId) formData.append("id", productId.toString());
-
-      // 2. مدیریت واحدهای فرعی
-      const convs = conversions.map((c) => ({
-        id: c.id || 0,
-        alternativeUnitId: Number(c.alternativeUnitId || c.unitId),
-        factor: Number(c.factor),
-      }));
-      formData.append("conversionsJson", JSON.stringify(convs));
-
-      // 3. مدیریت تصویر - اصلاح شده
-      // فقط اگر فایلی انتخاب شده باشد آن را می‌فرستیم
       if (selectedImage) {
-        formData.append("imageFile", selectedImage);
-      }
-      // اگر کاربر دکمه حذف را زده باشد
-      else if (deleteImage) {
-        formData.append("deleteImage", "true");
-      }
+        const uploadFormData = new FormData();
+        uploadFormData.append("file", selectedImage);
 
-      // نکته حیاتی: اگر هیچکدام (نه فایل جدید، نه حذف) نباشد، هیچ چیزی در مورد تصویر نمی‌فرستیم
-      // تا بک‌اند تصویر قبلی را نگه دارد.
-
-      let newProductId = productId;
-
-      if (isCreate) {
-        const res = await apiClient.post("/BaseInfo/Products", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-        newProductId = res.data;
-        toast.success("کالا با موفقیت ایجاد شد");
-        // رفرش کامل صفحه برای اطمینان
-        window.location.href = `/base-info/products/edit/${newProductId}`;
-      } else {
-        await apiClient.put(`/BaseInfo/Products/${productId}`, formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-        toast.success("اطلاعات کالا با موفقیت بروزرسانی شد");
-
-        // اگر تصویر آپلود شده بود، پریویو را با کش‌باستر رفرش می‌کنیم
-        if (selectedImage) {
-          // یک مکث کوتاه برای اینکه فایل روی سرور ذخیره شود
-          setTimeout(() => {
-            const timestamp = new Date().getTime();
-            // فرض بر اینکه بک‌اند مسیر فایل را برمی‌گرداند یا می‌دانیم کجاست
-            // اینجا فقط برای UX بهتر است، وگرنه خود کاربر می‌بیند
-          }, 500);
+        try {
+          // استفاده از کنترلر آپلود عمومی
+          const uploadRes = await apiClient.post("/Upload", uploadFormData, {
+            headers: { "Content-Type": "multipart/form-data" },
+          });
+          finalImagePath = uploadRes.data.path;
+        } catch (err) {
+          console.error("Upload Error", err);
+          toast.error("خطا در آپلود تصویر");
+          setLoading(false);
+          return;
         }
+      }
+
+      // 2. آماده‌سازی داده‌ها به صورت JSON (برای رفع خطای 415)
+      const cleanConversions = conversions
+        .filter((c) => (c.alternativeUnitId || c.unitId) && c.factor > 0)
+        .map((c) => ({
+          id: c.id || 0,
+          alternativeUnitId: Number(c.alternativeUnitId || c.unitId),
+          factor: Number(c.factor),
+        }));
+
+      const payload = {
+        ...values,
+        id: productId ? Number(productId) : 0,
+        unitId: Number(values.unitId),
+        supplyType: Number(values.supplyType),
+        // ارسال مسیر تصویر (رشته) به جای فایل
+        imagePath: finalImagePath,
+        // در حالت JSON معمولاً لیست conversions را مستقیم می‌فرستیم، نه رشته JSON
+        // اما اگر بک‌اند شما string می‌گیرد، باید چک شود.
+        // با توجه به page_edit.tsx قبلی، به صورت آرایه آبجکت ارسال می‌شد:
+        conversions: cleanConversions,
+      };
+
+      // 3. ارسال درخواست
+      if (isCreate) {
+        const res = await apiClient.post("/BaseInfo/Products", payload);
+        toast.success("کالا با موفقیت ایجاد شد");
+        window.location.href = `/base-info/products/edit/${res.data}`;
+      } else {
+        await apiClient.put(`/BaseInfo/Products/${productId}`, payload);
+        toast.success("اطلاعات کالا با موفقیت بروزرسانی شد");
+        // آپدیت استیت محلی تصویر
+        setCurrentImagePath(finalImagePath);
+        setDeleteImage(false);
+        setSelectedImage(null);
       }
     } catch (error: any) {
       console.error(error);
-      toast.error(error.response?.data?.message || "خطا در ذخیره اطلاعات");
+      const msg =
+        error.response?.data?.detail ||
+        error.response?.data?.message ||
+        "خطا در ذخیره اطلاعات";
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
   };
 
-  const HeaderActions = () => {
+  const renderHeaderActions = () => {
     return (
       <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.back()}
-          type="button"
-        >
-          بازگشت
-        </Button>
-
         {isView && (
           <Button
             variant="outline"
@@ -232,15 +241,14 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
 
         {!isView && (
           <>
-            {/* دکمه ثبت اصلی: در تب‌های جنرال، واحدها و تصویر کار می‌کند */}
             {(activeTab === "general" ||
               activeTab === "units" ||
               activeTab === "image") && (
               <Button
-                type="button" // تغییر به button معمولی
-                onClick={form.handleSubmit(onSubmitGeneral)} // مستقیماً هندلر را صدا می‌زنیم
+                type="button"
+                onClick={form.handleSubmit(onSubmitGeneral)}
                 size="sm"
-                className="gap-2 bg-emerald-600 hover:bg-emerald-700"
+                className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
                 disabled={loading}
               >
                 {loading ? (
@@ -268,7 +276,6 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
 
   return (
     <div dir="rtl" className="h-full w-full flex flex-col">
-      {/* رفع خطای Typescript با حذف icon={Box} و پاس دادن actions={null} چون خودمان تولبار داریم */}
       <BaseFormLayout
         title={
           isCreate
@@ -276,20 +283,11 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
             : `مدیریت کالا: ${form.getValues("name") || "..."}`
         }
         isLoading={loading}
-        actions={null} // اکشن‌ها را به BaseFormLayout نمی‌دهیم چون تولبار اختصاصی ساختیم
+        headerActions={renderHeaderActions()}
+        onSubmit={undefined}
+        showActions={false}
       >
         <div className="h-full flex flex-col bg-background w-full">
-          {/* تولبار اختصاصی */}
-          <div className="bg-white border-b px-6 py-3 flex items-center justify-between sticky top-0 z-10 shadow-sm">
-            <div className="text-sm text-muted-foreground font-medium">
-              وضعیت:{" "}
-              <span className="text-foreground font-bold">
-                {isCreate ? "در حال ایجاد" : isView ? "مشاهده" : "ویرایش"}
-              </span>
-            </div>
-            <HeaderActions />
-          </div>
-
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}
@@ -327,13 +325,14 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
                   <Warehouse className="w-4 h-4 ml-2" /> تنظیمات انبار
                 </TabsTrigger>
 
-                <TabsTrigger
-                  value="batches"
-                  disabled={isCreate}
-                  className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-orange-500 data-[state=active]:text-orange-600 px-4 text-sm"
-                >
-                  <Tag className="w-4 h-4 ml-2" /> مدیریت بچ‌ها
-                </TabsTrigger>
+                {isBatchManaged && !isCreate && (
+                  <TabsTrigger
+                    value="batches"
+                    className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-orange-500 data-[state=active]:text-orange-600 px-4 text-sm animate-in fade-in zoom-in duration-300"
+                  >
+                    <Tag className="w-4 h-4 ml-2" /> مدیریت بچ‌ها
+                  </TabsTrigger>
+                )}
               </TabsList>
             </div>
 
@@ -356,6 +355,7 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
                               <FormControl>
                                 <Input
                                   {...field}
+                                  value={field.value ?? ""}
                                   disabled={isView}
                                   className="text-right font-mono"
                                 />
@@ -373,6 +373,7 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
                               <FormControl>
                                 <Input
                                   {...field}
+                                  value={field.value ?? ""}
                                   disabled={isView}
                                   className="text-right"
                                 />
@@ -437,6 +438,7 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
                               <FormControl>
                                 <Input
                                   {...field}
+                                  value={field.value ?? ""}
                                   disabled={isView}
                                   className="text-left"
                                 />
@@ -489,6 +491,7 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
                               <FormControl>
                                 <Textarea
                                   {...field}
+                                  value={field.value ?? ""}
                                   disabled={isView}
                                   rows={3}
                                   className="text-right"
@@ -541,21 +544,25 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
                       productId={productId}
                       units={units}
                       isViewMode={isView}
+                      onProfileUpdate={handleProfileUpdate}
                     />
                   )}
                 </div>
               </TabsContent>
 
-              <TabsContent value="batches" className="mt-0 h-full w-full">
-                <div className="w-full bg-card border rounded-lg p-6 shadow-sm">
-                  {productId && (
-                    <ProductBatchesTab
-                      productId={productId}
-                      isViewMode={isView}
-                    />
-                  )}
-                </div>
-              </TabsContent>
+              {/* محتوای تب بچ فقط اگر فعال باشد رندر شود */}
+              {isBatchManaged && !isCreate && (
+                <TabsContent value="batches" className="mt-0 h-full w-full">
+                  <div className="w-full bg-card border rounded-lg p-6 shadow-sm">
+                    {productId && (
+                      <ProductBatchesTab
+                        productId={productId}
+                        isViewMode={isView}
+                      />
+                    )}
+                  </div>
+                </TabsContent>
+              )}
             </div>
           </Tabs>
         </div>

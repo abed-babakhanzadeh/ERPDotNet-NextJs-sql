@@ -56,7 +56,7 @@ public class InventoryController : ControllerBase
     // ==========================================
 
     [HttpPost("warehouses")]
-    [HasPermission("Inventory.Warehouses.Define")] 
+    [HasPermission("Inventory.Warehouses.Create")] 
     public async Task<ActionResult<int>> DefineWarehouse([FromBody] DefineWarehouseCommand command)
     {
         var id = await _mediator.Send(command);
@@ -214,7 +214,7 @@ public class InventoryController : ControllerBase
 
     [HttpPost("locations")]
     // اصلاح شد: منطبق با Inventory.Locations.Define
-    [HasPermission("Inventory.Locations.Define")]
+    [HasPermission("Inventory.Warehouses.Locations")]
     public async Task<ActionResult<int>> CreateLocation([FromBody] CreateLocationCommand command)
     {
         var id = await _mediator.Send(command);
