@@ -202,3 +202,88 @@ export interface EnumLookupDto {
   name: string; // نام سیستمی
   title?: string; // اگر سمت سرور تایتل فارسی بفرستید، وگرنه از مپینگ استفاده می‌کنیم
 }
+
+// === Product Inventory Profile (پروفایل انبار کالا) ===
+
+export interface ItemWarehouseSettingDto {
+  id: number;
+  warehouseId: number;
+  warehouseTitle: string;
+  minStock: number;
+  maxStock: number;
+  reorderPoint: number;
+  defaultLocationId?: number | null;
+  defaultLocationTitle?: string;
+  defaultLocationCode?: string;
+  rowVersion: string;
+}
+
+export interface InventoryItemProfileDto {
+  id: number;
+  productId: number;
+
+  isBatchManaged: boolean;
+  isSerialManaged: boolean;
+  shelfLifeDays?: number | null;
+
+  mainInventoryUnitId: number;
+  mainInventoryUnitTitle: string;
+
+  warehouseSettings: ItemWarehouseSettingDto[];
+}
+
+export interface ConfigureItemProfileCommand {
+  productId: number;
+  isBatchManaged: boolean;
+  isSerialManaged: boolean;
+  shelfLifeDays?: number | null;
+  mainInventoryUnitId: number;
+}
+
+export interface SetItemWarehouseSettingCommand {
+  warehouseId: number;
+  productId: number;
+  reorderPoint: number;
+  maxStock: number;
+  minStock: number;
+  defaultLocationId?: number | null;
+}
+
+// === Batch Management (مدیریت بچ) ===
+
+export interface InventoryBatchDto {
+  id: number;
+  productId: number;
+  batchNumber: string;
+  manufactureDate?: string | null; // ISO Date String
+  expiryDate?: string | null; // ISO Date String
+  supplierBatchCode?: string | null;
+  description?: string | null;
+
+  isBlocked: boolean;
+  blockReason?: string | null;
+  isExpired: boolean; // فیلد محاسباتی
+
+  rowVersion: string;
+}
+
+export interface CreateBatchCommand {
+  productId: number;
+  batchNumber: string;
+  manufactureDate?: Date | null;
+  expiryDate?: Date | null;
+  supplierBatchCode?: string | null;
+  description?: string | null;
+}
+
+export interface UpdateBatchCommand {
+  id: number;
+  batchNumber?: string;
+  manufactureDate?: Date | null;
+  expiryDate?: Date | null;
+  supplierBatchCode?: string | null;
+  description?: string | null;
+  isBlocked: boolean;
+  blockReason?: string | null;
+  rowVersion: string;
+}

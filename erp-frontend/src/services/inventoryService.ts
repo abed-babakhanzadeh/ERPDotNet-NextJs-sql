@@ -1,7 +1,11 @@
 // src/services/inventoryService.ts
 import {
+  ConfigureItemProfileCommand,
+  CreateBatchCommand,
   CreateLocationCommand,
   DefineWarehouseCommand,
+  SetItemWarehouseSettingCommand,
+  UpdateBatchCommand,
   UpdateLocationCommand,
 } from "@/types/inventory";
 import apiClient from "./apiClient";
@@ -143,6 +147,63 @@ const inventoryService = {
   // دریافت لیست موجودیت‌های سیستم برای عطف
   getSystemEntities: async () => {
     const response = await apiClient.get(`${BASE_URL}/enums/system-entities`);
+    return response.data;
+  },
+
+  // === Product Inventory Profile ===
+
+  // دریافت پروفایل انبارداری یک کالا
+  getProductProfile: async (productId: number) => {
+    const response = await apiClient.get(
+      `${BASE_URL}/products/${productId}/profile`,
+    );
+    return response.data; // ممکن است null باشد
+  },
+
+  // ایجاد یا ویرایش تنظیمات کلی پروفایل (بچ، سریال، واحد)
+  configureProductProfile: async (data: ConfigureItemProfileCommand) => {
+    const response = await apiClient.post(`${BASE_URL}/products/profile`, data);
+    return response.data;
+  },
+
+  // تنظیم نقطه سفارش و ... برای یک انبار خاص
+  setWarehouseSetting: async (data: SetItemWarehouseSettingCommand) => {
+    const response = await apiClient.post(
+      `${BASE_URL}/products/warehouse-settings`,
+      data,
+    );
+    return response.data;
+  },
+
+  // حذف تنظیمات یک انبار
+  deleteWarehouseSetting: async (id: number, rowVersion: string) => {
+    return apiClient.delete(`${BASE_URL}/products/warehouse-settings/${id}`, {
+      params: { rowVersion },
+    });
+  },
+
+  // === Batch Management ===
+
+  // دریافت لیست بچ‌های یک کالا
+  getProductBatches: async (productId: number, includeBlocked = false) => {
+    const response = await apiClient.get(
+      `${BASE_URL}/products/${productId}/batches`,
+      {
+        params: { includeBlocked },
+      },
+    );
+    return response.data;
+  },
+
+  // ایجاد بچ جدید
+  createBatch: async (data: CreateBatchCommand) => {
+    const response = await apiClient.post(`${BASE_URL}/batches`, data);
+    return response.data;
+  },
+
+  // ویرایش بچ
+  updateBatch: async (id: number, data: UpdateBatchCommand) => {
+    const response = await apiClient.put(`${BASE_URL}/batches/${id}`, data);
     return response.data;
   },
 };

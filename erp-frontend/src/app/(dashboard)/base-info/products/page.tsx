@@ -19,22 +19,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-// 1. فراخوانی لایوت جدید
 import BaseListLayout from "@/components/layout/BaseListLayout";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-
-const PlaceholderWrapper: React.FC<{
-  children: React.ReactNode;
-  permission?: string;
-  title?: string;
-  icon?: any;
-  actions?: React.ReactNode;
-}> = ({ children }) => <div>{children}</div>;
-
-const ProtectedPagePlaceholder = ProtectedPage || PlaceholderWrapper;
-const PermissionGuardPlaceholder =
-  PermissionGuard || (({ children }) => <>{children}</>);
 
 export default function ProductsPage() {
   const { addTab } = useTabs();
@@ -42,7 +29,6 @@ export default function ProductsPage() {
   useTabPrefetch(["/base-info/products/create"]);
 
   const { tableProps, refresh, totalCount } = useServerDataTable<Product>({
-    // اصلاح شد: اضافه کردن BaseInfo به ابتدای آدرس
     endpoint: "/BaseInfo/Products/search",
     initialPageSize: 30,
   });
@@ -52,18 +38,18 @@ export default function ProductsPage() {
       {
         key: "imagePath",
         label: "تصویر",
-        type: "string",
-        render: (value: any, row: Product) => {
-          if (!value)
+        type: "custom", // تغییر به custom
+        render: (value: any, row: any) => {
+          if (!row.imagePath)
             return (
-              <div className="w-8 h-8 bg-muted rounded flex items-center justify-center">
+              <div className="w-8 h-8 bg-muted rounded flex items-center justify-center border">
                 <ImageIcon size={14} className="opacity-50" />
               </div>
             );
           return (
-            <div className="w-8 h-8 rounded overflow-hidden border bg-white hover:scale-150 transition-transform cursor-pointer shadow-sm relative z-0 hover:z-50">
+            <div className="w-8 h-8 rounded overflow-hidden border bg-white hover:scale-[2.5] transition-transform cursor-pointer shadow-sm relative z-0 hover:z-50 origin-left">
               <img
-                src={`${BACKEND_URL}${value}`}
+                src={`${BACKEND_URL}${row.imagePath}`}
                 alt={row.name}
                 className="w-full h-full object-cover"
                 loading="lazy"
@@ -72,17 +58,16 @@ export default function ProductsPage() {
           );
         },
       },
-      { key: "code", label: "کد کالا/قلم", type: "string" },
-      { key: "name", label: "نام کالا/قلم", type: "string" },
-      { key: "latinName", label: "نام لاتين کالا/قلم", type: "string" },
+      { key: "code", label: "کد کالا", type: "string", sortable: true },
+      { key: "name", label: "نام کالا", type: "string", sortable: true },
+      { key: "latinName", label: "نام لاتین", type: "string", sortable: true },
       { key: "unitName", label: "واحد", type: "string" },
       { key: "supplyType", label: "نوع تامین", type: "string" },
       {
-        // اصلاح مهم: حتماً با حرف کوچک بنویسید
         key: "descriptions",
-        label: "توضيحات",
-        type: "string",
-        render: (value) => (
+        label: "توضیحات",
+        type: "custom",
+        render: (value: any) => (
           <span
             className="truncate max-w-[150px] block text-muted-foreground text-xs"
             title={value}
@@ -91,68 +76,67 @@ export default function ProductsPage() {
           </span>
         ),
       },
-
       {
         key: "conversions",
-        label: "فرعی",
-        type: "string",
-        render: (_: any, row: Product) => {
+        label: "واحد فرعی",
+        type: "custom",
+        render: (_: any, row: any) => {
           const count = row.conversions?.length || 0;
           return count > 0 ? (
-            <span className="bg-blue-100 text-blue-700 text-[10px] px-2 py-0.5 rounded-full">
+            <Badge variant="secondary" className="text-[10px] px-2 h-5">
               {count} واحد
-            </span>
+            </Badge>
           ) : (
             <span className="text-muted-foreground text-[10px]">-</span>
           );
         },
       },
-
       {
         key: "isActive",
         label: "وضعیت",
         type: "boolean",
-        render: (val) =>
+        render: (val: boolean) =>
           val ? (
-            <Badge className="bg-emerald-500 hover:bg-emerald-600">فعال</Badge>
+            <Badge className="bg-emerald-500 hover:bg-emerald-600 h-5 text-[10px]">
+              فعال
+            </Badge>
           ) : (
-            <Badge variant="destructive">غیرفعال</Badge>
+            <Badge variant="destructive" className="h-5 text-[10px]">
+              غیرفعال
+            </Badge>
           ),
       },
     ],
-    []
+    [],
   );
 
   const handleCreate = () => {
-    addTab("تعریف کالا/قلمی جدید", "/base-info/products/create");
+    addTab("تعریف کالا جدید", "/base-info/products/create");
   };
 
   const handleView = (row: Product) => {
-    addTab(`جزئیات ${row.name}`, `/base-info/products/edit/${row.id}`);
+    addTab(`جزئیات ${row.name}`, `/base-info/products/view/${row.id}`);
   };
 
   const handleEdit = (row: Product) => {
-    addTab(
-      `ویرایش ${row.name}`,
-      `/base-info/products/edit/${row.id}?mode=edit`
-    );
+    // اصلاح شد: مسیر جدید بدون کوئری پارامتر قدیمی
+    addTab(`ویرایش ${row.name}`, `/base-info/products/edit/${row.id}`);
   };
 
   const handleDelete = async (row: Product) => {
-    if (!confirm(`آیا از حذف کالا/قلمی "${row.name}" اطمینان دارید؟`)) return;
+    if (!confirm(`آیا از حذف کالا "${row.name}" اطمینان دارید؟`)) return;
 
     try {
       await apiClient.delete(`/BaseInfo/Products/${row.id}`);
-      toast.success("کالا/قلم با موفقیت حذف شد");
+      toast.success("کالا با موفقیت حذف شد");
       refresh();
     } catch (error: any) {
-      toast.error("خطا در حذف کالا/قلم. ممکن است در اسناد استفاده شده باشد.");
+      toast.error(error.response?.data?.message || "خطا در حذف کالا.");
     }
   };
 
-  // 3. تعریف دکمه‌های اکشن (کالا/قلمی جدید) برای ارسال به لایوت
   const headerActions = (
-    <PermissionGuardPlaceholder permission="BaseInfo.Products.Create">
+    <PermissionGuard permission="BaseInfo.Products.Create">
       <TooltipProvider delayDuration={200}>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -162,34 +146,36 @@ export default function ProductsPage() {
               className="h-8 gap-1.5 md:gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
             >
               <Plus size={16} />
-              <span className="hidden sm:inline text-xs">کالا/قلمی جدید</span>
+              <span className="hidden sm:inline text-xs">کالای جدید</span>
             </Button>
           </TooltipTrigger>
           <TooltipContent side="bottom" className="text-[10px] sm:hidden">
-            کالا/قلمی جدید
+            تعریف کالای جدید
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
-    </PermissionGuardPlaceholder>
+    </PermissionGuard>
   );
 
   return (
-    <ProtectedPagePlaceholder permission="BaseInfo.Products">
-      {/* 4. استفاده از BaseListLayout به جای هدر دستی */}
+    <ProtectedPage permission="BaseInfo.Products.View">
       <BaseListLayout
-        title="مدیریت کالا/قلمها"
+        title="مدیریت کالاها و اقلام"
+        description="لیست کالاها، خدمات و محصولات با امکان تعریف واحدهای فرعی و تنظیمات انبار"
         icon={Box}
         actions={headerActions}
-        count={totalCount} // نمایش تعداد کل رکوردها
+        count={totalCount}
       >
-        <DataTable
-          columns={columns}
-          onView={handleView}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          {...tableProps}
-        />
+        <div className="bg-card border rounded-md h-[calc(100vh-180px)]">
+          <DataTable
+            columns={columns}
+            onView={handleView}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            {...tableProps}
+          />
+        </div>
       </BaseListLayout>
-    </ProtectedPagePlaceholder>
+    </ProtectedPage>
   );
 }

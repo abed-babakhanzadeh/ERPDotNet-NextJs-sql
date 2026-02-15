@@ -24,6 +24,7 @@ interface BaseFormLayoutProps {
   isSubmitting?: boolean;
   isLoading?: boolean;
   children: React.ReactNode;
+  actions?: React.ReactNode;
   onSubmit?: (e: React.FormEvent) => void;
   onCancel?: () => void;
   submitText?: string;
@@ -61,7 +62,7 @@ export default function BaseFormLayout({
       className={cn(
         "flex flex-col h-full bg-background transition-all duration-300",
         // در حالت تمام صفحه، z-index بالا می‌گیرد و فیکس می‌شود
-        isFullscreen ? "fixed inset-0 z-[100]" : "relative"
+        isFullscreen ? "fixed inset-0 z-[100]" : "relative",
       )}
     >
       {/* Fixed Header */}
