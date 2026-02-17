@@ -164,8 +164,10 @@ export default function InventoryDocsListPage() {
   const handleEdit = (row: InventoryDocDto) =>
     addTab(`ویرایش سند ${row.docNumber}`, `/inventory/docs/edit/${row.id}`);
   const handleView = (row: InventoryDocDto) =>
-    addTab(`مشاهده سند ${row.docNumber}`, `/inventory/docs/edit/${row.id}`);
-
+    addTab(
+      `مشاهده سند ${row.docNumber}`,
+      `/inventory/docs/edit/${row.id}?mode=view`,
+    );
   const handleDelete = async (row: InventoryDocDto) => {
     if (row.status === InventoryDocStatus.Posted) {
       toast.error("امکان حذف سند قطعی شده وجود ندارد.");

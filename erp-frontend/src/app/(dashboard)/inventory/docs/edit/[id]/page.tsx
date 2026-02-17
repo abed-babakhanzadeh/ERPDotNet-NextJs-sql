@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation"; // useSearchParams اضافه شد
 import DocForm from "../../components/DocForm";
 import inventoryService from "@/services/inventoryService";
 import { toast } from "sonner";
@@ -9,7 +9,12 @@ import { Loader2 } from "lucide-react";
 
 export default function EditDocPage() {
   const params = useParams();
+  const searchParams = useSearchParams(); // خواندن کوئری پارامترها
   const id = params.id as string;
+
+  // تشخیص مود: اگر ?mode=view بود، حالت view است، وگرنه edit
+  const isViewMode = searchParams.get("mode") === "view";
+  const formMode = isViewMode ? "view" : "edit";
 
   const [loading, setLoading] = useState(true);
   const [initialData, setInitialData] = useState<any>(null);
@@ -46,7 +51,7 @@ export default function EditDocPage() {
 
   return (
     <DocForm
-      mode="edit"
+      mode={formMode} // پاس دادن مود صحیح (view یا edit)
       initialData={initialData}
       docTypes={docTypes}
       warehouses={warehouses}
