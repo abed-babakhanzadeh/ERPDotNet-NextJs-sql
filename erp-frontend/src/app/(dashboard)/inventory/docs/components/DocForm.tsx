@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, {
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -75,7 +81,7 @@ const statusStyles: Record<
     icon: CheckCircle2,
   },
   [InventoryDocStatus.Posted]: {
-    label: "قطعی شده (کاردکس)",
+    label: "قطعی شده",
     className: "bg-emerald-50 text-emerald-700 border-emerald-200",
     icon: Archive,
   },
@@ -115,57 +121,115 @@ export default function DocForm({
   const [productsList, setProductsList] = useState<any[]>([]);
   const [productsLoading, setProductsLoading] = useState(false);
 
-  // === Sync Data (پر کردن فرم) ===
+  const isInitialized = useRef(false);
+
+  // --- Draft Logic (Same as before) ---
+  const getDraftKey = () => {
+    if (initialMode === "create") return "inventory-doc-draft-new";
+    if (docData?.id) return `inventory-doc-draft-${docData.id}`;
+    return null;
+  };
+
   useEffect(() => {
-    if (docData) {
-      // حالت ویرایش/نمایش
-      setHeaderData({
-        docTypeId: docData.docTypeId,
-        warehouseId: docData.warehouseId,
-        destinationWarehouseId: docData.destinationWarehouseId,
-        docDate: docData.docDate ? new Date(docData.docDate) : new Date(),
-        description: docData.description || "",
-        targetPartyName: docData.targetPartyName || "",
-        referenceExternalCode: docData.referenceExternalCode || "",
-      });
+    const initData = async () => {
+      const draftKey = getDraftKey();
+      const savedDraft = draftKey ? sessionStorage.getItem(draftKey) : null;
+      let loadedFromDraft = false;
 
-      setGridData(docData.details.map((d) => ({ ...d, tempId: d.id })) || []);
+      if (savedDraft) {
+        try {
+          const parsed = JSON.parse(savedDraft);
+          setHeaderData(parsed.headerData);
+          setGridData(parsed.gridData);
+          if (parsed.productsList) setProductsList(parsed.productsList);
+          if (parsed.headerData.warehouseId)
+            loadLocations(Number(parsed.headerData.warehouseId));
+          loadedFromDraft = true;
+        } catch (e) {
+          console.error(e);
+        }
+      }
 
-      // پر کردن کش کالاها
-      const existingProducts = docData.details.map((d) => ({
-        id: d.productId,
-        code: d.productCode,
-        name: d.productName,
-        unitName: d.unitTitle,
-      }));
-      setProductsList((prev) => {
-        const combined = [...prev];
-        existingProducts.forEach((p) => {
-          if (!combined.find((x) => x.id === p.id)) combined.push(p);
-        });
-        return combined;
-      });
+      if (!loadedFromDraft) {
+        if (docData) {
+          setHeaderData({
+            docTypeId: docData.docTypeId,
+            warehouseId: docData.warehouseId,
+            destinationWarehouseId: docData.destinationWarehouseId,
+            docDate: docData.docDate ? new Date(docData.docDate) : new Date(),
+            description: docData.description || "",
+            targetPartyName: docData.targetPartyName || "",
+            referenceExternalCode: docData.referenceExternalCode || "",
+          });
+          setGridData(
+            docData.details.map((d) => ({ ...d, tempId: d.id })) || [],
+          );
+          const existingProducts = docData.details.map((d) => ({
+            id: d.productId,
+            code: d.productCode,
+            name: d.productName,
+            unitName: d.unitTitle,
+          }));
+          setProductsList((prev) => {
+            const combined = [...prev];
+            existingProducts.forEach((p) => {
+              if (!combined.find((x) => x.id === p.id)) combined.push(p);
+            });
+            return combined;
+          });
+          if (docData.warehouseId) loadLocations(docData.warehouseId);
+        } else if (initialMode === "create") {
+          setHeaderData({
+            docDate: new Date(),
+            description: "",
+            targetPartyName: "",
+            referenceExternalCode: "",
+          });
+        }
+      }
+      isInitialized.current = true;
+    };
+    initData();
+  }, [docData, initialMode]);
 
-      if (docData.warehouseId) loadLocations(docData.warehouseId);
-    } else if (initialMode === "create") {
-      // ✅ اصلاح مشکل تاریخ خالی: مقداردهی اولیه برای حالت ایجاد
-      setHeaderData({
-        docDate: new Date(),
-        description: "",
-        targetPartyName: "",
-        referenceExternalCode: "",
-      });
+  useEffect(() => {
+    if (!isInitialized.current || currentMode === "view") return;
+    const draftKey = getDraftKey();
+    if (draftKey) {
+      sessionStorage.setItem(
+        draftKey,
+        JSON.stringify({
+          headerData,
+          gridData,
+          productsList,
+          timestamp: new Date().getTime(),
+        }),
+      );
     }
-  }, [docData, initialMode]); // وابستگی‌ها اصلاح شد
+  }, [headerData, gridData, productsList, currentMode]);
+
+  const clearDraft = () => {
+    const draftKey = getDraftKey();
+    if (draftKey) sessionStorage.removeItem(draftKey);
+  };
 
   const loadLocations = async (warehouseId: number) => {
+    if (!warehouseId) return;
     try {
-      const locs = await inventoryService.getLocations(warehouseId);
-      setLocations(locs || []);
+      const res = await inventoryService.getLocations(warehouseId);
+      const locs = Array.isArray(res) ? res : res?.items || [];
+      setLocations(locs);
     } catch (error) {
       console.error(error);
+      toast.error("خطا در دریافت لیست قفسه‌بندی");
     }
   };
+
+  useEffect(() => {
+    if (isInitialized.current && headerData.warehouseId)
+      loadLocations(Number(headerData.warehouseId));
+    if (isInitialized.current && !headerData.warehouseId) setLocations([]);
+  }, [headerData.warehouseId]);
 
   const reloadDocument = async () => {
     if (!docData?.id) return;
@@ -173,8 +237,9 @@ export default function DocForm({
     try {
       const freshDoc = await inventoryService.getDocById(docData.id);
       setDocData(freshDoc);
+      sessionStorage.removeItem(`inventory-doc-draft-${docData.id}`);
     } catch (error) {
-      handleApiError(error, "خطا در بازخوانی اطلاعات سند.");
+      handleApiError(error, "خطا در بازخوانی اطلاعات.");
     } finally {
       setIsReloading(false);
     }
@@ -200,8 +265,8 @@ export default function DocForm({
   }, []);
 
   const productLookupColumns: ColumnDef[] = [
-    { key: "code", label: "کد کالا", width: "80px" },
-    { key: "name", label: "نام کالا", width: "200px" },
+    { key: "code", label: "کد", width: "80px" },
+    { key: "name", label: "نام", width: "200px" },
     { key: "unitName", label: "واحد", width: "80px" },
     { key: "supplyType", label: "نوع", width: "100px" },
   ];
@@ -340,30 +405,59 @@ export default function DocForm({
     [locations, productsList, productsLoading, isReadOnly],
   );
 
-  // === Handlers (Save, Approve, Post, Revert) ===
+  // === Handlers ===
   const handleSave = async () => {
-    if (!headerData.docTypeId || !headerData.warehouseId)
-      return toast.error("نوع سند و انبار الزامی است.");
-    if (gridData.length === 0)
-      return toast.error("حداقل یک ردیف کالا وارد کنید.");
+    // 1. بررسی هدر
+    if (!headerData.docTypeId || !headerData.warehouseId) {
+      return toast.error("لطفا نوع سند و انبار را انتخاب کنید.");
+    }
+
+    // 2. پاکسازی و فیلتر کردن گرید (Sanitization)
+    // فقط ردیف‌هایی را نگه دار که "کالا" (productId) داشته باشند
+    const validDetails = gridData.filter(
+      (row) => row.productId && Number(row.productId) > 0,
+    );
+
+    // 3. چک کردن اینکه آیا بعد از فیلتر، چیزی باقی مانده؟
+    if (validDetails.length === 0) {
+      return toast.error("لطفا حداقل یک قلم کالا وارد کنید.");
+    }
+
+    // 4. بررسی مقادیر اجباری در ردیف‌های معتبر
+    const invalidRow = validDetails.find(
+      (r) => !r.mainUnitQuantity || Number(r.mainUnitQuantity) <= 0,
+    );
+    if (invalidRow) {
+      return toast.error("تعداد کالا در تمام ردیف‌ها باید بزرگتر از صفر باشد.");
+    }
+
     setSubmitting(true);
     try {
-      const detailsDto = gridData.map((row) => ({
+      // مپ کردن و تبدیل تایپ‌ها (جلوگیری از خطای JSON)
+      const detailsDto = validDetails.map((row) => ({
         id: row.id || null,
         productId: Number(row.productId),
         mainUnitQuantity: Number(row.mainUnitQuantity),
         subUnitQuantity: 0,
+        // ✅ اصلاح مهم: تبدیل رشته خالی یا undefined به null برای جلوگیری از خطای 400
         locationId: row.locationId ? Number(row.locationId) : null,
         batchId: null,
-        description: row.description,
+        description: row.description || "",
       }));
+
       if (currentMode === "create") {
         const command: CreateInventoryDocCommand = {
           ...headerData,
           details: detailsDto,
         };
-        const newId = await inventoryService.createDoc(command);
+        const result: any = await inventoryService.createDoc(command);
+        const newId =
+          typeof result === "object" && result !== null
+            ? result.id || result.data || result
+            : result;
+
         toast.success("سند جدید ایجاد شد");
+        clearDraft();
         router.push(`/inventory/docs/edit/${newId}`);
       } else {
         if (!docData) return;
@@ -377,6 +471,7 @@ export default function DocForm({
         };
         await inventoryService.updateDoc(docData.id, command);
         toast.success("تغییرات ذخیره شد");
+        clearDraft();
         await reloadDocument();
       }
     } catch (error: any) {
@@ -392,6 +487,7 @@ export default function DocForm({
     try {
       await inventoryService.approveDoc(docData!.id, docData!.rowVersion);
       toast.success("سند تایید شد");
+      clearDraft();
       await reloadDocument();
     } catch (error: any) {
       handleApiError(error, "خطا در تایید سند");
@@ -411,6 +507,7 @@ export default function DocForm({
     try {
       await inventoryService.postDoc(docData!.id, docData!.rowVersion);
       toast.success("سند قطعی شد");
+      clearDraft();
       await reloadDocument();
     } catch (error: any) {
       handleApiError(error, "خطا در قطعی سازی سند");
@@ -429,6 +526,7 @@ export default function DocForm({
     try {
       await inventoryService.revertDoc(docData!.id);
       toast.success(isPosted ? "سند ابطال شد" : "سند اصلاح شد");
+      clearDraft();
       await reloadDocument();
     } catch (error: any) {
       handleApiError(error, "خطا در عملیات");
@@ -446,9 +544,14 @@ export default function DocForm({
   const ActionMenu = () => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="h-9 gap-1.5 px-3">
-          <span className="hidden sm:inline">عملیات</span>
-          <MoreVertical className="w-4 h-4 sm:ml-1.5" />
+        {/* ✅ دکمه عملیات با استایل جدید */}
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 gap-1.5 px-3 text-slate-600 hover:text-slate-900 border-slate-300"
+        >
+          <MoreVertical className="w-4 h-4" />
+          <span className="hidden sm:inline text-xs">عملیات</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
@@ -460,14 +563,14 @@ export default function DocForm({
               ویرایش سند
             </DropdownMenuItem>
           )}
-        {currentMode !== "view" && !isReadOnly && (
+        {currentMode === "edit" && !isReadOnly && (
           <DropdownMenuItem
             onClick={handleSave}
             disabled={submitting}
             className="sm:hidden"
           >
             <Save className="w-4 h-4 ml-2" />
-            ذخیره موقت
+            ذخیره تغییرات
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
@@ -531,14 +634,14 @@ export default function DocForm({
   return (
     <MasterDetailForm
       title={
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <h1 className="text-lg font-bold tracking-tight">
-              {currentMode === "create"
-                ? "ثبت سند جدید"
-                : `سند انبار شماره ${docData?.docNumber}`}
-            </h1>
-            {currentMode !== "create" && (
+        currentMode === "create"
+          ? "ثبت سند جدید"
+          : `سند انبار شماره ${docData?.docNumber || "..."}`
+      }
+      headerActions={
+        <div className="flex items-center gap-2">
+          {currentMode !== "create" && (
+            <div className="hidden sm:flex items-center ml-2">
               <Badge
                 variant="outline"
                 className={`gap-1.5 px-2.5 py-0.5 rounded-full ${statusInfo?.className}`}
@@ -546,55 +649,65 @@ export default function DocForm({
                 <StatusIcon className="w-3.5 h-3.5" />
                 {statusInfo?.label}
               </Badge>
-            )}
-          </div>
-          <span className="text-xs text-muted-foreground hidden sm:inline-block">
-            {currentMode === "create"
-              ? "اطلاعات اولیه سند را وارد کنید"
-              : `تاریخ: ${new Date(headerData.docDate).toLocaleDateString("fa-IR")}`}
-          </span>
-        </div>
-      }
-      headerActions={
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={() => router.back()}>
-            انصراف
+            </div>
+          )}
+
+          {/* دکمه انصراف / بازگشت */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.back()}
+            className="h-8 w-8 px-0 sm:w-auto sm:px-3 text-slate-600 hover:bg-slate-100"
+          >
+            <ArrowRight className="w-4 h-4 sm:ml-1.5" />
+            <span className="hidden sm:inline text-xs">بازگشت</span>
           </Button>
-          <div className="hidden sm:flex items-center gap-2">
+
+          <div className="flex items-center gap-2">
+            {/* 1. دکمه ذخیره تغییرات (Edit Mode) */}
             {currentStatus === InventoryDocStatus.Draft &&
-              currentMode !== "view" && (
+              currentMode === "edit" && (
                 <Button
                   onClick={handleSave}
                   disabled={submitting}
                   size="sm"
-                  className="h-9 gap-1.5 bg-primary"
+                  className="h-8 gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
                 >
                   <Save className="w-4 h-4" />
-                  <span>ذخیره تغییرات</span>
+                  <span className="hidden sm:inline text-xs">
+                    ذخیره تغییرات
+                  </span>
                 </Button>
               )}
-            {currentStatus === InventoryDocStatus.Approved && (
-              <Button
-                onClick={handlePost}
-                disabled={submitting}
-                size="sm"
-                className="h-9 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
-              >
-                <Archive className="w-4 h-4" />
-                <span>قطعی سازی</span>
-              </Button>
-            )}
+
+            {/* 2. دکمه قطعی سازی (Approved Mode) */}
+            {currentStatus === InventoryDocStatus.Approved &&
+              currentMode === "edit" && (
+                <Button
+                  onClick={handlePost}
+                  disabled={submitting}
+                  size="sm"
+                  className="h-8 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+                >
+                  <Archive className="w-4 h-4" />
+                  <span className="hidden sm:inline text-xs">قطعی سازی</span>
+                </Button>
+              )}
           </div>
+
+          {/* منوی عملیات */}
           {currentMode !== "create" && <ActionMenu />}
+
+          {/* 3. دکمه ثبت سند (Create Mode) */}
           {currentMode === "create" && (
             <Button
               onClick={handleSave}
               disabled={submitting}
               size="sm"
-              className="h-9 gap-1.5 bg-primary"
+              className="h-8 gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
             >
               <Save className="w-4 h-4" />
-              <span>ثبت سند</span>
+              <span className="hidden sm:inline text-xs">ثبت سند</span>
             </Button>
           )}
         </div>
@@ -610,7 +723,7 @@ export default function DocForm({
             fields={headerFields}
             data={headerData}
             onChange={(name, val) =>
-              setHeaderData({ ...headerData, [name]: val })
+              setHeaderData((prev: any) => ({ ...prev, [name]: val }))
             }
           />
         </div>
@@ -620,8 +733,7 @@ export default function DocForm({
           key: "items",
           label: `اقلام سند (${gridData.length})`,
           content: (
-            // ✅ اصلاح ارتفاع برای حذف اسکرول بیرونی: h-[calc(100vh-350px)]
-            <div className="h-[calc(100vh-350px)] min-h-[400px] border rounded-lg bg-card shadow-sm overflow-hidden relative">
+            <div className="h-full border rounded-lg bg-card shadow-sm overflow-hidden relative">
               {isReloading && (
                 <div className="absolute inset-0 bg-background/50 backdrop-blur-sm z-50 flex items-center justify-center">
                   <Loader2 className="w-10 h-10 animate-spin text-primary" />

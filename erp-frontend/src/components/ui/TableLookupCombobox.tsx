@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, ChevronsUpDown, Loader2, X } from "lucide-react";
+import { ChevronsUpDown, Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -57,19 +57,16 @@ export function TableLookupCombobox<T extends LookupOption>({
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedItem, setSelectedItem] = React.useState<T | null>(null);
 
-  // تعیین فیلدهای جستجو
   const searchFields = React.useMemo(() => {
     if (searchableFields) return searchableFields;
     return columns.map((c) => c.key);
   }, [searchableFields, columns]);
 
-  // تعیین فیلدهای نمایش
   const displayFields_ = React.useMemo(() => {
     if (displayFields) return displayFields;
     return columns.slice(0, 2).map((c) => c.key);
   }, [displayFields, columns]);
 
-  // جستجو - case insensitive برای فارسی و انگلیسی
   const filteredItems = React.useMemo(() => {
     if (!searchTerm.trim()) return items;
     const searchLower = searchTerm.toLowerCase();
@@ -79,17 +76,14 @@ export function TableLookupCombobox<T extends LookupOption>({
         if (fieldValue === null || fieldValue === undefined) return false;
         const fieldLower = String(fieldValue).toLowerCase();
         return fieldLower.includes(searchLower);
-      })
+      }),
     );
   }, [items, searchTerm, searchFields]);
 
-  // یافتن آیتم انتخاب‌شده
   React.useEffect(() => {
     if (value && items) {
       const selected = items.find((item) => item.id === value);
-      if (selected) {
-        setSelectedItem(selected);
-      }
+      if (selected) setSelectedItem(selected);
     } else {
       setSelectedItem(null);
     }
@@ -124,27 +118,27 @@ export function TableLookupCombobox<T extends LookupOption>({
   };
 
   return (
-    <Popover open={open} onOpenChange={handleOpenChange}>
+    <Popover open={open} onOpenChange={handleOpenChange} modal={true}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
           role="combobox"
           aria-expanded={open}
           disabled={disabled}
-          className="w-full justify-between text-right"
+          className="w-full justify-between text-right h-8 text-xs" // سایز دکمه اصلی هم کوچک شد
         >
           <div className="flex items-center gap-2 flex-1 overflow-hidden">
-            <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+            <ChevronsUpDown className="h-3 w-3 shrink-0 opacity-50" />
             <div className="flex-1 text-right truncate">
               {selectedItem ? (
-                <span className="text-sm">
+                <span>
                   {displayFields_
                     .map((field) => selectedItem[field])
                     .filter(Boolean)
                     .join(" - ")}
                 </span>
               ) : (
-                <span className="text-muted-foreground text-sm truncate block">
+                <span className="text-muted-foreground truncate block">
                   {placeholder}
                 </span>
               )}
@@ -152,7 +146,7 @@ export function TableLookupCombobox<T extends LookupOption>({
           </div>
           {selectedItem && (
             <X
-              className="h-4 w-4 opacity-50 hover:opacity-100 shrink-0 mr-1"
+              className="h-3 w-3 opacity-50 hover:opacity-100 shrink-0 mr-1"
               onClick={handleClear}
             />
           )}
@@ -160,32 +154,26 @@ export function TableLookupCombobox<T extends LookupOption>({
       </PopoverTrigger>
 
       <PopoverContent
-        // --- تغییرات اصلی اینجاست ---
-        // 1. عرض در موبایل: w-[90vw] (۹۰ درصد عرض صفحه)
-        // 2. عرض در دسکتاپ: sm:w-auto و sm:min-w-[480px]
-        className="p-0 w-[90vw] sm:w-auto sm:min-w-[480px] max-w-[95vw]"
+        className="p-0 w-[90vw] sm:w-auto sm:min-w-[400px] max-w-[95vw]"
         align="end"
         side="bottom"
-        sideOffset={8}
+        sideOffset={4}
+        collisionPadding={10} // جلوگیری از چسبیدن به لبه‌ها
       >
-        {/* Search Box */}
-        <div className="p-3 border-b">
+        <div className="p-2 border-b">
           <Input
             placeholder={placeholder}
             value={searchTerm}
             onChange={(e) => handleSearch(e.target.value)}
-            className="text-right"
-            // autoFocus ممکن است در موبایل کیبورد را باز کند و صفحه بپرد، گاهی برداشتنش UX بهتری دارد
+            className="text-right h-8 text-xs"
             autoFocus
           />
         </div>
 
-        {/* Table Header */}
         <div className="border-b bg-muted/50 sticky top-0 z-10">
           <div
             className="grid text-right"
             style={{
-              // گرید در موبایل هم بر اساس درصد کار می‌کند، پس مشکلی نخواهد داشت
               gridTemplateColumns: columns
                 .map((c) => c.width || "1fr")
                 .join(" "),
@@ -195,7 +183,7 @@ export function TableLookupCombobox<T extends LookupOption>({
             {columns.map((column) => (
               <div
                 key={column.key}
-                className="px-3 py-2 text-xs font-semibold text-muted-foreground truncate"
+                className="px-3 py-2 text-[10px] font-semibold text-muted-foreground truncate"
               >
                 {column.label}
               </div>
@@ -203,11 +191,11 @@ export function TableLookupCombobox<T extends LookupOption>({
           </div>
         </div>
 
-        {/* Table Body */}
-        <ScrollArea className="h-[300px] sm:h-[400px]">
+        {/* ✅ اصلاح ارتفاع: استفاده از max-h به جای h ثابت */}
+        <ScrollArea className="h-auto max-h-[250px]">
           {loading ? (
-            <div className="flex justify-center items-center p-4 h-[300px] sm:h-[400px]">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <div className="flex justify-center items-center p-4 h-[100px]">
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
             </div>
           ) : filteredItems.length > 0 ? (
             <div className="divide-y divide-border">
@@ -216,8 +204,8 @@ export function TableLookupCombobox<T extends LookupOption>({
                   key={item.id}
                   onClick={() => handleSelect(item)}
                   className={cn(
-                    "hover:bg-muted/60 transition-colors duration-100 w-full text-right",
-                    selectedItem?.id === item.id && "bg-primary/15"
+                    "hover:bg-muted/60 transition-colors duration-100 w-full text-right focus:bg-muted/60 outline-none",
+                    selectedItem?.id === item.id && "bg-primary/10",
                   )}
                   style={{
                     display: "grid",
@@ -230,7 +218,7 @@ export function TableLookupCombobox<T extends LookupOption>({
                   {columns.map((column) => (
                     <div
                       key={`${item.id}-${column.key}`}
-                      className="px-3 py-3 text-sm truncate text-right"
+                      className="px-3 py-2 text-xs truncate text-right"
                     >
                       {renderCell ? (
                         renderCell(item, column)
@@ -245,11 +233,11 @@ export function TableLookupCombobox<T extends LookupOption>({
               ))}
             </div>
           ) : (
-            <div className="flex flex-col justify-center items-center p-4 text-muted-foreground text-sm h-[300px] sm:h-[400px] gap-2">
+            <div className="flex flex-col justify-center items-center p-4 text-muted-foreground text-xs h-[100px] gap-2">
               {!searchTerm && items.length === 0 ? (
                 <span>برای مشاهده نتایج تایپ کنید...</span>
               ) : (
-                <span>هیچ رکوردی با این مشخصات یافت نشد</span>
+                <span>موردی یافت نشد</span>
               )}
             </div>
           )}
