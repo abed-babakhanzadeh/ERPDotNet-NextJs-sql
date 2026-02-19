@@ -9,6 +9,7 @@ using ERPDotNet.Domain.Common;
 using System.Linq.Expressions;
 using ERPDotNet.Application.Modules.ProductEngineering.Queries.GetWhereUsed;
 using ERPDotNet.Domain.Modules.Inventory.Entities;
+using ERPDotNet.Domain.Modules.Workflow.Entities;
 
 namespace ERPDotNet.Infrastructure.Persistence;
 
@@ -43,6 +44,17 @@ public class AppDbContext : IdentityDbContext<User>, IApplicationDbContext
     public DbSet<InventoryTransaction> InventoryTransactions { get; set; }
     public DbSet<CurrentStock> CurrentStocks { get; set; }
     public DbSet<DocumentSequence> DocumentSequences { get; set; }
+
+    // === ماژول مدیریت فرآیندها (BPMS) ===
+    public DbSet<BpmsProcess> BpmsProcesses { get; set; }
+    public DbSet<BpmsProcessVersion> BpmsProcessVersions { get; set; }
+    public DbSet<BpmsState> BpmsStates { get; set; }
+    public DbSet<BpmsTransition> BpmsTransitions { get; set; }
+    public DbSet<BpmsTransitionRole> BpmsTransitionRoles { get; set; }
+    public DbSet<BpmsTransitionRule> BpmsTransitionRules { get; set; }
+    public DbSet<BpmsInstance> BpmsInstances { get; set; }
+    public DbSet<BpmsTask> BpmsTasks { get; set; }
+    public DbSet<BpmsHistory> BpmsHistories { get; set; }
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {

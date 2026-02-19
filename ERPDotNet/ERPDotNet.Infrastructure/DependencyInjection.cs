@@ -46,6 +46,9 @@ public static class DependencyInjection
         AddApplicationServices(services);
         // === 6. اضافه کردن سرویس‌های انبار (خط جدید) ===
         AddInventoryServices(services);
+
+        // === اضافه کردن سرویس‌های موتور فرآیند (خط جدید) ===
+        AddWorkflowServices(services);
         // ==============================================
 
         services.AddScoped<ApplicationDbContextInitialiser>();
@@ -154,5 +157,11 @@ public static class DependencyInjection
         // نکته: این سرویس در لایه دامین است اما اینجا به کانتینر معرفی می‌شود
         services.AddScoped<IInventoryPostingService, InventoryPostingService>();
         services.AddScoped<IDocumentNumberingService, DocumentNumberingService>();
+    }
+
+    // متد جدید در پایین فایل:
+    private static void AddWorkflowServices(IServiceCollection services)
+    {
+        // در مراحل بعدی، سرویس‌هایی مثل IBpmsEngineService یا رجیستری داینامیکِ ActionCode ها اینجا قرار می‌گیرد
     }
 }
