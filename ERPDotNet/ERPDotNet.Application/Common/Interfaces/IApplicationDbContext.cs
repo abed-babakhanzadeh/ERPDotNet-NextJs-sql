@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.AspNetCore.Identity;
+using ERPDotNet.Domain.Modules.Workflow.Entities;
 
 namespace ERPDotNet.Application.Common.Interfaces;
 
@@ -49,6 +50,19 @@ public interface IApplicationDbContext
     // ====================================
 
     DbSet<TEntity> Set<TEntity>() where TEntity : class;
+
+    DbSet<BpmsProcess> BpmsProcesses { get; }
+    DbSet<BpmsProcessVersion> BpmsProcessVersions { get; }
+    DbSet<BpmsState> BpmsStates { get; }
+    DbSet<BpmsTransition> BpmsTransitions { get; }
+    DbSet<BpmsTransitionRole> BpmsTransitionRoles { get; }
+    DbSet<BpmsTransitionRule> BpmsTransitionRules { get; }
+    DbSet<BpmsInstance> BpmsInstances { get; }
+    DbSet<BpmsTask> BpmsTasks { get; }
+    DbSet<BpmsHistory> BpmsHistories { get; }
+
+
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
     DatabaseFacade Database { get; }
     ChangeTracker ChangeTracker { get; }

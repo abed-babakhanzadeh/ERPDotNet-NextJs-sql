@@ -20,6 +20,9 @@ using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
 using System.Text;
 using ERPDotNet.Application.Modules.Inventory.Interfaces;
+using ERPDotNet.Application.Modules.Workflow.Interfaces;
+using ERPDotNet.Application.Modules.Workflow.Contracts;
+using ERPDotNet.Application.Modules.Workflow.Services;
 
 namespace ERPDotNet.Infrastructure;
 
@@ -159,9 +162,20 @@ public static class DependencyInjection
         services.AddScoped<IDocumentNumberingService, DocumentNumberingService>();
     }
 
-    // متد جدید در پایین فایل:
+
     private static void AddWorkflowServices(IServiceCollection services)
     {
-        // در مراحل بعدی، سرویس‌هایی مثل IBpmsEngineService یا رجیستری داینامیکِ ActionCode ها اینجا قرار می‌گیرد
+        // 1. ثبت موتور قوانین (Rule Evaluator)
+        services.AddScoped<IBpmsRuleEvaluator, BpmsRuleEvaluator>();
+
+        // 2. ثبت استراتژی رزولور (همان دیواری که مانع از Coupling می‌شود)
+        services.AddScoped<IBpmsActionResolver, BpmsActionResolver>();
+
+        // 3. ثبت قلب تپنده‌ی سیستم (Engine Service)
+        services.AddScoped<IBpmsEngineService, BpmsEngineService>();
+
+        // 🌟 مثال برای آینده: نحوه ثبت هندلرهای انبار در BPMS
+        // هرگاه ماژول انبار را به BPMS متصل کردیم، یک خط شبیه به این در AddInventoryServices اضافه می‌کنیم:
+        // services.AddKeyedScoped<IBpmsActionHandler, ApproveInventoryDocActionHandler>("INVENTORY_POST");
     }
 }
