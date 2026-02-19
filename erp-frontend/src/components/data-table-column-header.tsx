@@ -18,8 +18,13 @@ import {
   Hash,
   Type,
   ToggleLeft,
+  CalendarIcon,
+  X, // ✨ اضافه شدن آیکون X برای دکمه پاک کردن
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import DatePicker, { DateObject } from "react-multi-date-picker";
+import persian from "react-date-object/calendars/persian";
+import persian_fa from "react-date-object/locales/persian_fa";
 import {
   Popover,
   PopoverContent,
@@ -49,7 +54,6 @@ interface DataTableColumnHeaderProps {
 }
 
 // تابع کمکی برای تولید آی‌دی (جایگزین crypto.randomUUID)
-// این تابع چک می‌کند اگر crypto در دسترس نبود، از روش جایگزین استفاده کند
 function generateUniqueId() {
   if (
     typeof window !== "undefined" &&
@@ -116,14 +120,12 @@ export function DataTableColumnHeader({
     filter &&
     filter.conditions.length > 0 &&
     filter.conditions.some((c) => {
-      // عملگرهای بدون مقدار
       if (["isEmpty", "isNotEmpty"].includes(c.operator)) {
         return true;
       }
       return c.value !== "" && c.value !== null;
     });
 
-  // آیکون نوع داده
   const getTypeIcon = () => {
     switch (column.type) {
       case "number":
@@ -144,7 +146,7 @@ export function DataTableColumnHeader({
         onClick={() => onSort(column.key)}
         className={cn(
           "px-2 py-1 h-auto -mr-2 flex-grow justify-start hover:bg-accent/50 transition-colors",
-          isSorted && "text-primary font-medium"
+          isSorted && "text-primary font-medium",
         )}
       >
         <div className="flex items-center gap-1.5">
@@ -188,23 +190,31 @@ export function FilterPopoverContent({
   onApply: (filter: ColumnFilter) => void;
   onClear: () => void;
 }) {
+  const getOperatorKey = (
+    type: ColumnConfig["type"],
+  ): keyof typeof filterOperators => {
+    if (type === "text") return "string";
+    if (type === "custom") return "string";
+    return type as keyof typeof filterOperators;
+  };
+
   const defaultCondition: FilterCondition = {
-    id: generateUniqueId(), // تغییر: استفاده از تابع جدید
-    operator: filterOperators[column.type][0].value,
+    id: generateUniqueId(),
+    operator: filterOperators[getOperatorKey(column.type)][0].value,
     value: "",
   };
   const [logic, setLogic] = useState<"and" | "or">(
-    initialFilter?.logic || "and"
+    initialFilter?.logic || "and",
   );
   const [conditions, setConditions] = useState<FilterCondition[]>(
     initialFilter?.conditions.length
       ? initialFilter.conditions
-      : [defaultCondition]
+      : [defaultCondition],
   );
 
   const updateCondition = (id: string, updates: Partial<FilterCondition>) => {
     setConditions((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, ...updates } : c))
+      prev.map((c) => (c.id === id ? { ...c, ...updates } : c)),
     );
   };
 
@@ -212,8 +222,8 @@ export function FilterPopoverContent({
     setConditions((prev) => [
       ...prev,
       {
-        id: generateUniqueId(), // تغییر: استفاده از تابع جدید
-        operator: filterOperators[column.type][0].value,
+        id: generateUniqueId(),
+        operator: filterOperators[getOperatorKey(column.type)][0].value,
         value: "",
       },
     ]);
@@ -250,7 +260,6 @@ export function FilterPopoverContent({
         </p>
       </div>
 
-      {/* اضافه کردن اسکرول برای شرط‌ها */}
       <div className="max-h-[300px] overflow-y-auto custom-scrollbar space-y-2 pe-1">
         {conditions.map((condition, index) => (
           <div
@@ -285,7 +294,7 @@ export function FilterPopoverContent({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {filterOperators[column.type].map((op) => (
+                    {filterOperators[getOperatorKey(column.type)].map((op) => (
                       <SelectItem key={op.value} value={op.value}>
                         {op.label}
                       </SelectItem>
@@ -321,8 +330,8 @@ export function FilterPopoverContent({
                       column.type === "number"
                         ? "number"
                         : column.type === "date"
-                        ? "date"
-                        : "text"
+                          ? "date"
+                          : "text"
                     }
                     className="h-8"
                   />
@@ -391,42 +400,129 @@ function FilterInput({
   condition: FilterCondition;
   onChange: (id: string, updates: Partial<FilterCondition>) => void;
 }) {
+  const handleClear = () => onChange(condition.id, { value: "" });
+
   if (columnType === "boolean") {
     return (
-      <Select
-        value={condition.value}
-        onValueChange={(val) => onChange(condition.id, { value: val })}
-      >
-        <SelectTrigger id={`value-${condition.id}`} className="h-8">
-          <SelectValue placeholder="انتخاب وضعیت" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="true">فعال</SelectItem>
-          <SelectItem value="false">غیرفعال</SelectItem>
-        </SelectContent>
-      </Select>
+      <div className="flex items-center gap-1 relative w-full">
+        <Select
+          value={condition.value}
+          onValueChange={(val) => onChange(condition.id, { value: val })}
+        >
+          <SelectTrigger
+            id={`value-${condition.id}`}
+            className="h-8 flex-1 text-sm"
+          >
+            <SelectValue placeholder="انتخاب وضعیت" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="true">فعال</SelectItem>
+            <SelectItem value="false">غیرفعال</SelectItem>
+          </SelectContent>
+        </Select>
+        {condition.value && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 shrink-0 hover:bg-accent text-muted-foreground"
+            onClick={handleClear}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
     );
   }
 
   if (columnType === "date") {
     return (
+      <div className="flex items-center gap-1 relative w-full">
+        <div className="relative flex-1">
+          <Input
+            id={`value-${condition.id}`}
+            value={condition.value || ""}
+            onChange={(e) => onChange(condition.id, { value: e.target.value })}
+            placeholder="مثال: 1403/05/12"
+            // چون تاریخ است و LTR، پدینگ راست می‌دهیم تا دکمه X روی متن نیفتد
+            className="h-8 w-full font-mono text-left text-sm pr-7"
+            dir="ltr"
+          />
+          {condition.value && (
+            <button
+              type="button"
+              onClick={handleClear}
+              className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground hover:bg-accent rounded p-1 transition-colors z-10"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+        <DatePicker
+          calendar={persian}
+          locale={persian_fa}
+          format="YYYY/MM/DD"
+          portal // ✨ کلید طلایی: پرتال باعث خروج تقویم از داخل کادر می‌شود
+          zIndex={99999}
+          containerClassName="z-[99999]"
+          value={
+            condition.value
+              ? new DateObject({
+                  date: condition.value,
+                  format: "YYYY/MM/DD",
+                  calendar: persian,
+                })
+              : null
+          }
+          onChange={(date: any) => {
+            if (date) {
+              onChange(condition.id, { value: date.format("YYYY/MM/DD") });
+            } else {
+              handleClear();
+            }
+          }}
+          render={(value, openCalendar) => (
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 shrink-0 hover:bg-accent"
+              onClick={openCalendar}
+            >
+              <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+            </Button>
+          )}
+        />
+      </div>
+    );
+  }
+
+  // سایر ستون‌ها (متنی و عددی)
+  const isLtr = columnType === "number";
+
+  return (
+    <div className="relative w-full">
       <Input
         id={`value-${condition.id}`}
         value={condition.value || ""}
         onChange={(e) => onChange(condition.id, { value: e.target.value })}
-        type="date"
-        className="h-8"
+        placeholder="مقدار جستجو..."
+        type={columnType === "number" ? "number" : "text"}
+        // اعمال پدینگ هوشمند بر اساس چپ‌چین یا راست‌چین بودن متن
+        className={cn("h-8 w-full text-sm", isLtr ? "pr-7" : "pl-7")}
+        dir={isLtr ? "ltr" : "rtl"}
       />
-    );
-  }
-
-  return (
-    <Input
-      id={`value-${condition.id}`}
-      value={condition.value || ""}
-      onChange={(e) => onChange(condition.id, { value: e.target.value })}
-      type={columnType === "number" ? "number" : "text"}
-      className="h-8"
-    />
+      {condition.value && (
+        <button
+          type="button"
+          onClick={handleClear}
+          className={cn(
+            "absolute top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground hover:bg-accent rounded p-1 transition-colors z-10",
+            isLtr ? "right-1" : "left-1",
+          )}
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      )}
+    </div>
   );
 }

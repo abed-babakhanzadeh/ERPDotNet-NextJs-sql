@@ -7,14 +7,16 @@ import { SortConfig, ColumnFilter as AdvancedColumnFilter } from "@/types";
 interface UseServerDataTableProps {
   endpoint: string;
   initialPageSize?: number;
+  // ✅ اضافه شدن فیلد extraPayload برای رفع خطای تایپ اسکریپت
+  extraPayload?: Record<string, any>;
 }
 
 export function useServerDataTable<TData>(props: UseServerDataTableProps) {
-  const { endpoint, initialPageSize = 10 } = props;
+  const { endpoint, initialPageSize = 10, extraPayload } = props;
 
   // --- States ---
   const [data, setData] = useState<TData[]>([]);
-  const [rowCount, setRowCount] = useState(0); // این همان TotalCount است
+  const [rowCount, setRowCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   const [pagination, setPagination] = useState({
@@ -24,13 +26,16 @@ export function useServerDataTable<TData>(props: UseServerDataTableProps) {
   const [sorting, setSorting] = useState<SortConfig>(null);
   const [globalFilter, setGlobalFilter] = useState("");
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>(
-    {}
+    {},
   );
   const [advancedFilters, setAdvancedFilters] = useState<
     AdvancedColumnFilter[]
   >([]);
 
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // تبدیل extraPayload به استرینگ برای جلوگیری از حلقه بی‌نهایت رندر در useCallback
+  const extraPayloadString = JSON.stringify(extraPayload || {});
 
   // --- Fetch Logic ---
   const fetchData = useCallback(async () => {
@@ -49,7 +54,7 @@ export function useServerDataTable<TData>(props: UseServerDataTableProps) {
             Operation: c.operator,
             Value: String(c.value),
             Logic: f.logic,
-          }))
+          })),
       );
 
       const simpleColumnFiltersPayload = Object.entries(columnFilters)
@@ -60,6 +65,9 @@ export function useServerDataTable<TData>(props: UseServerDataTableProps) {
           Value: String(value),
         }));
 
+      // بازیابی پارامترهای اضافی
+      const parsedExtraPayload = JSON.parse(extraPayloadString);
+
       const payload = {
         pageNumber: pagination.pageIndex + 1,
         pageSize: pagination.pageSize,
@@ -67,6 +75,8 @@ export function useServerDataTable<TData>(props: UseServerDataTableProps) {
         sortColumn: sorting?.key,
         sortDescending: sorting?.direction === "descending",
         Filters: [...advancedFilterPayload, ...simpleColumnFiltersPayload],
+        // ✅ تزریق پارامترهای اضافی (مثل انبار و موجودی صفر) به بادی درخواست
+        ...parsedExtraPayload,
       };
 
       const response = await apiClient.post<any>(endpoint, payload, {
@@ -75,7 +85,6 @@ export function useServerDataTable<TData>(props: UseServerDataTableProps) {
 
       if (response?.data?.items) {
         setData(response.data.items);
-        // اینجا مقدار توتال را از بک‌اند می‌گیریم
         setRowCount(response.data.totalCount);
       } else {
         setData([]);
@@ -97,6 +106,7 @@ export function useServerDataTable<TData>(props: UseServerDataTableProps) {
     globalFilter,
     advancedFilters,
     columnFilters,
+    extraPayloadString, // اضافه شدن به وابستگی‌ها
   ]);
 
   useEffect(() => {
@@ -109,7 +119,7 @@ export function useServerDataTable<TData>(props: UseServerDataTableProps) {
   };
 
   const handleAdvancedFilterChange = (
-    newFilter: AdvancedColumnFilter | null
+    newFilter: AdvancedColumnFilter | null,
   ) => {
     setPagination((p) => ({ ...p, pageIndex: 0 }));
     setAdvancedFilters((prev) => {
@@ -153,7 +163,6 @@ export function useServerDataTable<TData>(props: UseServerDataTableProps) {
     },
     refresh: fetchData,
     data,
-    // تغییر جدید: اضافه کردن totalCount به خروجی اصلی
     totalCount: rowCount,
   };
 }

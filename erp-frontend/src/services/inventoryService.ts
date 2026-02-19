@@ -282,6 +282,24 @@ const inventoryService = {
     });
     return response.data;
   },
+
+  // ==========================================
+  // 9. Reports & Stock (گزارشات و موجودی)
+  // ==========================================
+
+  // دریافت گزارش موجودی لحظه‌ای
+  getCurrentStock: async (payload: any) => {
+    const response = await apiClient.post(`${BASE_URL}/stock/current`, payload);
+    return response.data;
+  },
+
+  getProductCardex: async (payload: any) => {
+    const response = await apiClient.post(
+      `${BASE_URL}/reports/cardex`,
+      payload,
+    );
+    return response.data;
+  },
 };
 
 export default inventoryService;

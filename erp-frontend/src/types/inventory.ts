@@ -369,3 +369,51 @@ export interface UpdateInventoryDocCommand {
 
   details: UpdateInventoryDocDetailDto[];
 }
+
+// ==========================================
+// Current Stock (موجودی لحظه‌ای)
+// ==========================================
+
+export interface InventoryStockDto {
+  id: number;
+  warehouseTitle: string;
+  productId: number;
+  productName: string;
+  productCode: string;
+  unitTitle: string;
+  quantityOnHand: number; // موجودی فیزیکی
+  quantityReserved: number; // رزرو شده
+  quantityBlocked: number; // مسدود/قرنطینه
+  availableQuantity: number; // در دسترس (قابل فروش/مصرف)
+  locationCode: string;
+  locationPath: string;
+  batchNumber: string;
+}
+
+// تایپ مربوط به پیلود ارسالی برای سرچ موجودی
+export interface GetCurrentStockQuery {
+  warehouseId: number; // اجباری
+  productId?: number | null;
+  pageNumber?: number;
+  pageSize?: number;
+  orderBy?: string;
+  isDescending?: boolean;
+  searchTerm?: string;
+  excludeZeroBalances?: boolean;
+  filters?: any[];
+}
+
+export interface ProductCardexDto {
+  transactionId: number;
+  transactionDate: Date | string;
+  docNumber: number | string;
+  docTypeTitle: string;
+  description: string;
+  warehouseTitle: string;
+  batchNumber?: string;
+  locationCode?: string;
+  signTitle: string;
+  inQuantity: number;
+  outQuantity: number;
+  runningBalance: number;
+}

@@ -16,6 +16,8 @@ public static class FilterExtensions
         foreach (var group in groupedFilters)
         {
             var propertyName = group.Key;
+            if (string.IsNullOrWhiteSpace(propertyName)) continue;
+
             // منطق پیش‌فرض AND است
             var logic = group.First().Logic?.ToLower() ?? "and";
             var parameter = Expression.Parameter(typeof(T), "x");
@@ -24,97 +26,80 @@ public static class FilterExtensions
 
             foreach (var filter in group)
             {
-                // ۱. نرمال‌سازی عملگر: حذف فاصله و تبدیل به حروف کوچک
+                // ۱. نرمال‌سازی عملگر
                 var op = filter.Operation?.Trim().ToLowerInvariant();
-                
                 if (string.IsNullOrEmpty(op)) continue;
                 
-                // اگر ولیو خالی است (مگر برای شرط‌های خالی بودن) رد شو
-                if (string.IsNullOrEmpty(filter.Value) && 
-                    op != "isempty" && op != "isnotempty")
+                // رد شدن از مقادیر خالی (مگر برای isempty/isnotempty)
+                if (string.IsNullOrEmpty(filter.Value) && op != "isempty" && op != "isnotempty")
                     continue;
 
                 try
                 {
-                    // ۲. دسترسی به پراپرتی (Nested Properties)
+                    // ۲. دسترسی به پراپرتی (بدون حساسیت به حروف بزرگ و کوچک)
                     Expression propertyAccess = parameter;
                     foreach (var member in propertyName.Split('.'))
                     {
-                        propertyAccess = Expression.PropertyOrField(propertyAccess, member);
+                        var propertyInfo = propertyAccess.Type.GetProperty(member, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+                        if (propertyInfo != null)
+                        {
+                            propertyAccess = Expression.Property(propertyAccess, propertyInfo);
+                        }
+                        else
+                        {
+                            // فال‌بک برای حالتی که با GetProperty پیدا نشد
+                            propertyAccess = Expression.PropertyOrField(propertyAccess, member);
+                        }
                     }
 
                     var targetType = Nullable.GetUnderlyingType(propertyAccess.Type) ?? propertyAccess.Type;
-                    Expression comparison = null!;
+                    Expression? comparison = null;
 
                     // =========================================================
-                    // بخش جدید: لاجیک هوشمند برای ENUM (جستجو در متن فارسی)
+                    // هندل کردن فیلتر برای نوع Enum (جستجوی متنی)
                     // =========================================================
-                    if (targetType.IsEnum && (op == "contains" || op == "eq" || op == "equals"))
+                    if (targetType.IsEnum && (op == "contains" || op == "eq" || op == "equals" || op == "="))
                     {
-                        // 1. پیدا کردن تمام مقادیر Enum که عنوان فارسی‌شان (Display) شامل متن کاربر است
                         var matchingValues = Enum.GetValues(targetType)
                             .Cast<Enum>()
-                            .Where(e => e.ToDisplay().Contains(filter.Value, StringComparison.OrdinalIgnoreCase))
-                            .Select(e => Convert.ChangeType(e, targetType)) // تبدیل به آبجکت اصلی Enum
+                            .Where(e => e.ToDisplay().Contains(filter.Value ?? "", StringComparison.OrdinalIgnoreCase))
+                            .Select(e => Convert.ChangeType(e, targetType))
                             .ToList();
 
                         if (!matchingValues.Any())
                         {
-                            // اگر هیچی پیدا نشد، یک شرط همیشه غلط بساز (1 == 0) تا نتیجه‌ای نیاید
-                            comparison = Expression.Equal(Expression.Constant(1), Expression.Constant(0));
+                            comparison = Expression.Equal(Expression.Constant(1), Expression.Constant(0)); // False condition
                         }
                         else
                         {
-                            // اگر پیدا شد، باید بگوییم: (Type == Val1 OR Type == Val2 OR ...)
                             Expression? enumOrExpr = null;
                             foreach (var match in matchingValues)
                             {
-                                // دقت کنید: propertyAccess باید به نوع نال‌پذیر تبدیل شود اگر لازم است
-                                // اما چون مقایسه مستقیم است، معمولاً Constant را به نوع پراپرتی تبدیل می‌کنیم
-                                var constantVal = Expression.Constant(match, propertyAccess.Type); // هندل کردن نال‌پذیری
+                                var constantVal = Expression.Constant(match, propertyAccess.Type);
                                 var eq = Expression.Equal(propertyAccess, constantVal);
-                                
                                 enumOrExpr = enumOrExpr == null ? eq : Expression.OrElse(enumOrExpr, eq);
                             }
-                            comparison = enumOrExpr!;
+                            comparison = enumOrExpr;
                         }
                     }
                     else
                     {
                         // =========================================================
-                        // بخش استاندارد: لاجیک قبلی برای سایر تایپ‌ها (String, Int, Date...)
+                        // هندل کردن فیلتر برای سایر انواع (String, Number, Date, ...)
                         // =========================================================
+                        object? parsedValue = null;
+                        Expression? constant = null;
 
-                        // تابع تبدیل مقدار
-                        object? GetConvertedValue(string? val)
-                        {
-                            if (string.IsNullOrEmpty(val)) return null;
-                            try
-                            {
-                                if (targetType == typeof(bool)) return bool.Parse(val);
-                                if (targetType.IsEnum) return Enum.Parse(targetType, val); // برای وقتی که عدد مستقیم می‌فرستند
-                                if (targetType == typeof(Guid)) return Guid.Parse(val);
-                                if (targetType == typeof(DateTime)) return DateTime.Parse(val);
-                                return Convert.ChangeType(val, targetType);
-                            }
-                            catch { return null; }
-                        }
-
-                        // آماده‌سازی مقدار ثابت (Constant)
-                        Expression constant = null!;
                         if (op != "isempty" && op != "isnotempty")
                         {
-                            var val1 = GetConvertedValue(filter.Value);
-                            if (val1 != null)
-                                constant = Expression.Constant(val1, propertyAccess.Type);
-                            else
-                                continue; // اگر تبدیل مقدار فیل شد، از این فیلتر بگذر
+                            parsedValue = GetConvertedValue(filter.Value, targetType);
+                            if (parsedValue == null) continue; // اگر مقدار نامعتبر بود رد شو
+                            
+                            constant = Expression.Constant(parsedValue, propertyAccess.Type);
                         }
 
-                        // ۳. سوئیچ روی تمام حالت‌ها
                         switch (op)
                         {
-                            // --- String Contains ---
                             case "contains":
                                 if (targetType == typeof(string))
                                 {
@@ -123,13 +108,22 @@ public static class FilterExtensions
                                     var methodCall = Expression.Call(propertyAccess, method!, Expression.Constant(filter.Value));
                                     comparison = Expression.AndAlso(notNull, methodCall);
                                 }
+                                else
+                                {
+                                    // ✨ اصلاح طلایی: پیدا کردن متد ToString مختص همان تایپ (جلوگیری از کرش Expression)
+                                    var toStringMethod = propertyAccess.Type.GetMethod("ToString", Type.EmptyTypes) 
+                                                        ?? typeof(object).GetMethod("ToString");
+                                                        
+                                    var toStringCall = Expression.Call(propertyAccess, toStringMethod!);
+                                    var containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) });
+                                    comparison = Expression.Call(toStringCall, containsMethod!, Expression.Constant(filter.Value));
+                                }
                                 break;
 
                             case "notcontains":
                                 if (targetType == typeof(string))
                                 {
                                     var method = typeof(string).GetMethod("Contains", new[] { typeof(string) });
-                                    // منطق: (x == null) OR (!x.Contains(val))
                                     var isNull = Expression.Equal(propertyAccess, Expression.Constant(null));
                                     var methodCall = Expression.Call(propertyAccess, method!, Expression.Constant(filter.Value));
                                     var notContains = Expression.Not(methodCall);
@@ -137,7 +131,13 @@ public static class FilterExtensions
                                 }
                                 else
                                 {
-                                    comparison = Expression.NotEqual(propertyAccess, constant);
+                                    var toStringMethod = propertyAccess.Type.GetMethod("ToString", Type.EmptyTypes) 
+                                                        ?? typeof(object).GetMethod("ToString");
+                                                        
+                                    var toStringCall = Expression.Call(propertyAccess, toStringMethod!);
+                                    var containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) });
+                                    var methodCall = Expression.Call(toStringCall, containsMethod!, Expression.Constant(filter.Value));
+                                    comparison = Expression.Not(methodCall);
                                 }
                                 break;
 
@@ -159,33 +159,12 @@ public static class FilterExtensions
                                 }
                                 break;
 
-                            // --- Equality ---
-                            case "equals":
-                            case "eq":
-                                if (targetType == typeof(DateTime))
-                                {
-                                    // برای تاریخ، بهتر است فقط قسمت Date مقایسه شود (یا بازه یک روزه)
-                                    // اما برای سادگی اینجا تساوی دقیق را نگه می‌داریم، یا می‌توانید لاجیک SARGable که قبلا گفتم را بگذارید
-                                    // اینجا لاجیک ساده:
-                                    var dateProperty = Expression.Property(propertyAccess, nameof(DateTime.Date));
-                                    var valDate = ((DateTime)GetConvertedValue(filter.Value)!).Date;
-                                    comparison = Expression.Equal(dateProperty, Expression.Constant(valDate));
-                                }
-                                else
-                                {
-                                    comparison = Expression.Equal(propertyAccess, constant);
-                                }
+                            case "equals": case "eq": case "=":
+                                if (constant != null) comparison = Expression.Equal(propertyAccess, constant);
                                 break;
 
-                            case "neq":
-                            case "notequals":
-                                if (targetType == typeof(DateTime))
-                                {
-                                    var dateProperty = Expression.Property(propertyAccess, nameof(DateTime.Date));
-                                    var valDate = ((DateTime)GetConvertedValue(filter.Value)!).Date;
-                                    comparison = Expression.NotEqual(dateProperty, Expression.Constant(valDate));
-                                }
-                                else
+                            case "neq": case "notequals": case "!=": case "not":
+                                if (constant != null)
                                 {
                                     var notEq = Expression.NotEqual(propertyAccess, constant);
                                     var isNull = Expression.Equal(propertyAccess, Expression.Constant(null));
@@ -193,47 +172,38 @@ public static class FilterExtensions
                                 }
                                 break;
 
-                            // --- Comparison ---
-                            case "gt":
-                            case "after":
-                                comparison = Expression.GreaterThan(propertyAccess, constant);
+                            case "gt": case "greaterthan": case ">": case "after":
+                                if (constant != null) comparison = Expression.GreaterThan(propertyAccess, constant);
                                 break;
 
-                            case "gte":
-                                comparison = Expression.GreaterThanOrEqual(propertyAccess, constant);
+                            case "gte": case "greaterthanorequal": case ">=":
+                                if (constant != null) comparison = Expression.GreaterThanOrEqual(propertyAccess, constant);
                                 break;
 
-                            case "lt":
-                            case "before":
-                                comparison = Expression.LessThan(propertyAccess, constant);
+                            case "lt": case "lessthan": case "<": case "before":
+                                if (constant != null) comparison = Expression.LessThan(propertyAccess, constant);
                                 break;
 
-                            case "lte":
-                                comparison = Expression.LessThanOrEqual(propertyAccess, constant);
+                            case "lte": case "lessthanorequal": case "<=":
+                                if (constant != null) comparison = Expression.LessThanOrEqual(propertyAccess, constant);
                                 break;
 
-                            // --- Range ---
-                            case "between":
-                            case "notbetween":
+                            case "between": case "notbetween":
                                 if (!string.IsNullOrEmpty(filter.Value2))
                                 {
-                                    var val2 = GetConvertedValue(filter.Value2);
-                                    if (val2 != null)
+                                    var val2 = GetConvertedValue(filter.Value2, targetType);
+                                    if (val2 != null && constant != null)
                                     {
                                         var constant2 = Expression.Constant(val2, propertyAccess.Type);
                                         var greaterThan = Expression.GreaterThanOrEqual(propertyAccess, constant);
                                         var lessThan = Expression.LessThanOrEqual(propertyAccess, constant2);
                                         var betweenExpr = Expression.AndAlso(greaterThan, lessThan);
 
-                                        if (op == "notbetween")
-                                            comparison = Expression.Not(betweenExpr);
-                                        else
-                                            comparison = betweenExpr;
+                                        comparison = op == "notbetween" ? Expression.Not(betweenExpr) : betweenExpr;
                                     }
                                 }
                                 break;
 
-                            // --- Null Check ---
                             case "isempty":
                                 if (targetType == typeof(string))
                                 {
@@ -266,17 +236,13 @@ public static class FilterExtensions
                         if (combinedExpression == null)
                             combinedExpression = comparison;
                         else
-                        {
-                            if (logic == "or")
-                                combinedExpression = Expression.OrElse(combinedExpression, comparison);
-                            else
-                                combinedExpression = Expression.AndAlso(combinedExpression, comparison);
-                        }
+                            combinedExpression = logic == "or" 
+                                ? Expression.OrElse(combinedExpression, comparison) 
+                                : Expression.AndAlso(combinedExpression, comparison);
                     }
                 }
                 catch
                 {
-                    // اگر خطایی در ساخت اکسپرشن بود (مثلاً تایپ اشتباه)، از این فیلتر می‌گذریم
                     continue;
                 }
             }
@@ -289,5 +255,39 @@ public static class FilterExtensions
         }
 
         return query;
+    }
+
+    // متد کمکی برای پارس کردن مقادیر و حل مشکل اعداد فارسی و اعشار
+    private static object? GetConvertedValue(string? val, Type targetType)
+    {
+        if (string.IsNullOrWhiteSpace(val)) return null;
+        try
+        {
+            val = val.Replace("۰", "0").Replace("۱", "1").Replace("۲", "2").Replace("۳", "3").Replace("۴", "4")
+                     .Replace("۵", "5").Replace("۶", "6").Replace("۷", "7").Replace("۸", "8").Replace("۹", "9")
+                     .Replace("/", ".");
+
+            if (targetType == typeof(bool)) return bool.Parse(val);
+            if (targetType.IsEnum) return Enum.Parse(targetType, val);
+            if (targetType == typeof(Guid)) return Guid.Parse(val);
+            
+            // ✨ خط قبلی حذف شد و فقط این بلاک باقی ماند
+            if (targetType == typeof(DateTime) || targetType == typeof(DateTime?))
+            {
+                var parts = val.Split('/');
+                if (parts.Length == 3 && int.TryParse(parts[0], out int year) && year >= 1300 && year <= 1500)
+                {
+                    var pc = new System.Globalization.PersianCalendar();
+                    return pc.ToDateTime(year, int.Parse(parts[1]), int.Parse(parts[2]), 0, 0, 0, 0);
+                }
+                return DateTime.Parse(val);
+            }
+
+            return Convert.ChangeType(val, targetType, System.Globalization.CultureInfo.InvariantCulture);
+        }
+        catch
+        {
+            return null;
+        }
     }
 }

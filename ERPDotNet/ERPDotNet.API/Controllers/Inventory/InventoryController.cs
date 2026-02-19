@@ -79,7 +79,6 @@ public class InventoryController : ControllerBase
 
     // ثبت سند پیش‌نویس (Draft)
     [HttpPost("docs")]
-    // اصلاح شد: منطبق با Inventory.Docs.Create
     [HasPermission("Inventory.Docs.Create")]
     public async Task<ActionResult<int>> CreateDocument([FromBody] CreateInventoryDocCommand command)
     {
@@ -89,7 +88,6 @@ public class InventoryController : ControllerBase
 
     // تایید سند (Approve)
     [HttpPost("docs/{id}/approve")]
-    // اصلاح شد: منطبق با Inventory.Docs.Approve
     [HasPermission("Inventory.Docs.Approve")]
     public async Task<IActionResult> ApproveDocument(long id, [FromBody] ApproveInventoryDocCommand command)
     {
@@ -101,7 +99,6 @@ public class InventoryController : ControllerBase
 
     // قطعی سازی سند (Post)
     [HttpPost("docs/{id}/post")]
-    // اصلاح شد: منطبق با Inventory.Docs.Post
     [HasPermission("Inventory.Docs.Post")]
     public async Task<IActionResult> PostDocument(long id, [FromBody] PostInventoryDocCommand command)
     {
@@ -134,7 +131,6 @@ public class InventoryController : ControllerBase
     // ==========================================
 
     [HttpPost("stock/current")] 
-    // اصلاح شد: منطبق با Inventory.Reports.CurrentStock
     [HasPermission("Inventory.Reports.CurrentStock")]
     public async Task<ActionResult<PaginatedResult<InventoryStockDto>>> GetCurrentStock([FromBody] GetCurrentStockQuery query)
     {
@@ -142,16 +138,14 @@ public class InventoryController : ControllerBase
         return Ok(result);
     }
 
-    [HttpGet("reports/cardex")]
-    // اصلاح شد: منطبق با Inventory.Reports.Cardex
+    [HttpPost("reports/cardex")] // تغییر از HttpGet به HttpPost
     [HasPermission("Inventory.Reports.Cardex")]
-    public async Task<ActionResult<PaginatedResult<ProductCardexDto>>> GetProductCardex([FromQuery] GetProductCardexQuery query)
+    public async Task<ActionResult<PaginatedResult<ProductCardexDto>>> GetProductCardex([FromBody] GetProductCardexQuery query)
     {
         return Ok(await _mediator.Send(query));
     }
 
     [HttpDelete("docs/{id}")]
-    // اصلاح شد: منطبق با Inventory.Docs.Delete
     [HasPermission("Inventory.Docs.Delete")]
     public async Task<IActionResult> DeleteDocument(long id, [FromQuery] string rowVersion)
     {
@@ -163,7 +157,6 @@ public class InventoryController : ControllerBase
 
     // ویرایش سند (فقط Draft)
     [HttpPut("docs/{id}")]
-    // اصلاح شد: منطبق با Inventory.Docs.Edit
     [HasPermission("Inventory.Docs.Edit")]
     public async Task<IActionResult> UpdateDocument(long id, [FromBody] UpdateInventoryDocCommand command)
     {
@@ -174,7 +167,6 @@ public class InventoryController : ControllerBase
 
     // بازگشت از تایید (Un-Approve)
     [HttpPost("docs/{id}/revert")]
-    // اصلاح شد: منطبق با Inventory.Docs.Revert
     [HasPermission("Inventory.Docs.Revert")]
     public async Task<IActionResult> RevertDocument(long id)
     {
@@ -233,7 +225,6 @@ public class InventoryController : ControllerBase
     }
 
     [HttpPost("locations")]
-    // اصلاح شد: منطبق با Inventory.Locations.Define
     [HasPermission("Inventory.Warehouses.Locations")]
     public async Task<ActionResult<int>> CreateLocation([FromBody] CreateLocationCommand command)
     {

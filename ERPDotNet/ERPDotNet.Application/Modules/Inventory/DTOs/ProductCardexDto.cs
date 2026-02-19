@@ -11,6 +11,7 @@ public class ProductCardexDto
     public long DocNumber { get; set; }
     public string DocTypeTitle { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty; // شرح هدر یا شرح ردیف
+    public string WarehouseTitle { get; set; } = string.Empty;
     
     // اطلاعات تکمیلی (اختیاری)
     public string? BatchNumber { get; set; }
