@@ -107,6 +107,9 @@ export default function ProductCardexPage() {
   const formattedData = useMemo(() => {
     return tableProps.data.map((item) => ({
       ...item,
+      // ✨ این خط جادویی مشکل انتخاب شدن کل سطرها را حل می‌کند
+      id: item.transactionId,
+
       transactionDate: item.transactionDate
         ? new Date(item.transactionDate).toLocaleDateString("fa-IR")
         : "",
