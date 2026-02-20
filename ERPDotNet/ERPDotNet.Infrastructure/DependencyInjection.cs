@@ -23,6 +23,7 @@ using ERPDotNet.Application.Modules.Inventory.Interfaces;
 using ERPDotNet.Application.Modules.Workflow.Interfaces;
 using ERPDotNet.Application.Modules.Workflow.Contracts;
 using ERPDotNet.Application.Modules.Workflow.Services;
+using ERPDotNet.Application.Modules.Inventory.ActionHandlers;
 
 namespace ERPDotNet.Infrastructure;
 
@@ -150,16 +151,15 @@ public static class DependencyInjection
 
     private static void AddInventoryServices(IServiceCollection services)
     {
-        // ریپازیتوری دیتابیس (خواندن موجودی و ...)
         services.AddScoped<IInventoryDomainRepository, InventoryDomainRepository>();
-
-        // سیاست‌گذاری‌ها (قوانین انبار)
         services.AddScoped<IInventoryPostingPolicy, DefaultInventoryPostingPolicy>();
-
-        // سرویس دامنه (مغز متفکر انبار)
-        // نکته: این سرویس در لایه دامین است اما اینجا به کانتینر معرفی می‌شود
         services.AddScoped<IInventoryPostingService, InventoryPostingService>();
         services.AddScoped<IDocumentNumberingService, DocumentNumberingService>();
+
+        // 🌟 اتصال استراتژیک به گردش کار (بدون Coupling)
+        // using ERPDotNet.Application.Modules.Workflow.Contracts;
+        // using ERPDotNet.Application.Modules.Inventory.ActionHandlers;
+        services.AddKeyedScoped<IBpmsActionHandler, PostInventoryDocActionHandler>("INVENTORY_POST");
     }
 
 

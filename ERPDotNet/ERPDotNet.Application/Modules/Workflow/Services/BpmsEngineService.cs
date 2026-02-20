@@ -192,6 +192,12 @@ public class BpmsEngineService : IBpmsEngineService
             
             _logger.LogInformation("Transition {TransitionTitle} executed for Instance {InstanceId}", transition.ActionTitle, instance.Id);
         }
+        catch (DbUpdateConcurrencyException)
+        {
+            // 🌟 لایه دوم محافظت: خطای هم‌روندی دیتابیس
+            await transaction.RollbackAsync(cancellationToken);
+            throw new BusinessRuleException("موجودی کالا یا وضعیت این پرونده دقیقاً در همین لحظه توسط کاربر دیگری تغییر کرده است. لطفاً کارتابل خود را رفرش کرده و مجدداً تلاش کنید.");
+        }
         catch (Exception ex)
         {
             await transaction.RollbackAsync(cancellationToken);

@@ -13,4 +13,7 @@ public class CurrentUserService : ICurrentUserService
     }
 
     public string? UserId => _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+
+    // 🌟 استخراج شناسه شرکت از توکن (با مقدار پیش‌فرض ۱ برای جلوگیری از خطا در توکن‌های قدیمی)
+    public string? CompanyId => _httpContextAccessor.HttpContext?.User?.FindFirstValue("CompanyId") ?? "1";
 }
