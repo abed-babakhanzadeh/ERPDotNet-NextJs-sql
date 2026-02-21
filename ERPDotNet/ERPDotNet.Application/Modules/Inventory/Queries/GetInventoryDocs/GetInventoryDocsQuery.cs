@@ -153,7 +153,8 @@ public class GetInventoryDocsHandler : IRequestHandler<GetInventoryDocsQuery, Pa
         return new PaginatedResult<InventoryDocDto>(items, totalCount, request.PageNumber, request.PageSize);
     }
 
-    private string MapColumn(string column) => column?.ToLower() switch
+    // اضافه کردن علامت سوال برای پشتیبانی از Null و برگرداندن string.Empty در صورت نیاز
+    private string MapColumn(string? column) => column?.ToLower() switch
     {
         "id" => "Id",
         "doctypetitle" => "DocType.Title",
@@ -162,7 +163,7 @@ public class GetInventoryDocsHandler : IRequestHandler<GetInventoryDocsQuery, Pa
         "description" => "Description",
         "nature" => "DocType.Nature",
         "status" => "Status",
-        _ => column // پیش‌فرض خود نام را برگردان
+        _ => column ?? string.Empty // پیش‌فرض خود نام را برگردان
     };
 
     private DateTime? ConvertPersianToGregorian(string persianDate)

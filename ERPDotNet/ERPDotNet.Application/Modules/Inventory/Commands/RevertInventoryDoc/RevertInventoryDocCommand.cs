@@ -38,9 +38,9 @@ public class RevertInventoryDocHandler : IRequestHandler<RevertInventoryDocComma
         if (doc.Status == InventoryDocStatus.Cancelled)
             throw new BusinessRuleException("این سند قبلاً باطل شده است.");
 
-        // === سناریوی ۱: سند هنوز قطعی نشده (فقط تایید/ارسال شده) ===
         // در این حالت تراکنش مالی وجود ندارد، پس فقط وضعیت را به پیش‌نویس برمی‌گردانیم تا قابل ویرایش شود.
-        if (doc.Status == InventoryDocStatus.Approved || doc.Status == InventoryDocStatus.Submitted)
+        // === سناریوی ۱: سند هنوز قطعی نشده ===
+        if (doc.Status == InventoryDocStatus.Approved || doc.Status == InventoryDocStatus.InProcess)
         {
             doc.Status = InventoryDocStatus.Draft;
             // اگر فیلدهای تایید کننده دارد، آن‌ها را پاک کنید (اختیاری)

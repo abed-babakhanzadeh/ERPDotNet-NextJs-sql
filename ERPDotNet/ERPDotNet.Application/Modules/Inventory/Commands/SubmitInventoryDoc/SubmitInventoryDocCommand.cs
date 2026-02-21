@@ -67,7 +67,7 @@ public class SubmitInventoryDocHandler : IRequestHandler<SubmitInventoryDocComma
         await _bpmsEngine.StartProcessAsync(new StartProcessRequest
         {
             CompanyId = userCompanyId, 
-            ProcessCode = "INVENTORY_DOC",
+            ProcessCode = "INVENTORY_V1",
             TargetRecordId = doc.Id,
             UserId = _currentUserService.UserId ?? "System",
             InitialVariables = variables

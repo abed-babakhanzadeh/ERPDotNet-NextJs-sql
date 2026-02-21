@@ -399,4 +399,13 @@ public class InventoryController : ControllerBase
         return NoContent();
     }
 
+    // ارسال سند به گردش کار (BPMS)
+    [HttpPost("docs/{id}/submit")]
+    [HasPermission("Inventory.Docs.Edit")]
+    public async Task<IActionResult> SubmitDocumentToWorkflow(long id)
+    {
+        await _mediator.Send(new ERPDotNet.Application.Modules.Inventory.Commands.SubmitInventoryDoc.SubmitInventoryDocCommand(id));
+        return Ok(new { message = "سند با موفقیت به کارتابل ارجاع داده شد." });
+    }
+
 }

@@ -2,14 +2,14 @@
 
 export enum InventoryDocStatus {
   Draft = 1,
-  Submitted = 2,
-  Approved = 3,
-  Rejected = 4,
-  Posted = 5,
-  Cancelled = 6,
+  InProcess = 2, // در جریان بررسی
+  RequiresRevision = 3, // نیازمند اصلاح
+  Approved = 4,
+  Rejected = 5,
+  Posted = 6,
+  Cancelled = 7,
 }
 
-// مپینگ برای نمایش رنگ و متن وضعیت‌ها
 export const InventoryDocStatusMap: Record<
   number,
   {
@@ -24,26 +24,31 @@ export const InventoryDocStatusMap: Record<
     variant: "outline",
   },
   2: {
-    label: "ارسال شده",
+    label: "در جریان بررسی",
     color: "text-blue-600 border-blue-200 bg-blue-50",
     variant: "outline",
   },
   3: {
+    label: "نیازمند اصلاح",
+    color: "text-orange-600 border-orange-200 bg-orange-50",
+    variant: "outline",
+  },
+  4: {
     label: "تایید شده",
     color: "text-emerald-600 border-emerald-200 bg-emerald-50",
     variant: "outline",
   },
-  4: {
+  5: {
     label: "رد شده",
     color: "text-red-600 border-red-200 bg-red-50",
     variant: "outline",
   },
-  5: {
+  6: {
     label: "قطعی شده",
     color: "bg-slate-800 text-white hover:bg-slate-900",
     variant: "default",
   },
-  6: {
+  7: {
     label: "ابطال",
     color: "text-red-500 bg-red-50",
     variant: "destructive",

@@ -12,6 +12,9 @@ public class BpmsTransition : BaseEntity
 
     public required string ActionTitle { get; set; }
     
+    // 🌟 فیلد جدید برای مدیریت فعال/غیرفعال بودن دکمه‌ها در سازمان (Soft Delete/Deactivation)
+    public bool IsActive { get; set; } = true;
+    
     // 🌟 اصلاح استراتژیک: استفاده از کد ثابت (مثل INVENTORY_APPROVE) به جای نام کلاس
     // در لایه Application یک دکشنری این کدها را به کلاس‌های اجرایی مپ می‌کند
     public string? ActionCode { get; set; }

@@ -38,8 +38,8 @@ public class ApproveInventoryDocHandler : IRequestHandler<ApproveInventoryDocCom
 
         if (doc == null) throw new KeyNotFoundException("سند یافت نشد.");
 
-        // 1. فقط اسناد درفت (یا ارسال شده) قابل تایید هستند
-        if (doc.Status != InventoryDocStatus.Draft && doc.Status != InventoryDocStatus.Submitted)
+        // 1. فقط اسناد درفت (یا در جریان بررسی) قابل تایید هستند
+        if (doc.Status != InventoryDocStatus.Draft && doc.Status != InventoryDocStatus.InProcess)
             throw new InvalidOperationException($"تغییر وضعیت از {doc.Status} به Approved مجاز نیست.");
 
         // 2. کنترل همروندی

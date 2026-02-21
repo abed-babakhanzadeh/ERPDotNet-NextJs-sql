@@ -4,16 +4,19 @@ using ERPDotNet.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace ERPDotNet.Infrastructure.Migrations
+namespace ERPDotNet.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260221174811_AddIsActiveToBpmsTransition")]
+    partial class AddIsActiveToBpmsTransition
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1779,47 +1782,6 @@ namespace ERPDotNet.Infrastructure.Migrations
                             ParentId = 3300,
                             Title = "کاردکس کالا",
                             Url = "/inventory/reports/cardex"
-                        },
-                        new
-                        {
-                            Id = 4000,
-                            IsMenu = true,
-                            Name = "Workflow",
-                            ParentId = 1,
-                            Title = "گردش کار"
-                        },
-                        new
-                        {
-                            Id = 4100,
-                            IsMenu = true,
-                            Name = "Workflow.Tasks",
-                            ParentId = 4000,
-                            Title = "کارتابل وظایف",
-                            Url = "/workflow/inbox"
-                        },
-                        new
-                        {
-                            Id = 4101,
-                            IsMenu = false,
-                            Name = "Workflow.Tasks.Inbox",
-                            ParentId = 4100,
-                            Title = "مشاهده کارتابل من"
-                        },
-                        new
-                        {
-                            Id = 4102,
-                            IsMenu = false,
-                            Name = "Workflow.Tasks.View",
-                            ParentId = 4100,
-                            Title = "مشاهده جزئیات پرونده"
-                        },
-                        new
-                        {
-                            Id = 4103,
-                            IsMenu = false,
-                            Name = "Workflow.Tasks.Complete",
-                            ParentId = 4100,
-                            Title = "اقدام روی پرونده (تایید/رد)"
                         });
                 });
 

@@ -300,6 +300,11 @@ const inventoryService = {
     );
     return response.data;
   },
+
+  submitDoc: async (id: number) => {
+    const response = await apiClient.post(`${BASE_URL}/docs/${id}/submit`);
+    return response.data;
+  },
 };
 
 export default inventoryService;

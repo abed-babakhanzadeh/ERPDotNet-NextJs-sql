@@ -19,6 +19,8 @@ import {
   BarChart3,
   Activity,
   ScrollText,
+  Inbox,
+  Briefcase,
 } from "lucide-react";
 
 export interface MenuItem {
@@ -35,6 +37,16 @@ export const MENU_ITEMS: MenuItem[] = [
     // href: "/",
     href: "/dashboard", // معمولا این مسیر درست است
     icon: LayoutDashboard,
+  },
+
+  // =======================================================
+  // === ماژول کارتابل و گردش کار (اضافه شده) ===
+  // =======================================================
+  {
+    title: "کارتابل من",
+    href: "/workflow/inbox",
+    icon: Inbox,
+    permission: "Workflow.Tasks.Inbox", // این همان پرمیشنی است که بالا تعریف کردیم
   },
 
   // === گروه عمومی ===

@@ -114,7 +114,21 @@ public class PermissionConfiguration : IEntityTypeConfiguration<Permission>
             // --- ج) گزارشات (Reports) ---
             new Permission { Id = 3300, Name = "Inventory.Reports", Title = "گزارشات", IsMenu = true, ParentId = 3000 },
             new Permission { Id = 3301, Name = "Inventory.Reports.CurrentStock", Title = "موجودی لحظه‌ای", IsMenu = true, ParentId = 3300, Url = "/inventory/reports/current-stock" },
-            new Permission { Id = 3302, Name = "Inventory.Reports.Cardex", Title = "کاردکس کالا", IsMenu = true, ParentId = 3300, Url = "/inventory/reports/cardex" }
+            new Permission { Id = 3302, Name = "Inventory.Reports.Cardex", Title = "کاردکس کالا", IsMenu = true, ParentId = 3300, Url = "/inventory/reports/cardex" },
+
+            // =========================================================
+            // === ماژول گردش کار و کارتابل (Workflow) - سری 4000 ===
+            // =========================================================
+            
+            // 1. ریشه ماژول گردش کار
+            new Permission { Id = 4000, Name = "Workflow", Title = "گردش کار", IsMenu = true, ParentId = 1 },
+
+            // 2. کارتابل وظایف (Inbox)
+            new Permission { Id = 4100, Name = "Workflow.Tasks", Title = "کارتابل وظایف", IsMenu = true, ParentId = 4000, Url = "/workflow/inbox" },
+            new Permission { Id = 4101, Name = "Workflow.Tasks.Inbox", Title = "مشاهده کارتابل من", IsMenu = false, ParentId = 4100 },
+            new Permission { Id = 4102, Name = "Workflow.Tasks.View", Title = "مشاهده جزئیات پرونده", IsMenu = false, ParentId = 4100 },
+            new Permission { Id = 4103, Name = "Workflow.Tasks.Complete", Title = "اقدام روی پرونده (تایید/رد)", IsMenu = false, ParentId = 4100 }
+            
         );
     }
 }

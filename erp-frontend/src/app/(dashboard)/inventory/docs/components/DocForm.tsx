@@ -22,6 +22,7 @@ import {
   Loader2,
   Pencil,
   Ban,
+  Send,
 } from "lucide-react";
 
 import MasterDetailForm from "@/components/form/MasterDetailForm";
@@ -61,6 +62,7 @@ interface DocFormProps {
   warehouses: any[];
 }
 
+// 🌟 وضعیت‌ها بر اساس Enum جدید سیستم گردش کار
 const statusStyles: Record<
   number,
   { label: string; className: string; icon?: any }
@@ -70,25 +72,30 @@ const statusStyles: Record<
     className: "bg-slate-100 text-slate-700 border-slate-200",
     icon: FileText,
   },
-  [InventoryDocStatus.Submitted]: {
-    label: "ارسال شده",
+  [InventoryDocStatus.InProcess]: {
+    label: "در جریان بررسی",
     className: "bg-blue-50 text-blue-700 border-blue-200",
-    icon: ArrowRight,
+    icon: Loader2,
+  },
+  [InventoryDocStatus.RequiresRevision]: {
+    label: "نیازمند اصلاح",
+    className: "bg-orange-50 text-orange-700 border-orange-200",
+    icon: Undo2,
   },
   [InventoryDocStatus.Approved]: {
     label: "تایید شده",
-    className: "bg-amber-50 text-amber-700 border-amber-200",
-    icon: CheckCircle2,
-  },
-  [InventoryDocStatus.Posted]: {
-    label: "قطعی شده",
     className: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    icon: Archive,
+    icon: CheckCircle2,
   },
   [InventoryDocStatus.Rejected]: {
     label: "رد شده",
     className: "bg-red-50 text-red-700 border-red-200",
     icon: AlertTriangle,
+  },
+  [InventoryDocStatus.Posted]: {
+    label: "قطعی شده",
+    className: "bg-slate-800 text-white border-slate-700",
+    icon: Archive,
   },
   [InventoryDocStatus.Cancelled]: {
     label: "ابطال شده",
@@ -123,7 +130,6 @@ export default function DocForm({
 
   const isInitialized = useRef(false);
 
-  // --- Draft Logic (Same as before) ---
   const getDraftKey = () => {
     if (initialMode === "create") return "inventory-doc-draft-new";
     if (docData?.id) return `inventory-doc-draft-${docData.id}`;
@@ -271,13 +277,16 @@ export default function DocForm({
     { key: "supplyType", label: "نوع", width: "100px" },
   ];
 
+  // 🌟 وضعیت فعلی و تشخیص اینکه فرم قابل ویرایش است یا خیر
   const currentStatus = docData?.status || InventoryDocStatus.Draft;
-  const isReadOnly =
-    currentMode === "view" ||
-    currentStatus === InventoryDocStatus.Posted ||
-    currentStatus === InventoryDocStatus.Cancelled;
-  const statusInfo = statusStyles[currentStatus];
-  const StatusIcon = statusInfo?.icon || FileText;
+  const isEditableStatus =
+    currentStatus === InventoryDocStatus.Draft ||
+    currentStatus === InventoryDocStatus.RequiresRevision;
+  const isReadOnly = currentMode === "view" || !isEditableStatus;
+
+  const statusInfo =
+    statusStyles[currentStatus] || statusStyles[InventoryDocStatus.Draft];
+  const StatusIcon = statusInfo.icon || FileText;
 
   const headerFields: FieldConfig[] = [
     {
@@ -407,23 +416,18 @@ export default function DocForm({
 
   // === Handlers ===
   const handleSave = async () => {
-    // 1. بررسی هدر
     if (!headerData.docTypeId || !headerData.warehouseId) {
       return toast.error("لطفا نوع سند و انبار را انتخاب کنید.");
     }
 
-    // 2. پاکسازی و فیلتر کردن گرید (Sanitization)
-    // فقط ردیف‌هایی را نگه دار که "کالا" (productId) داشته باشند
     const validDetails = gridData.filter(
       (row) => row.productId && Number(row.productId) > 0,
     );
 
-    // 3. چک کردن اینکه آیا بعد از فیلتر، چیزی باقی مانده؟
     if (validDetails.length === 0) {
       return toast.error("لطفا حداقل یک قلم کالا وارد کنید.");
     }
 
-    // 4. بررسی مقادیر اجباری در ردیف‌های معتبر
     const invalidRow = validDetails.find(
       (r) => !r.mainUnitQuantity || Number(r.mainUnitQuantity) <= 0,
     );
@@ -433,13 +437,11 @@ export default function DocForm({
 
     setSubmitting(true);
     try {
-      // مپ کردن و تبدیل تایپ‌ها (جلوگیری از خطای JSON)
       const detailsDto = validDetails.map((row) => ({
         id: row.id || null,
         productId: Number(row.productId),
         mainUnitQuantity: Number(row.mainUnitQuantity),
         subUnitQuantity: 0,
-        // ✅ اصلاح مهم: تبدیل رشته خالی یا undefined به null برای جلوگیری از خطای 400
         locationId: row.locationId ? Number(row.locationId) : null,
         batchId: null,
         description: row.description || "",
@@ -456,7 +458,7 @@ export default function DocForm({
             ? result.id || result.data || result
             : result;
 
-        toast.success("سند جدید ایجاد شد");
+        toast.success("سند پیش‌نویس با موفقیت ایجاد شد");
         clearDraft();
         router.push(`/inventory/docs/edit/${newId}`);
       } else {
@@ -470,7 +472,7 @@ export default function DocForm({
           details: detailsDto,
         };
         await inventoryService.updateDoc(docData.id, command);
-        toast.success("تغییرات ذخیره شد");
+        toast.success("تغییرات با موفقیت ذخیره شد");
         clearDraft();
         await reloadDocument();
       }
@@ -481,55 +483,22 @@ export default function DocForm({
     }
   };
 
-  const handleApprove = async () => {
-    if (!confirm("آیا از تایید نهایی سند اطمینان دارید؟")) return;
-    setSubmitting(true);
-    try {
-      await inventoryService.approveDoc(docData!.id, docData!.rowVersion);
-      toast.success("سند تایید شد");
-      clearDraft();
-      await reloadDocument();
-    } catch (error: any) {
-      handleApiError(error, "خطا در تایید سند");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handlePost = async () => {
-    if (
-      !confirm(
-        "هشدار: قطعی سازی باعث کسر/افزایش موجودی شده و غیرقابل بازگشت است.\nآیا ادامه می‌دهید؟",
-      )
-    )
+  // 🌟 هندلر جدید برای ارسال به گردش کار
+  const handleSubmitToWorkflow = async () => {
+    if (!docData?.id) return;
+    if (!confirm("آیا از ارسال این سند به کارتابل جهت بررسی اطمینان دارید؟"))
       return;
-    setSubmitting(true);
-    try {
-      await inventoryService.postDoc(docData!.id, docData!.rowVersion);
-      toast.success("سند قطعی شد");
-      clearDraft();
-      await reloadDocument();
-    } catch (error: any) {
-      handleApiError(error, "خطا در قطعی سازی سند");
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
-  const handleRevert = async () => {
-    const isPosted = currentStatus === InventoryDocStatus.Posted;
-    const msg = isPosted
-      ? "آیا از ابطال این سند اطمینان دارید؟"
-      : "سند به پیش‌نویس برگردد؟";
-    if (!confirm(msg)) return;
     setSubmitting(true);
     try {
-      await inventoryService.revertDoc(docData!.id);
-      toast.success(isPosted ? "سند ابطال شد" : "سند اصلاح شد");
+      await inventoryService.submitDoc(docData.id);
+      toast.success("سند با موفقیت در جریان گردش کار قرار گرفت");
       clearDraft();
-      await reloadDocument();
+
+      // هدایت کاربر به صفحه لیست اسناد پس از ارسال موفق
+      router.push("/inventory/docs");
     } catch (error: any) {
-      handleApiError(error, "خطا در عملیات");
+      handleApiError(error, "خطا در ارسال به گردش کار");
     } finally {
       setSubmitting(false);
     }
@@ -544,7 +513,6 @@ export default function DocForm({
   const ActionMenu = () => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        {/* ✅ دکمه عملیات با استایل جدید */}
         <Button
           variant="outline"
           size="sm"
@@ -554,78 +522,53 @@ export default function DocForm({
           <span className="hidden sm:inline text-xs">عملیات</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
+      <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>اقدامات سند</DropdownMenuLabel>
-        {currentMode === "view" &&
-          currentStatus === InventoryDocStatus.Draft && (
-            <DropdownMenuItem onClick={handleSwitchToEdit}>
-              <Pencil className="w-4 h-4 ml-2" />
-              ویرایش سند
-            </DropdownMenuItem>
-          )}
+
+        {currentMode === "view" && isEditableStatus && (
+          <DropdownMenuItem
+            onClick={handleSwitchToEdit}
+            className="cursor-pointer"
+          >
+            <Pencil className="w-4 h-4 ml-2 text-blue-600" />
+            ویرایش سند
+          </DropdownMenuItem>
+        )}
+
         {currentMode === "edit" && !isReadOnly && (
           <DropdownMenuItem
             onClick={handleSave}
             disabled={submitting}
-            className="sm:hidden"
+            className="sm:hidden cursor-pointer"
           >
             <Save className="w-4 h-4 ml-2" />
             ذخیره تغییرات
           </DropdownMenuItem>
         )}
+
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => window.print()}>
-          <Printer className="w-4 h-4 ml-2" />
+        <DropdownMenuItem
+          onClick={() => window.print()}
+          className="cursor-pointer"
+        >
+          <Printer className="w-4 h-4 ml-2 text-slate-600" />
           چاپ سند
         </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        {currentStatus === InventoryDocStatus.Draft &&
-          currentMode === "edit" && (
+
+        {isEditableStatus && currentMode === "edit" && docData?.id && (
+          <>
+            <DropdownMenuSeparator />
             <PermissionGuard permission="Inventory.Docs.Edit">
               <DropdownMenuItem
-                onClick={handleApprove}
+                onClick={handleSubmitToWorkflow}
                 disabled={submitting}
-                className="text-emerald-600"
+                className="text-blue-600 font-bold bg-blue-50 focus:bg-blue-100 cursor-pointer"
               >
-                <CheckCircle2 className="w-4 h-4 ml-2" />
-                تایید نهایی
+                <Send className="w-4 h-4 ml-2" />
+                ارسال به کارتابل بررسی
               </DropdownMenuItem>
             </PermissionGuard>
-          )}
-        {currentStatus === InventoryDocStatus.Approved &&
-          currentMode === "edit" && (
-            <>
-              <DropdownMenuItem
-                onClick={handleRevert}
-                disabled={submitting}
-                className="text-amber-600"
-              >
-                <Undo2 className="w-4 h-4 ml-2" />
-                اصلاح (برگشت)
-              </DropdownMenuItem>
-              <PermissionGuard permission="Inventory.Docs.Create">
-                <DropdownMenuItem
-                  onClick={handlePost}
-                  disabled={submitting}
-                  className="text-blue-600 font-bold"
-                >
-                  <Archive className="w-4 h-4 ml-2" />
-                  قطعی سازی
-                </DropdownMenuItem>
-              </PermissionGuard>
-            </>
-          )}
-        {currentStatus === InventoryDocStatus.Posted && (
-          <PermissionGuard permission="Inventory.Docs.Create">
-            <DropdownMenuItem
-              onClick={handleRevert}
-              disabled={submitting}
-              className="text-red-600 font-bold"
-            >
-              <Ban className="w-4 h-4 ml-2" />
-              ابطال سند
-            </DropdownMenuItem>
-          </PermissionGuard>
+          </>
         )}
       </DropdownMenuContent>
     </DropdownMenu>
@@ -635,7 +578,7 @@ export default function DocForm({
     <MasterDetailForm
       title={
         currentMode === "create"
-          ? "ثبت سند جدید"
+          ? "ثبت سند جدید (پیش‌نویس)"
           : `سند انبار شماره ${docData?.docNumber || "..."}`
       }
       headerActions={
@@ -646,13 +589,14 @@ export default function DocForm({
                 variant="outline"
                 className={`gap-1.5 px-2.5 py-0.5 rounded-full ${statusInfo?.className}`}
               >
-                <StatusIcon className="w-3.5 h-3.5" />
+                <StatusIcon
+                  className={`w-3.5 h-3.5 ${currentStatus === InventoryDocStatus.InProcess ? "animate-spin" : ""}`}
+                />
                 {statusInfo?.label}
               </Badge>
             </div>
           )}
 
-          {/* دکمه انصراف / بازگشت */}
           <Button
             variant="ghost"
             size="sm"
@@ -664,41 +608,40 @@ export default function DocForm({
           </Button>
 
           <div className="flex items-center gap-2">
-            {/* 1. دکمه ذخیره تغییرات (Edit Mode) */}
-            {currentStatus === InventoryDocStatus.Draft &&
-              currentMode === "edit" && (
+            {/* دکمه ذخیره تغییرات */}
+            {/* دکمه ذخیره تغییرات */}
+            {isEditableStatus && currentMode === "edit" && (
+              <Button
+                onClick={handleSave}
+                disabled={submitting}
+                size="sm"
+                className="h-8 gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                <Save className="w-4 h-4" />
+                <span className="hidden sm:inline text-xs">ذخیره تغییرات</span>
+              </Button>
+            )}
+
+            {/* 🌟 دکمه استارت گردش کار (نمایش مستقیم در هدر برای دسترسی سریع‌تر) */}
+            {isEditableStatus && currentMode === "edit" && docData?.id && (
+              <PermissionGuard permission="Inventory.Docs.Edit">
                 <Button
-                  onClick={handleSave}
+                  onClick={handleSubmitToWorkflow}
                   disabled={submitting}
                   size="sm"
-                  className="h-8 gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
+                  className="h-8 gap-1.5 bg-blue-600 hover:bg-blue-700 text-white"
                 >
-                  <Save className="w-4 h-4" />
+                  <Send className="w-4 h-4" />
                   <span className="hidden sm:inline text-xs">
-                    ذخیره تغییرات
+                    ارسال به کارتابل
                   </span>
                 </Button>
-              )}
-
-            {/* 2. دکمه قطعی سازی (Approved Mode) */}
-            {currentStatus === InventoryDocStatus.Approved &&
-              currentMode === "edit" && (
-                <Button
-                  onClick={handlePost}
-                  disabled={submitting}
-                  size="sm"
-                  className="h-8 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
-                >
-                  <Archive className="w-4 h-4" />
-                  <span className="hidden sm:inline text-xs">قطعی سازی</span>
-                </Button>
-              )}
+              </PermissionGuard>
+            )}
           </div>
 
-          {/* منوی عملیات */}
           {currentMode !== "create" && <ActionMenu />}
 
-          {/* 3. دکمه ثبت سند (Create Mode) */}
           {currentMode === "create" && (
             <Button
               onClick={handleSave}
@@ -707,7 +650,7 @@ export default function DocForm({
               className="h-8 gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
             >
               <Save className="w-4 h-4" />
-              <span className="hidden sm:inline text-xs">ثبت سند</span>
+              <span className="hidden sm:inline text-xs">ثبت اولیه</span>
             </Button>
           )}
         </div>
