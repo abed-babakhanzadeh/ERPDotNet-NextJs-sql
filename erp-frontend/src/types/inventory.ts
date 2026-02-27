@@ -23,8 +23,9 @@ export const InventoryDocStatusMap: Record<
     color: "text-amber-600 border-amber-200 bg-amber-50",
     variant: "outline",
   },
+  // در شیء InventoryDocStatusMap
   2: {
-    label: "در جریان بررسی",
+    label: "در انتظار تایید",
     color: "text-blue-600 border-blue-200 bg-blue-50",
     variant: "outline",
   },

@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ERPDotNet.Application.Modules.Inventory.Commands.DeleteInventoryDoc;
 
-[CacheInvalidation("InventoryDocs")] // لیست اسناد باید رفرش شود
+[CacheInvalidation("InventoryDocs")] 
 public record DeleteInventoryDocCommand(long Id, string RowVersion) : IRequest<bool>;
 
 public class DeleteInventoryDocHandler : IRequestHandler<DeleteInventoryDocCommand, bool>
@@ -22,7 +22,6 @@ public class DeleteInventoryDocHandler : IRequestHandler<DeleteInventoryDocComma
 
     public async Task<bool> Handle(DeleteInventoryDocCommand request, CancellationToken cancellationToken)
     {
-        // 1. یافتن سند همراه با اقلام (برای حذف آبشاری)
         var doc = await _context.InventoryDocHeaders
             .Include(x => x.Details)
             .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
@@ -30,13 +29,17 @@ public class DeleteInventoryDocHandler : IRequestHandler<DeleteInventoryDocComma
         if (doc == null)
             throw new KeyNotFoundException($"سند انبار با شناسه {request.Id} یافت نشد.");
 
-        // 2. گاردریل مهم: جلوگیری از حذف سند قطعی شده
-        if (doc.Status == InventoryDocStatus.Posted)
-        {
-            throw new BusinessRuleException("امکان حذف سندی که 'قطعی' (Posted) شده است وجود ندارد. برای اصلاح، باید سند اصلاحی/معکوس ثبت کنید.");
-        }
+        // 🌟 گاردریل امنیتی جدید (استاندارد ERP)
+        if (doc.Status == InventoryDocStatus.InProcess)
+            throw new BusinessRuleException("این سند در کارتابل بررسی قرار دارد و قفل شده است. امکان حذف آن وجود ندارد.");
 
-        // ✅ کنترل همروندی برای حذف
+        if (doc.Status == InventoryDocStatus.Posted || doc.Status == InventoryDocStatus.Approved)
+            throw new BusinessRuleException("اسناد تایید یا قطعی شده به هیچ وجه قابل حذف نیستند.");
+
+        if (doc.Status != InventoryDocStatus.Draft && doc.Status != InventoryDocStatus.RequiresRevision)
+            throw new BusinessRuleException("فقط اسناد 'پیش‌نویس' یا 'نیازمند اصلاح' قابل حذف می‌باشند.");
+
+        // کنترل همروندی
         try 
         {
              var rowVersionBytes = Convert.FromBase64String(request.RowVersion);
@@ -47,18 +50,31 @@ public class DeleteInventoryDocHandler : IRequestHandler<DeleteInventoryDocComma
             throw new ValidationException("RowVersion نامعتبر است."); 
         }
 
-        // 3. حذف منطقی (Soft Delete)
-        // چون از BaseEntity ارث‌بری کرده‌اید، فقط کافیست IsDeleted را True کنید
-        // اینترسپتور خودش بقیه کارها (تاریخ و کاربر حذف کننده) را انجام می‌دهد
-        doc.IsDeleted = true;
+        // پاکسازی لاشه احتمالی در کارتابل (در صورتی که سند نیازمند اصلاح باشد، ممکن است سابقه در BPMS داشته باشد)
+        var workflowInstances = await _context.BpmsInstances
+            .Include(i => i.Tasks)
+            .Include(i => i.Histories)
+            .Where(i => i.TargetRecordId == doc.Id)
+            .ToListAsync(cancellationToken);
 
-        // حذف اقلام زیرمجموعه
-        foreach (var detail in doc.Details)
+        foreach (var instance in workflowInstances)
         {
-            detail.IsDeleted = true;
+            _context.BpmsTasks.RemoveRange(instance.Tasks);
+            _context.BpmsHistories.RemoveRange(instance.Histories);
+        }
+        if (workflowInstances.Any())
+        {
+            _context.BpmsInstances.RemoveRange(workflowInstances);
         }
 
-        // 4. ذخیره تغییرات
+        // حذف منطقی
+        doc.IsDeleted = true;
+        foreach (var item in doc.Details)
+        {
+            item.IsDeleted = true;
+        }
+        
+        _context.InventoryDocHeaders.Update(doc);
         await _context.SaveChangesAsync(cancellationToken);
 
         return true;

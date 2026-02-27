@@ -73,7 +73,7 @@ const statusStyles: Record<
     icon: FileText,
   },
   [InventoryDocStatus.InProcess]: {
-    label: "در جریان بررسی",
+    label: "در انتظار تایید",
     className: "bg-blue-50 text-blue-700 border-blue-200",
     icon: Loader2,
   },
@@ -486,13 +486,16 @@ export default function DocForm({
   // 🌟 هندلر جدید برای ارسال به گردش کار
   const handleSubmitToWorkflow = async () => {
     if (!docData?.id) return;
-    if (!confirm("آیا از ارسال این سند به کارتابل جهت بررسی اطمینان دارید؟"))
+    if (
+      !confirm("آیا از ارسال این سند برای بررسی و تایید نهایی اطمینان دارید؟")
+    )
       return;
 
     setSubmitting(true);
     try {
       await inventoryService.submitDoc(docData.id);
-      toast.success("سند با موفقیت در جریان گردش کار قرار گرفت");
+      // خط پیام موفقیت (Toast)
+      toast.success("سند با موفقیت جهت بررسی ارسال شد");
       clearDraft();
 
       // هدایت کاربر به صفحه لیست اسناد پس از ارسال موفق
@@ -565,7 +568,7 @@ export default function DocForm({
                 className="text-blue-600 font-bold bg-blue-50 focus:bg-blue-100 cursor-pointer"
               >
                 <Send className="w-4 h-4 ml-2" />
-                ارسال به کارتابل بررسی
+                تایید و ارسال
               </DropdownMenuItem>
             </PermissionGuard>
           </>
@@ -633,7 +636,7 @@ export default function DocForm({
                 >
                   <Send className="w-4 h-4" />
                   <span className="hidden sm:inline text-xs">
-                    ارسال به کارتابل
+                    تایید و ارسال
                   </span>
                 </Button>
               </PermissionGuard>

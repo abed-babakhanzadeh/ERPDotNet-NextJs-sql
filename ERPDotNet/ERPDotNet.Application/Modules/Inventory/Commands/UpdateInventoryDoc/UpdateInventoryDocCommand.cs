@@ -71,12 +71,13 @@ public class UpdateInventoryDocHandler : IRequestHandler<UpdateInventoryDocComma
         if (doc == null)
             throw new KeyNotFoundException($"سند با شناسه {request.Id} یافت نشد.");
 
-        // 2. گاردریل وضعیت: فقط Draft ویرایش می‌شود
-        if (doc.Status != InventoryDocStatus.Draft)
-        {
-            throw new BusinessRuleException("فقط اسناد در وضعیت 'پیش‌نویس' قابل ویرایش هستند. اگر سند تایید شده است، ابتدا آن را 'برگشت' (Revert) بزنید.");
-        }
 
+        // 2. گاردریل وضعیت: اجازه ویرایش به پیش‌نویس و اسناد برگشت‌خورده
+        if (doc.Status != InventoryDocStatus.Draft && doc.Status != InventoryDocStatus.RequiresRevision)
+        {
+            throw new BusinessRuleException("فقط اسناد در وضعیت 'پیش‌نویس' یا 'نیازمند اصلاح' قابل ویرایش هستند. این سند در جریان بررسی یا قطعی شده است.");
+        }
+        
         // 3. گاردریل تغییر انبار (Tier-0 Rule)
         // تغییر انبار فقط وقتی مجاز است که هیچ سطری در دیتابیس نباشد (یا کاربر همه را حذف کرده باشد)
         // اما برای امنیت بیشتر، اگر انبار عوض شده و سند سطر دارد، خطا می‌دهیم.

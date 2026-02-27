@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+
 import {
   Loader2,
   ArrowRight,
@@ -22,10 +23,12 @@ import DocForm from "@/app/(dashboard)/inventory/docs/components/DocForm";
 export default function TaskDetailsPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>; // 🌟 2. تغییر نوع params به Promise
 }) {
   const router = useRouter();
-
+  // 🌟 3. باز کردن Promise با استفاده از use
+  const resolvedParams = use(params);
+  const id = resolvedParams.id;
   // State های مربوط به گردش کار
   const [task, setTask] = useState<any>(null);
   const [taskLoading, setTaskLoading] = useState(true);
@@ -41,11 +44,11 @@ export default function TaskDetailsPage({
   // 1. دریافت اطلاعات تسک از موتور BPMS
   useEffect(() => {
     workflowService
-      .getTaskDetails(params.id)
+      .getTaskDetails(id)
       .then((data) => setTask(data))
       .catch(() => toast.error("خطا در دریافت اطلاعات پرونده"))
       .finally(() => setTaskLoading(false));
-  }, [params.id]);
+  }, [id]);
 
   // 2. دریافت اطلاعات فرم انبار به محض مشخص شدن ProcessCode
   useEffect(() => {

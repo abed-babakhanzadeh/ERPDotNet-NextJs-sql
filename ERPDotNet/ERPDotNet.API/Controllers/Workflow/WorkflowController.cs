@@ -55,27 +55,45 @@ public class TasksController : ControllerBase
     [HttpGet("ultimate-seed")]
     public async Task<IActionResult> UltimateSeed([FromServices] ERPDotNet.Application.Common.Interfaces.IApplicationDbContext context)
     {
-        // 1. تغییر نام فرآیند برای دور زدن کامل کش
         string newProcessCode = "INVENTORY_V1";
 
-        // 2. پاکسازی دیتای قبلی
+        // 1. پاکسازی کامل و سلسله‌مراتبی (از پایین‌ترین سطح به بالاترین سطح برای جلوگیری از خطای FK)
+        var oldTasks = context.BpmsTasks.Where(x => x.Instance.ProcessVersion.Process.ProcessCode == newProcessCode);
+        context.BpmsTasks.RemoveRange(oldTasks);
+
+        var oldHistories = context.BpmsHistories.Where(x => x.Instance.ProcessVersion.Process.ProcessCode == newProcessCode);
+        context.BpmsHistories.RemoveRange(oldHistories);
+
+        var oldInstances = context.BpmsInstances.Where(x => x.ProcessVersion.Process.ProcessCode == newProcessCode);
+        context.BpmsInstances.RemoveRange(oldInstances);
+
+        var oldTransitions = context.BpmsTransitions.Where(x => x.ProcessVersion.Process.ProcessCode == newProcessCode);
+        context.BpmsTransitions.RemoveRange(oldTransitions);
+
+        var oldStates = context.BpmsStates.Where(x => x.ProcessVersion.Process.ProcessCode == newProcessCode);
+        context.BpmsStates.RemoveRange(oldStates);
+
+        var oldVersions = context.BpmsProcessVersions.Where(x => x.Process.ProcessCode == newProcessCode);
+        context.BpmsProcessVersions.RemoveRange(oldVersions);
+
         var oldProcesses = context.BpmsProcesses.Where(x => x.ProcessCode == newProcessCode);
         context.BpmsProcesses.RemoveRange(oldProcesses);
+
         await context.SaveChangesAsync(CancellationToken.None);
 
-        // 3. ساخت فرآیند با مقادیر دقیق کلاس دامین شما
+        // 2. ساخت فرآیند با مقادیر دقیق کلاس دامین
         var process = new ERPDotNet.Domain.Modules.Workflow.Entities.BpmsProcess 
         { 
             CompanyId = 1, 
             ProcessCode = newProcessCode, 
-            Title = "فرآیند تایید اسناد انبار (نسخه جدید)", // 🌟 اصلاح شد
-            TargetEntityName = "InventoryDocHeader", // 🌟 اضافه شد
+            Title = "فرآیند تایید اسناد انبار (نسخه جدید)", 
+            TargetEntityName = "InventoryDocHeader", 
             IsActive = true 
         };
         context.BpmsProcesses.Add(process);
         await context.SaveChangesAsync(CancellationToken.None);
 
-        // 4. ساخت نسخه فرآیند
+        // 3. ساخت نسخه فرآیند
         var version = new ERPDotNet.Domain.Modules.Workflow.Entities.BpmsProcessVersion 
         { 
             ProcessId = process.Id, 
@@ -85,13 +103,13 @@ public class TasksController : ControllerBase
         context.BpmsProcessVersions.Add(version);
         await context.SaveChangesAsync(CancellationToken.None);
 
-        // 5. ساخت مراحل با پراپرتی‌های دقیق کلاس BpmsState
+        // 4. ساخت مراحل
         var stateDraft = new ERPDotNet.Domain.Modules.Workflow.Entities.BpmsState 
         { 
             ProcessVersionId = version.Id, 
             Title = "پیش‌نویس", 
-            StateCode = "DRAFT", // 🌟 فیلد اجباری اضافه شد
-            Type = ERPDotNet.Domain.Modules.Workflow.Enums.BpmsStateType.Start // 🌟 اصلاح نام پراپرتی
+            StateCode = "DRAFT", 
+            Type = ERPDotNet.Domain.Modules.Workflow.Enums.BpmsStateType.Start 
         };
         
         var stateReview = new ERPDotNet.Domain.Modules.Workflow.Entities.BpmsState 
@@ -113,7 +131,7 @@ public class TasksController : ControllerBase
         context.BpmsStates.AddRange(stateDraft, stateReview, statePosted);
         await context.SaveChangesAsync(CancellationToken.None);
 
-        // 6. ساخت دکمه‌ها
+        // 5. ساخت دکمه‌ها
         var transitions = new List<ERPDotNet.Domain.Modules.Workflow.Entities.BpmsTransition>
         {
             new ERPDotNet.Domain.Modules.Workflow.Entities.BpmsTransition { ProcessVersionId = version.Id, FromStateId = stateDraft.Id, ToStateId = stateReview.Id, ActionTitle = "ارسال برای تایید مدیر", IsActive = true, ActionCode = null },
@@ -126,4 +144,5 @@ public class TasksController : ControllerBase
 
         return Ok($"جادوی نهایی با موفقیت اعمال شد! فرآیند جدید با کد {newProcessCode} و تمامی Property های دامین شما در دیتابیس نشست.");
     }
+    
 }

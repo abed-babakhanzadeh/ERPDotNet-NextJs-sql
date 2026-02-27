@@ -41,7 +41,7 @@ const statusMap: Record<
     className: "bg-slate-100 text-slate-600",
   },
   [InventoryDocStatus.InProcess]: {
-    label: "در جریان بررسی",
+    label: "در انتظار تایید",
     variant: "outline",
     className: "border-blue-200 text-blue-600 bg-blue-50",
   },

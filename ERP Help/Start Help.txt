@@ -2,9 +2,10 @@ git clone:
 https://github.com/abed-babakhanzadeh/ERPDotNet-NextJs-sql.git
 
 
-git config --global user.email "you@example.com"
-git config --global user.name "abed-babakhanzadeh"
 
+git config --global user.name "abed-babakhanzadeh"
+git config --global user.email "abed1386@gmail.com"
+---------------------------------------------------
 
 dotnet ef database update
 
@@ -14,6 +15,7 @@ docker-compose up -d db redis
 docker-compose up -d redis
 
 docker-compose down
+
 ---------------------------------------------------
 cd ERPDotNet/ERPDotNet.API  
 
