@@ -51,6 +51,53 @@ public class TasksController : ControllerBase
         return Ok(new { message = "وظیفه با موفقیت انجام شد." });
     }
 
+    // ==========================================
+    // بخش مدیریت گردش کار (Workflow Builder)
+    // ==========================================
+
+    [HttpPost("processes/list")]
+    [HasPermission("Workflow.Processes.View")]
+    public async Task<ActionResult<PaginatedResult<ProcessDto>>> GetAllProcesses([FromBody] ERPDotNet.Application.Modules.Workflow.Queries.GetAllProcesses.GetAllProcessesQuery query)
+    {
+        return Ok(await _mediator.Send(query));
+    }
+
+    [HttpPost("processes")]
+    [HasPermission("Workflow.Processes.Create")]
+    public async Task<ActionResult<int>> CreateProcess([FromBody] ERPDotNet.Application.Modules.Workflow.Commands.CreateProcess.CreateProcessCommand command)
+    {
+        var id = await _mediator.Send(command);
+        return CreatedAtAction(nameof(GetAllProcesses), new { id }, id);
+    }
+
+    // ==========================================
+    // بخش مدیریت گردش کار (Workflow Builder) - فاز 2
+    // ==========================================
+
+    [HttpGet("processes/{id}")]
+    [HasPermission("Workflow.Processes.View")]
+    public async Task<ActionResult<ProcessDetailsDto>> GetProcessDetails(int id)
+    {
+        return Ok(await _mediator.Send(new ERPDotNet.Application.Modules.Workflow.Queries.GetProcessDetails.GetProcessDetailsQuery(id)));
+    }
+
+    [HttpPost("states")]
+    [HasPermission("Workflow.Processes.Edit")]
+    public async Task<ActionResult<int>> CreateState([FromBody] ERPDotNet.Application.Modules.Workflow.Commands.CreateState.CreateStateCommand command)
+    {
+        var id = await _mediator.Send(command);
+        return Ok(id);
+    }
+
+    [HttpPost("transitions")]
+    [HasPermission("Workflow.Processes.Edit")]
+    public async Task<ActionResult<int>> CreateTransition([FromBody] ERPDotNet.Application.Modules.Workflow.Commands.CreateTransition.CreateTransitionCommand command)
+    {
+        var id = await _mediator.Send(command);
+        return Ok(id);
+    }
+    
+
     [AllowAnonymous]
     [HttpGet("ultimate-seed")]
     public async Task<IActionResult> UltimateSeed([FromServices] ERPDotNet.Application.Common.Interfaces.IApplicationDbContext context)
