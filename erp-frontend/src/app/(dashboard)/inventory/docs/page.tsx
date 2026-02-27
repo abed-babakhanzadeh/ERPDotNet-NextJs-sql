@@ -40,10 +40,15 @@ const statusMap: Record<
     variant: "secondary",
     className: "bg-slate-100 text-slate-600",
   },
-  [InventoryDocStatus.Submitted]: {
-    label: "ارسال شده",
+  [InventoryDocStatus.InProcess]: {
+    label: "در جریان بررسی",
     variant: "outline",
     className: "border-blue-200 text-blue-600 bg-blue-50",
+  },
+  [InventoryDocStatus.RequiresRevision]: {
+    label: "نیازمند اصلاح",
+    variant: "outline",
+    className: "border-orange-200 text-orange-600 bg-orange-50",
   },
   [InventoryDocStatus.Approved]: {
     label: "تایید شده",
@@ -83,6 +88,7 @@ export default function InventoryDocsListPage() {
       {
         key: "nature",
         label: "نوع",
+        title: "نوع سند",
         type: "custom",
         width: 60,
         render: (_: any, row: InventoryDocDto) => (
@@ -107,6 +113,7 @@ export default function InventoryDocsListPage() {
       {
         key: "status",
         label: "وضعیت",
+        title: "وضعیت سند",
         type: "custom",
         width: 100,
         render: (value: number) => {
@@ -127,24 +134,37 @@ export default function InventoryDocsListPage() {
       {
         key: "docNumber",
         label: "شماره سند",
+        title: "شماره سند",
         type: "string", // مهم: تایپ string باشد تا فیلتر متنی فعال شود
         sortable: true,
       },
       {
         key: "docDate",
         label: "تاریخ",
+        title: "تاریخ سند",
         type: "string", // مهم: تایپ string باشد تا کاربر بتواند تاریخ شمسی تایپ کند
         sortable: true,
         render: (date: string) => (
           <span dir="ltr">{new Date(date).toLocaleDateString("fa-IR")}</span>
         ),
       },
-      { key: "docTypeTitle", label: "نوع سند", type: "string" },
-      { key: "warehouseTitle", label: "انبار", type: "string" },
-      { key: "targetPartyName", label: "طرف حساب", type: "string" },
+      {
+        key: "docTypeTitle",
+        label: "نوع سند",
+        title: "نوع سند",
+        type: "string",
+      },
+      { key: "warehouseTitle", label: "انبار", title: "انبار", type: "string" },
+      {
+        key: "targetPartyName",
+        label: "طرف حساب",
+        title: "طرف حساب",
+        type: "string",
+      },
       {
         key: "description",
         label: "توضیحات",
+        title: "توضیحات",
         type: "string",
         render: (val: string) => (
           <span

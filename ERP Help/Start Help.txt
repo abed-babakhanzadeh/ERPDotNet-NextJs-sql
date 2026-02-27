@@ -2,6 +2,10 @@ git clone:
 https://github.com/abed-babakhanzadeh/ERPDotNet-NextJs-sql.git
 
 
+git config --global user.email "you@example.com"
+git config --global user.name "abed-babakhanzadeh"
+
+
 dotnet ef database update
 
 docker compose up -d --build
@@ -19,6 +23,10 @@ cd ERPDotNet
 dotnet build --startup-project ERPDotNet.API
 dotnet ef database update --project ERPDotNet.Infrastructure --startup-project ERPDotNet.API
 dotnet ef migrations add AddIsActiveToBpmsTransition --project ERPDotNet.Infrastructure --startup-project ERPDotNet.API
+
+dotnet tool install --global dotnet-ef
+dotnet restore
+dotnet build
 ---------------------------------------------------
 cd erp-frontend
 

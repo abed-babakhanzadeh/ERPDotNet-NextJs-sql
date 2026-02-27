@@ -2,8 +2,8 @@
 
 export enum InventoryDocStatus {
   Draft = 1,
-  InProcess = 2, // در جریان بررسی
-  RequiresRevision = 3, // نیازمند اصلاح
+  InProcess = 2,
+  RequiresRevision = 3,
   Approved = 4,
   Rejected = 5,
   Posted = 6,
