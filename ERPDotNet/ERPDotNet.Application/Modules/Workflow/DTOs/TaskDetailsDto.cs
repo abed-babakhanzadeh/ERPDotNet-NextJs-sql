@@ -23,4 +23,6 @@ public class TaskTransitionDto
     public string ActionTitle { get; set; } = string.Empty; 
     
     // (اختیاری) می‌توانید بعداً فیلدی مثل ColorClass هم به دیتابیس اضافه کنید تا دکمه تایید سبز و دکمه رد قرمز شود
+    // 🌟 فیلد جدید رنگ دکمه که مستقیماً به فرانت‌اند می‌رود
+    public string ButtonVariant { get; set; } = "default";
 }

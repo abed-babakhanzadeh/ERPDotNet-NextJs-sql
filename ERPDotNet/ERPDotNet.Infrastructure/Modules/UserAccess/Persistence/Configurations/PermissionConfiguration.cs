@@ -127,7 +127,13 @@ public class PermissionConfiguration : IEntityTypeConfiguration<Permission>
             new Permission { Id = 4100, Name = "Workflow.Tasks", Title = "کارتابل وظایف", IsMenu = true, ParentId = 4000, Url = "/workflow/inbox" },
             new Permission { Id = 4101, Name = "Workflow.Tasks.Inbox", Title = "مشاهده کارتابل من", IsMenu = false, ParentId = 4100 },
             new Permission { Id = 4102, Name = "Workflow.Tasks.View", Title = "مشاهده جزئیات پرونده", IsMenu = false, ParentId = 4100 },
-            new Permission { Id = 4103, Name = "Workflow.Tasks.Complete", Title = "اقدام روی پرونده (تایید/رد)", IsMenu = false, ParentId = 4100 }
+            new Permission { Id = 4103, Name = "Workflow.Tasks.Complete", Title = "اقدام روی پرونده (تایید/رد)", IsMenu = false, ParentId = 4100 },
+            
+            // 🌟 3. طراح گردش کار (Workflow Builder) - جدید
+            new Permission { Id = 4200, Name = "Workflow.Processes", Title = "طراح گردش کار", IsMenu = true, ParentId = 4000, Url = "/workflow/designer" },
+            new Permission { Id = 4201, Name = "Workflow.Processes.View", Title = "مشاهده فرآیندها", IsMenu = false, ParentId = 4200 },
+            new Permission { Id = 4202, Name = "Workflow.Processes.Create", Title = "ایجاد فرآیند", IsMenu = false, ParentId = 4200 },
+            new Permission { Id = 4203, Name = "Workflow.Processes.Edit", Title = "طراحی مراحل و دکمه‌ها", IsMenu = false, ParentId = 4200 }
             
         );
     }

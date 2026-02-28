@@ -161,6 +161,7 @@ public static class DependencyInjection
         // using ERPDotNet.Application.Modules.Inventory.ActionHandlers;
         services.AddKeyedScoped<IBpmsActionHandler, PostInventoryDocActionHandler>("INVENTORY_POST");
         services.AddKeyedScoped<IBpmsActionHandler, ReturnInventoryDocActionHandler>("INVENTORY_RETURN");
+        services.AddKeyedScoped<IBpmsActionHandler, CancelInventoryDocActionHandler>("INVENTORY_CANCEL");
     }
 
 

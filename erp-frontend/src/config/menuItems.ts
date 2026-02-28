@@ -21,6 +21,8 @@ import {
   ScrollText,
   Inbox,
   Briefcase,
+  Network,
+  Settings2,
 } from "lucide-react";
 
 export interface MenuItem {
@@ -40,13 +42,26 @@ export const MENU_ITEMS: MenuItem[] = [
   },
 
   // =======================================================
-  // === ماژول کارتابل و گردش کار (اضافه شده) ===
+  // === ماژول گردش کار (Workflow) ===
   // =======================================================
   {
-    title: "کارتابل من",
-    href: "/workflow/inbox",
-    icon: Inbox,
-    permission: "Workflow.Tasks.Inbox", // این همان پرمیشنی است که بالا تعریف کردیم
+    title: "گردش کار",
+    icon: Network,
+    permission: "Workflow",
+    submenu: [
+      {
+        title: "کارتابل من",
+        href: "/workflow/inbox",
+        icon: Inbox,
+        permission: "Workflow.Tasks.Inbox",
+      },
+      {
+        title: "طراح گردش کار",
+        href: "/workflow/designer",
+        icon: Settings2,
+        permission: "Workflow.Processes.View",
+      },
+    ],
   },
 
   // === گروه عمومی ===

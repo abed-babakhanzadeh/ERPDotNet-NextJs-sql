@@ -168,29 +168,25 @@ export default function TaskDetailsPage({
               />
 
               <div className="flex flex-wrap gap-2 mt-auto">
-                {task.availableTransitions.map((t: any) => {
-                  const isReject =
-                    t.actionTitle.includes("رد") ||
-                    t.actionTitle.includes("برگشت");
-                  return (
-                    <Button
-                      key={t.transitionId}
-                      onClick={() => handleTransition(t.transitionId)}
-                      disabled={processingId !== null}
-                      variant={isReject ? "destructive" : "default"}
-                      className="flex-1 font-bold shadow-sm"
-                    >
-                      {processingId === t.transitionId ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : isReject ? (
-                        <XCircle className="ml-2 w-4 h-4" />
-                      ) : (
-                        <CheckCircle2 className="ml-2 w-4 h-4" />
-                      )}
-                      {t.actionTitle}
-                    </Button>
-                  );
-                })}
+                {task.availableTransitions.map((t: any) => (
+                  <Button
+                    key={t.transitionId}
+                    onClick={() => handleTransition(t.transitionId)}
+                    disabled={processingId !== null}
+                    // 🌟 جادوی معماری داینامیک: رنگ دقیقاً از دیتابیس خوانده می‌شود
+                    variant={t.buttonVariant || "default"}
+                    className="flex-1 font-bold shadow-sm"
+                  >
+                    {processingId === t.transitionId ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : t.buttonVariant === "destructive" ? (
+                      <XCircle className="ml-2 w-4 h-4" />
+                    ) : (
+                      <CheckCircle2 className="ml-2 w-4 h-4" />
+                    )}
+                    {t.actionTitle}
+                  </Button>
+                ))}
                 {task.availableTransitions.length === 0 && (
                   <div className="w-full p-2 bg-red-50 text-red-600 text-sm text-center rounded-md border border-red-200">
                     دسترسی یا دکمه‌ای برای این مرحله تعریف نشده است.

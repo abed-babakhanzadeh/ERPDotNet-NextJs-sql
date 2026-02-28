@@ -4,11 +4,11 @@ using ERPDotNet.Domain.Modules.Workflow.Entities;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using ERPDotNet.Domain.Modules.Workflow.Enums;
 
 namespace ERPDotNet.Application.Modules.Workflow.Commands.CreateTransition;
 
-public record CreateTransitionCommand(int ProcessVersionId, int FromStateId, int ToStateId, string ActionTitle, string? ActionCode) : IRequest<int>;
-
+public record CreateTransitionCommand(int ProcessVersionId, int FromStateId, int ToStateId, string ActionTitle, string? ActionCode, BpmsButtonVariant ButtonVariant) : IRequest<int>;
 public class CreateTransitionCommandValidator : AbstractValidator<CreateTransitionCommand>
 {
     public CreateTransitionCommandValidator()
@@ -17,6 +17,7 @@ public class CreateTransitionCommandValidator : AbstractValidator<CreateTransiti
         RuleFor(v => v.FromStateId).GreaterThan(0);
         RuleFor(v => v.ToStateId).GreaterThan(0);
         RuleFor(v => v.ActionTitle).NotEmpty().MaximumLength(100);
+        RuleFor(v => v.ButtonVariant).IsInEnum();
     }
 }
 
@@ -47,6 +48,7 @@ public class CreateTransitionCommandHandler : IRequestHandler<CreateTransitionCo
             ToStateId = request.ToStateId,
             ActionTitle = request.ActionTitle,
             ActionCode = string.IsNullOrWhiteSpace(request.ActionCode) ? null : request.ActionCode,
+            ButtonVariant = request.ButtonVariant,            
             IsActive = true
         };
 

@@ -18,6 +18,7 @@ public class TransitionDto
     public string ActionTitle { get; set; } = string.Empty;
     public string? ActionCode { get; set; }
     public bool IsActive { get; set; }
+    public string ButtonVariant { get; set; } = "default";
 }
 
 // این کلاس کل درخت فرآیند را یکجا برای فرانت‌اند می‌فرستد

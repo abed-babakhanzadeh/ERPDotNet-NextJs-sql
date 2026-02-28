@@ -25,4 +25,6 @@ public class BpmsTransition : BaseEntity
     public BpmsProcessVersion ProcessVersion { get; set; } = null!;
     public BpmsState FromState { get; set; } = null!;
     public BpmsState ToState { get; set; } = null!;
+    // 🌟 استفاده از Enum به جای String برای حفظ یکپارچگی دیتابیس
+    public ERPDotNet.Domain.Modules.Workflow.Enums.BpmsButtonVariant ButtonVariant { get; set; } = ERPDotNet.Domain.Modules.Workflow.Enums.BpmsButtonVariant.Default;
 }

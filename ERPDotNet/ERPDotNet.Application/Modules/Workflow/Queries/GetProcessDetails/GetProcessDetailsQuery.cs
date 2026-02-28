@@ -69,6 +69,7 @@ public class GetProcessDetailsQueryHandler : IRequestHandler<GetProcessDetailsQu
                 ToStateTitle = t.ToState.Title,
                 ActionTitle = t.ActionTitle,
                 ActionCode = t.ActionCode,
+                ButtonVariant = t.ButtonVariant.ToString().ToLower(), // 🌟 اختصاص رنگ دکمه
                 IsActive = t.IsActive
             }).ToList();
         }

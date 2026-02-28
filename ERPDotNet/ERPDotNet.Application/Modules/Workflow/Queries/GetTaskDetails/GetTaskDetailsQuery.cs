@@ -24,7 +24,6 @@ public class GetTaskDetailsQueryHandler : IRequestHandler<GetTaskDetailsQuery, T
         int companyId = int.TryParse(_currentUser.CompanyId, out var cid) ? cid : 
                         throw new UnauthorizedAccessException("شناسه شرکت نامشخص است.");
 
-        // 1. واکشی تسک همراه با اطلاعات ضروری پرونده
         var task = await _context.BpmsTasks
             .AsNoTracking()
             .Include(t => t.Instance)
@@ -34,24 +33,20 @@ public class GetTaskDetailsQueryHandler : IRequestHandler<GetTaskDetailsQuery, T
             .FirstOrDefaultAsync(t => t.Id == request.TaskId && t.CompanyId == companyId, cancellationToken);
 
         if (task == null)
-            throw new KeyNotFoundException("وظیفه مورد نظر یافت نشد یا دسترسی ندارید.");
+            throw new KeyNotFoundException("وظیفه مورد نظر یافت نشد.");
 
-        // 2. واکشی دکمه‌های مجاز (Transition ها) بر اساس وضعیت فعلیِ پرونده
-        // در یک سیستم فوق‌پیشرفته، اینجا Role کاربر هم چک می‌شود که آیا اجازه دیدن این دکمه را دارد یا خیر
-        // 2. واکشی دکمه‌های مجاز (فقط فعال‌ها)
+        // 🌟 واکشی دکمه‌ها همراه با رنگ (ButtonVariant)
         var availableTransitions = await _context.BpmsTransitions
             .AsNoTracking()
-            .Where(tr => tr.FromStateId == task.Instance.CurrentStateId && tr.IsActive) // 🌟 اضافه شدن IsActive
-            // 💡 برای آینده: در اینجا می‌توانیم دسترسی نقش‌ها را هم چک کنیم
-            // && tr.AllowedRoles.Any(r => userRoles.Contains(r.RoleId))
+            .Where(tr => tr.FromStateId == task.Instance.CurrentStateId && tr.IsActive)
             .Select(tr => new TaskTransitionDto
             {
                 TransitionId = tr.Id,
-                ActionTitle = tr.ActionTitle
+                ActionTitle = tr.ActionTitle,
+                ButtonVariant = tr.ButtonVariant.ToString().ToLower() // 🌟 اختصاص رنگ دکمه
             })
             .ToListAsync(cancellationToken);
 
-        // 3. نگاشت به DTO خروجی
         return new TaskDetailsDto
         {
             TaskId = task.Id,
