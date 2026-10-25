@@ -2,6 +2,7 @@ using ERPDotNet.Application.Common.Extensions;
 using ERPDotNet.Application.Common.Interfaces;
 using ERPDotNet.Application.Common.Models;
 using ERPDotNet.Application.Modules.Workflow.DTOs;
+using ERPDotNet.Application.Modules.Workflow.Services;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -42,6 +43,13 @@ public class GetInboxTasksHandler : IRequestHandler<GetInboxTasksQuery, Paginate
             .AsNoTracking()
             .Where(t => t.CompanyId == companyId && !t.IsCompleted)
             .AsQueryable();
+
+        // فقط کارهایی که کاربر حداقل یکی از دکمه‌های مرحله فعلی‌شان را می‌تواند اجرا کند
+        var userRoles = await BpmsTransitionAccess.GetUserRolesAsync(_context, _currentUser.UserId, cancellationToken);
+        var executableTransitions = _context.BpmsTransitions
+            .Where(tr => tr.IsActive)
+            .Where(BpmsTransitionAccess.CanExecute(userRoles));
+        query = query.Where(t => executableTransitions.Any(tr => tr.FromStateId == t.Instance.CurrentStateId));
 
         if (!string.IsNullOrWhiteSpace(request.ProcessCode))
         {

@@ -32,6 +32,10 @@ public class GetProcessDetailsQueryHandler : IRequestHandler<GetProcessDetailsQu
             .Include(x => x.Versions)
                 .ThenInclude(v => v.Transitions)
                     .ThenInclude(t => t.ToState)
+            .Include(x => x.Versions)
+                .ThenInclude(v => v.Transitions)
+                    .ThenInclude(t => t.AllowedRoles)
+            .AsSplitQuery()
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == request.ProcessId && x.CompanyId == companyId, cancellationToken);
 
@@ -60,6 +64,12 @@ public class GetProcessDetailsQueryHandler : IRequestHandler<GetProcessDetailsQu
                 Type = (int)s.Type
             }).ToList();
 
+            var roleIds = activeVersion.Transitions.SelectMany(t => t.AllowedRoles).Select(r => r.RoleId).Distinct().ToList();
+            var roleNames = await _context.Roles
+                .AsNoTracking()
+                .Where(r => roleIds.Contains(r.Id))
+                .ToDictionaryAsync(r => r.Id, r => r.Name ?? r.Id, cancellationToken);
+
             dto.Transitions = activeVersion.Transitions.Select(t => new TransitionDto
             {
                 Id = t.Id,
@@ -70,7 +80,11 @@ public class GetProcessDetailsQueryHandler : IRequestHandler<GetProcessDetailsQu
                 ActionTitle = t.ActionTitle,
                 ActionCode = t.ActionCode,
                 ButtonVariant = t.ButtonVariant.ToString().ToLower(), // 🌟 اختصاص رنگ دکمه
-                IsActive = t.IsActive
+                IsActive = t.IsActive,
+                Roles = t.AllowedRoles
+                    .Select(r => new TransitionRoleDto { Id = r.RoleId, Name = roleNames.GetValueOrDefault(r.RoleId, r.RoleId) })
+                    .OrderBy(r => r.Name)
+                    .ToList()
             }).ToList();
         }
 

@@ -19,6 +19,15 @@ public class TransitionDto
     public string? ActionCode { get; set; }
     public bool IsActive { get; set; }
     public string ButtonVariant { get; set; } = "default";
+
+    // نقش‌های مجاز؛ لیست خالی یعنی دکمه برای همه کاربران فعال است
+    public List<TransitionRoleDto> Roles { get; set; } = new();
+}
+
+public class TransitionRoleDto
+{
+    public string Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
 }
 
 // این کلاس کل درخت فرآیند را یکجا برای فرانت‌اند می‌فرستد

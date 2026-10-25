@@ -96,7 +96,24 @@ public class TasksController : ControllerBase
         var id = await _mediator.Send(command);
         return Ok(id);
     }
-    
+
+    // جایگزینی نقش‌های مجاز یک دکمه؛ لیست خالی = آزاد برای همه
+    [HttpPut("transitions/{id}/roles")]
+    [HasPermission("Workflow.Processes.Edit")]
+    public async Task<IActionResult> UpdateTransitionRoles(int id, [FromBody] List<string> roleIds)
+    {
+        await _mediator.Send(new ERPDotNet.Application.Modules.Workflow.Commands.UpdateTransitionRoles.UpdateTransitionRolesCommand(id, roleIds));
+        return NoContent();
+    }
+
+    // فهرست نقش‌ها برای انتخاب در طراح
+    [HttpGet("roles")]
+    [HasPermission("Workflow.Processes.Edit")]
+    public async Task<ActionResult<List<TransitionRoleDto>>> GetWorkflowRoles()
+    {
+        return Ok(await _mediator.Send(new ERPDotNet.Application.Modules.Workflow.Queries.GetWorkflowRoles.GetWorkflowRolesQuery()));
+    }
+
 
     [AllowAnonymous]
     [HttpGet("ultimate-seed")]

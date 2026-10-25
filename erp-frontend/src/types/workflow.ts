@@ -24,6 +24,14 @@ export interface TransitionDto {
   actionTitle: string;
   actionCode?: string;
   isActive: boolean;
+  buttonVariant: string;
+  /** نقش‌های مجاز؛ خالی یعنی همه کاربران */
+  roles: WorkflowRoleDto[];
+}
+
+export interface WorkflowRoleDto {
+  id: string;
+  name: string;
 }
 
 export interface ProcessDetailsDto extends ProcessDto {

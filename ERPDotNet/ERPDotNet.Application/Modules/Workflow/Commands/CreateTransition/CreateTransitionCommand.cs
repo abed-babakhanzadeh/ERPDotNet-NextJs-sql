@@ -8,16 +8,27 @@ using ERPDotNet.Domain.Modules.Workflow.Enums;
 
 namespace ERPDotNet.Application.Modules.Workflow.Commands.CreateTransition;
 
-public record CreateTransitionCommand(int ProcessVersionId, int FromStateId, int ToStateId, string ActionTitle, string? ActionCode, BpmsButtonVariant ButtonVariant) : IRequest<int>;
+public record CreateTransitionCommand(
+    int ProcessVersionId,
+    int FromStateId,
+    int ToStateId,
+    string ActionTitle,
+    string? ActionCode,
+    BpmsButtonVariant ButtonVariant,
+    // نقش‌های مجاز به زدن این دکمه؛ خالی یعنی همه کاربران
+    List<string>? RoleIds = null) : IRequest<int>;
 public class CreateTransitionCommandValidator : AbstractValidator<CreateTransitionCommand>
 {
-    public CreateTransitionCommandValidator()
+    public CreateTransitionCommandValidator(IApplicationDbContext context)
     {
         RuleFor(v => v.ProcessVersionId).GreaterThan(0);
         RuleFor(v => v.FromStateId).GreaterThan(0);
         RuleFor(v => v.ToStateId).GreaterThan(0);
         RuleFor(v => v.ActionTitle).NotEmpty().MaximumLength(100);
         RuleFor(v => v.ButtonVariant).IsInEnum();
+        RuleFor(v => v.RoleIds)
+            .MustAsync((roleIds, ct) => TransitionRoleRules.AllExistAsync(context, roleIds, ct))
+            .WithMessage(TransitionRoleRules.UnknownRoleMessage);
     }
 }
 
@@ -51,6 +62,11 @@ public class CreateTransitionCommandHandler : IRequestHandler<CreateTransitionCo
             ButtonVariant = request.ButtonVariant,            
             IsActive = true
         };
+
+        foreach (var roleId in (request.RoleIds ?? []).Distinct())
+        {
+            transition.AllowedRoles.Add(new BpmsTransitionRole { RoleId = roleId });
+        }
 
         _context.BpmsTransitions.Add(transition);
         await _context.SaveChangesAsync(cancellationToken);
