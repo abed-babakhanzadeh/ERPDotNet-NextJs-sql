@@ -248,4 +248,45 @@ test.describe("سند انبار", () => {
     ).toContainText(code);
     await api.dispose();
   });
+
+  test("اعتبارسنجی سند جدید: خطای فیلدهای سربرگ و قفسه ردیف", async ({ page }) => {
+    const api = await adminApi();
+    const tag = uid();
+    const unitId = await createUnit(api, `عدد ${tag}`);
+    const code = `VL-${tag}`;
+    await createProduct(api, { code, name: `کالا ${tag}`, unitId });
+    const wh = await createWarehouse(api, tag);
+    const typeTitle = `رسید ${tag}`;
+    await createDocType(api, typeTitle, 1);
+
+    let posted = false;
+    page.on("request", (r) => {
+      if (r.method() === "POST" && docUrl.test(r.url())) posted = true;
+    });
+
+    await page.goto("/inventory/docs/create");
+    await page.getByRole("button", { name: "ثبت اولیه" }).click();
+    // خطا زیر خود فیلد هم دیده می‌شود و به آن وصل است
+    const docType = page.getByRole("combobox", { name: "نوع سند" });
+    await expect(docType).toHaveAttribute("aria-invalid", "true");
+    await expect(docType).toHaveAccessibleDescription("نوع سند را انتخاب کنید.");
+    await expect(page.getByText("انبار را انتخاب کنید.")).toBeVisible();
+
+    await docType.click();
+    await page.getByRole("option", { name: typeTitle }).click();
+    await expect(docType).not.toHaveAttribute("aria-invalid", "true");
+    await page.getByRole("combobox", { name: "انبار", exact: true }).click();
+    await page.getByRole("option", { name: wh.title }).click();
+
+    await page.getByRole("button", { name: "ثبت اولیه" }).click();
+    await expect(page.getByText("لطفا حداقل یک قلم کالا وارد کنید.")).toBeVisible();
+
+    await page.getByRole("button", { name: "افزودن سطر جدید" }).click();
+    await pickRowProduct(page, 1, code);
+    await page.getByRole("button", { name: "ثبت اولیه" }).click();
+    // بک‌اند سند بدون قفسه را رد می‌کند؛ فرم پیش از ارسال همین را می‌گوید
+    await expect(page.getByText("ردیف 1: قفسه را انتخاب کنید.")).toBeVisible();
+    expect(posted).toBe(false);
+    await api.dispose();
+  });
 });

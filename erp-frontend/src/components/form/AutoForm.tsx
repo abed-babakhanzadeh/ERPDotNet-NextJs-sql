@@ -53,12 +53,14 @@ function SelectControl({
   value,
   disabled,
   onChange,
+  errorId,
 }: {
   id: string;
   field: FieldConfig;
   value: unknown;
   disabled?: boolean;
   onChange: (value: string | number | null) => void;
+  errorId?: string;
 }) {
   const options = field.options ?? [];
   const match = options.find((o) => o.value !== null && String(o.value) === String(value));
@@ -75,7 +77,13 @@ function SelectControl({
         onChange(opt ? opt.value : v);
       }}
     >
-      <SelectTrigger id={id} aria-required={field.required}>
+      <SelectTrigger
+        id={id}
+        aria-required={field.required}
+        aria-invalid={!!errorId}
+        aria-describedby={errorId}
+        className={errorId ? "border-destructive" : undefined}
+      >
         <SelectValue placeholder={field.placeholder || "انتخاب کنید"} />
       </SelectTrigger>
       <SelectContent>
@@ -96,6 +104,8 @@ interface AutoFormProps {
   fields: FieldConfig[];
   data: any;
   onChange: (name: string, value: any) => void;
+  /** پیام خطای هر فیلد (مثلاً از formState.errors در react-hook-form) */
+  errors?: Record<string, string | undefined>;
   loading?: boolean;
   className?: string;
 }
@@ -104,6 +114,7 @@ export default function AutoForm({
   fields,
   data,
   onChange,
+  errors,
   loading,
   className,
 }: AutoFormProps) {
@@ -133,6 +144,8 @@ export default function AutoForm({
         const fieldValue = data[field.name];
         const id = `field-${field.name}`;
         const disabled = loading || field.disabled;
+        const error = errors?.[field.name];
+        const errorId = error ? `${id}-error` : undefined;
 
         return (
           <div
@@ -166,6 +179,8 @@ export default function AutoForm({
                 onChange={(e) => onChange(field.name, e.target.value)}
                 disabled={disabled}
                 required={field.required}
+                aria-invalid={!!error}
+                aria-describedby={errorId}
                 step={field.step}
                 dir={field.type === "number" ? "ltr" : undefined}
                 className={field.type === "number" ? "text-start" : undefined}
@@ -190,6 +205,7 @@ export default function AutoForm({
                 value={fieldValue}
                 disabled={disabled}
                 onChange={(v) => onChange(field.name, v)}
+                errorId={errorId}
               />
             )}
 
@@ -202,6 +218,8 @@ export default function AutoForm({
                 onChange={(e) => onChange(field.name, e.target.value)}
                 disabled={disabled}
                 required={field.required}
+                aria-invalid={!!error}
+                aria-describedby={errorId}
               />
             )}
 
@@ -283,6 +301,12 @@ export default function AutoForm({
                   )}
                 </div>
               </div>
+            )}
+
+            {error && (
+              <p id={errorId} className="text-[0.8rem] font-medium text-destructive">
+                {error}
+              </p>
             )}
           </div>
         );

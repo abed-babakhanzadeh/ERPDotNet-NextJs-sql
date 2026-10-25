@@ -8,6 +8,8 @@ import React, {
   useRef,
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import { useForm, useWatch, type FieldErrors } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import {
   Save,
@@ -21,7 +23,6 @@ import {
 
 import MasterDetailForm from "@/components/form/MasterDetailForm";
 import AutoForm, { FieldConfig } from "@/components/form/AutoForm";
-import { useDirtySnapshot } from "@/hooks/useDirtySnapshot";
 import AdvancedEditableGrid, {
   GridColumn,
 } from "@/components/grid/AdvancedEditableGrid";
@@ -51,6 +52,14 @@ import {
   InventoryNature,
 } from "@/types/inventory";
 import { useConfirm } from "@/providers/ConfirmProvider";
+import {
+  EMPTY_DOC,
+  firstDocError,
+  hasProduct,
+  makeDocSchema,
+  type DocFormValues,
+  type DocRow,
+} from "./docFormSchema";
 
 interface DocFormProps {
   mode: "create" | "edit" | "view";
@@ -78,8 +87,6 @@ export default function DocForm({
   const [submitting, setSubmitting] = useState(false);
   const [isReloading, setIsReloading] = useState(false);
 
-  const [headerData, setHeaderData] = useState<any>({});
-  const [gridData, setGridData] = useState<any[]>([]);
   const [locations, setLocations] = useState<any[]>([]);
   // لوکیشن‌های انبار مقصد (فقط سند انتقال)
   const [destinationLocations, setDestinationLocations] = useState<any[]>([]);
@@ -87,8 +94,46 @@ export default function DocForm({
   const [productsLoading, setProductsLoading] = useState(false);
 
   const isInitialized = useRef(false);
-  // نسخه state همان پرچم؛ تا مبنای «تغییرات ذخیره‌نشده» بعد از پر شدن فرم گرفته شود
+  // نسخه state همان پرچم؛ تا هشدار «تغییرات ذخیره‌نشده» پیش از پر شدن فرم نیاید
   const [initialized, setInitialized] = useState(false);
+
+  const isTransferType = useCallback(
+    (docTypeId: number | null) =>
+      docTypes.find((dt) => dt.id === Number(docTypeId))?.natureValue ===
+      InventoryNature.Transfer,
+    [docTypes],
+  );
+  const schema = useMemo(
+    () =>
+      makeDocSchema({
+        isTransfer: isTransferType,
+        // بک‌اند قفسه را فقط هنگام ایجاد سند اجباری می‌داند
+        requireLocation: initialMode === "create",
+      }),
+    [isTransferType, initialMode],
+  );
+  const form = useForm<DocFormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: EMPTY_DOC,
+  });
+  const watched = useWatch({ control: form.control });
+  // سربرگ و سطرها از همان state فرم خوانده می‌شوند تا AutoForm و جدول بدون تغییر بمانند
+  const headerData = watched as DocFormValues;
+  const gridData = (watched.details ?? []) as DocRow[];
+  const headerErrors = Object.fromEntries(
+    Object.entries(form.formState.errors)
+      .filter(([key]) => key !== "details")
+      .map(([key, err]) => [key, (err as { message?: string })?.message]),
+  ) as Record<string, string | undefined>;
+
+  const setHeaderField = (name: string, value: unknown) => {
+    form.setValue(name as keyof DocFormValues, value as never, { shouldDirty: true });
+    form.clearErrors(name as keyof DocFormValues);
+  };
+  const setGridData = (rows: DocRow[]) => {
+    form.setValue("details", rows, { shouldDirty: true });
+    form.clearErrors("details");
+  };
 
   const getDraftKey = () => {
     if (initialMode === "create") return "inventory-doc-draft-new";
@@ -102,11 +147,25 @@ export default function DocForm({
       const savedDraft = draftKey ? sessionStorage.getItem(draftKey) : null;
       let loadedFromDraft = false;
 
+      // مبنای «تغییرات ذخیره‌نشده» همیشه نسخه سرور (یا فرم خالی) است؛ پیش‌نویس روی آن اعمال می‌شود
+      const base: DocFormValues = docData
+        ? {
+            docTypeId: docData.docTypeId,
+            warehouseId: docData.warehouseId,
+            destinationWarehouseId: docData.destinationWarehouseId ?? null,
+            docDate: docData.docDate ? new Date(docData.docDate) : new Date(),
+            description: docData.description || "",
+            targetPartyName: docData.targetPartyName || "",
+            referenceExternalCode: docData.referenceExternalCode || "",
+            details: docData.details.map((d) => ({ ...d, tempId: d.id })) || [],
+          }
+        : { ...EMPTY_DOC, docDate: new Date() };
+      form.reset(base);
+
       if (savedDraft) {
         try {
           const parsed = JSON.parse(savedDraft);
-          setHeaderData(parsed.headerData);
-          setGridData(parsed.gridData);
+          form.reset({ ...base, ...parsed.headerData, details: parsed.gridData ?? [] }, { keepDefaultValues: true });
           if (parsed.productsList) setProductsList(parsed.productsList);
           if (parsed.headerData.warehouseId)
             loadLocations(Number(parsed.headerData.warehouseId));
@@ -118,18 +177,6 @@ export default function DocForm({
 
       if (!loadedFromDraft) {
         if (docData) {
-          setHeaderData({
-            docTypeId: docData.docTypeId,
-            warehouseId: docData.warehouseId,
-            destinationWarehouseId: docData.destinationWarehouseId,
-            docDate: docData.docDate ? new Date(docData.docDate) : new Date(),
-            description: docData.description || "",
-            targetPartyName: docData.targetPartyName || "",
-            referenceExternalCode: docData.referenceExternalCode || "",
-          });
-          setGridData(
-            docData.details.map((d) => ({ ...d, tempId: d.id })) || [],
-          );
           const existingProducts = docData.details.map((d) => ({
             id: d.productId,
             code: d.productCode,
@@ -144,19 +191,14 @@ export default function DocForm({
             return combined;
           });
           if (docData.warehouseId) loadLocations(docData.warehouseId);
-        } else if (initialMode === "create") {
-          setHeaderData({
-            docDate: new Date(),
-            description: "",
-            targetPartyName: "",
-            referenceExternalCode: "",
-          });
         }
       }
       isInitialized.current = true;
       setInitialized(true);
     };
     initData();
+    // فقط با رسیدن نسخه تازه سند دوباره مقداردهی شود
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [docData, initialMode]);
 
   useEffect(() => {
@@ -166,7 +208,8 @@ export default function DocForm({
       sessionStorage.setItem(
         draftKey,
         JSON.stringify({
-          headerData,
+          // همان قالب قبلی تا پیش‌نویس‌های باز کاربران هم خوانده شوند
+          headerData: { ...headerData, details: undefined },
           gridData,
           productsList,
           timestamp: new Date().getTime(),
@@ -258,16 +301,11 @@ export default function DocForm({
     currentStatus === InventoryDocStatus.RequiresRevision;
   const isReadOnly = currentMode === "view" || !isEditableStatus;
 
-  const isDirty = useDirtySnapshot(
-    { headerData, gridData },
-    initialized && !isReadOnly && !isReloading,
-    docData?.rowVersion
-  );
+  const isDirty =
+    form.formState.isDirty && initialized && !isReadOnly && !isReloading;
 
 
-  const isTransfer =
-    docTypes.find((dt) => dt.id === Number(headerData.docTypeId))
-      ?.natureValue === InventoryNature.Transfer;
+  const isTransfer = isTransferType(headerData.docTypeId ?? null);
 
   const headerFields: FieldConfig[] = [
     {
@@ -429,45 +467,13 @@ export default function DocForm({
   );
 
   // === Handlers ===
-  const handleSave = async () => {
-    if (!headerData.docTypeId || !headerData.warehouseId) {
-      return toast.error("لطفا نوع سند و انبار را انتخاب کنید.");
-    }
+  const onInvalid = (errors: FieldErrors<DocFormValues>) => {
+    const message = firstDocError(errors as Record<string, unknown>);
+    if (message) toast.error(message);
+  };
 
-    if (
-      isTransfer &&
-      (!headerData.destinationWarehouseId ||
-        Number(headerData.destinationWarehouseId) ===
-          Number(headerData.warehouseId))
-    ) {
-      return toast.error(
-        "برای سند انتقال، انبار مقصدی متفاوت از انبار مبدأ انتخاب کنید.",
-      );
-    }
-
-    const validDetails = gridData.filter(
-      (row) => row.productId && Number(row.productId) > 0,
-    );
-
-    if (validDetails.length === 0) {
-      return toast.error("لطفا حداقل یک قلم کالا وارد کنید.");
-    }
-
-    const invalidRow = validDetails.find(
-      (r) => !r.mainUnitQuantity || Number(r.mainUnitQuantity) <= 0,
-    );
-    if (invalidRow) {
-      return toast.error("تعداد کالا در تمام ردیف‌ها باید بزرگتر از صفر باشد.");
-    }
-
-    if (isTransfer) {
-      const missingIndex = validDetails.findIndex(
-        (r) => !r.destinationLocationId,
-      );
-      if (missingIndex >= 0) {
-        return toast.error(`ردیف ${missingIndex + 1}: قفسه مقصد را انتخاب کنید.`);
-      }
-    }
+  const onValid = async (values: DocFormValues) => {
+    const validDetails = values.details.filter(hasProduct);
 
     setSubmitting(true);
     try {
@@ -486,10 +492,16 @@ export default function DocForm({
       }));
 
       if (currentMode === "create") {
-        const command: CreateInventoryDocCommand = {
-          ...headerData,
+        const command = {
+          docTypeId: values.docTypeId,
+          warehouseId: values.warehouseId,
+          destinationWarehouseId: values.destinationWarehouseId,
+          docDate: values.docDate,
+          targetPartyName: values.targetPartyName,
+          referenceExternalCode: values.referenceExternalCode,
+          description: values.description,
           details: detailsDto,
-        };
+        } as unknown as CreateInventoryDocCommand;
         const result: any = await inventoryService.createDoc(command);
         const newId =
           typeof result === "object" && result !== null
@@ -498,20 +510,22 @@ export default function DocForm({
 
         toast.success("سند پیش‌نویس با موفقیت ایجاد شد");
         clearDraft();
+        // مبنا همان مقدار ثبت‌شده می‌شود تا رفتن به صفحه ویرایش هشدار تغییرات ندهد
+        form.reset(values);
         router.push(`/inventory/docs/edit/${newId}`);
       } else {
         if (!docData) return;
-        const command: UpdateInventoryDocCommand = {
+        const command = {
           id: docData.id,
-          docDate: headerData.docDate,
-          description: headerData.description,
-          warehouseId: headerData.warehouseId,
+          docDate: values.docDate,
+          description: values.description,
+          warehouseId: values.warehouseId,
           destinationWarehouseId: isTransfer
-            ? headerData.destinationWarehouseId
+            ? values.destinationWarehouseId
             : null,
           rowVersion: docData.rowVersion,
           details: detailsDto,
-        };
+        } as unknown as UpdateInventoryDocCommand;
         await inventoryService.updateDoc(docData.id, command);
         toast.success("تغییرات با موفقیت ذخیره شد");
         clearDraft();
@@ -523,6 +537,8 @@ export default function DocForm({
       setSubmitting(false);
     }
   };
+
+  const handleSave = form.handleSubmit(onValid, onInvalid);
 
   // 🌟 هندلر جدید برای ارسال به گردش کار
   const handleSubmitToWorkflow = async () => {
@@ -703,9 +719,8 @@ export default function DocForm({
           <AutoForm
             fields={headerFields}
             data={headerData}
-            onChange={(name, val) =>
-              setHeaderData((prev: any) => ({ ...prev, [name]: val }))
-            }
+            errors={headerErrors}
+            onChange={setHeaderField}
           />
         </div>
       }
