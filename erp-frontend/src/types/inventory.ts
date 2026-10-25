@@ -1,3 +1,4 @@
+import type { FilterModel } from "./api";
 // src/types/inventory.ts
 
 export enum InventoryDocStatus {
@@ -428,7 +429,7 @@ export interface GetCurrentStockQuery {
   isDescending?: boolean;
   searchTerm?: string;
   excludeZeroBalances?: boolean;
-  filters?: any[];
+  filters?: FilterModel[];
 }
 
 export interface ProductCardexDto {

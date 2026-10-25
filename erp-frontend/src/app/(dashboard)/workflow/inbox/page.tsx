@@ -5,13 +5,13 @@ import { useServerDataTable } from "@/hooks/useServerDataTable";
 import { DataTable } from "@/components/data-table";
 import { ColumnConfig } from "@/types";
 import { Badge } from "@/components/ui/badge";
+import { workflowService } from "@/services/workflowService";
 
 export default function InboxPage() {
   const router = useRouter();
 
-  // دقت کنید: چون apiClient خودش /api را اضافه می‌کند، اینجا فقط مسیر کنترلر را می‌دهیم
   const { tableProps } = useServerDataTable({
-    endpoint: "/Workflow/Tasks/inbox",
+    fetcher: workflowService.getInboxTasks,
     initialPageSize: 10,
   });
 

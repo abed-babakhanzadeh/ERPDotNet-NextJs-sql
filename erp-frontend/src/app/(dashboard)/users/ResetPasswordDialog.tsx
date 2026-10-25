@@ -14,7 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, KeyRound, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
-import apiClient from "@/services/apiClient";
+import { handleApiError } from "@/lib/error-handling";
+import { userService } from "@/services/userAccessService";
 
 interface ResetPasswordDialogProps {
   open: boolean;
@@ -47,18 +48,14 @@ export default function ResetPasswordDialog({
 
     setLoading(true);
     try {
-      // این اندپوینت باید در بک‌اند ساخته شود:
-      // [HttpPost("admin-reset-password")]
-      await apiClient.post(`/Users/${userId}/change-password`, {
-        newPassword: password,
-      });
+      await userService.changePassword(String(userId), { newPassword: password });
 
       toast.success(`رمز عبور کاربر ${username} با موفقیت تغییر کرد`);
       onClose();
       setPassword("");
       setConfirmPassword("");
     } catch (error: any) {
-      toast.error(error.response?.data?.detail || "خطا در تغییر رمز عبور");
+      handleApiError(error, "خطا در تغییر رمز عبور");
     } finally {
       setLoading(false);
     }

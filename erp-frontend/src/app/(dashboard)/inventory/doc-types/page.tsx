@@ -29,6 +29,7 @@ import {
   NumberingScopeLabels,
 } from "@/types/inventory";
 import { ColumnConfig, SortConfig, ColumnFilter } from "@/types";
+import { handleApiError } from "@/lib/error-handling";
 
 export default function DocTypesListPage() {
   const router = useRouter();
@@ -52,7 +53,7 @@ export default function DocTypesListPage() {
       const result = await inventoryService.getDocTypes();
       setData(result);
     } catch (error) {
-      toast.error("خطا در دریافت لیست انواع سند");
+      handleApiError(error, "خطا در دریافت لیست انواع سند");
     } finally {
       setLoading(false);
     }
@@ -70,7 +71,7 @@ export default function DocTypesListPage() {
       toast.success("حذف با موفقیت انجام شد");
       loadData();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "خطا در عملیات حذف");
+      handleApiError(error, "خطا در عملیات حذف");
     }
   };
 

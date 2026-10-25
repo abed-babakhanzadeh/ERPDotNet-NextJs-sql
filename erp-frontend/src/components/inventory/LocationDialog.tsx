@@ -36,6 +36,7 @@ import {
 
 import inventoryService from "@/services/inventoryService";
 import { LocationDto } from "@/types/inventory";
+import { handleApiError } from "@/lib/error-handling";
 
 const locationSchema = z.object({
   title: z.string().min(1, "عنوان الزامی است"),
@@ -142,7 +143,7 @@ export default function LocationDialog({
       onSuccess();
       onClose();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "خطا در عملیات");
+      handleApiError(error, "خطا در عملیات");
     }
   };
 

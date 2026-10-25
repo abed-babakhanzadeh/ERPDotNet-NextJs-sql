@@ -1,15 +1,8 @@
+import type { UnitDto } from "./api";
 import type { Product as ProductType } from "./product";
 
-export type Unit = {
-  id: number;
-  title: string;
-  symbol: string;
-  precision: number;
-  isActive: boolean;
-  baseUnitId?: number;
-  conversionFactor: number;
-  baseUnitName?: string;
-};
+// منبع حقیقت: قرارداد OpenAPI بک‌اند
+export type Unit = UnitDto;
 
 export type Product = ProductType;
 
@@ -21,7 +14,10 @@ export type SortConfig = {
 export type FilterCondition = {
   id: string;
   operator: string;
+  // TODO(phase 2): با DataGrid عمومی نوع دقیق مقدار هر ستون جایگزین می‌شود
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   value2?: any; // For between operator
 };
 
@@ -36,6 +32,8 @@ export type ColumnConfig = {
   key: string;
   label: string;
   type: "string" | "number" | "boolean" | "date" | "text" | "custom"; // اضافه شدن date
+  // TODO(phase 2): DataGrid عمومی (ColumnConfig<TRow>) این any را حذف می‌کند
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   render?: (value: any, row: any) => React.ReactNode;
   sortable?: boolean;
   filterable?: boolean;

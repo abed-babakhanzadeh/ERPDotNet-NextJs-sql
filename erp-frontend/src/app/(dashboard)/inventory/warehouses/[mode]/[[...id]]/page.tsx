@@ -34,6 +34,7 @@ import {
 
 import inventoryService from "@/services/inventoryService";
 import { WarehouseDto } from "@/types/inventory";
+import { handleApiError } from "@/lib/error-handling";
 
 // 1. اسکیمای به‌روز شده طبق DefineWarehouseCommand در بک‌اند
 const warehouseSchema = z.object({
@@ -87,7 +88,7 @@ export default function WarehousePage() {
         const types = await inventoryService.getWarehouseTypes();
         setWarehouseTypes(types);
       } catch (error) {
-        toast.error("خطا در دریافت انواع انبار");
+        handleApiError(error, "خطا در دریافت انواع انبار");
       }
     };
     fetchTypes();
@@ -114,7 +115,7 @@ export default function WarehousePage() {
         isActive: result.isActive,
       });
     } catch (error) {
-      toast.error("خطا در دریافت اطلاعات انبار");
+      handleApiError(error, "خطا در دریافت اطلاعات انبار");
       router.push("/inventory/warehouses");
     } finally {
       setLoading(false);
@@ -141,7 +142,7 @@ export default function WarehousePage() {
       mutate("/api/inventory/warehouses");
       router.push("/inventory/warehouses");
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "خطا در عملیات");
+      handleApiError(error, "خطا در عملیات");
     } finally {
       setIsSubmitting(false);
     }

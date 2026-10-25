@@ -6,6 +6,7 @@ import DocForm from "../../components/DocForm";
 import inventoryService from "@/services/inventoryService";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { handleApiError } from "@/lib/error-handling";
 
 export default function EditDocPage() {
   const params = useParams();
@@ -33,7 +34,7 @@ export default function EditDocPage() {
         setDocTypes(dtRes);
         setWarehouses(wRes);
       } catch (error) {
-        toast.error("خطا در دریافت اطلاعات سند");
+        handleApiError(error, "خطا در دریافت اطلاعات سند");
       } finally {
         setLoading(false);
       }

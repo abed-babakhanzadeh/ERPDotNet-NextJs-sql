@@ -26,6 +26,7 @@ import {
   InventoryNature,
 } from "@/types/inventory";
 import { ColumnConfig } from "@/types";
+import { handleApiError } from "@/lib/error-handling";
 
 const statusMap: Record<
   number,
@@ -78,7 +79,7 @@ export default function InventoryDocsListPage() {
   // ✅ 1. استفاده خالص از هوک (بدون بازنویسی دستی)
   const { tableProps, refresh, totalCount } =
     useServerDataTable<InventoryDocDto>({
-      endpoint: "/Inventory/Inventory/docs/search",
+      fetcher: inventoryService.searchDocs,
       initialPageSize: 10,
     });
 
@@ -200,7 +201,7 @@ export default function InventoryDocsListPage() {
       toast.success("سند حذف شد");
       refresh();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "خطا در حذف");
+      handleApiError(error, "خطا در حذف");
     }
   };
 

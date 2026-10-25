@@ -8,7 +8,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import apiClient from "@/services/apiClient";
 import {
   Loader2,
   Box,
@@ -23,6 +22,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { bomService } from "@/services/bomService";
+import { toApiError } from "@/lib/error-handling";
 
 interface BOMTreeNode {
   key: string;
@@ -79,16 +80,13 @@ export default function VisualTreeDialog({
     setScale(1);
     setPosition({ x: 0, y: 0 });
 
-    apiClient
-      .get(`/ProductEngineering/BOMs/${bomId}/tree`)
-      .then((res) => {
-        if (res.data) setData(res.data);
+    bomService
+      .getTree(bomId)
+      .then((tree) => {
+        if (tree) setData(tree);
         else setError("داده‌ای یافت نشد");
       })
-      .catch((err) => {
-        console.error(err);
-        setError("خطا در دریافت ساختار درختی");
-      })
+      .catch((err) => setError(toApiError(err).message))
       .finally(() => setLoading(false));
   }, [open, bomId]);
 

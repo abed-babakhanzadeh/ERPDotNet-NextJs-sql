@@ -37,6 +37,7 @@ import { TableLookupCombobox } from "@/components/ui/TableLookupCombobox";
 import inventoryService from "@/services/inventoryService";
 import { Unit } from "@/types/baseInfo";
 import { InventoryItemProfileDto } from "@/types/inventory";
+import { handleApiError } from "@/lib/error-handling";
 
 const warehouseSettingSchema = z.object({
   warehouseId: z.coerce.number().min(1, "انبار الزامی است"),
@@ -133,13 +134,8 @@ export default function InventorySettingsTab({
       if (onProfileUpdate && updated) {
         onProfileUpdate(updated);
       }
-    } catch (error: any) {
-      // نمایش خطای دقیق
-      const msg =
-        error.response?.data?.detail ||
-        error.response?.data?.message ||
-        "خطا در ذخیره پروفایل";
-      toast.error(msg);
+    } catch (error) {
+      handleApiError(error, "خطا در ذخیره پروفایل");
     }
   };
 
@@ -167,9 +163,8 @@ export default function InventorySettingsTab({
 
       const updated = await inventoryService.getProductProfile(productId);
       setProfile(updated);
-    } catch (error: any) {
-      const msg = error.response?.data?.detail || "خطا در ذخیره تنظیمات انبار";
-      toast.error(msg);
+    } catch (error) {
+      handleApiError(error, "خطا در ذخیره تنظیمات انبار");
     }
   };
 
@@ -192,7 +187,7 @@ export default function InventorySettingsTab({
       const updated = await inventoryService.getProductProfile(productId);
       setProfile(updated);
     } catch (error) {
-      toast.error("خطا در حذف");
+      handleApiError(error, "خطا در حذف");
     }
   };
 

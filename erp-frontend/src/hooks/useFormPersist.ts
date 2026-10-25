@@ -1,9 +1,9 @@
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 
-export function useFormPersist(
+export function useFormPersist<T>(
   key: string,
-  formData: any,
-  setFormData: (data: any) => void,
+  formData: T,
+  setFormData: React.Dispatch<React.SetStateAction<T>>,
   // پارامتر جدید: فقط وقتی true باشد عملیات ذخیره انجام می‌شود
   isEnabled: boolean = true
 ) {
@@ -12,8 +12,8 @@ export function useFormPersist(
     const savedData = localStorage.getItem(key);
     if (savedData) {
       try {
-        const parsed = JSON.parse(savedData);
-        setFormData((prev: any) => {
+        const parsed = JSON.parse(savedData) as T;
+        setFormData((prev) => {
           if (Array.isArray(prev) || Array.isArray(parsed)) {
             return parsed;
           }

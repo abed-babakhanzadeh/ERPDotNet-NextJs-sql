@@ -19,6 +19,7 @@ import inventoryService from "@/services/inventoryService";
 
 // 🌟 ایمپورت کامپوننت فرم انبار
 import DocForm from "@/app/(dashboard)/inventory/docs/components/DocForm";
+import { handleApiError } from "@/lib/error-handling";
 
 export default function TaskDetailsPage({
   params,
@@ -88,7 +89,7 @@ export default function TaskDetailsPage({
       toast.success("وظیفه با موفقیت انجام شد.");
       router.push("/workflow/inbox"); // برگشت به لیست کارتابل
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "خطا در انجام عملیات");
+      handleApiError(error, "خطا در انجام عملیات");
     } finally {
       setProcessingId(null);
     }

@@ -1,5 +1,13 @@
-import apiClient from "./apiClient";
-import type { WorkflowRoleDto } from "@/types/workflow";
+import apiClient from "@/lib/api/client";
+import type {
+  CreateProcessCommand,
+  CreateStateCommand,
+  CreateTransitionCommand,
+  InboxTaskDto,
+  PagedQuery,
+  Paged,
+} from "@/types/api";
+import type { ProcessDto, WorkflowRoleDto } from "@/types/workflow";
 
 // 🌟 مسیر پایه با توجه به کلاس TasksController در بک‌اند
 const BASE_URL = "/Workflow/Tasks";
@@ -8,8 +16,8 @@ export const workflowService = {
   // ==========================================
   // بخش اول: کارتابل (Inbox) و عملیات روزمره
   // ==========================================
-  getInboxTasks: async (data: any) => {
-    const response = await apiClient.post(`${BASE_URL}/inbox`, data);
+  getInboxTasks: async (query: PagedQuery, signal?: AbortSignal) => {
+    const response = await apiClient.post<Paged<InboxTaskDto>>(`${BASE_URL}/inbox`, query, { signal });
     return response.data;
   },
 
@@ -32,12 +40,12 @@ export const workflowService = {
   // ==========================================
   // بخش دوم: مدیریت گردش کار (Workflow Builder)
   // ==========================================
-  getAllProcesses: async (data: any) => {
-    const response = await apiClient.post(`${BASE_URL}/processes/list`, data);
+  getAllProcesses: async (query: PagedQuery, signal?: AbortSignal) => {
+    const response = await apiClient.post<Paged<ProcessDto>>(`${BASE_URL}/processes/list`, query, { signal });
     return response.data;
   },
 
-  createProcess: async (data: any) => {
+  createProcess: async (data: CreateProcessCommand) => {
     const response = await apiClient.post(`${BASE_URL}/processes`, data);
     return response.data;
   },
@@ -47,12 +55,12 @@ export const workflowService = {
     return response.data;
   },
 
-  createState: async (data: any) => {
+  createState: async (data: CreateStateCommand) => {
     const response = await apiClient.post(`${BASE_URL}/states`, data);
     return response.data;
   },
 
-  createTransition: async (data: any) => {
+  createTransition: async (data: CreateTransitionCommand) => {
     const response = await apiClient.post(`${BASE_URL}/transitions`, data);
     return response.data;
   },

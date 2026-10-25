@@ -14,10 +14,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Loader2, Copy, AlertTriangle } from "lucide-react";
-import apiClient from "@/services/apiClient";
 import { toast } from "sonner";
 import { useTabs } from "@/providers/TabsProvider";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { handleApiError } from "@/lib/error-handling";
+import { bomService } from "@/services/bomService";
 
 interface NewVersionDialogProps {
   open: boolean;
@@ -55,11 +56,7 @@ export default function NewVersionDialog({
   const fetchNextVersion = async () => {
     setFetchingVersion(true);
     try {
-      // دریافت ورژن بعدی از بک‌اند
-      const verRes = await apiClient.get(
-        `/ProductEngineering/BOMs/products/${sourceProductId}/next-version`
-      );
-      setNewVersion(verRes.data); // data is int
+      setNewVersion(await bomService.getNextVersion(sourceProductId));
       setNewTitle(""); // پاک کردن عنوان قبلی یا گذاشتن مقدار پیش‌فرض
     } catch (error) {
       console.error(error);
@@ -79,7 +76,7 @@ export default function NewVersionDialog({
 
     setLoading(true);
     try {
-      const res = await apiClient.post(`/ProductEngineering/BOMs/copy`, {
+      const newId = await bomService.copy({
         sourceBomId: sourceBomId,
         newVersion: Number(newVersion), // int
         newTitle: newTitle || undefined,
@@ -87,7 +84,6 @@ export default function NewVersionDialog({
         isActive: true,
       });
 
-      const newId = res.data.id;
       toast.success(`نسخه ${newVersion} با موفقیت ایجاد شد`);
       onClose();
 
@@ -96,9 +92,8 @@ export default function NewVersionDialog({
         `ویرایش BOM v${newVersion}`,
         `/product-engineering/boms/edit/${newId}`
       );
-    } catch (error: any) {
-      const msg = error.response?.data?.detail || "خطا در ایجاد نسخه جدید";
-      toast.error(msg);
+    } catch (error) {
+      handleApiError(error, "خطا در ایجاد نسخه جدید");
     } finally {
       setLoading(false);
     }

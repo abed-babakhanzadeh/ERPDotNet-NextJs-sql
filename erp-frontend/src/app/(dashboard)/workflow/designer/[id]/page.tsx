@@ -43,6 +43,7 @@ import {
   TransitionDto,
   WorkflowRoleDto,
 } from "@/types/workflow";
+import { handleApiError } from "@/lib/error-handling";
 
 export default function ProcessDesignerPage({
   params,
@@ -107,7 +108,7 @@ export default function ProcessDesignerPage({
       setEditingRolesFor(null);
       loadProcessDetails();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "خطا در ذخیره دسترسی");
+      handleApiError(error, "خطا در ذخیره دسترسی");
     } finally {
       setIsSubmitting(false);
     }
@@ -119,7 +120,7 @@ export default function ProcessDesignerPage({
       const data = await workflowService.getProcessDetails(processId);
       setProcess(data);
     } catch (error) {
-      toast.error("خطا در دریافت جزئیات فرآیند");
+      handleApiError(error, "خطا در دریافت جزئیات فرآیند");
     } finally {
       setLoading(false);
     }
@@ -138,7 +139,7 @@ export default function ProcessDesignerPage({
     try {
       setIsSubmitting(true);
       await workflowService.createState({
-        processVersionId: process?.activeVersionId,
+        processVersionId: process!.activeVersionId,
         title: newState.title,
         stateCode: newState.stateCode.toUpperCase(),
         type: Number(newState.type),
@@ -148,7 +149,7 @@ export default function ProcessDesignerPage({
       setNewState({ title: "", stateCode: "", type: 2 });
       loadProcessDetails();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "خطا در ثبت مرحله");
+      handleApiError(error, "خطا در ثبت مرحله");
     } finally {
       setIsSubmitting(false);
     }
@@ -167,7 +168,7 @@ export default function ProcessDesignerPage({
     try {
       setIsSubmitting(true);
       await workflowService.createTransition({
-        processVersionId: process?.activeVersionId,
+        processVersionId: process!.activeVersionId,
         fromStateId: Number(newTransition.fromStateId),
         toStateId: Number(newTransition.toStateId),
         actionTitle: newTransition.actionTitle,
@@ -190,7 +191,7 @@ export default function ProcessDesignerPage({
       });
       loadProcessDetails();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "خطا در ثبت ارتباط");
+      handleApiError(error, "خطا در ثبت ارتباط");
     } finally {
       setIsSubmitting(false);
     }

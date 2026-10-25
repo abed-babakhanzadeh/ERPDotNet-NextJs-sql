@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
-import apiClient from "@/services/apiClient";
 import { toast } from "sonner";
 import {
   Layers,
@@ -40,6 +39,10 @@ import SubstitutesDialog, { SubstituteRow } from "./SubstitutesDialog";
 import { usePermissions } from "@/providers/PermissionProvider";
 import { useTabs } from "@/providers/TabsProvider";
 import { useFormPersist } from "@/hooks/useFormPersist";
+import { handleApiError } from "@/lib/error-handling";
+import { productService } from "@/services/baseInfoService";
+import { bomService } from "@/services/bomService";
+import type { BOMListDto } from "@/types/api";
 
 // Types
 type FormMode = "create" | "edit" | "view";
@@ -56,13 +59,7 @@ interface ProductLookupDto {
   unitName: string;
 }
 
-interface BOMLookupDto {
-  id: number;
-  title: string;
-  version: string;
-  productName: string;
-  productCode: string;
-}
+type BOMLookupDto = BOMListDto;
 
 // اینترفیس استیت هدر (اصلاح شده)
 interface BOMHeaderState {
@@ -157,10 +154,8 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
       const fetchNext = async () => {
         setFetchingVersion(true);
         try {
-          const res = await apiClient.get(
-            `/ProductEngineering/BOMs/products/${headerData.productId}/next-version`
-          );
-          setHeaderData((prev) => ({ ...prev, version: res.data }));
+          const nextVersion = await bomService.getNextVersion(Number(headerData.productId));
+          setHeaderData((prev) => ({ ...prev, version: nextVersion }));
         } catch (error) {
           console.error("Error fetching next version:", error);
         } finally {
@@ -181,7 +176,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
     productId: number
   ): Promise<UnitOption[]> => {
     try {
-      const { data } = await apiClient.get(`/BaseInfo/Products/${productId}`);
+      const data = await productService.getById(productId);
       const options: UnitOption[] = [];
 
       if (data.unitId) {
@@ -212,7 +207,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
 
     setLoadingData(true);
     try {
-      const { data } = await apiClient.get(`/ProductEngineering/BOMs/${id}`);
+      const data = await bomService.getById(id);
 
       setHeaderData({
         productId: data.productId,
@@ -279,7 +274,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
 
       setDetails(mappedDetails);
     } catch (error) {
-      toast.error("خطا در دریافت اطلاعات BOM");
+      handleApiError(error, "خطا در دریافت اطلاعات BOM");
       safeCloseTab();
     } finally {
       setLoadingData(false);
@@ -322,12 +317,12 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
 
   const searchProductsApi = async (term: string) => {
     if (!term && mode === "create") return [];
-    const res = await apiClient.post("/BaseInfo/Products/search", {
+    const res = await productService.search({
       pageNumber: 1,
       pageSize: 20,
       searchTerm: term,
     });
-    return res.data.items || [];
+    return res.items;
   };
 
   const onSearchHeader = async (term: string) => {
@@ -353,12 +348,12 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
   const onSearchTemplate = async (term: string) => {
     setTemplateLoading(true);
     try {
-      const res = await apiClient.post("/ProductEngineering/BOMs/search", {
+      const res = await bomService.search({
         pageNumber: 1,
         pageSize: 20,
         searchTerm: term,
       });
-      setTemplateOptions(res.data.items || []);
+      setTemplateOptions(res.items);
     } finally {
       setTemplateLoading(false);
     }
@@ -367,9 +362,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
   const handleImportTemplate = async (sourceBomId: number) => {
     setTemplateLoading(true);
     try {
-      const { data } = await apiClient.get(
-        `/ProductEngineering/BOMs/${sourceBomId}`
-      );
+      const data = await bomService.getById(sourceBomId);
 
       if (data.details && data.details.length > 0) {
         const newRows = await mapTemplateToRows(data.details);
@@ -380,7 +373,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
         toast.warning("BOM انتخاب شده هیچ ردیفی ندارد.");
       }
     } catch (error) {
-      toast.error("خطا در فراخوانی الگو");
+      handleApiError(error, "خطا در فراخوانی الگو");
     } finally {
       setTemplateLoading(false);
     }
@@ -743,10 +736,10 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
 
       if (mode === "create") {
         payload.productId = Number(headerData.productId);
-        await apiClient.post("/ProductEngineering/BOMs", payload);
+        await bomService.create(payload);
         toast.success("BOM با موفقیت ایجاد شد");
       } else if (mode === "edit" && bomId) {
-        await apiClient.put(`/ProductEngineering/BOMs/${bomId}`, payload);
+        await bomService.update(Number(bomId), payload);
         toast.success("تغییرات با موفقیت ذخیره شد");
       }
 
@@ -754,25 +747,14 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
       localStorage.removeItem(`${persistKey}-details`);
 
       safeCloseTab();
-    } catch (error: any) {
-      console.error("Full Submission Error:", error);
-
-      if (error.message === "یکی از ردیف‌های جدول فاقد کالا/قلم است.") {
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message === "یکی از ردیف‌های جدول فاقد کالا/قلم است."
+      ) {
         toast.error(error.message);
       } else {
-        const status = error.response?.status;
-        const validationErrors = error.response?.data?.errors;
-        const detail = error.response?.data?.detail;
-
-        if (validationErrors) {
-          const firstField = Object.keys(validationErrors)[0];
-          const firstMsg = validationErrors[firstField][0];
-          toast.error(`خطای ورودی: ${firstMsg}`);
-        } else if (detail) {
-          toast.error(`خطای سرور: ${detail}`);
-        } else {
-          toast.error(`خطا در ارتباط با سرور (${status || "نامشخص"})`);
-        }
+        handleApiError(error, "خطا در ذخیره فرمول ساخت");
       }
     } finally {
       setSubmitting(false);

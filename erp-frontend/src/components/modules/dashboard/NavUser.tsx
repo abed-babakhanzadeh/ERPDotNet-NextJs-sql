@@ -38,19 +38,13 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import apiClient from "@/services/apiClient";
 import { LockKeyhole, UserCog } from "lucide-react";
 import ChangeOwnPasswordDialog from "./ChangeOwnPasswordDialog";
 import { useFont } from "@/providers/FontProvider";
+import { authService } from "@/services/userAccessService";
+import { handleApiError } from "@/lib/error-handling";
 
-interface UserProfileDto {
-  id: string;
-  username: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  roles?: string[];
-}
+import type { UserProfileDto } from "@/types/api";
 
 export function NavUser() {
   const { isMobile } = useSidebar();
@@ -65,10 +59,9 @@ export function NavUser() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await apiClient.get<UserProfileDto>("/Auth/profile");
-        setUser(response.data);
+        setUser(await authService.getProfile());
       } catch (error) {
-        console.error("Failed to fetch user profile", error);
+        handleApiError(error, "خطا در دریافت اطلاعات کاربر");
       } finally {
         setLoading(false);
       }

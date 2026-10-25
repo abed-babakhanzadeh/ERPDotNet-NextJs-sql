@@ -1,18 +1,35 @@
 // hooks/useServerDataTable.tsx
 import { useState, useEffect, useCallback, useRef } from "react";
-import apiClient from "@/services/apiClient";
-import { toast } from "sonner";
+import { handleApiError, toApiError } from "@/lib/error-handling";
 import { SortConfig, ColumnFilter as AdvancedColumnFilter } from "@/types";
+import type { FilterModel, Paged } from "@/types/api";
 
-interface UseServerDataTableProps {
-  endpoint: string;
-  initialPageSize?: number;
-  // ✅ اضافه شدن فیلد extraPayload برای رفع خطای تایپ اسکریپت
-  extraPayload?: Record<string, any>;
+/** بدنه استاندارد درخواست فهرست صفحه‌بندی‌شده که این hook می‌سازد */
+export interface ServerTableQuery {
+  pageNumber: number;
+  pageSize: number;
+  searchTerm: string;
+  sortColumn?: string;
+  sortDescending: boolean;
+  filters: FilterModel[];
+  [extra: string]: unknown;
 }
 
-export function useServerDataTable<TData>(props: UseServerDataTableProps) {
-  const { endpoint, initialPageSize = 10, extraPayload } = props;
+/** تابع سرویس که یک صفحه از داده را برمی‌گرداند (آدرس API فقط در سرویس است) */
+export type ServerTableFetcher<TData> = (
+  query: ServerTableQuery,
+  signal?: AbortSignal,
+) => Promise<Paged<TData>>;
+
+interface UseServerDataTableProps<TData> {
+  fetcher: ServerTableFetcher<TData>;
+  initialPageSize?: number;
+  /** پارامترهای اضافه (مثل انبار انتخاب‌شده) که به بدنه درخواست اضافه می‌شوند */
+  extraPayload?: Record<string, unknown>;
+}
+
+export function useServerDataTable<TData>(props: UseServerDataTableProps<TData>) {
+  const { fetcher, initialPageSize = 10, extraPayload } = props;
 
   // --- States ---
   const [data, setData] = useState<TData[]>([]);
@@ -50,57 +67,48 @@ export function useServerDataTable<TData>(props: UseServerDataTableProps) {
         f.conditions
           .filter((c) => c.value !== "" && c.value !== null)
           .map((c) => ({
-            PropertyName: f.key,
-            Operation: c.operator,
-            Value: String(c.value),
-            Logic: f.logic,
+            propertyName: f.key,
+            operation: c.operator,
+            value: String(c.value),
+            logic: f.logic,
           })),
       );
 
       const simpleColumnFiltersPayload = Object.entries(columnFilters)
         .filter(([, value]) => value)
         .map(([key, value]) => ({
-          PropertyName: key,
-          Operation: "contains",
-          Value: String(value),
+          propertyName: key,
+          operation: "contains",
+          value: String(value),
         }));
 
       // بازیابی پارامترهای اضافی
       const parsedExtraPayload = JSON.parse(extraPayloadString);
 
-      const payload = {
+      const payload: ServerTableQuery = {
         pageNumber: pagination.pageIndex + 1,
         pageSize: pagination.pageSize,
         searchTerm: globalFilter,
         sortColumn: sorting?.key,
         sortDescending: sorting?.direction === "descending",
-        Filters: [...advancedFilterPayload, ...simpleColumnFiltersPayload],
-        // ✅ تزریق پارامترهای اضافی (مثل انبار و موجودی صفر) به بادی درخواست
+        filters: [...advancedFilterPayload, ...simpleColumnFiltersPayload],
+        // پارامترهای اضافی (مثل انبار و موجودی صفر)
         ...parsedExtraPayload,
       };
 
-      const response = await apiClient.post<any>(endpoint, payload, {
-        signal: controller.signal,
-      });
-
-      if (response?.data?.items) {
-        setData(response.data.items);
-        setRowCount(response.data.totalCount);
-      } else {
-        setData([]);
-        setRowCount(0);
-      }
-    } catch (error: any) {
-      if (error.name === "CanceledError" || error.code === "ERR_CANCELED")
-        return;
-      console.error("Fetch error:", error);
-      toast.error("خطا در دریافت اطلاعات");
+      const result = await fetcher(payload, controller.signal);
+      setData(result?.items ?? []);
+      setRowCount(result?.totalCount ?? 0);
+    } catch (error) {
+      if (toApiError(error).code === "cancelled") return;
+      handleApiError(error, "خطا در دریافت اطلاعات");
       setData([]);
+      setRowCount(0);
     } finally {
       if (abortControllerRef.current === controller) setIsLoading(false);
     }
   }, [
-    endpoint,
+    fetcher,
     pagination,
     sorting,
     globalFilter,

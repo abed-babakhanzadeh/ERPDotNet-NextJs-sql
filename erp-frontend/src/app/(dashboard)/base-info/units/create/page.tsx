@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import apiClient from "@/services/apiClient";
 import { toast } from "sonner";
 import { Unit } from "@/types/baseInfo";
 import { Ruler } from "lucide-react";
@@ -9,6 +8,8 @@ import BaseFormLayout from "@/components/layout/BaseFormLayout";
 import { useTabs } from "@/providers/TabsProvider";
 import { useFormPersist } from "@/hooks/useFormPersist";
 import AutoForm, { FieldConfig } from "@/components/form/AutoForm";
+import { handleApiError } from "@/lib/error-handling";
+import { unitService, productService } from "@/services/baseInfoService";
 
 export default function CreateUnitPage() {
   const { closeTab, activeTabId } = useTabs();
@@ -33,10 +34,10 @@ export default function CreateUnitPage() {
   );
 
   useEffect(() => {
-    apiClient
-      .get<Unit[]>("/BaseInfo/Units/lookup")
-      .then((res) => setUnits(res.data))
-      .catch(() => toast.error("خطا در دریافت واحدها"))
+    unitService
+      .lookup()
+      .then(setUnits)
+      .catch((error) => handleApiError(error, "خطا در دریافت واحدها"))
       .finally(() => setLoadingUnits(false));
   }, []);
 
@@ -100,17 +101,13 @@ export default function CreateUnitPage() {
           : Number(formData.conversionFactor),
       };
 
-      await apiClient.post("/BaseInfo/Units", payload);
+      await unitService.create(payload);
       toast.success("واحد با موفقیت ایجاد شد");
 
       clearStorage();
       closeTab(activeTabId);
-    } catch (error: any) {
-      console.error(error);
-      const msg = error.response?.data?.errors
-        ? Object.values(error.response.data.errors).flat().join(" - ")
-        : "خطا در ثبت واحد";
-      toast.error(msg);
+    } catch (error) {
+      handleApiError(error, "خطا در ثبت واحد");
     } finally {
       setSubmitting(false);
     }

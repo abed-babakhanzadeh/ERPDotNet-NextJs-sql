@@ -17,7 +17,6 @@ import {
   ImageIcon,
 } from "lucide-react";
 
-import apiClient from "@/services/apiClient";
 import inventoryService from "@/services/inventoryService";
 import { Unit } from "@/types/baseInfo";
 import { Product } from "@/types/product";
@@ -43,6 +42,8 @@ import InventorySettingsTab from "@/components/inventory/product/InventorySettin
 import ProductBatchesTab from "@/components/inventory/product/ProductBatchesTab";
 import ProductUnitsTab from "./ProductUnitsTab";
 import ProductImageTab from "./ProductImageTab";
+import { handleApiError } from "@/lib/error-handling";
+import { fileService, productService, unitService } from "@/services/baseInfoService";
 
 const productSchema = z.object({
   code: z.string().min(1, "کد کالا الزامی است"),
@@ -51,7 +52,6 @@ const productSchema = z.object({
   unitId: z.coerce.number().min(1, "واحد سنجش اصلی الزامی است"),
   supplyType: z.coerce.number().default(1),
   productNature: z.coerce.number().default(1),
-  productGroupId: z.coerce.number().optional().nullable(),
   descriptions: z.string().optional(),
   isActive: z.boolean().default(true),
 });
@@ -101,14 +101,10 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
     const init = async () => {
       setLoading(true);
       try {
-        const unitsRes = await apiClient.get("/BaseInfo/Units/lookup");
-        setUnits(unitsRes.data);
+        setUnits(await unitService.lookup());
 
         if (!isCreate && productId) {
-          const productRes = await apiClient.get(
-            `/BaseInfo/Products/${productId}`,
-          );
-          const prod = productRes.data;
+          const prod = await productService.getById(Number(productId));
 
           const profile = await inventoryService.getProductProfile(productId);
           if (profile) {
@@ -120,9 +116,8 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
             name: prod.name ?? "",
             latinName: prod.latinName ?? "",
             unitId: prod.unitId,
-            supplyType: prod.supplyTypeId || prod.supplyType,
+            supplyType: prod.supplyTypeId,
             descriptions: prod.descriptions ?? "",
-            productGroupId: prod.productGroupId,
             isActive: prod.isActive ?? true,
           });
 
@@ -138,7 +133,7 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
           }
         }
       } catch (error) {
-        toast.error("خطا در بارگذاری اطلاعات");
+        handleApiError(error, "خطا در بارگذاری اطلاعات");
       } finally {
         setLoading(false);
       }
@@ -161,18 +156,10 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
       }
 
       if (selectedImage) {
-        const uploadFormData = new FormData();
-        uploadFormData.append("file", selectedImage);
-
         try {
-          // استفاده از کنترلر آپلود عمومی
-          const uploadRes = await apiClient.post("/Upload", uploadFormData, {
-            headers: { "Content-Type": "multipart/form-data" },
-          });
-          finalImagePath = uploadRes.data.path;
+          finalImagePath = await fileService.upload(selectedImage);
         } catch (err) {
-          console.error("Upload Error", err);
-          toast.error("خطا در آپلود تصویر");
+          handleApiError(err, "خطا در آپلود تصویر");
           setLoading(false);
           return;
         }
@@ -202,24 +189,19 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
 
       // 3. ارسال درخواست
       if (isCreate) {
-        const res = await apiClient.post("/BaseInfo/Products", payload);
+        const newId = await productService.create(payload);
         toast.success("کالا با موفقیت ایجاد شد");
-        window.location.href = `/base-info/products/edit/${res.data}`;
+        window.location.href = `/base-info/products/edit/${newId}`;
       } else {
-        await apiClient.put(`/BaseInfo/Products/${productId}`, payload);
+        await productService.update(Number(productId), payload);
         toast.success("اطلاعات کالا با موفقیت بروزرسانی شد");
         // آپدیت استیت محلی تصویر
         setCurrentImagePath(finalImagePath);
         setDeleteImage(false);
         setSelectedImage(null);
       }
-    } catch (error: any) {
-      console.error(error);
-      const msg =
-        error.response?.data?.detail ||
-        error.response?.data?.message ||
-        "خطا در ذخیره اطلاعات";
-      toast.error(msg);
+    } catch (error) {
+      handleApiError(error, "خطا در ذخیره اطلاعات");
     } finally {
       setLoading(false);
     }

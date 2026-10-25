@@ -5,6 +5,7 @@ import DocForm from "../components/DocForm";
 import inventoryService from "@/services/inventoryService";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { handleApiError } from "@/lib/error-handling";
 
 export default function CreateDocPage() {
   const [loading, setLoading] = useState(true);
@@ -21,7 +22,7 @@ export default function CreateDocPage() {
         setDocTypes(dtRes);
         setWarehouses(wRes);
       } catch (error) {
-        toast.error("خطا در دریافت اطلاعات اولیه");
+        handleApiError(error, "خطا در دریافت اطلاعات اولیه");
       } finally {
         setLoading(false);
       }

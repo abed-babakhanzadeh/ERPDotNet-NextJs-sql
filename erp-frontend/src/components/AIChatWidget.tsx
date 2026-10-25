@@ -4,6 +4,9 @@ import React, { useState, useRef, useEffect } from "react";
 import { Send, Bot, X, MessageSquare, User, Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
+// آدرس سرویس دستیار هوشمند (erp-ai-agent)؛ با NEXT_PUBLIC_AI_AGENT_URL قابل تنظیم است (پیش‌فرض: آدرس فعلی سرور)
+const AI_AGENT_URL = (process.env.NEXT_PUBLIC_AI_AGENT_URL || "http://192.168.0.241:8000").replace(/\/+$/, "");
+
 interface Message {
   role: "user" | "assistant";
   content: string;
@@ -33,7 +36,7 @@ export default function AIChatWidget() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://192.168.0.241:8000/chat", {
+      const response = await fetch(`${AI_AGENT_URL}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userMsg }),
@@ -46,7 +49,7 @@ export default function AIChatWidget() {
     } catch (error) {
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "❌ متاسفانه ارتباط با سرور هوش مصنوعی برقرار نشد. (لطفا بررسی کنید main.py اجرا باشد)" },
+        { role: "assistant", content: "ارتباط با دستیار هوشمند برقرار نشد. کمی بعد دوباره تلاش کنید." },
       ]);
     } finally {
       setIsLoading(false);

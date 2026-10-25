@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
-import apiClient from "@/services/apiClient";
 import { toast } from "sonner";
 import { Layers, Search, FileSearch, Network } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,6 +25,10 @@ import { useFormPersist } from "@/hooks/useFormPersist";
 
 // 1. اضافه کردن لایوت جدید
 import BaseListLayout from "@/components/layout/BaseListLayout";
+import { handleApiError } from "@/lib/error-handling";
+import { productService } from "@/services/baseInfoService";
+import { bomService } from "@/services/bomService";
+import type { WhereUsedDto as ApiWhereUsedDto } from "@/types/api";
 
 interface ProductLookupDto {
   id: number;
@@ -33,19 +36,8 @@ interface ProductLookupDto {
   name: string;
 }
 
-interface WhereUsedDto {
-  id: number;
-  bomId: number;
-  bomTitle: string;
-  bomVersion: string;
-  bomStatus: string;
-  parentProductId: number;
-  parentProductName: string;
-  parentProductCode: string;
-  usageType: string;
-  quantity: number;
-  unitName: string;
-}
+// شناسه ردیف در گرید رشته‌ای است (هر فرمول ممکن است در چند سطح تکرار شود)
+type WhereUsedDto = Omit<ApiWhereUsedDto, "id"> & { id: string };
 
 type ReportMode = "direct" | "multi" | "endItems";
 
@@ -116,12 +108,12 @@ export default function WhereUsedPage() {
   const handleProductSearch = async (term: string) => {
     setProductLoading(true);
     try {
-      const res = await apiClient.post("/BaseInfo/Products/search", {
+      const res = await productService.search({
         pageNumber: 1,
         pageSize: 20,
         searchTerm: term,
       });
-      const newOptions = res.data.items || [];
+      const newOptions = res.items;
       setReportState((prev) => ({
         ...prev,
         productOptions: newOptions,
@@ -138,7 +130,7 @@ export default function WhereUsedPage() {
       const isMulti = mode !== "direct";
       const isEndItems = mode === "endItems";
 
-      const res = await apiClient.post("/ProductEngineering/BOMs/where-used", {
+      const res = await bomService.whereUsed({
         pageNumber: 1,
         pageSize: 1000,
         productId: prodId,
@@ -146,18 +138,18 @@ export default function WhereUsedPage() {
         endItemsOnly: isEndItems,
       });
 
-      const mappedItems = (res.data.items || []).map((item: any) => ({
+      const mappedItems = res.items.map((item) => ({
         ...item,
-        id: (item.bomId || item.bomHeaderId) + "_" + Math.random(),
+        id: `${item.bomId}_${item.level}_${item.parentProductId}_${item.usageType}`,
       }));
 
       setReportState((prev) => ({
         ...prev,
         data: mappedItems,
-        totalCount: res.data.totalCount || 0,
+        totalCount: res.totalCount,
       }));
     } catch (error) {
-      toast.error("خطا در دریافت گزارش");
+      handleApiError(error, "خطا در دریافت گزارش");
     } finally {
       setLoading(false);
     }

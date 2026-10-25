@@ -1,11 +1,2 @@
-export interface Unit {
-  id: number;
-  title: string;
-  symbol: string;
-  precision: number; // جدید
-  isActive: boolean; // جدید
-  baseUnitId?: number; // جدید
-  conversionFactor?: number;
-  baseUnitName?: string;
-  rowVersion: string;
-}
+// منبع حقیقت: قرارداد OpenAPI بک‌اند (types/api.generated.ts)
+export type { UnitDto as Unit } from "./api";
