@@ -11,50 +11,18 @@ export enum InventoryDocStatus {
   Cancelled = 7,
 }
 
+/** برچسب و رنگ معنایی هر وضعیت سند؛ نمایش از طریق `InventoryDocStatusBadge` */
 export const InventoryDocStatusMap: Record<
-  number,
-  {
-    label: string;
-    color: string;
-    variant: "default" | "secondary" | "destructive" | "outline";
-  }
+  InventoryDocStatus,
+  { label: string; tone: "neutral" | "info" | "warning" | "success" | "danger" }
 > = {
-  1: {
-    label: "پیش‌نویس",
-    color: "text-amber-600 border-amber-200 bg-amber-50",
-    variant: "outline",
-  },
-  // در شیء InventoryDocStatusMap
-  2: {
-    label: "در انتظار تایید",
-    color: "text-blue-600 border-blue-200 bg-blue-50",
-    variant: "outline",
-  },
-  3: {
-    label: "نیازمند اصلاح",
-    color: "text-orange-600 border-orange-200 bg-orange-50",
-    variant: "outline",
-  },
-  4: {
-    label: "تایید شده",
-    color: "text-emerald-600 border-emerald-200 bg-emerald-50",
-    variant: "outline",
-  },
-  5: {
-    label: "رد شده",
-    color: "text-red-600 border-red-200 bg-red-50",
-    variant: "outline",
-  },
-  6: {
-    label: "قطعی شده",
-    color: "bg-slate-800 text-white hover:bg-slate-900",
-    variant: "default",
-  },
-  7: {
-    label: "ابطال",
-    color: "text-red-500 bg-red-50",
-    variant: "destructive",
-  },
+  [InventoryDocStatus.Draft]: { label: "پیش‌نویس", tone: "neutral" },
+  [InventoryDocStatus.InProcess]: { label: "در انتظار تایید", tone: "info" },
+  [InventoryDocStatus.RequiresRevision]: { label: "نیازمند اصلاح", tone: "warning" },
+  [InventoryDocStatus.Approved]: { label: "تایید شده", tone: "success" },
+  [InventoryDocStatus.Rejected]: { label: "رد شده", tone: "danger" },
+  [InventoryDocStatus.Posted]: { label: "قطعی شده", tone: "success" },
+  [InventoryDocStatus.Cancelled]: { label: "ابطال شده", tone: "danger" },
 };
 
 // 1. تعریف انواع انبار (طبق Backend)

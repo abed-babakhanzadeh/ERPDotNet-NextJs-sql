@@ -98,7 +98,7 @@ export function DataTablePagination({
               <SelectValue placeholder={pagination.pageSize} />
             </SelectTrigger>
             <SelectContent side="top">
-              {[10, 20, 30, 50, 100, 200].map((size) => (
+              {pageSizeOptions(pagination.pageSize).map((size) => (
                 <SelectItem key={size} value={`${size}`} className="text-xs">
                   {size}
                 </SelectItem>
@@ -191,4 +191,11 @@ export function DataTablePagination({
       </div>
     </div>
   );
+}
+
+/** گزینه‌های استاندارد به‌اضافه اندازه فعلی صفحه (اگر صفحه‌ای مقدار دیگری مثل ۱۵ بدهد، انتخابگر خالی نماند) */
+function pageSizeOptions(current: number) {
+  const sizes = new Set([10, 20, 30, 50, 100, 200]);
+  if (current > 0) sizes.add(current);
+  return Array.from(sizes).sort((a, b) => a - b);
 }

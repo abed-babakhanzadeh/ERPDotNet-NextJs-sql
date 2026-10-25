@@ -12,7 +12,8 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Bell } from "lucide-react";
-import AIChatWidget from "@/components/AIChatWidget"; 
+import AIChatWidget from "@/components/AIChatWidget";
+import { PageHeading } from "@/components/modules/dashboard/PageHeading";
 
 export default function DashboardLayout({
   children,
@@ -35,22 +36,20 @@ export default function DashboardLayout({
       <SidebarInset className="bg-background h-full flex flex-col overflow-hidden">
         {/* Header - ثابت در بالا */}
         <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b px-4">
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2">
             <SidebarTrigger className="-mr-1" />
             <Separator orientation="vertical" className="mr-2 h-4" />
-            <h1 className="text-sm font-semibold text-muted-foreground hidden sm:block">
-              پیشخوان سیستم
-            </h1>
+            <PageHeading />
           </div>
 
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="icon"
+              aria-label="اعلان‌ها"
               className="relative text-muted-foreground hover:text-foreground"
             >
               <Bell className="h-5 w-5" />
-              <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-600 border border-background"></span>
             </Button>
           </div>
         </header>

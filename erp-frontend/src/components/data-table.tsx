@@ -10,7 +10,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,15 +17,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import {
-  MoreHorizontal,
-  CheckCircle2,
-  XCircle,
-  FilterX,
-  Eye,
-  Pencil,
-  Trash2,
-} from "lucide-react";
+import { FilterX, Eye, Pencil, Trash2 } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -46,6 +37,9 @@ import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 import { Resizable } from "react-resizable";
 import { ColumnFilter } from "./column-filter";
+import { ActiveBadge } from "./common/StatusBadge";
+import { DataTableMobileCards } from "./data-table-mobile-cards";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type PaginationState = {
   pageIndex: number;
@@ -102,7 +96,7 @@ interface DataTableProps<TData extends TableRow> {
 }
 
 export function DataTable<TData extends TableRow>({
-  columns,
+  columns: allColumns,
   data,
   rowCount,
   pageCount,
@@ -128,6 +122,8 @@ export function DataTable<TData extends TableRow>({
   onRowDoubleClick,
   onRefresh,
 }: DataTableProps<TData>) {
+  const columns = React.useMemo(() => allColumns.filter((c) => !c.hidden), [allColumns]);
+  const isMobile = useIsMobile();
   const [contextMenuOpen, setContextMenuOpen] = React.useState(false);
   const [contextMenuRow, setContextMenuRow] = React.useState<TData | null>(
     null
@@ -236,6 +232,55 @@ export function DataTable<TData extends TableRow>({
     return count;
   }, [globalFilter, columnFilters, advancedFilters]);
 
+  const renderCell = (column: ColumnConfig, row: TData) => {
+    if (column.render) {
+      return (
+        <div className="flex min-w-0 items-center">
+          {column.render(row[column.key as keyof TData], row)}
+        </div>
+      );
+    }
+    if (column.key === "isActive") return <ActiveBadge active={!!row.isActive} />;
+    const text = String(row[column.key as keyof TData] ?? "—");
+    // span بلوکی تا ellipsis درست کار کند؛ متن کامل در title. dir=auto ترتیب متن مختلط فارسی/لاتین را حفظ می‌کند
+    return (
+      <span dir="auto" title={text} className="block truncate text-start text-sm">
+        {text}
+      </span>
+    );
+  };
+
+  const renderActions = (row: TData) => (
+    <TooltipProvider delayDuration={300}>
+      <div
+        className="flex items-center justify-center gap-1"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {renderRowActions ? (
+          renderRowActions(row)
+        ) : (
+          <>
+            {permissions.view && onView && (
+              <RowActionButton label="مشاهده جزئیات" onClick={() => onView(row)}>
+                <Eye size={15} />
+              </RowActionButton>
+            )}
+            {permissions.edit && onEdit && (
+              <RowActionButton label="ویرایش" onClick={() => onEdit(row)}>
+                <Pencil size={15} />
+              </RowActionButton>
+            )}
+            {permissions.delete && onDelete && (
+              <RowActionButton label="حذف" destructive onClick={() => onDelete(row)}>
+                <Trash2 size={15} />
+              </RowActionButton>
+            )}
+          </>
+        )}
+      </div>
+    </TooltipProvider>
+  );
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex-shrink-0 mb-3">
@@ -250,6 +295,21 @@ export function DataTable<TData extends TableRow>({
         />
       </div>
 
+      {isMobile ? (
+        <DataTableMobileCards
+          columns={columns}
+          data={data}
+          isLoading={isLoading}
+          pageSize={pagination.pageSize}
+          selectedRowId={selectedRowId}
+          renderCell={renderCell}
+          renderActions={renderActions}
+          onOpen={(row) => {
+            setSelectedRowId(row.id);
+            handleRowDoubleClick(row);
+          }}
+        />
+      ) : (
       <div className="flex-1 min-h-0 rounded-xl border border-border shadow-sm bg-card overflow-hidden flex flex-col">
         <div className="flex-1 overflow-auto custom-scrollbar">
           <Table style={{ tableLayout: "fixed", width: "100%" }}>
@@ -359,12 +419,10 @@ export function DataTable<TData extends TableRow>({
 
                       // ۱. حالت انتخاب شده (بالاترین اولویت)
                       selectedRowId === row.id
-                        ? "!bg-orange-100 dark:!bg-orange-900/40 text-orange-900 dark:text-orange-100 hover:!bg-orange-200"
+                        ? "!bg-primary/10 hover:!bg-primary/15"
                         : // ۲. حالت غیرفعال (isActive === false)
-                        // از !bg-gray-100 استفاده می‌کنیم تا رنگ hover پیش‌فرض را خنثی کند
-                        // grayscale باعث می‌شود کل آیکون‌ها و متون سیاه و سفید شوند
                         row.isActive === false
-                        ? "!bg-slate-100 dark:!bg-slate-900 text-muted-foreground/60 grayscale-[1] hover:!bg-slate-200 dark:hover:!bg-slate-800"
+                        ? "bg-muted/40 text-muted-foreground hover:bg-muted/60"
                         : // ۳. حالت عادی
                           "hover:bg-muted/50"
                     )}
@@ -378,35 +436,7 @@ export function DataTable<TData extends TableRow>({
                         }}
                         className="py-1.5 px-3"
                       >
-                        <div className="truncate flex items-center">
-                          {column.render ? (
-                            column.render(row[column.key as keyof TData], row)
-                          ) : column.key === "isActive" ? (
-                            <Badge
-                              variant={row.isActive ? "default" : "destructive"}
-                              className={cn(
-                                "text-white font-medium shadow-sm",
-                                row.isActive
-                                  ? "bg-emerald-500 hover:bg-emerald-600"
-                                  : "bg-red-500 hover:bg-red-600"
-                              )}
-                            >
-                              {row.isActive ? (
-                                <>
-                                  <CheckCircle2 className="w-3 h-3 ml-1" /> فعال
-                                </>
-                              ) : (
-                                <>
-                                  <XCircle className="w-3 h-3 ml-1" /> غیرفعال
-                                </>
-                              )}
-                            </Badge>
-                          ) : (
-                            <span className="text-sm">
-                              {String(row[column.key as keyof TData] ?? "—")}
-                            </span>
-                          )}
-                        </div>
+                        {renderCell(column, row)}
                       </TableCell>
                     ))}
 
@@ -414,73 +444,7 @@ export function DataTable<TData extends TableRow>({
                       className="no-print text-center"
                       style={{ width: `${columnWidths.actions}px` }}
                     >
-                      {/* اینجا تغییر کرد: استفاده از آیکون‌های پایه به جای سه نقطه */}
-                      <TooltipProvider delayDuration={0}>
-                        {renderRowActions ? (
-                          <div
-                            className="flex items-center justify-center gap-1"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {renderRowActions(row)}
-                          </div>
-                        ) : (
-                          <div
-                            className="flex items-center justify-center gap-1"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {/* دکمه مشاهده */}
-                            {permissions.view && onView && (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6 text-blue-500 hover:text-blue-600 hover:bg-blue-50"
-                                    onClick={() => onView(row)}
-                                  >
-                                    <Eye size={14} />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>مشاهده جزئیات</TooltipContent>
-                              </Tooltip>
-                            )}
-
-                            {/* دکمه ویرایش */}
-                            {permissions.edit && onEdit && (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
-                                    onClick={() => onEdit(row)}
-                                  >
-                                    <Pencil size={14} />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>ویرایش</TooltipContent>
-                              </Tooltip>
-                            )}
-
-                            {/* دکمه حذف */}
-                            {permissions.delete && onDelete && (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                    onClick={() => onDelete(row)}
-                                  >
-                                    <Trash2 size={14} />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>حذف</TooltipContent>
-                              </Tooltip>
-                            )}
-                          </div>
-                        )}
-                      </TooltipProvider>
+                      {renderActions(row)}
                     </TableCell>
                   </TableRow>
                 ))
@@ -551,7 +515,7 @@ export function DataTable<TData extends TableRow>({
                     // استفاده از flex-row و justify-start برای اطمینان از قرارگیری آیکون در راست
                     className="flex flex-row items-center justify-start gap-2 cursor-pointer text-right"
                   >
-                    <Eye className="w-4 h-4 text-blue-600" />
+                    <Eye className="w-4 h-4 text-muted-foreground" />
                     <span>مشاهده جزئیات</span>
                   </DropdownMenuItem>
                 )}
@@ -564,7 +528,7 @@ export function DataTable<TData extends TableRow>({
                     }}
                     className="flex flex-row items-center justify-start gap-2 cursor-pointer text-right"
                   >
-                    <Pencil className="w-4 h-4 text-emerald-600" />
+                    <Pencil className="w-4 h-4 text-muted-foreground" />
                     <span>ویرایش</span>
                   </DropdownMenuItem>
                 )}
@@ -591,6 +555,8 @@ export function DataTable<TData extends TableRow>({
         </DropdownMenu>
       </div>
 
+      )}
+
       <div className="flex-shrink-0 mt-3">
         <DataTablePagination
           pagination={pagination}
@@ -600,5 +566,39 @@ export function DataTable<TData extends TableRow>({
         />
       </div>
     </div>
+  );
+}
+
+function RowActionButton({
+  label,
+  destructive,
+  onClick,
+  children,
+}: {
+  label: string;
+  destructive?: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={label}
+          onClick={onClick}
+          className={cn(
+            "h-7 w-7 text-muted-foreground",
+            destructive
+              ? "hover:bg-destructive/10 hover:text-destructive"
+              : "hover:bg-primary/10 hover:text-primary",
+          )}
+        >
+          {children}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
   );
 }
