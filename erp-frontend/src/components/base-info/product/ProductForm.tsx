@@ -73,6 +73,8 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
   const [activeTab, setActiveTab] = useState("general");
   const [units, setUnits] = useState<Unit[]>([]);
   const [conversions, setConversions] = useState<any[]>([]);
+  // تغییر ضرایب تبدیل جزو فرم react-hook-form نیست؛ جدا پیگیری می‌شود
+  const [conversionsTouched, setConversionsTouched] = useState(false);
 
   const [isBatchManaged, setIsBatchManaged] = useState(false);
 
@@ -195,6 +197,8 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
       } else {
         await productService.update(Number(productId), payload);
         toast.success("اطلاعات کالا با موفقیت بروزرسانی شد");
+        form.reset(values);
+        setConversionsTouched(false);
         // آپدیت استیت محلی تصویر
         setCurrentImagePath(finalImagePath);
         setDeleteImage(false);
@@ -265,6 +269,10 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
             : `مدیریت کالا: ${form.getValues("name") || "..."}`
         }
         isLoading={loading}
+        isDirty={
+          !isView &&
+          (form.formState.isDirty || conversionsTouched || !!selectedImage || deleteImage)
+        }
         headerActions={renderHeaderActions()}
         onSubmit={undefined}
         showActions={false}
@@ -494,7 +502,10 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
                     units={units}
                     mainUnitId={form.watch("unitId")}
                     conversions={conversions}
-                    setConversions={setConversions}
+                    setConversions={(next) => {
+                      setConversions(next);
+                      setConversionsTouched(true);
+                    }}
                     isViewMode={isView}
                   />
                 </div>

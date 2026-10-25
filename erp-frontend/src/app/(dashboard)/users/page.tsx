@@ -33,6 +33,7 @@ import ResetPasswordDialog from "./ResetPasswordDialog"; // ایمپورت کا�
 import { handleApiError } from "@/lib/error-handling";
 import type { UserDto } from "@/types/api";
 import { userService, permissionService, roleService } from "@/services/userAccessService";
+import { useConfirm } from "@/providers/ConfirmProvider";
 
 // --- توابع کمکی لاجیک دسترسی (بدون تغییر) ---
 const findNodeAndGetChildrenIds = (
@@ -87,6 +88,7 @@ const findNodeById = (nodes: any[], id: number): any | null => {
 };
 
 export default function UsersPage() {
+  const confirm = useConfirm();
   const { tableProps, refresh, totalCount } = useServerDataTable<UserDto>({
     fetcher: userService.search,
     initialPageSize: 10,
@@ -188,9 +190,12 @@ export default function UsersPage() {
 
   const handleDelete = async (id: string) => {
     if (
-      !confirm(
-        "آیا از حذف این کاربر اطمینان دارید؟ این عملیات غیرقابل بازگشت است."
-      )
+      !(await confirm({
+        title: "حذف کاربر",
+        description: "آیا از حذف این کاربر اطمینان دارید؟ این عملیات غیرقابل بازگشت است.",
+        tone: "danger",
+        confirmText: "حذف",
+      }))
     )
       return;
 
@@ -307,9 +312,13 @@ export default function UsersPage() {
   const handleCopyPermissions = async () => {
     if (!permUser || !copySourceId) return;
     if (
-      !confirm(
-        "آیا مطمئن هستید؟ تمام دسترسی‌های فعلی این کاربر حذف و با دسترسی‌های کاربر انتخابی جایگزین می‌شود."
-      )
+      !(await confirm({
+        title: "جایگزینی دسترسی‌ها",
+        description:
+          "تمام دسترسی‌های فعلی این کاربر حذف و با دسترسی‌های کاربر انتخابی جایگزین می‌شود.",
+        tone: "danger",
+        confirmText: "جایگزینی دسترسی‌ها",
+      }))
     )
       return;
 

@@ -12,16 +12,10 @@ import { toast } from "sonner";
 import {
   Save,
   Printer,
-  CheckCircle2,
-  Archive,
-  Undo2,
   ArrowRight,
   MoreVertical,
-  FileText,
-  AlertTriangle,
   Loader2,
   Pencil,
-  Ban,
   Send,
 } from "lucide-react";
 
@@ -31,7 +25,7 @@ import AdvancedEditableGrid, {
   GridColumn,
 } from "@/components/grid/AdvancedEditableGrid";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { InventoryDocStatusBadge } from "@/components/inventory/InventoryDocStatusBadge";
 import {
   TableLookupCombobox,
   ColumnDef,
@@ -55,6 +49,7 @@ import {
   InventoryDocStatus,
   InventoryNature,
 } from "@/types/inventory";
+import { useConfirm } from "@/providers/ConfirmProvider";
 
 interface DocFormProps {
   mode: "create" | "edit" | "view";
@@ -64,54 +59,13 @@ interface DocFormProps {
 }
 
 // 🌟 وضعیت‌ها بر اساس Enum جدید سیستم گردش کار
-const statusStyles: Record<
-  number,
-  { label: string; className: string; icon?: any }
-> = {
-  [InventoryDocStatus.Draft]: {
-    label: "پیش‌نویس",
-    className: "bg-muted text-foreground border-border",
-    icon: FileText,
-  },
-  [InventoryDocStatus.InProcess]: {
-    label: "در انتظار تایید",
-    className: "bg-primary/10 text-primary border-primary/30",
-    icon: Loader2,
-  },
-  [InventoryDocStatus.RequiresRevision]: {
-    label: "نیازمند اصلاح",
-    className: "bg-warning/10 text-warning border-warning/30",
-    icon: Undo2,
-  },
-  [InventoryDocStatus.Approved]: {
-    label: "تایید شده",
-    className: "bg-success/10 text-success border-success/30",
-    icon: CheckCircle2,
-  },
-  [InventoryDocStatus.Rejected]: {
-    label: "رد شده",
-    className: "bg-destructive/10 text-destructive border-destructive/30",
-    icon: AlertTriangle,
-  },
-  [InventoryDocStatus.Posted]: {
-    label: "قطعی شده",
-    className: "bg-foreground text-background border-input",
-    icon: Archive,
-  },
-  [InventoryDocStatus.Cancelled]: {
-    label: "ابطال شده",
-    className:
-      "bg-muted text-muted-foreground border-border line-through decoration-muted-foreground",
-    icon: Ban,
-  },
-};
-
 export default function DocForm({
   mode: initialMode,
   initialData: serverInitialData,
   docTypes,
   warehouses,
 }: DocFormProps) {
+  const confirm = useConfirm();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -300,9 +254,6 @@ export default function DocForm({
     currentStatus === InventoryDocStatus.RequiresRevision;
   const isReadOnly = currentMode === "view" || !isEditableStatus;
 
-  const statusInfo =
-    statusStyles[currentStatus] || statusStyles[InventoryDocStatus.Draft];
-  const StatusIcon = statusInfo.icon || FileText;
 
   const isTransfer =
     docTypes.find((dt) => dt.id === Number(headerData.docTypeId))
@@ -566,7 +517,7 @@ export default function DocForm({
   const handleSubmitToWorkflow = async () => {
     if (!docData?.id) return;
     if (
-      !confirm("آیا از ارسال این سند برای بررسی و تایید نهایی اطمینان دارید؟")
+      !(await confirm({ title: "آیا از ارسال این سند برای بررسی و تایید نهایی اطمینان دارید؟", confirmText: "ارسال" }))
     )
       return;
 
@@ -667,15 +618,7 @@ export default function DocForm({
         <div className="flex items-center gap-2">
           {currentMode !== "create" && (
             <div className="hidden sm:flex items-center ml-2">
-              <Badge
-                variant="outline"
-                className={`gap-1.5 px-2.5 py-0.5 rounded-full ${statusInfo?.className}`}
-              >
-                <StatusIcon
-                  className={`w-3.5 h-3.5 ${currentStatus === InventoryDocStatus.InProcess ? "animate-spin" : ""}`}
-                />
-                {statusInfo?.label}
-              </Badge>
+              <InventoryDocStatusBadge status={currentStatus} />
             </div>
           )}
 

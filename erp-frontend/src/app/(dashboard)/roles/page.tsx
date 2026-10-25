@@ -8,6 +8,7 @@ import Modal from "@/components/ui/Modal";
 import ProtectedPage from "@/components/ui/ProtectedPage";
 import { handleApiError } from "@/lib/error-handling";
 import { roleService, permissionService } from "@/services/userAccessService";
+import { useConfirm } from "@/providers/ConfirmProvider";
 
 // DTO
 interface Role {
@@ -69,6 +70,7 @@ const getAllChildren = (node: any): number[] => {
 
 
 export default function RolesPage() {
+  const confirm = useConfirm();
   const [roles, setRoles] = useState<Role[]>([]);
   const [treeData, setTreeData] = useState<any[]>([]);
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
@@ -196,7 +198,7 @@ export default function RolesPage() {
   // حذف نقش
   const handleDeleteRole = async (e: React.MouseEvent, role: Role) => {
     e.stopPropagation(); // جلوگیری از انتخاب شدن نقش موقع کلیک روی حذف
-    if (!confirm(`آیا از حذف نقش "${role.name}" اطمینان دارید؟`)) return;
+    if (!(await confirm({ title: `آیا از حذف نقش "${role.name}" اطمینان دارید؟`, tone: "danger", confirmText: "حذف" }))) return;
 
     try {
       await roleService.remove(role.id);

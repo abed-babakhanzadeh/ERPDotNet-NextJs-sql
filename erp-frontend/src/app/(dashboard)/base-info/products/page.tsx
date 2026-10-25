@@ -22,10 +22,12 @@ import BaseListLayout from "@/components/layout/BaseListLayout";
 import { handleApiError } from "@/lib/error-handling";
 import { productService } from "@/services/baseInfoService";
 import type { ProductDto } from "@/types/api";
+import { useConfirm } from "@/providers/ConfirmProvider";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 export default function ProductsPage() {
+  const confirm = useConfirm();
   const { addTab } = useTabs();
 
   useTabPrefetch(["/base-info/products/create"]);
@@ -128,7 +130,7 @@ export default function ProductsPage() {
   };
 
   const handleDelete = async (row: ProductDto) => {
-    if (!confirm(`آیا از حذف کالا "${row.name}" اطمینان دارید؟`)) return;
+    if (!(await confirm({ title: `آیا از حذف کالا "${row.name}" اطمینان دارید؟`, tone: "danger", confirmText: "حذف" }))) return;
 
     try {
       await productService.remove(row.id);

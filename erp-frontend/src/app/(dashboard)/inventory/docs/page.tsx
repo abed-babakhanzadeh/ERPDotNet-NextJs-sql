@@ -28,8 +28,10 @@ import {
 import { ColumnConfig } from "@/types";
 import { handleApiError } from "@/lib/error-handling";
 import { InventoryDocStatusBadge } from "@/components/inventory/InventoryDocStatusBadge";
+import { useConfirm } from "@/providers/ConfirmProvider";
 
 export default function InventoryDocsListPage() {
+  const confirm = useConfirm();
   const { addTab } = useTabs();
 
   // ✅ 1. استفاده خالص از هوک (بدون بازنویسی دستی)
@@ -137,7 +139,7 @@ export default function InventoryDocsListPage() {
       toast.error("امکان حذف سند قطعی شده وجود ندارد.");
       return;
     }
-    if (!confirm(`آیا از حذف سند شماره ${row.docNumber} اطمینان دارید؟`))
+    if (!(await confirm({ title: `آیا از حذف سند شماره ${row.docNumber} اطمینان دارید؟`, tone: "danger", confirmText: "حذف" })))
       return;
     try {
       await inventoryService.deleteDoc(row.id, row.rowVersion);

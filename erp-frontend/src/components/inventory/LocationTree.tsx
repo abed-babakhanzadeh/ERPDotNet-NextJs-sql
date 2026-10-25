@@ -37,12 +37,14 @@ import inventoryService from "@/services/inventoryService";
 import { LocationDto } from "@/types/inventory";
 import LocationDialog from "./LocationDialog";
 import { handleApiError } from "@/lib/error-handling";
+import { useConfirm } from "@/providers/ConfirmProvider";
 
 interface LocationTreeProps {
   warehouseId: number;
 }
 
 export default function LocationTree({ warehouseId }: LocationTreeProps) {
+  const confirm = useConfirm();
   // SWR برای دریافت و کش کردن دیتا
   const {
     data: locations,
@@ -65,7 +67,7 @@ export default function LocationTree({ warehouseId }: LocationTreeProps) {
 
   // هندلر حذف
   const handleDelete = async (loc: LocationDto) => {
-    if (!confirm(`آیا از حذف لوکیشن "${loc.title}" اطمینان دارید؟`)) return;
+    if (!(await confirm({ title: `آیا از حذف لوکیشن "${loc.title}" اطمینان دارید؟`, tone: "danger", confirmText: "حذف" }))) return;
 
     try {
       await inventoryService.deleteLocation(loc.id, loc.rowVersion);

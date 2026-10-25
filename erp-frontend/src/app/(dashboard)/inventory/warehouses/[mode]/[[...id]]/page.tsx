@@ -7,34 +7,23 @@ import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Pencil, List } from "lucide-react";
+import { Pencil, List, Warehouse } from "lucide-react";
 
 import BaseFormLayout from "@/components/layout/BaseFormLayout";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
 import LocationTree from "@/components/inventory/LocationTree";
+import { Form } from "@/components/ui/form";
+import { FormSection } from "@/components/form/FormSection";
 import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  SelectField,
+  SwitchField,
+  TextField,
+  TextareaField,
+} from "@/components/form/fields";
 
 import inventoryService from "@/services/inventoryService";
 import { WarehouseDto } from "@/types/inventory";
-import { handleApiError } from "@/lib/error-handling";
+import { applyFieldErrors, handleApiError } from "@/lib/error-handling";
 
 // 1. اسکیمای به‌روز شده طبق DefineWarehouseCommand در بک‌اند
 const warehouseSchema = z.object({
@@ -140,9 +129,13 @@ export default function WarehousePage() {
       }
 
       mutate("/api/inventory/warehouses");
+      form.reset(values);
       router.push("/inventory/warehouses");
     } catch (error: any) {
       handleApiError(error, "خطا در عملیات");
+      applyFieldErrors(error, (name, e) =>
+        form.setError(name as keyof WarehouseFormValues, e),
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -171,6 +164,7 @@ export default function WarehousePage() {
       }
       isLoading={loading}
       isSubmitting={isSubmitting}
+      isDirty={!isReadOnly && form.formState.isDirty}
       formId={FORM_ID}
       onSubmit={!isReadOnly ? form.handleSubmit(onSubmit) : undefined}
       onCancel={handleCancel}
@@ -201,116 +195,52 @@ export default function WarehousePage() {
       }
     >
       <Form {...form}>
-        {/* گرید را تنظیم کردیم تا جای خالی فیلدهای حذف شده پر شود */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-1">
-          <FormField
+        <FormSection title="اطلاعات انبار" icon={Warehouse}>
+          <TextField
             control={form.control}
             name="title"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>عنوان انبار</FormLabel>
-                <FormControl>
-                  <Input {...field} disabled={isReadOnly} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            label="عنوان انبار"
+            required
+            disabled={isReadOnly}
           />
-
-          <FormField
+          <TextField
             control={form.control}
             name="code"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>کد انبار</FormLabel>
-                <FormControl>
-                  <Input {...field} disabled={isReadOnly} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            label="کد انبار"
+            dir="ltr"
+            required
+            disabled={isReadOnly}
           />
-
-          {/* فیلد جدید نوع انبار */}
-          <FormField
+          <SelectField
             control={form.control}
             name="type"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>نوع انبار</FormLabel>
-                <Select
-                  disabled={isReadOnly}
-                  onValueChange={(value) => field.onChange(Number(value))}
-                  value={field.value?.toString()}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="انتخاب کنید" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {warehouseTypes.map((type) => (
-                      <SelectItem
-                        key={type.value}
-                        value={type.value.toString()}
-                      >
-                        {type.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
+            label="نوع انبار"
+            options={warehouseTypes}
+            required
+            disabled={isReadOnly}
           />
-
-          <FormField
+          <SwitchField
             control={form.control}
             name="isActive"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm mt-8 bg-card">
-                <div className="space-y-0.5">
-                  <FormLabel>وضعیت انبار</FormLabel>
-                  <FormDescription>
-                    آیا این انبار فعال و قابل استفاده است؟
-                  </FormDescription>
-                </div>
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                    disabled={isReadOnly}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
+            label="انبار فعال است"
+            description="انبار غیرفعال در اسناد جدید قابل انتخاب نیست"
+            disabled={isReadOnly}
+            className="self-end"
           />
-
-          <div className="col-span-1 md:col-span-2">
-            <FormField
-              control={form.control}
-              name="address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>آدرس کامل</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      {...field}
-                      disabled={isReadOnly}
-                      className="resize-none min-h-[100px]"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </div>
+          <TextareaField
+            control={form.control}
+            name="address"
+            label="آدرس کامل"
+            rows={3}
+            disabled={isReadOnly}
+            className="sm:col-span-full"
+          />
+        </FormSection>
       </Form>
 
       {/* === اضافه کردن بخش لوکیشن‌ها === */}
       {mode === "view" && id && (
-        <div className="mt-8">
+        <div className="mt-2">
           <LocationTree warehouseId={Number(id)} />
         </div>
       )}

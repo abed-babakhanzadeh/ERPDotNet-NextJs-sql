@@ -43,6 +43,7 @@ import { useTabs } from "@/providers/TabsProvider";
 import { useTabPrefetch } from "@/hooks/useTabPrefetch";
 import { handleApiError } from "@/lib/error-handling";
 import { bomService } from "@/services/bomService";
+import { useConfirm } from "@/providers/ConfirmProvider";
 
 // DTO هماهنگ با بک‌ند
 interface BOMListDto {
@@ -60,6 +61,7 @@ interface BOMListDto {
 }
 
 export default function BOMsListPage() {
+  const confirm = useConfirm();
   const { addTab } = useTabs();
 
   // استیت‌های مودال کپی
@@ -206,9 +208,7 @@ export default function BOMsListPage() {
 
   const handleDelete = async (row: BOMListDto) => {
     if (
-      !confirm(
-        `آیا از حذف فرمول نسخه ${row.version} برای کالا/قلم "${row.productName}" اطمینان دارید؟`
-      )
+      !(await confirm({ title: `آیا از حذف فرمول نسخه ${row.version} برای کالا/قلم "${row.productName}" اطمینان دارید؟`, tone: "danger", confirmText: "حذف" }))
     )
       return;
 

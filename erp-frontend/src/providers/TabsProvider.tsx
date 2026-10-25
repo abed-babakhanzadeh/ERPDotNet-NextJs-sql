@@ -7,10 +7,12 @@ import {
   ReactNode,
   useEffect,
   useCallback,
+  useRef,
   Suspense,
 } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { DISCARD_CHANGES, useConfirm } from "@/providers/ConfirmProvider";
 
 export interface Tab {
   id: string; // معمولا همان url است
@@ -24,6 +26,8 @@ interface TabsContextType {
   addTab: (title: string, url: string) => void;
   closeTab: (id: string) => void;
   setActiveTab: (id: string) => void;
+  /** فرم داخل تب این را صدا می‌زند تا رفتن از تب با تغییرات ذخیره‌نشده تأیید بخواهد */
+  setTabDirty: (id: string, dirty: boolean) => void;
 }
 
 const TabsContext = createContext<TabsContextType | undefined>(undefined);
@@ -36,6 +40,7 @@ const defaultContextValue: TabsContextType = {
   addTab: () => {},
   closeTab: () => {},
   setActiveTab: () => {},
+  setTabDirty: () => {},
 };
 
 function LoadingSkeleton() {
@@ -64,6 +69,25 @@ function TabsProviderContent({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
+  const confirm = useConfirm();
+  // تب‌هایی که فرم ذخیره‌نشده دارند؛ ref است چون تغییرش نباید رندر بگیرد
+  const dirtyTabs = useRef(new Set<string>());
+
+  const setTabDirty = useCallback((id: string, dirty: boolean) => {
+    if (dirty) dirtyTabs.current.add(id);
+    else dirtyTabs.current.delete(id);
+  }, []);
+
+  /** اگر تب تغییرات ذخیره‌نشده دارد، قبل از ترک آن تأیید می‌گیرد */
+  const confirmLeave = useCallback(
+    async (id: string) => {
+      if (!dirtyTabs.current.has(id)) return true;
+      const ok = await confirm(DISCARD_CHANGES);
+      if (ok) dirtyTabs.current.delete(id);
+      return ok;
+    },
+    [confirm]
+  );
 
   // بررسی logout (حذف token) - بهینه‌شده بدون polling
   useEffect(() => {
@@ -135,7 +159,9 @@ function TabsProviderContent({ children }: { children: ReactNode }) {
   }, [pathname, isHydrated]);
 
   const addTab = useCallback(
-    (title: string, url: string) => {
+    async (title: string, url: string) => {
+      if (url !== activeTabId && !(await confirmLeave(activeTabId))) return;
+
       // ابتدا صفحه هدف را prefetch می‌کنیم تا سریع‌تر باز شود
       try {
         router.prefetch?.(url);
@@ -154,11 +180,13 @@ function TabsProviderContent({ children }: { children: ReactNode }) {
       router.push(url);
       setActiveTabId(url);
     },
-    [router]
+    [router, activeTabId, confirmLeave]
   );
 
   const closeTab = useCallback(
-    (id: string) => {
+    async (id: string) => {
+      if (!(await confirmLeave(id))) return;
+
       setTabs((prevTabs) => {
         const newTabs = prevTabs.filter((t) => t.id !== id);
 
@@ -176,15 +204,16 @@ function TabsProviderContent({ children }: { children: ReactNode }) {
         return newTabs;
       });
     },
-    [activeTabId, router]
+    [activeTabId, router, confirmLeave]
   );
 
   const setActiveTabHandler = useCallback(
-    (id: string) => {
+    async (id: string) => {
+      if (id !== activeTabId && !(await confirmLeave(activeTabId))) return;
       setActiveTabId(id);
       router.push(id);
     },
-    [router]
+    [router, activeTabId, confirmLeave]
   );
 
   // فقط پس از hydration، context value را بفرستیم
@@ -195,6 +224,7 @@ function TabsProviderContent({ children }: { children: ReactNode }) {
         addTab,
         closeTab,
         setActiveTab: setActiveTabHandler,
+        setTabDirty,
       }
     : defaultContextValue;
 
