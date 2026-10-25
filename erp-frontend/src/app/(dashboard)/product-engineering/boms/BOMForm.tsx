@@ -39,6 +39,7 @@ import SubstitutesDialog, { SubstituteRow } from "./SubstitutesDialog";
 import { usePermissions } from "@/providers/PermissionProvider";
 import { useTabs } from "@/providers/TabsProvider";
 import { useFormPersist } from "@/hooks/useFormPersist";
+import { useDirtySnapshot } from "@/hooks/useDirtySnapshot";
 import { handleApiError } from "@/lib/error-handling";
 import { productService } from "@/services/baseInfoService";
 import { bomService } from "@/services/bomService";
@@ -123,6 +124,12 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
   });
 
   const [details, setDetails] = useState<BOMRow[]>([]);
+  // در ویرایش، مبنای «تغییرات ذخیره‌نشده» بعد از دریافت داده سرور گرفته می‌شود
+  const [loaded, setLoaded] = useState(mode === "create");
+  const isDirty = useDirtySnapshot(
+    { headerData, details },
+    !isReadOnly && loaded && !loadingData
+  );
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [activeRowIndex, setActiveRowIndex] = useState<number | null>(null);
@@ -273,6 +280,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
       );
 
       setDetails(mappedDetails);
+      setLoaded(true);
     } catch (error) {
       handleApiError(error, "خطا در دریافت اطلاعات BOM");
       safeCloseTab();
@@ -818,6 +826,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
           formId="bom-form"
           submitting={submitting}
           isLoading={loadingData}
+          isDirty={isDirty}
           headerContent={headerContent}
           headerActions={
             <div className="flex items-center gap-2">

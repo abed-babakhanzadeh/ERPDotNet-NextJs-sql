@@ -21,6 +21,7 @@ import {
 
 import MasterDetailForm from "@/components/form/MasterDetailForm";
 import AutoForm, { FieldConfig } from "@/components/form/AutoForm";
+import { useDirtySnapshot } from "@/hooks/useDirtySnapshot";
 import AdvancedEditableGrid, {
   GridColumn,
 } from "@/components/grid/AdvancedEditableGrid";
@@ -86,6 +87,8 @@ export default function DocForm({
   const [productsLoading, setProductsLoading] = useState(false);
 
   const isInitialized = useRef(false);
+  // نسخه state همان پرچم؛ تا مبنای «تغییرات ذخیره‌نشده» بعد از پر شدن فرم گرفته شود
+  const [initialized, setInitialized] = useState(false);
 
   const getDraftKey = () => {
     if (initialMode === "create") return "inventory-doc-draft-new";
@@ -151,6 +154,7 @@ export default function DocForm({
         }
       }
       isInitialized.current = true;
+      setInitialized(true);
     };
     initData();
   }, [docData, initialMode]);
@@ -253,6 +257,12 @@ export default function DocForm({
     currentStatus === InventoryDocStatus.Draft ||
     currentStatus === InventoryDocStatus.RequiresRevision;
   const isReadOnly = currentMode === "view" || !isEditableStatus;
+
+  const isDirty = useDirtySnapshot(
+    { headerData, gridData },
+    initialized && !isReadOnly && !isReloading,
+    docData?.rowVersion
+  );
 
 
   const isTransfer =
@@ -680,8 +690,10 @@ export default function DocForm({
           )}
         </div>
       }
+      submitting={submitting}
+      isDirty={isDirty}
       headerContent={
-        <div className="p-4 bg-card border rounded-lg mb-4 shadow-sm relative">
+        <div className="relative">
           {isReloading && (
             <div className="absolute inset-0 bg-background/50 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />

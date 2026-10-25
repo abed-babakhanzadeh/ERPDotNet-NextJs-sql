@@ -3,6 +3,17 @@ import React from "react";
 import { clsx } from "clsx";
 import { UploadCloud, X } from "lucide-react";
 import PersianDatePicker from "@/components/ui/PersianDatePicker";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export type FieldType =
   | "text"
@@ -30,6 +41,55 @@ export interface FieldConfig {
   colSpan?: 1 | 2 | 3;
   disabled?: boolean;
   accept?: string;
+  step?: number;
+}
+
+/** Radix Select مقدار رشته‌ای خالی نمی‌پذیرد؛ این مقدار جایگزین null است */
+const NONE = "__none__";
+
+function SelectControl({
+  id,
+  field,
+  value,
+  disabled,
+  onChange,
+}: {
+  id: string;
+  field: FieldConfig;
+  value: unknown;
+  disabled?: boolean;
+  onChange: (value: string | number | null) => void;
+}) {
+  const options = field.options ?? [];
+  const match = options.find((o) => o.value !== null && String(o.value) === String(value));
+  const hasNone = options.some((o) => o.value === null);
+  const current = match ? String(match.value) : hasNone && (value === null || value === undefined || value === "") ? NONE : "";
+  return (
+    <Select
+      value={current}
+      disabled={disabled}
+      onValueChange={(v) => {
+        if (v === NONE) return onChange(null);
+        // نوع اصلی گزینه (عدد یا رشته) را برمی‌گردانیم
+        const opt = options.find((o) => String(o.value) === v);
+        onChange(opt ? opt.value : v);
+      }}
+    >
+      <SelectTrigger id={id} aria-required={field.required}>
+        <SelectValue placeholder={field.placeholder || "انتخاب کنید"} />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((opt) => (
+          <SelectItem
+            key={String(opt.value)}
+            value={opt.value === null ? NONE : String(opt.value)}
+          >
+            {opt.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
 }
 
 interface AutoFormProps {
@@ -61,49 +121,54 @@ export default function AutoForm({
     onChange(name, null);
   };
 
-  const commonInputClasses =
-    "flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs ring-offset-background file:border-0 file:bg-transparent file:text-xs file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200";
-
   return (
     <div
       className={clsx(
-        // گرید فشرده‌تر با فاصله کمتر
-        "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-3 gap-y-3",
+        "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4",
         className
       )}
     >
       {fields.map((field) => {
-        const isFullWidth = field.colSpan === 2;
+        const isFullWidth = (field.colSpan ?? 1) >= 2;
         const fieldValue = data[field.name];
+        const id = `field-${field.name}`;
+        const disabled = loading || field.disabled;
 
         return (
           <div
             key={field.name}
             className={clsx(
-              "space-y-1",
+              "space-y-2",
               isFullWidth
                 ? "md:col-span-2 lg:col-span-3 xl:col-span-4"
-                : "col-span-1"
+                : "col-span-1",
+              field.type === "checkbox" && "self-end"
             )}
           >
-            {/* Label - کوچکتر */}
+            {/* برچسب، هم‌شکل فیلدهای مشترک components/form/fields */}
             {field.type !== "checkbox" && (
-              <label className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-1">
+              <Label htmlFor={id}>
                 {field.label}
-                {field.required && <span className="text-destructive">*</span>}
-              </label>
+                {field.required && (
+                  <span className="ms-0.5 text-destructive" aria-hidden>
+                    *
+                  </span>
+                )}
+              </Label>
             )}
 
-            {/* Inputs */}
             {["text", "number", "email", "password"].includes(field.type) && (
-              <input
+              <Input
+                id={id}
                 type={field.type}
-                className={commonInputClasses}
                 placeholder={field.placeholder}
-                value={fieldValue || ""}
+                value={fieldValue ?? ""}
                 onChange={(e) => onChange(field.name, e.target.value)}
-                disabled={loading || field.disabled}
+                disabled={disabled}
                 required={field.required}
+                step={field.step}
+                dir={field.type === "number" ? "ltr" : undefined}
+                className={field.type === "number" ? "text-start" : undefined}
               />
             )}
 
@@ -111,82 +176,46 @@ export default function AutoForm({
               <PersianDatePicker
                 value={fieldValue}
                 onChange={(newDate) => onChange(field.name, newDate)}
-                disabled={loading || field.disabled}
+                disabled={disabled}
                 required={field.required}
                 placeholder={field.placeholder}
                 hasError={!fieldValue && field.required}
-                className="h-8"
               />
             )}
 
             {field.type === "select" && (
-              <div className="relative">
-                <select
-                  className={clsx(commonInputClasses, "appearance-none")}
-                  value={fieldValue || ""}
-                  onChange={(e) => onChange(field.name, e.target.value)}
-                  disabled={loading || field.disabled}
-                  required={field.required}
-                >
-                  <option value="" disabled>
-                    {field.placeholder || "انتخاب کنید..."}
-                  </option>
-                  {field.options?.map((opt) => (
-                    <option
-                      key={String(opt.value)}
-                      value={opt.value ?? ""} // اگر نال بود، رشته خالی بگذار
-                    >
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-                <div className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground">
-                  <svg
-                    width="10"
-                    height="6"
-                    viewBox="0 0 10 6"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M1 1L5 5L9 1"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </div>
-              </div>
+              <SelectControl
+                id={id}
+                field={field}
+                value={fieldValue}
+                disabled={disabled}
+                onChange={(v) => onChange(field.name, v)}
+              />
             )}
 
             {field.type === "textarea" && (
-              <textarea
-                className={clsx(commonInputClasses, "min-h-[80px] resize-y")}
+              <Textarea
+                id={id}
+                className="min-h-[80px] resize-y"
                 placeholder={field.placeholder}
-                value={fieldValue || ""}
+                value={fieldValue ?? ""}
                 onChange={(e) => onChange(field.name, e.target.value)}
-                disabled={loading || field.disabled}
+                disabled={disabled}
                 required={field.required}
               />
             )}
 
             {field.type === "checkbox" && (
-              <div className="flex items-center gap-2 pt-1">
-                <input
-                  type="checkbox"
-                  id={`field-${field.name}`}
-                  className="h-3.5 w-3.5 rounded border-border text-primary focus:ring-primary"
-                  checked={!!fieldValue}
-                  onChange={(e) => onChange(field.name, e.target.checked)}
-                  disabled={loading || field.disabled}
-                />
-                <label
-                  htmlFor={`field-${field.name}`}
-                  className="text-xs font-medium leading-none cursor-pointer select-none"
-                >
+              <div className="flex h-10 items-center justify-between gap-3 rounded-md border bg-card px-3">
+                <Label htmlFor={id} className="cursor-pointer">
                   {field.label}
-                </label>
+                </Label>
+                <Switch
+                  id={id}
+                  checked={!!fieldValue}
+                  onCheckedChange={(checked) => onChange(field.name, checked)}
+                  disabled={disabled}
+                />
               </div>
             )}
 
