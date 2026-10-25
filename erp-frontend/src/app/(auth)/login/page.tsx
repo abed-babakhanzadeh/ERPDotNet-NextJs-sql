@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authService } from "@/services/userAccessService";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { handleApiError } from "@/lib/error-handling";
 
@@ -41,7 +43,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted p-4">
+    <main className="flex min-h-screen items-center justify-center bg-muted p-4">
       <div className="w-full max-w-md overflow-hidden rounded-2xl bg-card shadow-xl">
         <div className="bg-primary p-8 text-center">
           <h1 className="text-3xl font-bold text-primary-foreground">ERP DotNet</h1>
@@ -51,13 +53,16 @@ export default function LoginPage() {
         <div className="p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="mb-2 block text-sm font-medium text-foreground">
+              <Label htmlFor="username" className="mb-2 block">
                 نام کاربری
-              </label>
-              <input
+              </Label>
+              <Input
+                id="username"
                 type="text"
                 required
-                className="block w-full rounded-lg border border-border bg-muted p-2.5 text-sm text-foreground focus:border-primary focus:ring-ring outline-none"
+                autoComplete="username"
+                dir="ltr"
+                autoFocus
                 placeholder="admin"
                 value={formData.username}
                 onChange={(e) =>
@@ -67,13 +72,15 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-foreground">
+              <Label htmlFor="password" className="mb-2 block">
                 رمز عبور
-              </label>
-              <input
+              </Label>
+              <Input
+                id="password"
                 type="password"
                 required
-                className="block w-full rounded-lg border border-border bg-muted p-2.5 text-sm text-foreground focus:border-primary focus:ring-ring outline-none"
+                autoComplete="current-password"
+                dir="ltr"
                 placeholder="••••••••"
                 value={formData.password}
                 onChange={(e) =>
@@ -85,7 +92,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex justify-center items-center gap-2 rounded-lg bg-primary px-5 py-3 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-4 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="w-full flex justify-center items-center gap-2 rounded-lg bg-primary px-5 py-3 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               {loading ? (
                 <>
@@ -99,6 +106,6 @@ export default function LoginPage() {
           </form>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

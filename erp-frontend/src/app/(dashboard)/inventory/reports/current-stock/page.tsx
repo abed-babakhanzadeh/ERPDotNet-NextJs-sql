@@ -188,7 +188,7 @@ export default function CurrentStockReportPage() {
           setSelectedWarehouseId(val === "all" ? null : Number(val));
         }}
       >
-        <SelectTrigger className="w-[120px] sm:w-[180px] h-8 bg-background text-xs shrink-0">
+        <SelectTrigger aria-label="انبار" className="w-[120px] sm:w-[180px] h-8 bg-background text-xs shrink-0">
           <SelectValue placeholder="همه انبارها" />
         </SelectTrigger>
         <SelectContent>

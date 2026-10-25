@@ -92,6 +92,7 @@ export function ColumnFilter({
           <div className="relative flex-1">
             <Input
               placeholder="مثال: 1403/05/12"
+              aria-label={`فیلتر تاریخ ${column.label}`}
               value={filterValue}
               onChange={(e) => setFilterValue(e.target.value)}
               // چون LTR است، پدینگ راست (pr-7) می‌دهیم تا متن زیر دکمه نرود
@@ -137,6 +138,7 @@ export function ColumnFilter({
                 size="icon"
                 className="h-8 w-8 shrink-0 hover:bg-accent"
                 onClick={openCalendar}
+                aria-label={`انتخاب تاریخ برای ${column.label}`}
               >
                 <Calendar className="h-4 w-4 text-muted-foreground" />
               </Button>
@@ -172,6 +174,7 @@ export function ColumnFilter({
           <Button
             variant="ghost"
             size="icon"
+            aria-label={`فیلتر پیشرفته ${column.label}`}
             className={cn(
               "h-8 w-8 transition-all shrink-0",
               isFiltered

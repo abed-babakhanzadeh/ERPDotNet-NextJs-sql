@@ -380,6 +380,7 @@ export default function WhereUsedPage() {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
+                        aria-label="مشاهده فرم BOM"
                         variant="ghost"
                         className="h-8 w-8 p-0 text-primary hover:bg-primary/10"
                         onClick={(e) => {
@@ -396,6 +397,7 @@ export default function WhereUsedPage() {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
+                        aria-label="مشاهده در درخت کالا/قلم"
                         variant="ghost"
                         className="h-8 w-8 p-0 text-primary hover:bg-primary/10"
                         onClick={(e) => {

@@ -110,9 +110,17 @@ export default function PersianDatePicker({
                 <div
                   role="button"
                   tabIndex={0}
+                  aria-label="پاک کردن تاریخ"
                   onClick={(e) => {
                     e.stopPropagation();
                     onChange(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onChange(null);
+                    }
                   }}
                   className="hover:bg-muted rounded-full p-1 transition-colors"
                 >

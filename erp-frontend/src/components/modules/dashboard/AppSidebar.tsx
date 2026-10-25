@@ -45,7 +45,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { state } = useSidebar();
 
   return (
-    <Sidebar collapsible="icon" side="right" variant="sidebar" {...props}>
+    <Sidebar role="navigation" aria-label="منوی اصلی" collapsible="icon" side="right" variant="sidebar" {...props}>
       <SidebarHeader>
         <TeamSwitcher />
         {/* فیلد جستجو - فقط وقتی باز است نمایش داده شود */}
@@ -55,6 +55,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <Search className="absolute right-2 top-2.5 size-4 text-muted-foreground pointer-events-none" />
               <Input
                 placeholder="جستجوی منو..."
+                aria-label="جستجوی منو"
                 className="pr-8 h-9 bg-background shadow-none focus-visible:ring-1"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}

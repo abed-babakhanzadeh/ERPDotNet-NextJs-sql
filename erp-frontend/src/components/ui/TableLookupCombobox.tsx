@@ -31,6 +31,8 @@ interface TableLookupComboboxProps<T extends LookupOption> {
   items: T[];
   loading?: boolean;
   placeholder?: string;
+  /** نام دسترس‌پذیر؛ role=combobox نامش را از متن داخل دکمه نمی‌گیرد */
+  ariaLabel?: string;
   disabled?: boolean;
   searchableFields?: string[];
   displayFields?: string[];
@@ -46,6 +48,7 @@ export function TableLookupCombobox<T extends LookupOption>({
   items,
   loading = false,
   placeholder = "جستجو...",
+  ariaLabel,
   disabled = false,
   searchableFields,
   displayFields,
@@ -123,6 +126,7 @@ export function TableLookupCombobox<T extends LookupOption>({
         <Button
           variant="outline"
           role="combobox"
+          aria-label={ariaLabel ?? placeholder}
           aria-expanded={open}
           disabled={disabled}
           className="w-full justify-between text-right h-8 text-xs" // سایز دکمه اصلی هم کوچک شد

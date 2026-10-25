@@ -221,6 +221,7 @@ export default function BaseFormLayout({
                         variant="ghost"
                         size="icon"
                         onClick={() => setIsFullscreen(!isFullscreen)}
+                        aria-label={isFullscreen ? "خروج از تمام صفحه" : "تمام صفحه"}
                         className="hidden h-8 w-8 text-muted-foreground sm:inline-flex"
                       >
                         {isFullscreen ? (

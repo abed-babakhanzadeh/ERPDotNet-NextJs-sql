@@ -350,6 +350,7 @@ export default function UsersPage() {
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
+                aria-label="ویرایش اطلاعات"
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 text-primary hover:bg-primary/10"
@@ -366,6 +367,7 @@ export default function UsersPage() {
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
+                aria-label="دسترسی‌های ویژه"
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 text-warning hover:bg-warning/10"
@@ -382,6 +384,7 @@ export default function UsersPage() {
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
+                aria-label="تغییر رمز عبور"
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 text-muted-foreground hover:bg-muted"
@@ -398,6 +401,7 @@ export default function UsersPage() {
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
+                aria-label="حذف کاربر"
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive"

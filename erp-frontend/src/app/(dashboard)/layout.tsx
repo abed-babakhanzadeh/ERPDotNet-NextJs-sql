@@ -31,6 +31,12 @@ export default function DashboardLayout({
 
   return (
     <SidebarProvider defaultOpen={true} className="h-svh overflow-hidden">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-[120] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-foreground"
+      >
+        پرش به محتوای اصلی
+      </a>
       <AppSidebar />
 
       <SidebarInset className="bg-background h-full flex flex-col overflow-hidden">
@@ -60,9 +66,14 @@ export default function DashboardLayout({
         </div>
 
         {/* Main Content */}
-        <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4">
+        {/* SidebarInset خودش <main> است؛ این ناحیه فقط مقصد «پرش به محتوا» است */}
+        <div
+          id="main-content"
+          tabIndex={-1}
+          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 focus:outline-none"
+        >
           {children}
-        </main>
+        </div>
 
         {/* ✅ محل دقیق اضافه کردن ویجت: اینجا، قبل از بسته شدن SidebarInset */}
         <AIChatWidget />

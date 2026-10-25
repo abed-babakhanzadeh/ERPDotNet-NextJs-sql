@@ -211,7 +211,7 @@ export default function ProductCardexPage() {
           setSelectedWarehouseId(val === "all" ? null : Number(val))
         }
       >
-        <SelectTrigger className="w-[110px] sm:w-[160px] h-8 bg-background text-xs shrink-0">
+        <SelectTrigger aria-label="انبار" className="w-[110px] sm:w-[160px] h-8 bg-background text-xs shrink-0">
           <SelectValue placeholder="انتخاب انبار..." />
         </SelectTrigger>
         <SelectContent>

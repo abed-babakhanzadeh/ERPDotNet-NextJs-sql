@@ -418,7 +418,7 @@ export default function ProcessDesignerPage({
                   setNewState({ ...newState, type: Number(v) })
                 }
               >
-                <SelectTrigger dir="rtl">
+                <SelectTrigger dir="rtl" aria-label="نوع وضعیت">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent dir="rtl">
@@ -467,7 +467,7 @@ export default function ProcessDesignerPage({
                     setNewTransition({ ...newTransition, fromStateId: v })
                   }
                 >
-                  <SelectTrigger dir="rtl">
+                  <SelectTrigger dir="rtl" aria-label="وضعیت مبدا">
                     <SelectValue placeholder="انتخاب مبدا..." />
                   </SelectTrigger>
                   <SelectContent dir="rtl">
@@ -487,7 +487,7 @@ export default function ProcessDesignerPage({
                     setNewTransition({ ...newTransition, toStateId: v })
                   }
                 >
-                  <SelectTrigger dir="rtl">
+                  <SelectTrigger dir="rtl" aria-label="وضعیت مقصد">
                     <SelectValue placeholder="انتخاب مقصد..." />
                   </SelectTrigger>
                   <SelectContent dir="rtl">
@@ -527,7 +527,7 @@ export default function ProcessDesignerPage({
                   })
                 }
               >
-                <SelectTrigger dir="rtl">
+                <SelectTrigger dir="rtl" aria-label="رنگ دکمه">
                   <SelectValue placeholder="انتخاب رنگ دکمه..." />
                 </SelectTrigger>
                 <SelectContent dir="rtl">
