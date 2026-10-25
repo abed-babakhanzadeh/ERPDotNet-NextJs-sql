@@ -3,6 +3,7 @@ import {
   request,
   test,
   type APIRequestContext,
+  type APIResponse,
 } from "@playwright/test";
 import {
   API_URL,
@@ -19,10 +20,7 @@ const PROCESS_CODE = "INVENTORY_V1";
 // مجوزهای کارتابل: مشاهده، جزئیات، اقدام و تفویض
 const INBOX_PERMISSIONS = [4100, 4101, 4102, 4103, 4104];
 
-async function ok(
-  res: Awaited<ReturnType<APIRequestContext["get"]>>,
-  what: string,
-) {
+async function ok(res: APIResponse, what: string): Promise<APIResponse> {
   if (!res.ok())
     throw new Error(`${what}: ${res.status()} ${await res.text()}`);
   return res;
