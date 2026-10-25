@@ -70,6 +70,11 @@ public class InventoryPostingService : IInventoryPostingService
                     continue;
                 }
             }
+            else if (!isReversal && await _repository.IsBatchManagedAsync(detail.ProductId, cancellationToken))
+            {
+                errors.Add($"کالای {detail.ProductId} مدیریت بچ دارد؛ بچ ردیف آن را انتخاب کنید.");
+                continue;
+            }
 
             foreach (var plannedMovement in GetMovements(context, detail, isReversal))
             {

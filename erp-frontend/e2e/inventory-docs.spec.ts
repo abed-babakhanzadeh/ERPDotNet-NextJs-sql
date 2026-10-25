@@ -366,4 +366,26 @@ test.describe("سند انبار", () => {
     expect(JSON.stringify(items[0])).toContain(`LOT-${tag}`);
     await api.dispose();
   });
+  test("کالای بچ‌دار بدون بچ قطعی نمی‌شود", async () => {
+    const api = await adminApi();
+    const tag = uid();
+    const unitId = await createUnit(api, `عدد ${tag}`);
+    const productId = await createProduct(api, {
+      code: `NB-${tag}`,
+      name: `چسب ${tag}`,
+      unitId,
+    });
+    await createBatch(api, { productId, unitId, batchNumber: `LOT-${tag}` });
+    const warehouse = await createWarehouse(api, tag);
+    const docTypeId = await createDocType(api, `رسید بی‌بچ ${tag}`, 1);
+    const docId = await createDoc(api, {
+      docTypeId,
+      warehouseId: warehouse.warehouseId,
+      lines: [{ productId, quantity: 3, locationId: warehouse.locationId }],
+    });
+
+    await expect(approveAndPostDoc(api, docId)).rejects.toThrow(/مدیریت بچ/);
+    expect(await stockOf(api, productId, warehouse.warehouseId)).toBe(0);
+    await api.dispose();
+  });
 });

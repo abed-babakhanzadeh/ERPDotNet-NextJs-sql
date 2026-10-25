@@ -129,6 +129,18 @@ public class InventoryPostingServiceTests
     }
 
     [Fact]
+    public async Task Batch_managed_product_without_batch_is_rejected()
+    {
+        _repo.BatchManagedProducts.Add(ProductId);
+        var context = Context(InventoryNature.Input, Line(1, 10));
+
+        var result = await _sut.ProcessDocumentAsync(context, default);
+
+        Assert.False(result.IsSuccess);
+        Assert.Contains(result.Errors, e => e.Contains("مدیریت بچ"));
+    }
+
+    [Fact]
     public async Task Receipt_with_own_batch_posts_stock_on_that_batch()
     {
         _repo.Batches.Add(new InventoryBatch { Id = 7, ProductId = ProductId, BatchNumber = "B7" });
@@ -331,6 +343,11 @@ public class InventoryPostingServiceTests
 
         public Task<InventoryBatch?> GetBatchAsync(int batchId, CancellationToken cancellationToken) =>
             Task.FromResult(Batches.FirstOrDefault(b => b.Id == batchId));
+
+        public HashSet<int> BatchManagedProducts { get; } = new();
+
+        public Task<bool> IsBatchManagedAsync(int productId, CancellationToken cancellationToken) =>
+            Task.FromResult(BatchManagedProducts.Contains(productId));
 
         public Task<PostedTransactionRef?> GetLastTransactionAsync(long docDetailId, int warehouseId, CancellationToken cancellationToken) =>
             Task.FromResult(LastTransactions.GetValueOrDefault((docDetailId, warehouseId)));
