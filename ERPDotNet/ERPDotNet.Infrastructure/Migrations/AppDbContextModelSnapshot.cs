@@ -1401,6 +1401,121 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.ToTable("Locations");
                 });
 
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.StockCount", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CountDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<long?>("ShortageDocId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<long?>("SurplusDocId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("WarehouseId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WarehouseId", "Status");
+
+                    b.ToTable("StockCounts", "inventory");
+                });
+
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.StockCountLine", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int?>("BatchId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("CountedQuantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("LocationId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("StockCountId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("SystemQuantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BatchId");
+
+                    b.HasIndex("LocationId");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("StockCountId");
+
+                    b.ToTable("StockCountLines", "inventory");
+                });
+
             modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.Warehouse", b =>
                 {
                     b.Property<int>("Id")
@@ -2324,6 +2439,47 @@ namespace ERPDotNet.Infrastructure.Migrations
                             Name = "Inventory.Docs.View",
                             ParentId = 3201,
                             Title = "مشاهده اسناد"
+                        },
+                        new
+                        {
+                            Id = 3210,
+                            IsMenu = true,
+                            Name = "Inventory.StockCounts",
+                            ParentId = 3200,
+                            Title = "انبارگردانی",
+                            Url = "/inventory/stock-counts"
+                        },
+                        new
+                        {
+                            Id = 3211,
+                            IsMenu = false,
+                            Name = "Inventory.StockCounts.View",
+                            ParentId = 3210,
+                            Title = "مشاهده انبارگردانی"
+                        },
+                        new
+                        {
+                            Id = 3212,
+                            IsMenu = false,
+                            Name = "Inventory.StockCounts.Create",
+                            ParentId = 3210,
+                            Title = "شروع انبارگردانی"
+                        },
+                        new
+                        {
+                            Id = 3213,
+                            IsMenu = false,
+                            Name = "Inventory.StockCounts.Edit",
+                            ParentId = 3210,
+                            Title = "ثبت شمارش"
+                        },
+                        new
+                        {
+                            Id = 3214,
+                            IsMenu = false,
+                            Name = "Inventory.StockCounts.Finalize",
+                            ParentId = 3210,
+                            Title = "نهایی کردن و صدور اسناد اصلاحی"
                         },
                         new
                         {
@@ -3781,6 +3937,50 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.Navigation("Warehouse");
                 });
 
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.StockCount", b =>
+                {
+                    b.HasOne("ERPDotNet.Domain.Modules.Inventory.Entities.Warehouse", "Warehouse")
+                        .WithMany()
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Warehouse");
+                });
+
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.StockCountLine", b =>
+                {
+                    b.HasOne("ERPDotNet.Domain.Modules.Inventory.Entities.InventoryBatch", "Batch")
+                        .WithMany()
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ERPDotNet.Domain.Modules.Inventory.Entities.Location", "Location")
+                        .WithMany()
+                        .HasForeignKey("LocationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ERPDotNet.Domain.Modules.BaseInfo.Entities.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ERPDotNet.Domain.Modules.Inventory.Entities.StockCount", "StockCount")
+                        .WithMany("Lines")
+                        .HasForeignKey("StockCountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Batch");
+
+                    b.Navigation("Location");
+
+                    b.Navigation("Product");
+
+                    b.Navigation("StockCount");
+                });
+
             modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.Warehouse", b =>
                 {
                     b.HasOne("ERPDotNet.Domain.Modules.BaseInfo.Entities.Company", null)
@@ -4144,6 +4344,11 @@ namespace ERPDotNet.Infrastructure.Migrations
             modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.Location", b =>
                 {
                     b.Navigation("Children");
+                });
+
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.StockCount", b =>
+                {
+                    b.Navigation("Lines");
                 });
 
             modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.Warehouse", b =>

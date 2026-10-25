@@ -1,6 +1,7 @@
 import {
   LayoutDashboard,
   Barcode,
+  ClipboardCheck,
   FolderTree,
   Users,
   Settings,
@@ -220,6 +221,12 @@ export const MENU_ITEMS: MenuItem[] = [
             href: "/inventory/docs",
             icon: FileText,
             permission: "Inventory.Docs",
+          },
+          {
+            title: "انبارگردانی",
+            href: "/inventory/stock-counts",
+            icon: ClipboardCheck,
+            permission: "Inventory.StockCounts",
           },
         ],
       },

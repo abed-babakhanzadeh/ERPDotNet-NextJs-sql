@@ -2982,6 +2982,201 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Inventory/StockCounts/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["GetStockCountsQuery"];
+                    "text/json": components["schemas"]["GetStockCountsQuery"];
+                    "application/*+json": components["schemas"]["GetStockCountsQuery"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PaginatedResultOfStockCountListItemDto"];
+                        "application/json": components["schemas"]["PaginatedResultOfStockCountListItemDto"];
+                        "text/json": components["schemas"]["PaginatedResultOfStockCountListItemDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Inventory/StockCounts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["StockCountDto"];
+                        "application/json": components["schemas"]["StockCountDto"];
+                        "text/json": components["schemas"]["StockCountDto"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateStockCountCommand"];
+                    "text/json": components["schemas"]["UpdateStockCountCommand"];
+                    "application/*+json": components["schemas"]["UpdateStockCountCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Inventory/StockCounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateStockCountCommand"];
+                    "text/json": components["schemas"]["CreateStockCountCommand"];
+                    "application/*+json": components["schemas"]["CreateStockCountCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": number;
+                        "application/json": number;
+                        "text/json": number;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Inventory/StockCounts/{id}/finalize": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["FinalizeStockCountCommand"];
+                    "text/json": components["schemas"]["FinalizeStockCountCommand"];
+                    "application/*+json": components["schemas"]["FinalizeStockCountCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["FinalizeStockCountResult"];
+                        "application/json": components["schemas"]["FinalizeStockCountResult"];
+                        "text/json": components["schemas"]["FinalizeStockCountResult"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/BaseInfo/Companies/lookup": {
         parameters: {
             query?: never;
@@ -4624,6 +4819,15 @@ export interface components {
             stateCode: string;
             type: components["schemas"]["BpmsStateType"];
         };
+        CreateStockCountCommand: {
+            /** Format: int32 */
+            warehouseId: number;
+            /** Format: int32 */
+            locationId?: null | number;
+            /** Format: date-time */
+            countDate: string;
+            description?: null | string;
+        };
         CreateTransitionCommand: {
             /** Format: int32 */
             processVersionId: number;
@@ -4701,6 +4905,20 @@ export interface components {
             value: string;
             value2?: null | string;
             logic?: null | string;
+        };
+        FinalizeStockCountCommand: {
+            /** Format: int32 */
+            id: number;
+            /** Format: int32 */
+            surplusDocTypeId?: null | number;
+            /** Format: int32 */
+            shortageDocTypeId?: null | number;
+        };
+        FinalizeStockCountResult: {
+            /** Format: int64 */
+            surplusDocId: null | number;
+            /** Format: int64 */
+            shortageDocId: null | number;
         };
         FiscalYearDto: {
             /** Format: int32 */
@@ -4878,6 +5096,19 @@ export interface components {
             searchTerm?: null | string;
         };
         GetProductCategoriesQuery: {
+            /** Format: int32 */
+            pageNumber: number;
+            /** Format: int32 */
+            pageSize: number;
+            sortColumn?: null | string;
+            sortDescending: boolean;
+            searchTerm?: null | string;
+            filters?: null | components["schemas"]["FilterModel"][];
+        };
+        GetStockCountsQuery: {
+            /** Format: int32 */
+            warehouseId?: null | number;
+            status: null | components["schemas"]["StockCountStatus"];
             /** Format: int32 */
             pageNumber: number;
             /** Format: int32 */
@@ -5236,6 +5467,17 @@ export interface components {
             hasPreviousPage: boolean;
             hasNextPage: boolean;
         };
+        PaginatedResultOfStockCountListItemDto: {
+            items: components["schemas"]["StockCountListItemDto"][];
+            /** Format: int32 */
+            pageNumber: number;
+            /** Format: int32 */
+            totalPages: number;
+            /** Format: int32 */
+            totalCount: number;
+            hasPreviousPage: boolean;
+            hasNextPage: boolean;
+        };
         PaginatedResultOfUnitDto: {
             items: components["schemas"]["UnitDto"][];
             /** Format: int32 */
@@ -5417,6 +5659,79 @@ export interface components {
             /** Format: int32 */
             type: number;
         };
+        StockCountDto: {
+            /** Format: int32 */
+            id: number;
+            /** Format: date-time */
+            countDate: string;
+            /** Format: int32 */
+            warehouseId: number;
+            warehouseTitle: string;
+            /** Format: int32 */
+            statusId: number;
+            statusTitle: string;
+            description: null | string;
+            /** Format: int64 */
+            surplusDocId: null | number;
+            /** Format: int64 */
+            surplusDocNumber: null | number;
+            /** Format: int64 */
+            shortageDocId: null | number;
+            /** Format: int64 */
+            shortageDocNumber: null | number;
+            lines: components["schemas"]["StockCountLineDto"][];
+        };
+        StockCountLineDto: {
+            /** Format: int64 */
+            id: number;
+            /** Format: int32 */
+            productId: number;
+            productCode: string;
+            productName: string;
+            unitTitle: string;
+            /** Format: int32 */
+            locationId: null | number;
+            locationCode: null | string;
+            /** Format: int32 */
+            batchId: null | number;
+            batchNumber: null | string;
+            /** Format: double */
+            systemQuantity: number;
+            /** Format: double */
+            countedQuantity: null | number;
+            /** Format: double */
+            difference: null | number;
+        };
+        StockCountLineInput: {
+            /** Format: int64 */
+            id?: null | number;
+            /** Format: int32 */
+            productId: number;
+            /** Format: int32 */
+            locationId?: null | number;
+            /** Format: int32 */
+            batchId?: null | number;
+            /** Format: double */
+            countedQuantity?: null | number;
+        };
+        StockCountListItemDto: {
+            /** Format: int32 */
+            id: number;
+            /** Format: date-time */
+            countDate: string;
+            /** Format: int32 */
+            warehouseId: number;
+            warehouseTitle: string;
+            /** Format: int32 */
+            statusId: number;
+            statusTitle: string;
+            /** Format: int32 */
+            lineCount: number;
+            /** Format: int32 */
+            countedLines: number;
+            description: null | string;
+        };
+        StockCountStatus: number;
         StockRebuildResultDto: {
             /** Format: int32 */
             updated: number;
@@ -5663,6 +5978,12 @@ export interface components {
         UpdateRolePermissionsCommand: {
             roleId: string;
             permissionIds: (number)[];
+        };
+        UpdateStockCountCommand: {
+            /** Format: int32 */
+            id: number;
+            description?: null | string;
+            lines: components["schemas"]["StockCountLineInput"][];
         };
         UpdateUnitCommand: {
             /** Format: int32 */

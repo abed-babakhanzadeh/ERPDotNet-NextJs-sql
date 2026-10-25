@@ -130,6 +130,13 @@ public class PermissionConfiguration : IEntityTypeConfiguration<Permission>
             new Permission { Id = 3207, Name = "Inventory.Docs.Post", Title = "قطعی سازی (Post)", IsMenu = false, ParentId = 3201 },
             new Permission { Id = 3208, Name = "Inventory.Docs.View", Title = "مشاهده اسناد", IsMenu = false, ParentId = 3201 },
 
+            // انبارگردانی
+            new Permission { Id = 3210, Name = "Inventory.StockCounts", Title = "انبارگردانی", IsMenu = true, ParentId = 3200, Url = "/inventory/stock-counts" },
+            new Permission { Id = 3211, Name = "Inventory.StockCounts.View", Title = "مشاهده انبارگردانی", IsMenu = false, ParentId = 3210 },
+            new Permission { Id = 3212, Name = "Inventory.StockCounts.Create", Title = "شروع انبارگردانی", IsMenu = false, ParentId = 3210 },
+            new Permission { Id = 3213, Name = "Inventory.StockCounts.Edit", Title = "ثبت شمارش", IsMenu = false, ParentId = 3210 },
+            new Permission { Id = 3214, Name = "Inventory.StockCounts.Finalize", Title = "نهایی کردن و صدور اسناد اصلاحی", IsMenu = false, ParentId = 3210 },
+
             // --- ج) گزارشات (Reports) ---
             new Permission { Id = 3300, Name = "Inventory.Reports", Title = "گزارشات", IsMenu = true, ParentId = 3000 },
             new Permission { Id = 3301, Name = "Inventory.Reports.CurrentStock", Title = "موجودی لحظه‌ای", IsMenu = true, ParentId = 3300, Url = "/inventory/reports/current-stock" },
