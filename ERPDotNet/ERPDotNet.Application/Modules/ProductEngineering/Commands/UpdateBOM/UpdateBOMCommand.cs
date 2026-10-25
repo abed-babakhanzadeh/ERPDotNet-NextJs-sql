@@ -1,6 +1,7 @@
 using ERPDotNet.Application.Common.Exceptions;
 using ERPDotNet.Application.Common.Attributes;
 using ERPDotNet.Application.Common.Interfaces;
+using ERPDotNet.Application.Modules.ProductEngineering.Services;
 using ERPDotNet.Domain.Modules.ProductEngineering.Entities;
 using FluentValidation;
 using MediatR;
@@ -90,8 +91,7 @@ public class UpdateBOMValidator : AbstractValidator<UpdateBOMCommand>
             .Must(details => details.Select(d => d.ChildProductId).Distinct().Count() == details.Count)
             .WithMessage("یک کالا نمی‌تواند چند بار در لیست مواد اولیه تکرار شود (موارد تکراری را ادغام کنید).");
             
-        // جلوگیری از لوپ: پدر نمی‌تواند فرزند خودش باشد
-        // (این نیاز به کوئری دارد تا ProductId پدر را پیدا کنیم)
+        // جلوگیری از لوپ در همه سطوح: محصول نباید مستقیم یا غیرمستقیم زیرمجموعه خودش شود
         RuleFor(x => x)
             .MustAsync(NotBeCircularDependency)
             .WithMessage("خطای مهندسی: محصول نهایی نمی‌تواند به عنوان زیرمجموعه خودش استفاده شود (لوپ تولید).");
@@ -123,7 +123,7 @@ public class UpdateBOMValidator : AbstractValidator<UpdateBOMCommand>
         return !hasOtherActiveMain;
     }
 
-    // لاجیک جلوگیری از لوپ (پدر در فرزندان نباشد)
+    // لاجیک جلوگیری از لوپ (پدر در هیچ سطحی از فرزندان نباشد)
     private async Task<bool> NotBeCircularDependency(UpdateBOMCommand command, CancellationToken token)
     {
         var currentBom = await _context.BOMHeaders
@@ -133,10 +133,10 @@ public class UpdateBOMValidator : AbstractValidator<UpdateBOMCommand>
 
         if (currentBom == null) return true;
 
-        // چک می‌کنیم آیا ProductId پدر، در لیست ChildProductIdهای ارسالی وجود دارد؟
-        bool isParentInChildren = command.Details.Any(d => d.ChildProductId == currentBom.ProductId);
-        
-        return !isParentInChildren;
+        var components = command.Details
+            .SelectMany(d => d.Substitutes.Select(s => s.SubstituteProductId).Prepend(d.ChildProductId));
+
+        return !await BomCycleCheck.CreatesCycleAsync(_context, currentBom.ProductId, components, command.Id, token);
     }
 }
 

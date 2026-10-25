@@ -115,10 +115,16 @@ public class TasksController : ControllerBase
     }
 
 
-    [AllowAnonymous]
+    // ابزار توسعه: فرآیند INVENTORY_V1 و همه نمونه‌ها و کارهایش را پاک و از نو می‌سازد.
+    // فقط در محیط Development و برای کاربر دارای مجوز ویرایش فرآیند در دسترس است.
     [HttpGet("ultimate-seed")]
-    public async Task<IActionResult> UltimateSeed([FromServices] ERPDotNet.Application.Common.Interfaces.IApplicationDbContext context)
+    [HasPermission("Workflow.Processes.Edit")]
+    public async Task<IActionResult> UltimateSeed(
+        [FromServices] ERPDotNet.Application.Common.Interfaces.IApplicationDbContext context,
+        [FromServices] IWebHostEnvironment environment)
     {
+        if (!environment.IsDevelopment()) return NotFound();
+
         string newProcessCode = "INVENTORY_V1";
 
         // 1. پاکسازی کامل و سلسله‌مراتبی (از پایین‌ترین سطح به بالاترین سطح برای جلوگیری از خطای FK)
