@@ -60,6 +60,17 @@ public class InventoryPostingService : IInventoryPostingService
                 continue;
             }
 
+            // بچ باید متعلق به همان کالای سطر باشد؛ در ابطال همان اثر قبلی برمی‌گردد و دوباره بررسی نمی‌شود
+            if (!isReversal && detail.BatchId.HasValue)
+            {
+                var batch = await _repository.GetBatchAsync(detail.BatchId.Value, cancellationToken);
+                if (batch == null || batch.ProductId != detail.ProductId)
+                {
+                    errors.Add($"بچ انتخاب‌شده متعلق به کالای {detail.ProductId} نیست.");
+                    continue;
+                }
+            }
+
             foreach (var plannedMovement in GetMovements(context, detail, isReversal))
             {
                 var movement = plannedMovement;
