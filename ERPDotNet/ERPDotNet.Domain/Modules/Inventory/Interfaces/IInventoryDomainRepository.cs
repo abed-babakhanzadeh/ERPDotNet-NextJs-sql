@@ -2,6 +2,9 @@ using ERPDotNet.Domain.Modules.Inventory.Entities;
 
 namespace ERPDotNet.Domain.Modules.Inventory.Interfaces;
 
+// ارجاع به تراکنش ثبت‌شده: برای ابطال، لوکیشن از خود تراکنش اصلی خوانده می‌شود تا دقیقاً همان اثر برگردد
+public sealed record PostedTransactionRef(long Id, int? LocationId);
+
 public interface IInventoryDomainRepository
 {
     // گرفتن موجودی لحظه‌ای
@@ -10,10 +13,6 @@ public interface IInventoryDomainRepository
     // گرفتن اطلاعات بچ
     Task<InventoryBatch?> GetBatchAsync(int batchId, CancellationToken cancellationToken);
 
-    // برای پیدا کردن تراکنش اصلی جهت لینک کردن در زمان ابطال
     // آخرین تراکنش یک سطر سند در یک انبار (سطر انتقال در دو انبار تراکنش دارد)
-    Task<long?> GetLastTransactionIdAsync(long docDetailId, int warehouseId, CancellationToken cancellationToken);
-
-    // لوکیشن پیش‌فرض کالا در یک انبار (از تنظیمات کالا-انبار)، برای ورود کالا در مقصد انتقال
-    Task<int?> GetDefaultLocationIdAsync(int productId, int warehouseId, CancellationToken cancellationToken);
+    Task<PostedTransactionRef?> GetLastTransactionAsync(long docDetailId, int warehouseId, CancellationToken cancellationToken);
 }

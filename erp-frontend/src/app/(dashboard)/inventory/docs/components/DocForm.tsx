@@ -126,6 +126,8 @@ export default function DocForm({
   const [headerData, setHeaderData] = useState<any>({});
   const [gridData, setGridData] = useState<any[]>([]);
   const [locations, setLocations] = useState<any[]>([]);
+  // لوکیشن‌های انبار مقصد (فقط سند انتقال)
+  const [destinationLocations, setDestinationLocations] = useState<any[]>([]);
   const [productsList, setProductsList] = useState<any[]>([]);
   const [productsLoading, setProductsLoading] = useState(false);
 
@@ -237,6 +239,20 @@ export default function DocForm({
       loadLocations(Number(headerData.warehouseId));
     if (isInitialized.current && !headerData.warehouseId) setLocations([]);
   }, [headerData.warehouseId]);
+
+  useEffect(() => {
+    const destinationId = Number(headerData.destinationWarehouseId);
+    if (!destinationId) {
+      setDestinationLocations([]);
+      return;
+    }
+    inventoryService
+      .getLocations(destinationId)
+      .then((res) =>
+        setDestinationLocations(Array.isArray(res) ? res : res?.items || []),
+      )
+      .catch(() => toast.error("خطا در دریافت قفسه‌های انبار مقصد"));
+  }, [headerData.destinationWarehouseId]);
 
   const reloadDocument = async () => {
     if (!docData?.id) return;
@@ -408,6 +424,23 @@ export default function DocForm({
         options: locations.map((l) => ({ label: l.title, value: l.id })),
         disabled: isReadOnly,
       },
+      // ردیابی کامل انتقال: قفسه مقصد برای هر سطر
+      ...(isTransfer
+        ? [
+            {
+              key: "destinationLocationId",
+              title: "قفسه مقصد",
+              type: "select" as const,
+              width: "150px",
+              required: true,
+              options: destinationLocations.map((l) => ({
+                label: l.title,
+                value: l.id,
+              })),
+              disabled: isReadOnly,
+            },
+          ]
+        : []),
       {
         key: "batchNumber",
         title: "بچ نامبر",
@@ -424,7 +457,14 @@ export default function DocForm({
         disabled: isReadOnly,
       },
     ],
-    [locations, productsList, productsLoading, isReadOnly],
+    [
+      locations,
+      destinationLocations,
+      isTransfer,
+      productsList,
+      productsLoading,
+      isReadOnly,
+    ],
   );
 
   // === Handlers ===
@@ -459,6 +499,15 @@ export default function DocForm({
       return toast.error("تعداد کالا در تمام ردیف‌ها باید بزرگتر از صفر باشد.");
     }
 
+    if (isTransfer) {
+      const missingIndex = validDetails.findIndex(
+        (r) => !r.destinationLocationId,
+      );
+      if (missingIndex >= 0) {
+        return toast.error(`ردیف ${missingIndex + 1}: قفسه مقصد را انتخاب کنید.`);
+      }
+    }
+
     setSubmitting(true);
     try {
       const detailsDto = validDetails.map((row) => ({
@@ -467,6 +516,10 @@ export default function DocForm({
         mainUnitQuantity: Number(row.mainUnitQuantity),
         subUnitQuantity: 0,
         locationId: row.locationId ? Number(row.locationId) : null,
+        destinationLocationId:
+          isTransfer && row.destinationLocationId
+            ? Number(row.destinationLocationId)
+            : null,
         batchId: null,
         description: row.description || "",
       }));

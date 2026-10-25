@@ -33,6 +33,8 @@ public class GetInventoryDocByIdHandler : IRequestHandler<GetInventoryDocByIdQue
                 .ThenInclude(d => d.Batch)
             .Include(x => x.Details)
                 .ThenInclude(d => d.Location)
+            .Include(x => x.Details)
+                .ThenInclude(d => d.DestinationLocation)
             .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
 
         if (doc == null) return null;
@@ -75,6 +77,8 @@ public class GetInventoryDocByIdHandler : IRequestHandler<GetInventoryDocByIdQue
                 
                 LocationId = d.LocationId ?? 0,
                 LocationCode = d.Location?.Code ?? string.Empty,
+                DestinationLocationId = d.DestinationLocationId,
+                DestinationLocationCode = d.DestinationLocation?.Code,
                 
                 BatchId = d.BatchId,
                 BatchNumber = d.Batch?.BatchNumber, // می‌تواند نال باشد

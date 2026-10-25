@@ -54,21 +54,31 @@ public class InventoryPostingService : IInventoryPostingService
         foreach (var detail in header.Details)
         {
             var quantity = detail.MainUnitQuantity;
-            var movements = await GetMovementsAsync(context, detail, isReversal, cancellationToken);
-
-            foreach (var movement in movements)
+            if (nature == InventoryNature.Transfer && !isReversal && !detail.DestinationLocationId.HasValue)
             {
+                errors.Add($"لوکیشن مقصد برای کالای {detail.ProductId} مشخص نشده است.");
+                continue;
+            }
+
+            foreach (var plannedMovement in GetMovements(context, detail, isReversal))
+            {
+                var movement = plannedMovement;
+
                 // === 1. مدیریت Reversal (لینک به تراکنش اصلی همان انبار) ===
                 long? relatedTransactionId = null;
                 if (isReversal)
                 {
-                    relatedTransactionId = await _repository.GetLastTransactionIdAsync(detail.Id, movement.WarehouseId, cancellationToken);
+                    var original = await _repository.GetLastTransactionAsync(detail.Id, movement.WarehouseId, cancellationToken);
 
-                    if (relatedTransactionId == null)
+                    if (original == null)
                     {
                         errors.Add($"تراکنش اصلی برای سطر {detail.Id} جهت ابطال یافت نشد. (شاید سند قبلاً ثبت نشده است)");
                         continue;
                     }
+
+                    relatedTransactionId = original.Id;
+                    // ابطال دقیقاً همان لوکیشنی را برمی‌گرداند که تراکنش اصلی تغییر داده بود
+                    movement = movement with { LocationId = original.LocationId };
                 }
 
                 var isDecrease = movement.Sign == InventoryTransactionSign.Decrease;
@@ -160,11 +170,10 @@ public class InventoryPostingService : IInventoryPostingService
         return InventoryPostingResult.Success(transactions, stockUpdates, events);
     }
 
-    private async Task<List<StockMovement>> GetMovementsAsync(
+    private static List<StockMovement> GetMovements(
         InventoryPostingContext context,
         InventoryDocDetail detail,
-        bool isReversal,
-        CancellationToken cancellationToken)
+        bool isReversal)
     {
         var header = context.Header;
         var increase = isReversal ? InventoryTransactionSign.Decrease : InventoryTransactionSign.Increase;
@@ -177,11 +186,9 @@ public class InventoryPostingService : IInventoryPostingService
 
             case InventoryNature.Transfer:
                 var destinationWarehouseId = header.DestinationWarehouseId!.Value;
-                // سطر سند فقط لوکیشن مبدأ را دارد؛ در مقصد لوکیشن پیش‌فرض کالا (در صورت تعریف) استفاده می‌شود
-                var destinationLocationId = await _repository.GetDefaultLocationIdAsync(detail.ProductId, destinationWarehouseId, cancellationToken);
                 // در ابطال ابتدا اثر مقصد برداشته می‌شود تا کنترل موجودی منفی مقصد قبل از برگشت به مبدأ انجام شود
                 var outOfSource = new StockMovement(header.WarehouseId, detail.LocationId, decrease);
-                var intoDestination = new StockMovement(destinationWarehouseId, destinationLocationId, increase);
+                var intoDestination = new StockMovement(destinationWarehouseId, detail.DestinationLocationId, increase);
                 return isReversal ? [intoDestination, outOfSource] : [outOfSource, intoDestination];
 
             default:

@@ -290,6 +290,9 @@ export interface InventoryDocDetailDto {
   subUnitQuantity: number;
 
   locationId?: number | null;
+  /** فقط سند انتقال: قفسه مقصد */
+  destinationLocationId?: number | null;
+  destinationLocationCode?: string | null;
   locationCode?: string;
 
   batchId?: number | null;
@@ -332,6 +335,8 @@ export interface CreateInventoryDocDetailDto {
   mainUnitQuantity: number;
   subUnitQuantity: number;
   locationId?: number | null;
+  /** فقط سند انتقال: قفسه مقصد */
+  destinationLocationId?: number | null;
   batchId?: number | null;
   description?: string | null;
 }
@@ -362,6 +367,8 @@ export interface UpdateInventoryDocDetailDto {
   mainUnitQuantity: number;
   subUnitQuantity: number;
   locationId?: number | null;
+  /** فقط سند انتقال: قفسه مقصد */
+  destinationLocationId?: number | null;
   batchId?: number | null;
   description?: string | null;
 }
