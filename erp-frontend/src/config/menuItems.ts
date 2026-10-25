@@ -1,5 +1,6 @@
 import {
   LayoutDashboard,
+  Barcode,
   FolderTree,
   Users,
   Settings,
@@ -240,6 +241,12 @@ export const MENU_ITEMS: MenuItem[] = [
             href: "/inventory/reports/cardex",
             icon: ScrollText,
             permission: "Inventory.Reports.Cardex",
+          },
+          {
+            title: "شماره سریال‌ها",
+            href: "/inventory/reports/serials",
+            icon: Barcode,
+            permission: "Inventory.Reports.Serials",
           },
         ],
       },

@@ -39,6 +39,8 @@ public class UpdateInventoryDocDetailDto
     public int? DestinationLocationId { get; set; }
     public int? BatchId { get; set; }
     public string? Description { get; set; }
+    // فقط برای کالای سریال‌دار
+    public List<string> SerialNumbers { get; set; } = new();
 }
 
 public class UpdateInventoryDocValidator : AbstractValidator<UpdateInventoryDocCommand>
@@ -48,6 +50,9 @@ public class UpdateInventoryDocValidator : AbstractValidator<UpdateInventoryDocC
         RuleFor(x => x.Id).GreaterThan(0);
         RuleFor(x => x.DocDate).NotEmpty();
         RuleFor(x => x.WarehouseId).GreaterThan(0);
+        RuleFor(x => x).Custom((cmd, validation) =>
+            InventoryDocRules.ValidateSerials(cmd.Details.Select(d => (d.ProductId, (IEnumerable<string>?)d.SerialNumbers)))
+                .ForEach(validation.AddFailure));
         RuleForEach(x => x.Details).ChildRules(d =>
         {
             d.RuleFor(x => x.ProductId).GreaterThan(0);
@@ -71,7 +76,8 @@ public class UpdateInventoryDocHandler : IRequestHandler<UpdateInventoryDocComma
     {
         // 1. لود کردن سند همراه با اقلام (شامل اقلام حذف شده نباشد)
         var doc = await _context.InventoryDocHeaders
-            .Include(x => x.Details.Where(d => !d.IsDeleted)) 
+            .Include(x => x.Details.Where(d => !d.IsDeleted))
+                .ThenInclude(d => d.Serials)
             .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
 
         if (doc == null)
@@ -170,6 +176,7 @@ public class UpdateInventoryDocHandler : IRequestHandler<UpdateInventoryDocComma
                     existingItem.DestinationLocationId = isTransfer ? reqDetail.DestinationLocationId : null;
                     existingItem.BatchId = reqDetail.BatchId;
                     existingItem.Description = reqDetail.Description;
+                    SyncSerials(existingItem, reqDetail.SerialNumbers);
                     // اینجا ModifiedAt خودکار آپدیت می‌شود
                 }
             }
@@ -188,11 +195,22 @@ public class UpdateInventoryDocHandler : IRequestHandler<UpdateInventoryDocComma
                     Description = reqDetail.Description
                     // CreatedAt, CreatedBy خودکار پر می‌شوند
                 };
+                SyncSerials(newItem, reqDetail.SerialNumbers);
                 doc.Details.Add(newItem);
             }
         }
 
         await _context.SaveChangesAsync(cancellationToken);
         return true;
+    }
+
+    // سریال‌های سطر با فهرست ارسالی هم‌سان می‌شوند؛ سریال تکراری حذف و دوباره درج نمی‌شود
+    private static void SyncSerials(InventoryDocDetail detail, IEnumerable<string>? serialNumbers)
+    {
+        var requested = InventoryDocRules.NormalizeSerials(serialNumbers);
+        foreach (var removed in detail.Serials.Where(s => !requested.Contains(s.SerialNumber)).ToList())
+            detail.Serials.Remove(removed);
+        foreach (var serial in requested.Where(r => detail.Serials.All(s => s.SerialNumber != r)))
+            detail.Serials.Add(new InventoryDocDetailSerial { SerialNumber = serial });
     }
 }

@@ -1,3 +1,4 @@
+using ERPDotNet.Application.Modules.Inventory.Services;
 using ERPDotNet.Application.Common.Attributes;
 using ERPDotNet.Application.Common.Exceptions;
 using ERPDotNet.Application.Common.Interfaces;
@@ -40,6 +41,7 @@ public class RevertInventoryDocHandler : IRequestHandler<RevertInventoryDocComma
         var doc = await _context.InventoryDocHeaders
             .Include(x => x.DocType)
             .Include(x => x.Details)
+                .ThenInclude(d => d.Serials)
             .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
 
         if (doc == null)
@@ -96,6 +98,8 @@ public class RevertInventoryDocHandler : IRequestHandler<RevertInventoryDocComma
 
             // 2. اعمال تغییرات روی موجودی کالا (Current Stocks)
             await _context.AddNewStocksAsync(result.UpdatedStocks, cancellationToken);
+
+            await InventorySerialTracker.ApplyAsync(_context, doc, doc.DocType!.Nature, isReversal: true, cancellationToken);
 
             // 3. تغییر وضعیت سند به "ابطال شده" (Cancelled)
             // توجه: به Draft برنمی‌گردد چون سند دارای اثر مالی بوده و باید تاریخچه آن حفظ شود.

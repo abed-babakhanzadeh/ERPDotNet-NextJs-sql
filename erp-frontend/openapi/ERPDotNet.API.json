@@ -2157,6 +2157,55 @@
         }
       }
     },
+    "/api/Inventory/Inventory/serials/search": {
+      "post": {
+        "tags": [
+          "Inventory"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetInventorySerialsQuery"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetInventorySerialsQuery"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetInventorySerialsQuery"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResultOfInventorySerialDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResultOfInventorySerialDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResultOfInventorySerialDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Inventory/Inventory/stock/rebuild/preview": {
       "get": {
         "tags": [
@@ -6191,7 +6240,8 @@
           "productId",
           "mainUnitQuantity",
           "subUnitQuantity",
-          "locationId"
+          "locationId",
+          "serialNumbers"
         ],
         "type": "object",
         "properties": {
@@ -6250,6 +6300,12 @@
               "null",
               "string"
             ]
+          },
+          "serialNumbers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -7333,6 +7389,85 @@
           }
         }
       },
+      "GetInventorySerialsQuery": {
+        "required": [
+          "status",
+          "pageNumber",
+          "pageSize",
+          "sortDescending"
+        ],
+        "type": "object",
+        "properties": {
+          "productId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "warehouseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "status": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/InventorySerialStatus"
+              }
+            ]
+          },
+          "pageNumber": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "pageSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "sortColumn": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sortDescending": {
+            "type": "boolean"
+          },
+          "searchTerm": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "filters": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/FilterModel"
+            }
+          }
+        }
+      },
       "GetProductCardexQuery": {
         "required": [
           "pageNumber",
@@ -7722,7 +7857,8 @@
           "mainUnitQuantity",
           "subUnitQuantity",
           "locationId",
-          "locationCode"
+          "locationCode",
+          "serialNumbers"
         ],
         "type": "object",
         "properties": {
@@ -7813,6 +7949,12 @@
               "null",
               "string"
             ]
+          },
+          "serialNumbers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -8075,6 +8217,103 @@
         }
       },
       "InventoryNature": {
+        "type": "integer"
+      },
+      "InventorySerialDto": {
+        "required": [
+          "id",
+          "productId",
+          "productCode",
+          "productName",
+          "serialNumber",
+          "statusId",
+          "statusTitle",
+          "warehouseId",
+          "warehouseTitle",
+          "locationTitle",
+          "lastDocHeaderId",
+          "lastDocNumber"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "productId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "productCode": {
+            "type": "string"
+          },
+          "productName": {
+            "type": "string"
+          },
+          "serialNumber": {
+            "type": "string"
+          },
+          "statusId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "statusTitle": {
+            "type": "string"
+          },
+          "warehouseId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "warehouseTitle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "locationTitle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "lastDocHeaderId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "lastDocNumber": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "InventorySerialStatus": {
         "type": "integer"
       },
       "InventoryStockDto": {
@@ -8575,6 +8814,55 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/InventoryDocDto"
+            }
+          },
+          "pageNumber": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "totalPages": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "totalCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "hasPreviousPage": {
+            "type": "boolean"
+          },
+          "hasNextPage": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PaginatedResultOfInventorySerialDto": {
+        "required": [
+          "items",
+          "pageNumber",
+          "totalPages",
+          "totalCount",
+          "hasPreviousPage",
+          "hasNextPage"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InventorySerialDto"
             }
           },
           "pageNumber": {
@@ -10371,7 +10659,8 @@
           "productId",
           "mainUnitQuantity",
           "subUnitQuantity",
-          "locationId"
+          "locationId",
+          "serialNumbers"
         ],
         "type": "object",
         "properties": {
@@ -10439,6 +10728,12 @@
               "null",
               "string"
             ]
+          },
+          "serialNumbers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },

@@ -43,6 +43,8 @@ public class AppDbContext : IdentityDbContext<User>, IApplicationDbContext
     public DbSet<InventoryItemProfile> InventoryItemProfiles { get; set; }
     public DbSet<ItemWarehouseSetting> ItemWarehouseSettings { get; set; }
     public DbSet<InventoryBatch> InventoryBatches { get; set; }
+    public DbSet<InventorySerial> InventorySerials { get; set; }
+    public DbSet<InventoryDocDetailSerial> InventoryDocDetailSerials { get; set; }
     public DbSet<InventoryDocType> InventoryDocTypes { get; set; }
     public DbSet<InventoryDocHeader> InventoryDocHeaders { get; set; }
     public DbSet<InventoryDocDetail> InventoryDocDetails { get; set; }

@@ -68,6 +68,28 @@ internal static class InventoryDocRules
         return errors;
     }
 
+    /// <summary>سریال‌های ورودی کاربر بدون فاصله و تکرار</summary>
+    public static List<string> NormalizeSerials(IEnumerable<string>? serials) =>
+        serials?.Select(s => s.Trim()).Where(s => s.Length > 0).Distinct().ToList() ?? [];
+
+    /// <summary>خطای سریال تکراری یا بلند در یک سند (هر سریال برای هر کالا فقط یک بار)</summary>
+    public static List<string> ValidateSerials(IEnumerable<(int ProductId, IEnumerable<string>? Serials)> lines)
+    {
+        var errors = new List<string>();
+        var seen = new HashSet<(int, string)>();
+        foreach (var (productId, serials) in lines)
+        {
+            foreach (var serial in NormalizeSerials(serials))
+            {
+                if (serial.Length > 100)
+                    errors.Add($"شماره سریال {serial[..20]}… بیش از ۱۰۰ کاراکتر است.");
+                else if (!seen.Add((productId, serial)))
+                    errors.Add($"شماره سریال {serial} بیش از یک بار در این سند آمده است.");
+            }
+        }
+        return errors;
+    }
+
     public static async Task<bool> IsTransferAsync(IApplicationDbContext context, int docTypeId, CancellationToken cancellationToken) =>
         await context.InventoryDocTypes.AnyAsync(x => x.Id == docTypeId && x.Nature == InventoryNature.Transfer, cancellationToken);
 

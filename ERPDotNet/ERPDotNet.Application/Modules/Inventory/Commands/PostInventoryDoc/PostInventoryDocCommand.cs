@@ -1,3 +1,4 @@
+using ERPDotNet.Application.Modules.Inventory.Services;
 using ERPDotNet.Application.Common.Constants;
 using ERPDotNet.Application.Common.Exceptions;
 using ERPDotNet.Application.Common.Interfaces;
@@ -63,6 +64,7 @@ public class PostInventoryDocHandler : IRequestHandler<PostInventoryDocCommand, 
         var doc = await _context.InventoryDocHeaders
             .Include(x => x.DocType)
             .Include(x => x.Details) // لود اقلام در همین کوئری
+                .ThenInclude(d => d.Serials)
             .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
 
         if (doc == null) 
@@ -116,6 +118,8 @@ public class PostInventoryDocHandler : IRequestHandler<PostInventoryDocCommand, 
         // 5. بروزرسانی موجودی (Current Stock)
         // موجودی‌های قبلی را سرویس دامین روی همین DbContext ویرایش کرده؛ فقط رکوردهای جدید اضافه می‌شوند
         await _context.AddNewStocksAsync(result.UpdatedStocks, cancellationToken);
+
+        await InventorySerialTracker.ApplyAsync(_context, doc, doc.DocType!.Nature, isReversal: false, cancellationToken);
 
         // 6. تغییر وضعیت
         doc.Status = InventoryDocStatus.Posted;

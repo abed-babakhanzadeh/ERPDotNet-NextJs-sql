@@ -55,4 +55,7 @@ public class InventoryDocDetailDto
     public string? BatchNumber { get; set; }
 
     public string? Description { get; set; }
+
+    // فقط برای کالای سریال‌دار
+    public List<string> SerialNumbers { get; set; } = new();
 }

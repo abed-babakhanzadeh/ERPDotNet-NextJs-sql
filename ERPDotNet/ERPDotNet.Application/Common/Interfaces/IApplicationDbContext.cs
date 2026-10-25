@@ -43,6 +43,8 @@ public interface IApplicationDbContext
     DbSet<InventoryItemProfile> InventoryItemProfiles { get; }
     DbSet<ItemWarehouseSetting> ItemWarehouseSettings { get; }
     DbSet<InventoryBatch> InventoryBatches { get; }
+    DbSet<InventorySerial> InventorySerials { get; }
+    DbSet<InventoryDocDetailSerial> InventoryDocDetailSerials { get; }
     
     // کانفیگ و اسناد
     DbSet<InventoryDocType> InventoryDocTypes { get; }

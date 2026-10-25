@@ -35,5 +35,21 @@ public class InventoryDocDetailConfiguration : IEntityTypeConfiguration<Inventor
                .WithMany()
                .HasForeignKey(x => x.BatchId)
                .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasMany(x => x.Serials)
+               .WithOne(x => x.DocDetail)
+               .HasForeignKey(x => x.DocDetailId)
+               .OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+public class InventoryDocDetailSerialConfiguration : IEntityTypeConfiguration<InventoryDocDetailSerial>
+{
+    public void Configure(EntityTypeBuilder<InventoryDocDetailSerial> builder)
+    {
+        builder.ToTable("InventoryDocDetailSerials", "inventory");
+        builder.Property(x => x.SerialNumber).HasMaxLength(100).IsRequired();
+        builder.HasIndex(x => new { x.DocDetailId, x.SerialNumber }).IsUnique();
+        builder.HasIndex(x => x.SerialNumber);
     }
 }

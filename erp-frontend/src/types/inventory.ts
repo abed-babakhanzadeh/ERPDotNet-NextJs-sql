@@ -270,6 +270,8 @@ export interface InventoryDocDetailDto {
   batchNumber?: string;
 
   description?: string;
+  /** فقط کالای سریال‌دار */
+  serialNumbers?: string[];
 }
 
 export interface InventoryDocDto {
@@ -310,6 +312,7 @@ export interface CreateInventoryDocDetailDto {
   destinationLocationId?: number | null;
   batchId?: number | null;
   description?: string | null;
+  serialNumbers?: string[];
 }
 
 export interface CreateInventoryDocCommand {
@@ -341,6 +344,7 @@ export interface UpdateInventoryDocDetailDto {
   destinationLocationId?: number | null;
   batchId?: number | null;
   description?: string | null;
+  serialNumbers?: string[];
 }
 
 export interface UpdateInventoryDocCommand {

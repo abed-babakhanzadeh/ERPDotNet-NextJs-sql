@@ -212,6 +212,7 @@ export async function createDoc(
       quantity: number;
       locationId: number;
       destinationLocationId?: number;
+      serialNumbers?: string[];
     }[];
   },
 ): Promise<number> {
@@ -229,6 +230,7 @@ export async function createDoc(
         subUnitQuantity: 0,
         locationId: l.locationId,
         destinationLocationId: l.destinationLocationId ?? null,
+        serialNumbers: l.serialNumbers ?? [],
       })),
     },
     "ساخت سند",
@@ -282,4 +284,35 @@ export async function createBatch(
   if (!res.ok())
     throw new Error(`ساخت بچ: ${res.status()} ${await res.text()}`);
   return Number(await res.text());
+}
+
+/** کالا را سریال‌دار می‌کند */
+export async function makeSerialManaged(
+  api: APIRequestContext,
+  p: { productId: number; unitId: number },
+) {
+  const res = await api.post("/api/Inventory/Inventory/products/profile", {
+    data: {
+      productId: p.productId,
+      isBatchManaged: false,
+      isSerialManaged: true,
+      mainInventoryUnitId: p.unitId,
+    },
+  });
+  if (!res.ok())
+    throw new Error(`سریال‌دار کردن کالا: ${res.status()} ${await res.text()}`);
+}
+
+/** شماره سریال‌های یک کالا از گزارش سریال */
+export async function serialsOf(api: APIRequestContext, productId: number) {
+  const res = await api.post("/api/Inventory/Inventory/serials/search", {
+    data: { productId, pageNumber: 1, pageSize: 100 },
+  });
+  if (!res.ok())
+    throw new Error(`گزارش سریال: ${res.status()} ${await res.text()}`);
+  return (await res.json()).items as {
+    serialNumber: string;
+    statusId: number;
+    warehouseId: number | null;
+  }[];
 }
