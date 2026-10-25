@@ -1,4 +1,5 @@
 using ERPDotNet.Application.Common.Interfaces;
+using ERPDotNet.Application.Modules.BaseInfo.Contracts;
 using ERPDotNet.Domain.Modules.Inventory.Enums;
 using Microsoft.EntityFrameworkCore;
 
@@ -69,4 +70,16 @@ internal static class InventoryDocRules
 
     public static async Task<bool> IsTransferAsync(IApplicationDbContext context, int docTypeId, CancellationToken cancellationToken) =>
         await context.InventoryDocTypes.AnyAsync(x => x.Id == docTypeId && x.Nature == InventoryNature.Transfer, cancellationToken);
+
+    /// <summary>سال مالی باز سند، بر اساس شرکتِ انبار و تاریخ سند</summary>
+    public static async Task<int?> ResolveFiscalYearAsync(
+        IApplicationDbContext context, IFiscalYearService fiscalYears, int warehouseId, DateTime docDate, CancellationToken cancellationToken)
+    {
+        var companyId = await context.Warehouses
+            .AsNoTracking()
+            .Where(x => x.Id == warehouseId)
+            .Select(x => x.CompanyId)
+            .FirstOrDefaultAsync(cancellationToken);
+        return await fiscalYears.ResolveOpenYearAsync(companyId, docDate, cancellationToken);
+    }
 }

@@ -12,6 +12,7 @@ public record WarehouseDetailsDto(
     string Code,
     int Type,
     string? Address,
+    int? CompanyId,
     bool IsActive,
     string RowVersion // ارسال به صورت Base64 برای فرانت
 );
@@ -36,6 +37,7 @@ public class GetWarehouseByIdHandler : IRequestHandler<GetWarehouseByIdQuery, Wa
                 x.Code,
                 (int)x.Type,
                 x.Address,
+                x.CompanyId,
                 x.IsActive,
                 x.RowVersion != null ? Convert.ToBase64String(x.RowVersion) : ""
             ))

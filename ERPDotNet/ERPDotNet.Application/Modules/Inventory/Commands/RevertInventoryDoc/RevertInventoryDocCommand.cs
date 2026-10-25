@@ -1,6 +1,7 @@
 using ERPDotNet.Application.Common.Attributes;
 using ERPDotNet.Application.Common.Exceptions;
 using ERPDotNet.Application.Common.Interfaces;
+using ERPDotNet.Application.Modules.BaseInfo.Contracts;
 using ERPDotNet.Application.Modules.Inventory.Extensions;
 using ERPDotNet.Domain.Modules.Inventory.Enums;
 using ERPDotNet.Domain.Modules.Inventory.Interfaces;
@@ -19,12 +20,15 @@ public class RevertInventoryDocHandler : IRequestHandler<RevertInventoryDocComma
     private readonly IApplicationDbContext _context;
     private readonly IInventoryPostingService _postingService; // ✅ تزریق سرویس دامین
     private readonly IInventoryPostingPolicy _policy;
+    private readonly IFiscalYearService _fiscalYears;
 
     public RevertInventoryDocHandler(
         IApplicationDbContext context,
         IInventoryPostingService postingService,
-        IInventoryPostingPolicy policy)
+        IInventoryPostingPolicy policy,
+        IFiscalYearService fiscalYears)
     {
+        _fiscalYears = fiscalYears;
         _context = context;
         _postingService = postingService;
         _policy = policy;
@@ -44,6 +48,8 @@ public class RevertInventoryDocHandler : IRequestHandler<RevertInventoryDocComma
         // اگر قبلاً باطل شده، کاری نکن
         if (doc.Status == InventoryDocStatus.Cancelled)
             throw new BusinessRuleException("این سند قبلاً باطل شده است.");
+
+        await _fiscalYears.EnsureOpenAsync(doc.FiscalYearId, cancellationToken);
 
         // در این حالت تراکنش مالی وجود ندارد، پس فقط وضعیت را به پیش‌نویس برمی‌گردانیم تا قابل ویرایش شود.
         // === سناریوی ۱: سند هنوز قطعی نشده ===

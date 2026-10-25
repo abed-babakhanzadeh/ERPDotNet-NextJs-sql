@@ -17,6 +17,11 @@ interface PersianDatePickerProps {
   required?: boolean;
   className?: string;
   hasError?: boolean;
+  /** از FormControl می‌آیند تا برچسب و پیام خطا به دکمه تقویم وصل شوند */
+  id?: string;
+  "aria-describedby"?: string;
+  /** نام دسترس‌پذیر دکمه؛ برچسب فرم به div وصل نمی‌شود */
+  ariaLabel?: string;
 }
 
 export default function PersianDatePicker({
@@ -28,6 +33,9 @@ export default function PersianDatePicker({
   required = false,
   className,
   hasError,
+  id,
+  "aria-describedby": ariaDescribedBy,
+  ariaLabel,
 }: PersianDatePickerProps) {
   // رفرنس برای کنترل تقویم (بستن بعد از انتخاب امروز)
   const datePickerRef = React.useRef<any>(null);
@@ -91,7 +99,20 @@ export default function PersianDatePicker({
         render={(value: any, openCalendar: any) => {
           return (
             <div
+              id={id}
+              role="button"
+              tabIndex={disabled ? -1 : 0}
+              aria-haspopup="dialog"
+              aria-label={ariaLabel && (value ? `${ariaLabel}: ${value}` : ariaLabel)}
+              aria-disabled={disabled || undefined}
+              aria-describedby={ariaDescribedBy}
               onClick={!disabled ? openCalendar : undefined}
+              onKeyDown={(e) => {
+                if (!disabled && (e.key === "Enter" || e.key === " ")) {
+                  e.preventDefault();
+                  openCalendar();
+                }
+              }}
               className={cn(
                 "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer transition-colors",
                 disabled && "cursor-not-allowed opacity-50 bg-muted",

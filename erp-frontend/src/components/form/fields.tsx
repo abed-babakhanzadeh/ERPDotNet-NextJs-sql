@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import PersianDatePicker from "@/components/ui/PersianDatePicker";
 import { cn } from "@/lib/utils";
 
 /**
@@ -238,6 +239,41 @@ export function SelectField<T extends FieldValues>({
           </FormItem>
         );
       }}
+    />
+  );
+}
+
+/** تاریخ شمسی؛ مقدار فرم رشته ISO است (یا null) */
+export function DateField<T extends FieldValues>({
+  control,
+  name,
+  label,
+  required,
+  description,
+  disabled,
+  className,
+}: BaseFieldProps<T>) {
+  return (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field, fieldState }) => (
+        <FormItem className={className}>
+          <FieldLabel label={label} required={required} />
+          <FormControl>
+            <PersianDatePicker
+              value={field.value ?? null}
+              onChange={field.onChange}
+              disabled={disabled}
+              required={required}
+              hasError={!!fieldState.error}
+              ariaLabel={label}
+            />
+          </FormControl>
+          {description && <FormDescription>{description}</FormDescription>}
+          <FormMessage />
+        </FormItem>
+      )}
     />
   );
 }

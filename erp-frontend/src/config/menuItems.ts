@@ -23,6 +23,9 @@ import {
   Briefcase,
   Network,
   Settings2,
+  Building2,
+  CalendarRange,
+  Coins,
 } from "lucide-react";
 
 export interface MenuItem {
@@ -107,6 +110,24 @@ export const MENU_ITEMS: MenuItem[] = [
         href: "/base-info/products",
         icon: Package,
         permission: "BaseInfo.Products",
+      },
+      {
+        title: "شرکت‌ها",
+        href: "/base-info/companies",
+        icon: Building2,
+        permission: "BaseInfo.Companies",
+      },
+      {
+        title: "سال‌های مالی",
+        href: "/base-info/fiscal-years",
+        icon: CalendarRange,
+        permission: "BaseInfo.FiscalYears",
+      },
+      {
+        title: "مراکز هزینه",
+        href: "/base-info/cost-centers",
+        icon: Coins,
+        permission: "BaseInfo.CostCenters",
       },
     ],
   },

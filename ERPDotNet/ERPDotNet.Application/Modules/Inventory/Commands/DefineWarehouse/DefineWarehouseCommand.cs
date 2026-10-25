@@ -14,6 +14,7 @@ public record DefineWarehouseCommand : IRequest<int>
     public required string Code { get; set; }
     public WarehouseType Type { get; set; } = WarehouseType.Physical;
     public string? Address { get; set; }
+    public int? CompanyId { get; set; }
     public bool IsActive { get; set; } = true;
 }
 
@@ -28,6 +29,10 @@ public class DefineWarehouseValidator : AbstractValidator<DefineWarehouseCommand
         RuleFor(x => x.Title).NotEmpty().MaximumLength(100);
         RuleFor(x => x.Code).NotEmpty().MaximumLength(50)
             .MustAsync(BeUniqueCode).WithMessage("کد انبار تکراری است.");
+        RuleFor(x => x.CompanyId)
+            .MustAsync(async (id, ct) => await _context.Companies.AnyAsync(c => c.Id == id, ct))
+            .When(x => x.CompanyId.HasValue)
+            .WithMessage("شرکت انتخاب‌شده یافت نشد.");
     }
 
     private async Task<bool> BeUniqueCode(string code, CancellationToken token)
@@ -53,6 +58,7 @@ public class DefineWarehouseHandler : IRequestHandler<DefineWarehouseCommand, in
             Code = request.Code,
             Type = request.Type,
             Address = request.Address,
+            CompanyId = request.CompanyId,
             IsActive = request.IsActive
         };
 

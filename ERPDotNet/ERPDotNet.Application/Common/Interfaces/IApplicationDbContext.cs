@@ -25,6 +25,9 @@ public interface IApplicationDbContext
     DbSet<Unit> Units { get; }
     DbSet<Product> Products { get; }
     DbSet<ProductUnitConversion> ProductUnitConversions { get; }
+    DbSet<Company> Companies { get; }
+    DbSet<FiscalYear> FiscalYears { get; }
+    DbSet<CostCenter> CostCenters { get; }
 
     // === ماژول ProductEngineering ===
     DbSet<BOMHeader> BOMHeaders { get; }

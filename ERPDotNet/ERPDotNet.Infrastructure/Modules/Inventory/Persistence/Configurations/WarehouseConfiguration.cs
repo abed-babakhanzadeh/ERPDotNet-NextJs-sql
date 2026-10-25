@@ -1,3 +1,4 @@
+using ERPDotNet.Domain.Modules.BaseInfo.Entities;
 using ERPDotNet.Domain.Modules.Inventory.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -23,6 +24,12 @@ public class WarehouseConfiguration : IEntityTypeConfiguration<Warehouse>
         builder.HasMany(w => w.Locations)
                .WithOne(l => l.Warehouse)
                .HasForeignKey(l => l.WarehouseId)
+               .OnDelete(DeleteBehavior.Restrict);
+
+        // فقط کلید خارجی؛ انبار ناوبری به شرکت ندارد تا مدل انبار به اطلاعات پایه گره نخورد
+        builder.HasOne<Company>()
+               .WithMany()
+               .HasForeignKey(x => x.CompanyId)
                .OnDelete(DeleteBehavior.Restrict);
     }
 }

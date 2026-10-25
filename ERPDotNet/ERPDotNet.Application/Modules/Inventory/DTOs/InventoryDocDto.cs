@@ -8,6 +8,8 @@ public class InventoryDocDto
     public long Id { get; set; }
     public long DocNumber { get; set; }
     public DateTime DocDate { get; set; }
+    public int? FiscalYearId { get; set; }
+    public string? FiscalYearTitle { get; set; }
     public int DocTypeId { get; set; }
     public string DocTypeTitle { get; set; } = string.Empty;
     public InventoryNature Nature { get; set; } // برای تشخیص رنگ و رفتار در فرانت

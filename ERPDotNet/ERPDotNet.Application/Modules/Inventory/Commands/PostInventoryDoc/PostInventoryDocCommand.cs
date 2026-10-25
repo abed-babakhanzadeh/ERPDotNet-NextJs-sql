@@ -1,9 +1,10 @@
 using ERPDotNet.Application.Common.Constants;
 using ERPDotNet.Application.Common.Exceptions;
 using ERPDotNet.Application.Common.Interfaces;
+using ERPDotNet.Application.Modules.BaseInfo.Contracts;
+using ERPDotNet.Application.Modules.Inventory.Contracts;
 using ERPDotNet.Application.Modules.Inventory.Extensions;
 using ERPDotNet.Domain.Modules.Inventory.Enums;
-using ERPDotNet.Domain.Modules.Inventory.Events;
 using ERPDotNet.Domain.Modules.Inventory.Interfaces;
 using ERPDotNet.Domain.Modules.Inventory.Models;
 using ERPDotNet.Domain.Modules.Inventory.Services;
@@ -36,6 +37,7 @@ public class PostInventoryDocHandler : IRequestHandler<PostInventoryDocCommand, 
     private readonly ICurrentUserService _currentUserService;
     private readonly ICacheService _cacheService;
     private readonly IPublisher _publisher;
+    private readonly IFiscalYearService _fiscalYears;
 
     public PostInventoryDocHandler(
         IApplicationDbContext context, 
@@ -43,8 +45,10 @@ public class PostInventoryDocHandler : IRequestHandler<PostInventoryDocCommand, 
         IInventoryPostingPolicy policy,
         ICurrentUserService currentUserService,
         ICacheService cacheService, 
-        IPublisher publisher)
+        IPublisher publisher,
+        IFiscalYearService fiscalYears)
     {
+        _fiscalYears = fiscalYears;
         _context = context;
         _postingService = postingService;
         _policy = policy;
@@ -72,6 +76,8 @@ public class PostInventoryDocHandler : IRequestHandler<PostInventoryDocCommand, 
 
         if (doc.Status != InventoryDocStatus.Approved)
             throw new BusinessRuleException("سند باید در وضعیت تایید شده (Approved) باشد.");
+
+        await _fiscalYears.EnsureOpenAsync(doc.FiscalYearId, cancellationToken);
 
         // 2. کنترل همروندی
         try 
@@ -124,7 +130,7 @@ public class PostInventoryDocHandler : IRequestHandler<PostInventoryDocCommand, 
                 .Select(stock => _cacheService.RemoveAsync(CacheKeys.CurrentStock(stock.WarehouseId, stock.ProductId), cancellationToken));
             await Task.WhenAll(cacheTasks);
 
-            await _publisher.Publish(new InventoryDocPostedEvent(doc), cancellationToken);
+            await _publisher.Publish(InventoryDocPostedNotification.From(doc), cancellationToken);
         }
         catch
         {

@@ -1,3 +1,4 @@
+using ERPDotNet.Domain.Modules.BaseInfo.Entities;
 using ERPDotNet.Domain.Modules.Inventory.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -35,6 +36,11 @@ public class InventoryDocHeaderConfiguration : IEntityTypeConfiguration<Inventor
         builder.HasOne(x => x.DestinationWarehouse)
                .WithMany()
                .HasForeignKey(x => x.DestinationWarehouseId)
+               .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<FiscalYear>()
+               .WithMany()
+               .HasForeignKey(x => x.FiscalYearId)
                .OnDelete(DeleteBehavior.Restrict);
 
         // === اصلاح حیاتی: تعریف صریح رابطه با اقلام ===

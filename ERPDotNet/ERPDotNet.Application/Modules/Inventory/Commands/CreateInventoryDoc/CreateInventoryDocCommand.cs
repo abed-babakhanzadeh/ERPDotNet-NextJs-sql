@@ -1,5 +1,6 @@
 using ERPDotNet.Application.Common.Attributes;
 using ERPDotNet.Application.Common.Interfaces;
+using ERPDotNet.Application.Modules.BaseInfo.Contracts;
 using ERPDotNet.Application.Modules.Inventory.Interfaces; // <--- رفرنس صحیح اینجاست
 using ERPDotNet.Domain.Modules.Inventory.Entities;
 using ERPDotNet.Domain.Modules.Inventory.Enums;
@@ -17,7 +18,6 @@ public record CreateInventoryDocCommand : IRequest<long>
     public required int WarehouseId { get; set; }
     public int? DestinationWarehouseId { get; set; }
     public DateTime DocDate { get; set; } = DateTime.UtcNow;
-    public int? FiscalYearId { get; set; }
     public string? ReferenceEntityName { get; set; }
     public long? ReferenceEntityId { get; set; }
     public string? ReferenceExternalCode { get; set; }
@@ -68,13 +68,16 @@ public class CreateInventoryDocHandler : IRequestHandler<CreateInventoryDocComma
 {
     private readonly IApplicationDbContext _context;
     private readonly IDocumentNumberingService _numberingService; // استفاده از اینترفیس
+    private readonly IFiscalYearService _fiscalYears;
 
     public CreateInventoryDocHandler(
         IApplicationDbContext context, 
-        IDocumentNumberingService numberingService)
+        IDocumentNumberingService numberingService,
+        IFiscalYearService fiscalYears)
     {
         _context = context;
         _numberingService = numberingService;
+        _fiscalYears = fiscalYears;
     }
 
     public async Task<long> Handle(CreateInventoryDocCommand request, CancellationToken cancellationToken)
@@ -86,10 +89,14 @@ public class CreateInventoryDocHandler : IRequestHandler<CreateInventoryDocComma
         if (docType == null)
             throw new KeyNotFoundException("نوع سند انتخاب شده یافت نشد.");
 
+        // سال مالی از تاریخ سند و شرکتِ انبار تعیین می‌شود، نه از ورودی کاربر
+        var fiscalYearId = await InventoryDocRules.ResolveFiscalYearAsync(
+            _context, _fiscalYears, request.WarehouseId, request.DocDate, cancellationToken);
+
         // فراخوانی سرویس بدون مشکل تایپ
         long docNumber = await _numberingService.GetNextDocNumberAsync(
             docType.Id, 
-            request.FiscalYearId, 
+            fiscalYearId, 
             docType.NumberingScope, 
             cancellationToken);
 
@@ -99,7 +106,7 @@ public class CreateInventoryDocHandler : IRequestHandler<CreateInventoryDocComma
             WarehouseId = request.WarehouseId,
             DestinationWarehouseId = request.DestinationWarehouseId,
             DocDate = request.DocDate,
-            FiscalYearId = request.FiscalYearId,
+            FiscalYearId = fiscalYearId,
             DocNumber = docNumber,
             Status = InventoryDocStatus.Draft,
             ReferenceEntityName = request.ReferenceEntityName,

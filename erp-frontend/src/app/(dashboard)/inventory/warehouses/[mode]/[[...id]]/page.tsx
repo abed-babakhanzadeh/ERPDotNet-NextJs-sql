@@ -22,6 +22,7 @@ import {
 } from "@/components/form/fields";
 
 import inventoryService from "@/services/inventoryService";
+import { companyService } from "@/services/baseInfoService";
 import { WarehouseDto } from "@/types/inventory";
 import { applyFieldErrors, handleApiError } from "@/lib/error-handling";
 
@@ -32,6 +33,7 @@ const warehouseSchema = z.object({
   // فیلد نوع انبار (Enum) که عدد ارسال می‌شود
   type: z.coerce.number().min(1, "انتخاب نوع انبار الزامی است"),
   address: z.string().optional(),
+  companyId: z.number().nullable(),
   isActive: z.boolean().default(true),
 });
 
@@ -58,6 +60,7 @@ export default function WarehousePage() {
 
   // استیت برای نگهداری لیست انواع انبار
   const [warehouseTypes, setWarehouseTypes] = useState<OptionDto[]>([]);
+  const [companies, setCompanies] = useState<OptionDto[]>([]);
 
   const form = useForm<WarehouseFormValues>({
     resolver: zodResolver(warehouseSchema),
@@ -66,6 +69,7 @@ export default function WarehousePage() {
       code: "",
       type: 1, // مقدار پیش‌فرض (مثلاً فیزیکی)
       address: "",
+      companyId: null,
       isActive: true,
     },
   });
@@ -81,6 +85,10 @@ export default function WarehousePage() {
       }
     };
     fetchTypes();
+    companyService
+      .lookup()
+      .then((list) => setCompanies(list.map((c) => ({ value: c.id, label: c.title }))))
+      .catch((error) => handleApiError(error, "خطا در دریافت شرکت‌ها"));
   }, []);
 
   useEffect(() => {
@@ -101,6 +109,7 @@ export default function WarehousePage() {
         // توجه: در متد getWarehouseById مقدار type به صورت عدد (int) برمی‌گردد
         type: result.type,
         address: result.address || "",
+        companyId: result.companyId ?? null,
         isActive: result.isActive,
       });
     } catch (error) {
@@ -217,6 +226,15 @@ export default function WarehousePage() {
             label="نوع انبار"
             options={warehouseTypes}
             required
+            disabled={isReadOnly}
+          />
+          <SelectField
+            control={form.control}
+            name="companyId"
+            label="شرکت"
+            options={companies}
+            noneLabel="بدون شرکت"
+            description="سال مالی اسناد این انبار از سال‌های همین شرکت تعیین می‌شود"
             disabled={isReadOnly}
           />
           <SwitchField
