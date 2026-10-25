@@ -3529,6 +3529,8 @@ export interface components {
             /** Format: int32 */
             locationId: number;
             /** Format: int32 */
+            destinationLocationId?: null | number;
+            /** Format: int32 */
             batchId?: null | number;
             description?: null | string;
         };
@@ -3799,6 +3801,9 @@ export interface components {
             /** Format: int32 */
             locationId: number;
             locationCode: string;
+            /** Format: int32 */
+            destinationLocationId?: null | number;
+            destinationLocationCode?: null | string;
             /** Format: int32 */
             batchId?: null | number;
             batchNumber?: null | string;
@@ -4298,6 +4303,8 @@ export interface components {
             subUnitQuantity: number;
             /** Format: int32 */
             locationId: number;
+            /** Format: int32 */
+            destinationLocationId?: null | number;
             /** Format: int32 */
             batchId?: null | number;
             description?: null | string;

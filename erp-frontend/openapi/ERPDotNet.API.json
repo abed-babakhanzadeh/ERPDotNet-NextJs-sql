@@ -4897,6 +4897,15 @@
             ],
             "format": "int32"
           },
+          "destinationLocationId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
           "batchId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
@@ -6129,6 +6138,21 @@
           },
           "locationCode": {
             "type": "string"
+          },
+          "destinationLocationId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "destinationLocationCode": {
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "batchId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -8286,6 +8310,15 @@
           "locationId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "destinationLocationId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
               "integer",
               "string"
             ],
