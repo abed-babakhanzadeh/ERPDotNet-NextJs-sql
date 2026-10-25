@@ -31,6 +31,14 @@ export type ColumnFilter = {
 export type ColumnConfig = {
   key: string;
   label: string;
+  title?: string;
+  /** ستون در جدول و نمای کارتی نمایش داده نمی‌شود */
+  hidden?: boolean;
+  /**
+   * نقش ستون در نمای کارتی موبایل: `title` عنوان کارت، `hidden` حذف از کارت.
+   * پیش‌فرض: اولین ستون غیرسفارشی عنوان است و بقیه به‌صورت «برچسب: مقدار» می‌آیند.
+   */
+  mobile?: "title" | "hidden";
   type: "string" | "number" | "boolean" | "date" | "text" | "custom"; // اضافه شدن date
   // TODO(phase 2): DataGrid عمومی (ColumnConfig<TRow>) این any را حذف می‌کند
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

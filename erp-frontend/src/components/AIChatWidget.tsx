@@ -57,25 +57,25 @@ export default function AIChatWidget() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2 font-sans" dir="rtl">
+    <div className="fixed bottom-4 left-4 z-50 flex flex-col items-start gap-2 sm:bottom-6 sm:left-6" dir="rtl">
       
       {isOpen && (
-        <div className="w-[380px] h-[500px] flex flex-col bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl animate-in slide-in-from-bottom-10 fade-in duration-300 overflow-hidden">
+        <div className="w-[min(380px,calc(100vw-2rem))] h-[min(500px,calc(100svh-6rem))] flex flex-col bg-card border rounded-xl shadow-2xl animate-in slide-in-from-bottom-10 fade-in duration-300 overflow-hidden">
           
-          <div className="bg-blue-600 text-white p-4 flex justify-between items-center shadow-md">
+          <div className="bg-primary text-primary-foreground p-4 flex justify-between items-center">
             <div className="flex items-center gap-2">
               <Bot className="w-6 h-6" />
-              <span className="font-bold text-sm">دستیار هوشمند سازماني</span>
+              <span className="font-bold text-sm">دستیار هوشمند سازمانی</span>
             </div>
             <button
-              className="text-white hover:bg-white/20 rounded-full p-1 transition-colors"
+              className="hover:bg-primary-foreground/20 rounded-full p-1 transition-colors" aria-label="بستن"
               onClick={() => setIsOpen(false)}
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 bg-zinc-50 dark:bg-zinc-950 space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 bg-muted/40 space-y-4">
             {messages.map((msg, idx) => (
               <div
                 key={idx}
@@ -86,8 +86,8 @@ export default function AIChatWidget() {
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 border ${
                     msg.role === "user" 
-                      ? "bg-blue-600 text-white border-blue-600" 
-                      : "bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700"
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-card text-muted-foreground"
                   }`}
                 >
                   {msg.role === "user" ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
@@ -96,8 +96,8 @@ export default function AIChatWidget() {
                 <div
                   className={`rounded-2xl px-4 py-2 text-sm shadow-sm overflow-hidden ${
                     msg.role === "user"
-                      ? "bg-blue-600 text-white rounded-tl-none"
-                      : "bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 rounded-tr-none border border-zinc-200 dark:border-zinc-700"
+                      ? "bg-primary text-primary-foreground rounded-tl-none"
+                      : "bg-card text-card-foreground rounded-tr-none border"
                   }`}
                 >
                   {/* --- بخش اصلاح شده --- */}
@@ -111,10 +111,10 @@ export default function AIChatWidget() {
 
             {isLoading && (
               <div className="flex gap-3 self-start max-w-[85%]">
-                <div className="w-8 h-8 rounded-full bg-white dark:bg-zinc-800 border flex items-center justify-center shrink-0">
-                  <Bot className="w-4 h-4 animate-pulse text-zinc-500" />
+                <div className="w-8 h-8 rounded-full bg-card border flex items-center justify-center shrink-0">
+                  <Bot className="w-4 h-4 animate-pulse text-muted-foreground" />
                 </div>
-                <div className="bg-white dark:bg-zinc-800 text-zinc-500 rounded-2xl rounded-tr-none px-4 py-2 text-sm flex items-center gap-2 border shadow-sm">
+                <div className="bg-card text-muted-foreground rounded-2xl rounded-tr-none px-4 py-2 text-sm flex items-center gap-2 border shadow-sm">
                   <Loader2 className="w-3 h-3 animate-spin" />
                   <span>در حال فکر کردن...</span>
                 </div>
@@ -123,7 +123,7 @@ export default function AIChatWidget() {
             <div ref={scrollRef} />
           </div>
 
-          <div className="p-3 border-t bg-white dark:bg-zinc-900 flex gap-2 items-center">
+          <div className="p-3 border-t bg-card flex gap-2 items-center">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -135,13 +135,13 @@ export default function AIChatWidget() {
                 placeholder="سوال خود را بپرسید..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                className="flex-1 text-sm px-3 py-2 bg-zinc-100 dark:bg-zinc-800 border-transparent focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-md outline-none transition-all"
+                className="flex-1 text-sm px-3 py-2 bg-muted border-transparent focus:ring-2 focus:ring-ring rounded-md outline-none transition-all"
                 disabled={isLoading}
               />
               <button 
                 type="submit" 
                 disabled={isLoading || !input.trim()}
-                className="bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-300 text-white rounded-md p-2 transition-colors flex items-center justify-center"
+                className="bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground rounded-md p-2 transition-colors flex items-center justify-center" aria-label="ارسال"
               >
                 <Send className="w-4 h-4" style={{ transform: "scaleX(-1)" }} />
               </button>
@@ -153,9 +153,11 @@ export default function AIChatWidget() {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="h-14 w-14 rounded-full shadow-xl hover:scale-110 active:scale-95 transition-all duration-200 bg-blue-600 text-white flex items-center justify-center"
+          className="h-12 w-12 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-transform duration-200 bg-primary text-primary-foreground flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          aria-label="دستیار هوشمند"
+          title="دستیار هوشمند"
         >
-          <MessageSquare className="w-7 h-7" />
+          <MessageSquare className="w-6 h-6" />
         </button>
       )}
     </div>

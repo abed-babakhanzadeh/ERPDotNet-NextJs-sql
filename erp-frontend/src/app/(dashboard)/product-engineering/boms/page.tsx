@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import { BOMStatusBadge } from "@/components/bom/BOMStatusBadge";
 import { ColumnConfig } from "@/types";
 import { toast } from "sonner";
 import {
@@ -143,8 +144,8 @@ export default function BOMsListPage() {
         render: (val) => (
           <div className="flex justify-center">
             <Badge
-              variant="outline"
-              className="font-mono bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 px-2 min-w-[30px] justify-center"
+              variant="info"
+              className="font-mono px-2 min-w-[30px] justify-center"
             >
               v{val}
             </Badge>
@@ -155,38 +156,7 @@ export default function BOMsListPage() {
         key: "status",
         label: "وضعیت",
         type: "string",
-        render: (val, row: BOMListDto) => {
-          if (!row.isActive) {
-            return (
-              <Badge
-                variant="destructive"
-                className="bg-gray-100 text-gray-500 border-gray-300 font-normal shadow-none hover:bg-gray-200"
-              >
-                غیرفعال
-              </Badge>
-            );
-          }
-
-          let colorClass = "bg-gray-100 text-gray-700 border-gray-200";
-          if (val.includes("فعال") || val.includes("Active"))
-            colorClass =
-              "bg-emerald-100 text-emerald-700 border-emerald-200 shadow-sm";
-          if (val.includes("منسوخ") || val.includes("Obsolete"))
-            colorClass = "bg-red-50 text-red-700 border-red-200";
-          if (val.includes("تایید") || val.includes("Approved"))
-            colorClass = "bg-blue-100 text-blue-700 border-blue-200";
-          if (val.includes("پیش") || val.includes("Draft"))
-            colorClass = "bg-amber-50 text-amber-700 border-amber-200";
-
-          return (
-            <Badge
-              variant="outline"
-              className={`font-normal shadow-none ${colorClass}`}
-            >
-              {val}
-            </Badge>
-          );
-        },
+        render: (val, row: BOMListDto) => <BOMStatusBadge status={val} isActive={row.isActive} />,
       },
       {
         key: "fromDate",

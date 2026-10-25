@@ -39,6 +39,7 @@ export default function ProductsPage() {
     () => [
       {
         key: "imagePath",
+        mobile: "hidden",
         label: "تصویر",
         type: "custom", // تغییر به custom
         render: (value: any, row: any) => {
@@ -61,12 +62,13 @@ export default function ProductsPage() {
         },
       },
       { key: "code", label: "کد کالا", type: "string", sortable: true },
-      { key: "name", label: "نام کالا", type: "string", sortable: true },
-      { key: "latinName", label: "نام لاتین", type: "string", sortable: true },
+      { key: "name", label: "نام کالا", type: "string", sortable: true, mobile: "title" },
+      { key: "latinName", label: "نام لاتین", type: "string", sortable: true, mobile: "hidden" },
       { key: "unitName", label: "واحد", type: "string" },
       { key: "supplyType", label: "نوع تامین", type: "string" },
       {
         key: "descriptions",
+        mobile: "hidden",
         label: "توضیحات",
         type: "custom",
         render: (value: any) => (

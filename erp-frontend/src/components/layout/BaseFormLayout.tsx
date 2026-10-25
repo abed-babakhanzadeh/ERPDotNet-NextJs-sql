@@ -66,7 +66,7 @@ export default function BaseFormLayout({
       )}
     >
       {/* Fixed Header */}
-      <div className="sticky top-0 z-50 flex items-center justify-between border-b bg-gradient-to-l from-slate-50 to-white dark:from-slate-900 dark:to-slate-950 backdrop-blur supports-[backdrop-filter]:bg-card/90 px-4 py-2.5 shadow-sm h-12">
+      <div className="sticky top-0 z-50 flex items-center justify-between border-b bg-card px-3 sm:px-4 py-2.5 h-12">
         <div className="flex items-center gap-3 overflow-hidden min-w-0">
           <TooltipProvider delayDuration={300}>
             <Tooltip>
@@ -75,13 +75,11 @@ export default function BaseFormLayout({
                   variant="ghost"
                   size="icon"
                   onClick={handleCancel}
-                  className="h-8 w-8 shrink-0 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  className="h-8 w-8 shrink-0 text-muted-foreground"
+                  aria-label="بستن"
                   title="بازگشت"
                 >
-                  <ArrowRight
-                    size={18}
-                    className="text-slate-600 dark:text-slate-400"
-                  />
+                  <ArrowRight size={18} />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="text-xs">
@@ -90,7 +88,7 @@ export default function BaseFormLayout({
             </Tooltip>
           </TooltipProvider>
 
-          <h1 className="text-sm font-bold text-foreground truncate bg-gradient-to-l from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <h1 className="truncate text-sm font-bold text-foreground sm:text-base">
             {title}
           </h1>
         </div>
@@ -113,9 +111,9 @@ export default function BaseFormLayout({
                         size="sm"
                         onClick={handleCancel}
                         disabled={isSubmitting}
-                        className="h-8 gap-2 border-slate-200 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800 transition-all"
+                        className="h-8 gap-2"
                       >
-                        <X size={15} className="text-slate-500" />
+                        <X size={15} className="text-muted-foreground" />
                         <span className="hidden sm:inline text-xs">انصراف</span>
                       </Button>
                     </TooltipTrigger>
@@ -135,7 +133,7 @@ export default function BaseFormLayout({
                         form={formId}
                         size="sm"
                         disabled={isSubmitting || isLoading}
-                        className="h-8 gap-2 bg-gradient-to-l from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white shadow-md hover:shadow-lg transition-all"
+                        className="h-8 gap-2"
                       >
                         {isSubmitting ? (
                           <>
@@ -161,7 +159,7 @@ export default function BaseFormLayout({
                       {submitText}
                     </TooltipContent>
                   </Tooltip>
-                  <div className="w-px h-5 bg-slate-200 dark:bg-slate-700 mx-1 hidden sm:block" />
+                  <div className="w-px h-5 bg-border mx-1 hidden sm:block" />
                   {/* دکمه جدید: تمام صفحه */}
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -169,7 +167,7 @@ export default function BaseFormLayout({
                         variant="ghost"
                         size="icon"
                         onClick={() => setIsFullscreen(!isFullscreen)}
-                        className="h-8 w-8 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600"
+                        className="hidden h-8 w-8 text-muted-foreground sm:inline-flex"
                       >
                         {isFullscreen ? (
                           <Minimize2 size={16} />
@@ -190,10 +188,10 @@ export default function BaseFormLayout({
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar bg-gradient-to-br from-slate-50/50 via-white to-blue-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      <div className="flex-1 overflow-y-auto custom-scrollbar bg-background">
         {isLoading ? (
           <div className="flex h-full items-center justify-center flex-col gap-4 text-muted-foreground">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <p className="text-sm font-medium">در حال بارگذاری...</p>
           </div>
         ) : (
@@ -218,7 +216,7 @@ export default function BaseFormLayout({
       {/* Loading Progress Bar */}
       {isSubmitting && (
         <div className="absolute bottom-0 left-0 right-0 h-1 bg-muted overflow-hidden">
-          <div className="h-full bg-gradient-to-r from-emerald-500 via-green-400 to-emerald-500 animate-loading-bar"></div>
+          <div className="h-full bg-primary animate-loading-bar"></div>
         </div>
       )}
     </div>

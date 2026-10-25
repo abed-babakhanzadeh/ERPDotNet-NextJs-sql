@@ -27,51 +27,7 @@ import {
 } from "@/types/inventory";
 import { ColumnConfig } from "@/types";
 import { handleApiError } from "@/lib/error-handling";
-
-const statusMap: Record<
-  number,
-  {
-    label: string;
-    variant: "default" | "secondary" | "outline" | "destructive";
-    className?: string;
-  }
-> = {
-  [InventoryDocStatus.Draft]: {
-    label: "پیش‌نویس",
-    variant: "secondary",
-    className: "bg-slate-100 text-slate-600",
-  },
-  [InventoryDocStatus.InProcess]: {
-    label: "در انتظار تایید",
-    variant: "outline",
-    className: "border-blue-200 text-blue-600 bg-blue-50",
-  },
-  [InventoryDocStatus.RequiresRevision]: {
-    label: "نیازمند اصلاح",
-    variant: "outline",
-    className: "border-orange-200 text-orange-600 bg-orange-50",
-  },
-  [InventoryDocStatus.Approved]: {
-    label: "تایید شده",
-    variant: "outline",
-    className: "border-emerald-200 text-emerald-600 bg-emerald-50",
-  },
-  [InventoryDocStatus.Rejected]: {
-    label: "رد شده",
-    variant: "destructive",
-    className: "",
-  },
-  [InventoryDocStatus.Posted]: {
-    label: "قطعی شده",
-    variant: "default",
-    className: "bg-emerald-600 hover:bg-emerald-700",
-  },
-  [InventoryDocStatus.Cancelled]: {
-    label: "ابطال شده",
-    variant: "destructive",
-    className: "bg-red-100 text-red-700 hover:bg-red-200",
-  },
-};
+import { InventoryDocStatusBadge } from "@/components/inventory/InventoryDocStatusBadge";
 
 export default function InventoryDocsListPage() {
   const { addTab } = useTabs();
@@ -97,9 +53,9 @@ export default function InventoryDocsListPage() {
             <Tooltip>
               <TooltipTrigger>
                 {row.nature === InventoryNature.Input ? (
-                  <ArrowDownCircle className="w-5 h-5 text-emerald-500" />
+                  <ArrowDownCircle className="w-5 h-5 text-success" />
                 ) : (
-                  <ArrowUpCircle className="w-5 h-5 text-orange-500" />
+                  <ArrowUpCircle className="w-5 h-5 text-warning" />
                 )}
               </TooltipTrigger>
               <TooltipContent>
@@ -117,20 +73,7 @@ export default function InventoryDocsListPage() {
         title: "وضعیت سند",
         type: "custom",
         width: 100,
-        render: (value: number) => {
-          const status = statusMap[value] || {
-            label: "نامشخص",
-            variant: "secondary",
-          };
-          return (
-            <Badge
-              variant={status.variant}
-              className={`font-normal text-xs ${status.className || ""}`}
-            >
-              {status.label}
-            </Badge>
-          );
-        },
+        render: (value: InventoryDocStatus) => <InventoryDocStatusBadge status={value} />,
       },
       {
         key: "docNumber",

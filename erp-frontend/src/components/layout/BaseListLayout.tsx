@@ -40,7 +40,7 @@ export default function BaseListLayout({
       )}
     >
       {/* Header */}
-      <div className="sticky top-0 z-50 flex items-center justify-between border-b bg-gradient-to-l from-slate-50 to-white dark:from-slate-900 dark:to-slate-950 backdrop-blur supports-[backdrop-filter]:bg-card/90 px-4 py-2.5 shadow-sm h-12">
+      <div className="sticky top-0 z-50 flex items-center justify-between border-b bg-card px-3 sm:px-4 py-2.5 h-12">
         {/* Right Side: Title & Icon */}
         <div className="flex items-center gap-3 overflow-hidden min-w-0">
           <TooltipProvider delayDuration={300}>
@@ -50,12 +50,10 @@ export default function BaseListLayout({
                   variant="ghost"
                   size="icon"
                   onClick={() => closeTab(activeTabId)}
-                  className="h-8 w-8 shrink-0 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  className="h-8 w-8 shrink-0 text-muted-foreground"
+                  aria-label="بستن"
                 >
-                  <ArrowRight
-                    size={18}
-                    className="text-slate-600 dark:text-slate-400"
-                  />
+                  <ArrowRight size={18} />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="text-xs">
@@ -64,14 +62,14 @@ export default function BaseListLayout({
             </Tooltip>
           </TooltipProvider>
 
-          <div className="flex items-center gap-2">
-            {Icon && <Icon className="h-5 w-5 text-primary" />}
+          <div className="flex min-w-0 items-center gap-2">
+            {Icon && <Icon className="h-5 w-5 shrink-0 text-primary" />}
 
             {/* نمایش تایتل با تولتیپ توضیحات */}
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <h1 className="text-sm font-bold text-foreground truncate bg-gradient-to-l from-blue-600 to-purple-600 bg-clip-text text-transparent cursor-default">
+                  <h1 className="truncate text-sm font-bold text-foreground sm:text-base cursor-default">
                     {title}
                   </h1>
                 </TooltipTrigger>
@@ -87,8 +85,8 @@ export default function BaseListLayout({
             </TooltipProvider>
 
             {count !== undefined && (
-              <span className="text-xs bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full text-slate-600 dark:text-slate-400 font-mono">
-                {count}
+              <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs tabular-nums text-muted-foreground">
+                {count.toLocaleString("fa-IR")}
               </span>
             )}
           </div>
@@ -98,7 +96,7 @@ export default function BaseListLayout({
         <div className="flex items-center gap-2 shrink-0">
           {actions}
 
-          <div className="w-px h-5 bg-slate-200 dark:bg-slate-700 mx-1 hidden sm:block" />
+          <div className="w-px h-5 bg-border mx-1 hidden sm:block" />
 
           <TooltipProvider delayDuration={200}>
             <Tooltip>
@@ -107,7 +105,8 @@ export default function BaseListLayout({
                   variant="ghost"
                   size="icon"
                   onClick={() => setIsFullscreen(!isFullscreen)}
-                  className="h-8 w-8 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600"
+                  className="hidden h-8 w-8 text-muted-foreground sm:inline-flex"
+                  aria-label={isFullscreen ? "خروج از تمام صفحه" : "تمام صفحه"}
                 >
                   {isFullscreen ? (
                     <Minimize2 size={16} />
@@ -125,7 +124,7 @@ export default function BaseListLayout({
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-h-0 bg-slate-50/50 dark:bg-slate-950/50">
+      <div className="flex-1 min-h-0 bg-background">
         {children}
       </div>
     </div>

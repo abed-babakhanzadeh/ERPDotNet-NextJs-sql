@@ -36,8 +36,7 @@ export interface MenuItem {
 export const MENU_ITEMS: MenuItem[] = [
   {
     title: "داشبورد",
-    // href: "/",
-    href: "/dashboard", // معمولا این مسیر درست است
+    href: "/",
     icon: LayoutDashboard,
   },
 
@@ -219,3 +218,24 @@ export const MENU_ITEMS: MenuItem[] = [
     ],
   },
 ];
+
+/**
+ * مسیر منو (والدها تا آیتم) برای یک آدرس؛ طولانی‌ترین href منطبق برنده است
+ * تا صفحه‌های فرزند مثل /inventory/docs/edit/5 هم عنوان «اسناد انبار» بگیرند.
+ */
+export function findMenuTrail(pathname: string, items: MenuItem[] = MENU_ITEMS): MenuItem[] {
+  let best: MenuItem[] = [];
+  const walk = (nodes: MenuItem[], trail: MenuItem[]) => {
+    for (const node of nodes) {
+      const next = [...trail, node];
+      const href = node.href;
+      if (href) {
+        const matches = href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/");
+        if (matches && href.length > (best.at(-1)?.href?.length ?? -1)) best = next;
+      }
+      if (node.submenu) walk(node.submenu, next);
+    }
+  };
+  walk(items, []);
+  return best;
+}

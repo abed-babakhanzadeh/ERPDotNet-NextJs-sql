@@ -1,40 +1,44 @@
+"use client";
+
+import { useAsyncData } from "@/hooks/useAsyncData";
+import { usePermissions } from "@/providers/PermissionProvider";
+import { authService } from "@/services/userAccessService";
+import { formatLongDate } from "@/lib/format";
+import { DashboardKpis } from "@/components/dashboard/DashboardKpis";
+import { MyInboxTasks } from "@/components/dashboard/MyInboxTasks";
+import { RecentInventoryDocs } from "@/components/dashboard/RecentInventoryDocs";
+import { InventoryDocStatusChart } from "@/components/dashboard/InventoryDocStatusChart";
+import { QuickActions } from "@/components/dashboard/QuickActions";
+
 export default function DashboardPage() {
+  const { hasPermission } = usePermissions();
+  const { data: profile } = useAsyncData(() => authService.getProfile());
+
+  const canDocs = hasPermission("Inventory.Docs");
+  const canInbox = hasPermission("Workflow.Tasks.Inbox");
+
   return (
-    <div className="page-content space-y-6">
-      {/* کارت‌های آمار */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        <div className="rounded-xl bg-card p-6 shadow-sm border border-border">
-          <h3 className="text-sm font-medium text-card-foreground">
-            تعداد کل کاربران
-          </h3>
-          <p className="mt-2 text-3xl font-bold text-foreground">1,240</p>
-          <span className="text-xs text-green-500">+12% نسبت به ماه قبل</span>
-        </div>
-
-        <div className="rounded-xl bg-card p-6 shadow-sm border border-border">
-          <h3 className="text-sm font-medium text-card-foreground">
-            سندهای ثبت شده
-          </h3>
-          <p className="mt-2 text-3xl font-bold text-foreground">354</p>
-        </div>
-
-        <div className="rounded-xl bg-card p-6 shadow-sm border border-border">
-          <h3 className="text-sm font-medium text-card-foreground">
-            وضعیت سیستم
-          </h3>
-          <p className="mt-2 text-3xl font-bold text-blue-400">آنلاین</p>
+    <div className="mx-auto max-w-7xl space-y-4">
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <h1 className="text-xl font-bold text-foreground">
+            {profile?.firstName ? `سلام ${profile.firstName}` : "داشبورد"}
+          </h1>
+          <p className="text-sm text-muted-foreground">{formatLongDate(new Date())}</p>
         </div>
       </div>
 
-      {/* بخش محتوا */}
-      <div className="rounded-xl bg-card p-6 shadow-sm border border-border min-h-[400px]">
-        <h2 className="mb-4 text-lg font-bold text-foreground">
-          گزارش فعالیت‌های اخیر
-        </h2>
-        <p className="text-card-foreground">
-          به سامانه ERP خوش آمدید. از منوی سمت راست برای دسترسی به بخش‌ها
-          استفاده کنید.
-        </p>
+      <DashboardKpis />
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="space-y-4 lg:col-span-2">
+          {canDocs && <RecentInventoryDocs />}
+          {canInbox && <MyInboxTasks />}
+        </div>
+        <div className="space-y-4">
+          <QuickActions />
+          {canDocs && <InventoryDocStatusChart />}
+        </div>
       </div>
     </div>
   );
