@@ -27,3 +27,6 @@
 **/__pycache__/
 *.pyc
 **/.venv/
+
+# Redis local snapshot
+dump.rdb
