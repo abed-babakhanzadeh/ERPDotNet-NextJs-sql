@@ -18,6 +18,9 @@ public record CreateProductCommand : IRequest<int>
     public required int UnitId { get; set; } // واحد اصلی
     public ProductSupplyType SupplyType { get; set; } // 1: خریدنی، 2: تولیدی
     public string? ImagePath { get; set; }
+    public int? CategoryId { get; set; }
+    public string? Barcode { get; set; }
+    public string? TaxCode { get; set; }
     
     // لیست تبدیل واحدها (اختیاری)
     public List<ProductConversionInput> Conversions { get; set; } = new();
@@ -43,6 +46,17 @@ public class CreateProductValidator : AbstractValidator<CreateProductCommand>
 
         RuleFor(v => v.Name).NotEmpty().MaximumLength(200);
         RuleFor(v => v.UnitId).GreaterThan(0);
+
+        RuleFor(v => v.Barcode).MaximumLength(50)
+            .MustAsync(BeUniqueBarcode).WithMessage("این بارکد قبلاً برای کالای دیگری ثبت شده است.");
+
+        RuleFor(v => v.TaxCode)
+            .Matches("^[0-9]{13}$").When(v => !string.IsNullOrWhiteSpace(v.TaxCode))
+            .WithMessage("شناسه مالیاتی کالا باید ۱۳ رقم باشد.");
+
+        RuleFor(v => v.CategoryId)
+            .MustAsync(CategoryExists).When(v => v.CategoryId.HasValue)
+            .WithMessage("گروه کالا یافت نشد.");
         
         // اعتبارسنجی تبدیل‌ها
         RuleForEach(v => v.Conversions).ChildRules(c => {
@@ -54,6 +68,16 @@ public class CreateProductValidator : AbstractValidator<CreateProductCommand>
     private async Task<bool> BeUniqueCode(string code, CancellationToken cancellationToken)
     {
         return !await _context.Products.AnyAsync(p => p.Code == code, cancellationToken);
+    }
+    private async Task<bool> BeUniqueBarcode(CreateProductCommand model, string? barcode, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(barcode)) return true;
+        return !await _context.Products.AnyAsync(p => p.Barcode == barcode, cancellationToken);
+    }
+
+    private async Task<bool> CategoryExists(int? categoryId, CancellationToken cancellationToken)
+    {
+        return await _context.ProductCategories.AnyAsync(c => c.Id == categoryId, cancellationToken);
     }
 }
 
@@ -78,6 +102,9 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, int>
             UnitId = request.UnitId, // فقط واحد اصلی را ست می‌کنیم
             SupplyType = request.SupplyType,
             ImagePath = request.ImagePath,
+            CategoryId = request.CategoryId,
+            Barcode = NormalizeOptional(request.Barcode),
+            TaxCode = NormalizeOptional(request.TaxCode),
             IsActive = true
         };
 
@@ -99,4 +126,7 @@ public class CreateProductHandler : IRequestHandler<CreateProductCommand, int>
 
         return entity.Id;
     }
+
+    private static string? NormalizeOptional(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

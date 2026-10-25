@@ -28,6 +28,11 @@ public class Product : BaseEntity
 
     // اینام‌ها چون Value Type هستند دیفالت دارند (0)، ولی required کردنش خوبه که مطمئن بشی ست شده.
     public required ProductSupplyType SupplyType { get; set; }
+    public int? CategoryId { get; set; }
+    public ProductCategory? Category { get; set; }
+    public string? Barcode { get; set; }
+    // شناسه کالا/خدمت در سامانه مودیان (۱۳ رقم)
+    public string? TaxCode { get; set; }
 
     // فقط نام فایل یا مسیر نسبی را ذخیره می‌کنیم
     // مثال: "prod-1024-v1.jpg"

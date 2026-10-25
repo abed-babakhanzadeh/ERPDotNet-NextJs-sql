@@ -36,6 +36,9 @@ export type UpdateFiscalYearCommand = S["UpdateFiscalYearCommand"];
 export type CostCenterDto = S["CostCenterDto"];
 export type CreateCostCenterCommand = S["CreateCostCenterCommand"];
 export type UpdateCostCenterCommand = S["UpdateCostCenterCommand"];
+export type ProductCategoryDto = S["ProductCategoryDto"];
+export type CreateProductCategoryCommand = S["CreateProductCategoryCommand"];
+export type UpdateProductCategoryCommand = S["UpdateProductCategoryCommand"];
 
 // --- مهندسی محصول ---
 export type BOMListDto = S["BOMListDto"];

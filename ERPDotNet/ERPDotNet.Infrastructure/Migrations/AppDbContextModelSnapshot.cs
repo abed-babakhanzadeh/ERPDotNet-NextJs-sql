@@ -311,6 +311,13 @@ namespace ERPDotNet.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Barcode")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int?>("CategoryId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -356,10 +363,20 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.Property<int>("SupplyType")
                         .HasColumnType("int");
 
+                    b.Property<string>("TaxCode")
+                        .HasMaxLength(13)
+                        .HasColumnType("nvarchar(13)");
+
                     b.Property<int>("UnitId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Barcode")
+                        .IsUnique()
+                        .HasFilter("[Barcode] IS NOT NULL AND [IsDeleted] = 0");
+
+                    b.HasIndex("CategoryId");
 
                     b.HasIndex("Code")
                         .IsUnique();
@@ -367,6 +384,61 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.HasIndex("UnitId");
 
                     b.ToTable("products", "base");
+                });
+
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.BaseInfo.Entities.ProductCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("ParentId")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.HasIndex("ParentId");
+
+                    b.ToTable("product_categories", "base");
                 });
 
             modelBuilder.Entity("ERPDotNet.Domain.Modules.BaseInfo.Entities.ProductUnitConversion", b =>
@@ -1795,6 +1867,39 @@ namespace ERPDotNet.Infrastructure.Migrations
                         },
                         new
                         {
+                            Id = 51,
+                            IsMenu = true,
+                            Name = "BaseInfo.ProductCategories",
+                            ParentId = 30,
+                            Title = "گروه‌های کالا",
+                            Url = "/base-info/product-categories"
+                        },
+                        new
+                        {
+                            Id = 52,
+                            IsMenu = false,
+                            Name = "BaseInfo.ProductCategories.Create",
+                            ParentId = 51,
+                            Title = "تعریف گروه کالا"
+                        },
+                        new
+                        {
+                            Id = 53,
+                            IsMenu = false,
+                            Name = "BaseInfo.ProductCategories.Edit",
+                            ParentId = 51,
+                            Title = "ویرایش گروه کالا"
+                        },
+                        new
+                        {
+                            Id = 54,
+                            IsMenu = false,
+                            Name = "BaseInfo.ProductCategories.Delete",
+                            ParentId = 51,
+                            Title = "حذف گروه کالا"
+                        },
+                        new
+                        {
                             Id = 2000,
                             IsMenu = true,
                             Name = "ProductEngineering",
@@ -3219,13 +3324,30 @@ namespace ERPDotNet.Infrastructure.Migrations
 
             modelBuilder.Entity("ERPDotNet.Domain.Modules.BaseInfo.Entities.Product", b =>
                 {
+                    b.HasOne("ERPDotNet.Domain.Modules.BaseInfo.Entities.ProductCategory", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("ERPDotNet.Domain.Modules.BaseInfo.Entities.Unit", "Unit")
                         .WithMany()
                         .HasForeignKey("UnitId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.Navigation("Category");
+
                     b.Navigation("Unit");
+                });
+
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.BaseInfo.Entities.ProductCategory", b =>
+                {
+                    b.HasOne("ERPDotNet.Domain.Modules.BaseInfo.Entities.ProductCategory", "Parent")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Parent");
                 });
 
             modelBuilder.Entity("ERPDotNet.Domain.Modules.BaseInfo.Entities.ProductUnitConversion", b =>
@@ -3762,6 +3884,11 @@ namespace ERPDotNet.Infrastructure.Migrations
             modelBuilder.Entity("ERPDotNet.Domain.Modules.BaseInfo.Entities.Product", b =>
                 {
                     b.Navigation("UnitConversions");
+                });
+
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.BaseInfo.Entities.ProductCategory", b =>
+                {
+                    b.Navigation("Children");
                 });
 
             modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.InventoryDocHeader", b =>

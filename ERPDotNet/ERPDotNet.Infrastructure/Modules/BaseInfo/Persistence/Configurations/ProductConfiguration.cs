@@ -13,6 +13,15 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.Property(p => p.Code).HasMaxLength(50).IsRequired();
         builder.Property(p => p.Name).HasMaxLength(200).IsRequired();
         builder.HasIndex(p => p.Code).IsUnique();
+        builder.Property(p => p.Barcode).HasMaxLength(50);
+        builder.Property(p => p.TaxCode).HasMaxLength(13);
+        // بارکد اختیاری است ولی اگر وارد شود باید یکتا باشد
+        builder.HasIndex(p => p.Barcode).IsUnique().HasFilter("[Barcode] IS NOT NULL AND [IsDeleted] = 0");
+
+        builder.HasOne(p => p.Category)
+               .WithMany()
+               .HasForeignKey(p => p.CategoryId)
+               .OnDelete(DeleteBehavior.Restrict);
 
         // رابطه با واحد اصلی
         builder.HasOne(p => p.Unit)      // تغییر از BaseUnit به Unit

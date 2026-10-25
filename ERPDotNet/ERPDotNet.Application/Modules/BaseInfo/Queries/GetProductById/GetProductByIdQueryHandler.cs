@@ -38,7 +38,11 @@ public class GetProductByIdQueryHandler : IRequestHandler<GetProductByIdQuery, P
                     c.AlternativeUnitId,
                     c.AlternativeUnit != null ? c.AlternativeUnit.Title : "",
                     c.Factor
-                )).ToList()
+                )).ToList(),
+                p.CategoryId,
+                p.Category != null ? p.Category.Title : null,
+                p.Barcode,
+                p.TaxCode
             ))
             .FirstOrDefaultAsync(cancellationToken);
     }

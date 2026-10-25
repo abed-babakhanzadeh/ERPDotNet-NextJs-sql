@@ -5,16 +5,19 @@ import type {
   CreateCompanyCommand,
   CreateCostCenterCommand,
   CreateFiscalYearCommand,
+  CreateProductCategoryCommand,
   CreateProductCommand,
   CreateUnitCommand,
   PagedQuery,
   Paged,
+  ProductCategoryDto,
   ProductDto,
   FiscalYearDto,
   UnitDto,
   UpdateCompanyCommand,
   UpdateCostCenterCommand,
   UpdateFiscalYearCommand,
+  UpdateProductCategoryCommand,
   UpdateProductCommand,
   UpdateUnitCommand,
 } from "@/types/api";
@@ -110,6 +113,12 @@ export const costCenterService = {
   ),
   types: async () => (await apiClient.get<EnumOption[]>("/BaseInfo/CostCenters/types")).data,
 };
+
+export const productCategoryService = baseInfoCrud<
+  ProductCategoryDto,
+  CreateProductCategoryCommand,
+  UpdateProductCategoryCommand
+>("/BaseInfo/ProductCategories");
 
 export const fileService = {
   /** آپلود فایل عمومی؛ مسیر نسبی فایل ذخیره‌شده را برمی‌گرداند */

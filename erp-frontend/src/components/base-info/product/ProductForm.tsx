@@ -42,8 +42,15 @@ import InventorySettingsTab from "@/components/inventory/product/InventorySettin
 import ProductBatchesTab from "@/components/inventory/product/ProductBatchesTab";
 import ProductUnitsTab from "./ProductUnitsTab";
 import ProductImageTab from "./ProductImageTab";
-import { handleApiError } from "@/lib/error-handling";
-import { fileService, productService, unitService } from "@/services/baseInfoService";
+import { applyFieldErrors, handleApiError } from "@/lib/error-handling";
+import {
+  fileService,
+  productCategoryService,
+  productService,
+  unitService,
+} from "@/services/baseInfoService";
+import { SelectField, TextField } from "@/components/form/fields";
+import type { ProductCategoryDto } from "@/types/api";
 
 const productSchema = z.object({
   code: z.string().min(1, "کد کالا الزامی است"),
@@ -53,6 +60,13 @@ const productSchema = z.object({
   supplyType: z.coerce.number().default(1),
   productNature: z.coerce.number().default(1),
   descriptions: z.string().optional(),
+  // هم‌راستا با Create/UpdateProductValidator در بک‌اند
+  categoryId: z.number().nullable(),
+  barcode: z.string().trim().max(50, "حداکثر ۵۰ کاراکتر"),
+  taxCode: z
+    .string()
+    .trim()
+    .refine((v) => v === "" || /^[0-9]{13}$/.test(v), "شناسه مالیاتی کالا باید ۱۳ رقم باشد"),
   isActive: z.boolean().default(true),
 });
 
@@ -72,6 +86,9 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
   const [units, setUnits] = useState<Unit[]>([]);
+  const [categories, setCategories] = useState<ProductCategoryDto[]>([]);
+  // گروه فعلی کالا اگر بعداً غیرفعال شده باشد در lookup نمی‌آید؛ جدا نگه داشته می‌شود
+  const [inactiveCategory, setInactiveCategory] = useState<{ value: number; label: string } | null>(null);
   const [conversions, setConversions] = useState<any[]>([]);
   // تغییر ضرایب تبدیل جزو فرم react-hook-form نیست؛ جدا پیگیری می‌شود
   const [conversionsTouched, setConversionsTouched] = useState(false);
@@ -95,6 +112,9 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
       unitId: 0,
       supplyType: 1,
       descriptions: "",
+      categoryId: null,
+      barcode: "",
+      taxCode: "",
       isActive: true,
     },
   });
@@ -103,7 +123,12 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
     const init = async () => {
       setLoading(true);
       try {
-        setUnits(await unitService.lookup());
+        const [allUnits, allCategories] = await Promise.all([
+          unitService.lookup(),
+          productCategoryService.lookup(),
+        ]);
+        setUnits(allUnits);
+        setCategories(allCategories);
 
         if (!isCreate && productId) {
           const prod = await productService.getById(Number(productId));
@@ -113,6 +138,10 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
             setIsBatchManaged(profile.isBatchManaged);
           }
 
+          if (prod.categoryId && !allCategories.some((c) => c.id === prod.categoryId)) {
+            setInactiveCategory({ value: prod.categoryId, label: `${prod.categoryTitle ?? ""} (غیرفعال)` });
+          }
+
           form.reset({
             code: prod.code ?? "",
             name: prod.name ?? "",
@@ -120,6 +149,9 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
             unitId: prod.unitId,
             supplyType: prod.supplyTypeId,
             descriptions: prod.descriptions ?? "",
+            categoryId: prod.categoryId ?? null,
+            barcode: prod.barcode ?? "",
+            taxCode: prod.taxCode ?? "",
             isActive: prod.isActive ?? true,
           });
 
@@ -181,6 +213,8 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
         id: productId ? Number(productId) : 0,
         unitId: Number(values.unitId),
         supplyType: Number(values.supplyType),
+        barcode: values.barcode || null,
+        taxCode: values.taxCode || null,
         // ارسال مسیر تصویر (رشته) به جای فایل
         imagePath: finalImagePath,
         // در حالت JSON معمولاً لیست conversions را مستقیم می‌فرستیم، نه رشته JSON
@@ -206,10 +240,16 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
       }
     } catch (error) {
       handleApiError(error, "خطا در ذخیره اطلاعات");
+      applyFieldErrors(error, (name, e) => form.setError(name as keyof ProductFormValues, e));
     } finally {
       setLoading(false);
     }
   };
+
+  const categoryOptions = [
+    ...categories.map((c) => ({ value: c.id, label: `${c.code} - ${c.title}` })),
+    ...(inactiveCategory ? [inactiveCategory] : []),
+  ];
 
   const renderHeaderActions = () => {
     return (
@@ -471,6 +511,28 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
                               <FormMessage />
                             </FormItem>
                           )}
+                        />
+                        <SelectField
+                          control={form.control}
+                          name="categoryId"
+                          label="گروه کالا"
+                          options={categoryOptions}
+                          noneLabel="بدون گروه"
+                          disabled={isView}
+                        />
+                        <TextField
+                          control={form.control}
+                          name="barcode"
+                          label="بارکد"
+                          dir="ltr"
+                          disabled={isView}
+                        />
+                        <TextField
+                          control={form.control}
+                          name="taxCode"
+                          label="شناسه مالیاتی کالا (۱۳ رقمی)"
+                          dir="ltr"
+                          disabled={isView}
                         />
                         <FormField
                           control={form.control}
