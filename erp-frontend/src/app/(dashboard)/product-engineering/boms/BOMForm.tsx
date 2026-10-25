@@ -663,6 +663,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
                   ? "bg-success hover:bg-success/90"
                   : "text-muted-foreground border-dashed"
               }`}
+              aria-label={`جایگزین‌های ردیف ${index + 1}${subCount > 0 ? ` (${subCount})` : ""}`}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();

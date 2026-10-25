@@ -16,17 +16,27 @@ test.describe("کالا", () => {
     await page.getByRole("combobox", { name: "واحد سنجش اصلی" }).click();
     await page.getByPlaceholder("انتخاب واحد...").fill(tag);
     await page.getByRole("button", { name: unitTitle }).click();
-    await expect(page.getByRole("combobox", { name: "واحد سنجش اصلی" })).toContainText(unitTitle);
+    await expect(
+      page.getByRole("combobox", { name: "واحد سنجش اصلی" }),
+    ).toContainText(unitTitle);
 
-    const created = page.waitForResponse((r) => r.request().method() === "POST" && /\/BaseInfo\/Products$/.test(r.url()));
+    const created = page.waitForResponse(
+      (r) =>
+        r.request().method() === "POST" &&
+        /\/BaseInfo\/Products$/.test(r.url()),
+    );
     await page.getByRole("button", { name: "ثبت و ادامه" }).click();
     // بعد از ثبت، صفحه با window.location عوض می‌شود و بدنه پاسخ دیگر خواندنی نیست؛ شناسه را از آدرس می‌گیریم
     expect((await created).status()).toBeLessThan(300);
     await expect(page).toHaveURL(/\/base-info\/products\/edit\/\d+$/);
     const id = Number(page.url().split("/").pop());
-    await expect(page.getByLabel("نام کالا (فارسی)")).toHaveValue(`کالای تست ${tag}`);
+    await expect(page.getByLabel("نام کالا (فارسی)")).toHaveValue(
+      `کالای تست ${tag}`,
+    );
 
-    const product = await (await api.get(`/api/BaseInfo/Products/${id}`)).json();
+    const product = await (
+      await api.get(`/api/BaseInfo/Products/${id}`)
+    ).json();
     expect(product).toMatchObject({ code: `P-${tag}`, unitId });
     await api.dispose();
   });
@@ -41,11 +51,17 @@ test.describe("کالا", () => {
     for (const attempt of [1, 2]) {
       await page.goto("/base-info/products/create");
       await page.getByLabel("کد کالا").fill(code);
-      await page.getByLabel("نام کالا (فارسی)").fill(`تکراری ${attempt} ${tag}`);
+      await page
+        .getByLabel("نام کالا (فارسی)")
+        .fill(`تکراری ${attempt} ${tag}`);
       await page.getByRole("combobox", { name: "واحد سنجش اصلی" }).click();
       await page.getByPlaceholder("انتخاب واحد...").fill(tag);
       await page.getByRole("button", { name: unitTitle }).click();
-      const res = page.waitForResponse((r) => r.request().method() === "POST" && /\/BaseInfo\/Products$/.test(r.url()));
+      const res = page.waitForResponse(
+        (r) =>
+          r.request().method() === "POST" &&
+          /\/BaseInfo\/Products$/.test(r.url()),
+      );
       await page.getByRole("button", { name: "ثبت و ادامه" }).click();
       const status = (await res).status();
       if (attempt === 1) {

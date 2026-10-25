@@ -3,7 +3,10 @@ import { adminApi, uid } from "./helpers";
 
 /** فرم را ذخیره می‌کند و شناسه برگشتی از API را برمی‌گرداند */
 async function saveUnit(page: Page, button: string): Promise<number> {
-  const response = page.waitForResponse((r) => r.request().method() === "POST" && /\/BaseInfo\/Units$/.test(r.url()));
+  const response = page.waitForResponse(
+    (r) =>
+      r.request().method() === "POST" && /\/BaseInfo\/Units$/.test(r.url()),
+  );
   await page.getByRole("button", { name: button }).click();
   const res = await response;
   expect(res.status(), await res.text()).toBeLessThan(300);
@@ -11,10 +14,13 @@ async function saveUnit(page: Page, button: string): Promise<number> {
 }
 
 test.describe("واحد سنجش", () => {
-  test("فرم خالی خطای اعتبارسنجی نشان می‌دهد و چیزی ثبت نمی‌کند", async ({ page }) => {
+  test("فرم خالی خطای اعتبارسنجی نشان می‌دهد و چیزی ثبت نمی‌کند", async ({
+    page,
+  }) => {
     let posted = false;
     page.on("request", (r) => {
-      if (r.method() === "POST" && /\/BaseInfo\/Units$/.test(r.url())) posted = true;
+      if (r.method() === "POST" && /\/BaseInfo\/Units$/.test(r.url()))
+        posted = true;
     });
     await page.goto("/base-info/units/create");
     await page.getByRole("button", { name: "ثبت واحد" }).click();
@@ -23,7 +29,9 @@ test.describe("واحد سنجش", () => {
     expect(posted).toBe(false);
   });
 
-  test("واحد اصلی و فرعی با ضریب تبدیل و دقت اعشار درست در دیتابیس ذخیره می‌شوند", async ({ page }) => {
+  test("واحد اصلی و فرعی با ضریب تبدیل و دقت اعشار درست در دیتابیس ذخیره می‌شوند", async ({
+    page,
+  }) => {
     const api = await adminApi();
     const tag = uid();
 
@@ -40,18 +48,28 @@ test.describe("واحد سنجش", () => {
     await page.getByRole("option", { name: new RegExp(`عدد ${tag}`) }).click();
     await page.getByLabel("ضریب تبدیل").fill("12");
     // راهنمای زیر فیلد، رابطه دو واحد را نشان می‌دهد
-    await expect(page.getByText(`۱ کارتن ${tag} = 12 عدد ${tag}`)).toBeVisible();
+    await expect(
+      page.getByText(`۱ کارتن ${tag} = 12 عدد ${tag}`),
+    ).toBeVisible();
     const subId = await saveUnit(page, "ثبت واحد");
 
     // قبلاً ضریب واحد فرعی همیشه ۱ ذخیره می‌شد
     const sub = await (await api.get(`/api/BaseInfo/Units/${subId}`)).json();
-    expect(sub).toMatchObject({ baseUnitId: baseId, conversionFactor: 12, precision: 2 });
+    expect(sub).toMatchObject({
+      baseUnitId: baseId,
+      conversionFactor: 12,
+      precision: 2,
+    });
 
     // ویرایش: دقت اعشار نباید با ذخیره دوباره صفر شود
     await page.goto(`/base-info/units/edit/${subId}`);
     await expect(page.getByLabel("تعداد رقم اعشار")).toHaveValue("2");
     await page.getByLabel("ضریب تبدیل").fill("24");
-    const put = page.waitForResponse((r) => r.request().method() === "PUT" && r.url().includes(`/BaseInfo/Units/${subId}`));
+    const put = page.waitForResponse(
+      (r) =>
+        r.request().method() === "PUT" &&
+        r.url().includes(`/BaseInfo/Units/${subId}`),
+    );
     await page.getByRole("button", { name: "ذخیره تغییرات" }).click();
     expect((await put).status()).toBeLessThan(300);
 

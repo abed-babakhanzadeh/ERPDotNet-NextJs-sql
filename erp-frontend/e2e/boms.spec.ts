@@ -133,3 +133,145 @@ test.describe("فرمول ساخت (BOM)", () => {
     await api.dispose();
   });
 });
+
+test.describe("فرمول ساخت (BOM): جایگزین و ویرایش", () => {
+  test("تعریف کالای جایگزین برای یک ماده اولیه", async ({ page }) => {
+    const api = await adminApi();
+    const tag = uid();
+    const unitId = await createUnit(api, `عدد ${tag}`);
+    const parentCode = `TB-${tag}`;
+    const parentId = await createProduct(api, {
+      code: parentCode,
+      name: `میز ${tag}`,
+      unitId,
+      supplyType: 2,
+    });
+    const mainCode = `MD-${tag}`;
+    const mainId = await createProduct(api, {
+      code: mainCode,
+      name: `صفحه MDF ${tag}`,
+      unitId,
+    });
+    const subCode = `PB-${tag}`;
+    const subId = await createProduct(api, {
+      code: subCode,
+      name: `صفحه نئوپان ${tag}`,
+      unitId,
+    });
+
+    await page.goto("/product-engineering/boms/create");
+    await pickProduct(page, "کالا/قلم (محصول یا نیمه ساخته)", parentCode);
+    await page.getByLabel("عنوان فرمول").fill(`فرمول میز ${tag}`);
+    await page.getByRole("button", { name: "افزودن سطر جدید" }).click();
+    await pickProduct(page, "ماده اولیه ردیف 1", mainCode);
+    await page.getByLabel("مقدار مصرفی ردیف 1").fill("2");
+    await expect(page.getByLabel("واحد مصرفی ردیف 1")).toContainText(
+      `عدد ${tag}`,
+    );
+
+    await page.getByRole("button", { name: "جایگزین‌های ردیف 1" }).click();
+    const dialog = page.getByRole("dialog", { name: /جایگزین‌ها برای/ });
+    await expect(dialog).toContainText(`صفحه MDF ${tag}`);
+    await dialog.getByRole("button", { name: "افزودن سطر جدید" }).click();
+    await dialog
+      .getByRole("combobox", { name: "کالای جایگزین ردیف 1" })
+      .click();
+    await page.getByPlaceholder("انتخاب کالا/قلم...").last().fill(subCode);
+    await page.getByRole("button", { name: new RegExp(subCode) }).click();
+    await dialog.getByLabel("ضریب ردیف 1").fill("1.5");
+    await dialog.getByRole("button", { name: "تایید" }).click();
+    await expect(
+      page.getByRole("button", { name: "جایگزین‌های ردیف 1 (1)" }),
+    ).toBeVisible();
+
+    const created = page.waitForResponse(
+      (r) =>
+        r.request().method() === "POST" &&
+        /\/ProductEngineering\/BOMs$/.test(r.url()),
+    );
+    await page.getByRole("button", { name: "ثبت", exact: true }).click();
+    const res = await created;
+    expect(res.status()).toBeLessThan(300);
+    const bomId = Number(await res.text());
+
+    const bom = await (
+      await api.get(`/api/ProductEngineering/BOMs/${bomId}`)
+    ).json();
+    expect(bom.productId).toBe(parentId);
+    expect(bom.details).toHaveLength(1);
+    expect(bom.details[0]).toMatchObject({
+      childProductId: mainId,
+      quantity: 2,
+    });
+    expect(bom.details[0].substitutes).toHaveLength(1);
+    expect(bom.details[0].substitutes[0]).toMatchObject({
+      substituteProductId: subId,
+      factor: 1.5,
+      priority: 1,
+    });
+    await api.dispose();
+  });
+
+  test("ویرایش BOM: تغییر مقدار و حذف یک ماده اولیه", async ({ page }) => {
+    const api = await adminApi();
+    const tag = uid();
+    const unitId = await createUnit(api, `عدد ${tag}`);
+    const parentId = await createProduct(api, {
+      code: `BD-${tag}`,
+      name: `تخت ${tag}`,
+      unitId,
+      supplyType: 2,
+    });
+    const aId = await createProduct(api, {
+      code: `FA-${tag}`,
+      name: `چوب ${tag}`,
+      unitId,
+    });
+    const bId = await createProduct(api, {
+      code: `FB-${tag}`,
+      name: `پیچ ${tag}`,
+      unitId,
+    });
+    const bomId = await createBom(api, {
+      productId: parentId,
+      title: `تخت ${tag}`,
+      components: [
+        { productId: aId, unitId, quantity: 3 },
+        { productId: bId, unitId, quantity: 20 },
+      ],
+    });
+
+    await page.goto(`/product-engineering/boms/edit/${bomId}`);
+    await expect(page.getByLabel("مقدار مصرفی ردیف 2")).toHaveValue("20");
+    await expect(page.getByText("ذخیره نشده")).toHaveCount(0);
+
+    await page.getByLabel("مقدار مصرفی ردیف 1").fill("5");
+    await page
+      .getByRole("row")
+      .filter({ has: page.getByLabel("مقدار مصرفی ردیف 2") })
+      .getByRole("button", { name: "حذف" })
+      .click();
+    await expect(page.getByLabel("مقدار مصرفی ردیف 2")).toHaveCount(0);
+    await expect(page.getByText("ذخیره نشده")).toBeVisible();
+
+    const saved = page.waitForResponse(
+      (r) =>
+        r.request().method() === "PUT" &&
+        r.url().includes(`/ProductEngineering/BOMs/${bomId}`),
+    );
+    await page.getByRole("button", { name: "ثبت", exact: true }).click();
+    expect((await saved).status()).toBeLessThan(300);
+
+    const bom = await (
+      await api.get(`/api/ProductEngineering/BOMs/${bomId}`)
+    ).json();
+    const lines = Object.fromEntries(
+      bom.details.map((d: { childProductId: number; quantity: number }) => [
+        d.childProductId,
+        d.quantity,
+      ]),
+    );
+    expect(lines).toEqual({ [aId]: 5 });
+    await api.dispose();
+  });
+});

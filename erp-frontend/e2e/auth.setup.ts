@@ -8,6 +8,14 @@ setup("ورود admin", async ({ baseURL }) => {
   fs.mkdirSync("e2e/.auth", { recursive: true });
   fs.writeFileSync(
     AUTH_FILE,
-    JSON.stringify({ cookies: [], origins: [{ origin: new URL(baseURL!).origin, localStorage: [{ name: "accessToken", value: token }] }] }),
+    JSON.stringify({
+      cookies: [],
+      origins: [
+        {
+          origin: new URL(baseURL!).origin,
+          localStorage: [{ name: "accessToken", value: token }],
+        },
+      ],
+    }),
   );
 });
