@@ -1417,6 +1417,14 @@ namespace ERPDotNet.Infrastructure.Migrations
                         },
                         new
                         {
+                            Id = 12,
+                            IsMenu = false,
+                            Name = "UserAccess.ResetPassword",
+                            ParentId = 2,
+                            Title = "تغییر رمز عبور کاربران"
+                        },
+                        new
+                        {
                             Id = 90,
                             IsMenu = true,
                             Name = "General.Settings",

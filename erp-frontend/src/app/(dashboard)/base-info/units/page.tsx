@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { Unit, ColumnConfig } from "@/types";
-import apiClient from "@/services/apiClient";
+import { ColumnConfig } from "@/types";
 import { Plus, Ruler } from "lucide-react";
 import ProtectedPage from "@/components/ui/ProtectedPage";
 import PermissionGuard from "@/components/ui/PermissionGuard";
@@ -21,6 +20,9 @@ import {
 } from "@/components/ui/tooltip";
 // 1. ایمپورت کردن لایوت جدید
 import BaseListLayout from "@/components/layout/BaseListLayout";
+import { handleApiError } from "@/lib/error-handling";
+import { unitService } from "@/services/baseInfoService";
+import type { UnitDto } from "@/types/api";
 
 const PlaceholderWrapper: React.FC<{
   children: React.ReactNode;
@@ -39,9 +41,9 @@ export default function UnitsPage() {
 
   useTabPrefetch(["/base-info/units/create"]);
 
-  const { tableProps, refresh, totalCount } = useServerDataTable<Unit>({
+  const { tableProps, refresh, totalCount } = useServerDataTable<UnitDto>({
     // totalCount اضافه شد
-    endpoint: "/BaseInfo/Units/search",
+    fetcher: unitService.search,
     initialPageSize: 30,
   });
 
@@ -82,14 +84,14 @@ export default function UnitsPage() {
     []
   );
 
-  const handleDelete = async (row: Unit) => {
+  const handleDelete = async (row: UnitDto) => {
     if (!confirm(`آیا از حذف واحد "${row.title}" اطمینان دارید؟`)) return;
     try {
-      await apiClient.delete(`/Units/${row.id}`);
+      await unitService.remove(row.id);
       toast.success("واحد با موفقیت حذف شد");
       refresh();
-    } catch (error: any) {
-      toast.error("خطا در حذف واحد. ممکن است در کالا/قلمها استفاده شده باشد.");
+    } catch (error) {
+      handleApiError(error, "خطا در حذف واحد. ممکن است در کالا/قلمها استفاده شده باشد.");
     }
   };
 
@@ -97,7 +99,7 @@ export default function UnitsPage() {
     addTab("تعریف واحد جدید", "/base-info/units/create");
   };
 
-  const handleEdit = (row: Unit) => {
+  const handleEdit = (row: UnitDto) => {
     addTab(`ویرایش ${row.title}`, `/base-info/units/edit/${row.id}`);
   };
 
@@ -135,7 +137,7 @@ export default function UnitsPage() {
       >
         <DataTable
           columns={columns}
-          onEdit={(unit) => handleEdit(unit as Unit)}
+          onEdit={handleEdit}
           onDelete={handleDelete}
           {...tableProps}
         />

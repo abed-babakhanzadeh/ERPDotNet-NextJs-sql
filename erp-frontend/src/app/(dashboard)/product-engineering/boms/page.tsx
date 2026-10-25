@@ -2,7 +2,6 @@
 
 import React, { useMemo, useState } from "react";
 import { ColumnConfig } from "@/types";
-import apiClient from "@/services/apiClient";
 import { toast } from "sonner";
 import {
   Layers,
@@ -41,6 +40,8 @@ import NewVersionDialog from "./NewVersionDialog";
 import { useServerDataTable } from "@/hooks/useServerDataTable";
 import { useTabs } from "@/providers/TabsProvider";
 import { useTabPrefetch } from "@/hooks/useTabPrefetch";
+import { handleApiError } from "@/lib/error-handling";
+import { bomService } from "@/services/bomService";
 
 // DTO هماهنگ با بک‌ند
 interface BOMListDto {
@@ -69,7 +70,7 @@ export default function BOMsListPage() {
 
   // DataTable Hook
   const { tableProps, refresh, totalCount } = useServerDataTable<BOMListDto>({
-    endpoint: "/ProductEngineering/BOMs/search",
+    fetcher: bomService.search,
     initialPageSize: 30,
   });
 
@@ -242,12 +243,11 @@ export default function BOMsListPage() {
       return;
 
     try {
-      await apiClient.delete(`/ProductEngineering/BOMs/${row.id}`);
+      await bomService.remove(row.id);
       toast.success("فرمول با موفقیت حذف شد");
       refresh();
-    } catch (error: any) {
-      const msg = error.response?.data?.detail || "خطا در حذف اطلاعات.";
-      toast.error(msg);
+    } catch (error) {
+      handleApiError(error, "خطا در حذف اطلاعات.");
     }
   };
 

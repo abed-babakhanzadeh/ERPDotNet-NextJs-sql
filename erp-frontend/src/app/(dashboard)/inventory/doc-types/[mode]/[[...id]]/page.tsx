@@ -29,6 +29,7 @@ import {
 
 import inventoryService from "@/services/inventoryService";
 import { InventoryDocTypeDto } from "@/types/inventory";
+import { handleApiError } from "@/lib/error-handling";
 
 const formSchema = z.object({
   title: z.string().min(1, "عنوان الزامی است"),
@@ -99,8 +100,7 @@ export default function DocTypeFormPage() {
           });
         }
       } catch (error) {
-        console.error(error);
-        toast.error("خطا در بارگذاری اطلاعات");
+        handleApiError(error, "خطا در بارگذاری اطلاعات");
       } finally {
         setLoading(false);
       }
@@ -126,7 +126,7 @@ export default function DocTypeFormPage() {
       }
       router.push("/inventory/doc-types");
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "خطا در عملیات");
+      handleApiError(error, "خطا در عملیات");
     } finally {
       setIsSubmitting(false);
     }

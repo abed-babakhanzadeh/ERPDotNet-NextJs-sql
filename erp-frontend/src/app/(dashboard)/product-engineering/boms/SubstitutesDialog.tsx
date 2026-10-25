@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import EditableGrid, { GridColumn } from "@/components/form/EditableGrid";
 import { TableLookupCombobox } from "@/components/ui/TableLookupCombobox";
 import { Checkbox } from "@/components/ui/checkbox";
-import apiClient from "@/services/apiClient";
+import { productService } from "@/services/baseInfoService";
 
 export interface SubstituteRow {
   id: string;
@@ -77,12 +77,12 @@ export default function SubstitutesDialog({
   const handleProductSearch = async (term: string) => {
     setLoadingProducts(true);
     try {
-      const res = await apiClient.post("/BaseInfo/Products/search", {
+      const res = await productService.search({
         pageNumber: 1,
         pageSize: 20,
         searchTerm: term,
       });
-      setProductOptions(res.data.items || []);
+      setProductOptions(res.items);
     } finally {
       setLoadingProducts(false);
     }

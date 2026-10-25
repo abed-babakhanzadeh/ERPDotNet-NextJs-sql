@@ -23,6 +23,7 @@ import { ColumnConfig } from "@/types";
 
 import { workflowService } from "@/services/workflowService";
 import { ProcessDto } from "@/types/workflow";
+import { handleApiError } from "@/lib/error-handling";
 
 export default function WorkflowDesignerPage() {
   const router = useRouter();
@@ -35,7 +36,7 @@ export default function WorkflowDesignerPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { tableProps, refresh } = useServerDataTable<ProcessDto>({
-    endpoint: "/Workflow/Tasks/processes/list",
+    fetcher: workflowService.getAllProcesses,
     initialPageSize: 10,
   });
 
@@ -57,7 +58,7 @@ export default function WorkflowDesignerPage() {
       setNewProcess({ processCode: "", title: "", targetEntityName: "" });
       refresh();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "خطا در ایجاد فرآیند");
+      handleApiError(error, "خطا در ایجاد فرآیند");
     } finally {
       setIsSubmitting(false);
     }

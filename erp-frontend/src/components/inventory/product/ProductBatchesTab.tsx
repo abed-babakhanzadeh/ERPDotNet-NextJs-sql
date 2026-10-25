@@ -37,6 +37,7 @@ import PersianDatePicker from "@/components/ui/PersianDatePicker";
 
 import inventoryService from "@/services/inventoryService";
 import { InventoryBatchDto } from "@/types/inventory";
+import { handleApiError } from "@/lib/error-handling";
 
 const createBatchSchema = z.object({
   batchNumber: z.string().min(1, "شماره بچ الزامی است"),
@@ -157,19 +158,9 @@ export default function ProductBatchesTab({ productId, isViewMode }: Props) {
 
       handleDialogChange(false);
       loadBatches();
-    } catch (error: any) {
-      console.error(error);
-      const serverMessage =
-        error.response?.data?.detail ||
-        error.response?.data?.title ||
-        "خطا در عملیات";
-      if (serverMessage.includes("پروفایل") || error.response?.status === 500) {
-        toast.error(
-          "خطا: لطفاً ابتدا در تب 'تنظیمات انبار'، تیک 'مدیریت بچ' را فعال و ذخیره کنید.",
-        );
-      } else {
-        toast.error(serverMessage);
-      }
+    } catch (error) {
+      // پیام سرور (مثلاً «این کالا بچ‌دار نیست») خودش راهنمای اصلاح را دارد
+      handleApiError(error, "خطا در ثبت بچ");
     }
   };
 
@@ -191,7 +182,7 @@ export default function ProductBatchesTab({ productId, isViewMode }: Props) {
       toast.success("وضعیت بچ تغییر کرد");
       loadBatches();
     } catch (err) {
-      toast.error("خطا در تغییر وضعیت");
+      handleApiError(err, "خطا در تغییر وضعیت");
     }
   };
 

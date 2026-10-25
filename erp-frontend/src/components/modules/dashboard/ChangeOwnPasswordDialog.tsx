@@ -13,7 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, KeyRound } from "lucide-react";
 import { toast } from "sonner";
-import apiClient from "@/services/apiClient";
+import { handleApiError } from "@/lib/error-handling";
+import { authService } from "@/services/userAccessService";
 
 interface ChangeOwnPasswordDialogProps {
   open: boolean;
@@ -42,11 +43,7 @@ export default function ChangeOwnPasswordDialog({
 
     setLoading(true);
     try {
-      // این متد برای تغییر رمز خود کاربر است
-      await apiClient.post("/Auth/change-password", {
-        currentPassword,
-        newPassword,
-      });
+      await authService.changeOwnPassword({ currentPassword, newPassword });
 
       toast.success("رمز عبور شما با موفقیت تغییر کرد");
       onClose();
@@ -55,7 +52,7 @@ export default function ChangeOwnPasswordDialog({
       setNewPassword("");
       setConfirmPassword("");
     } catch (error: any) {
-      toast.error(error.response?.data?.detail || "رمز عبور فعلی اشتباه است");
+      handleApiError(error, "رمز عبور فعلی اشتباه است");
     } finally {
       setLoading(false);
     }

@@ -36,6 +36,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import inventoryService from "@/services/inventoryService";
 import { LocationDto } from "@/types/inventory";
 import LocationDialog from "./LocationDialog";
+import { handleApiError } from "@/lib/error-handling";
 
 interface LocationTreeProps {
   warehouseId: number;
@@ -71,7 +72,7 @@ export default function LocationTree({ warehouseId }: LocationTreeProps) {
       toast.success("لوکیشن حذف شد");
       mutate(); // رفرش لیست
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "خطا در حذف");
+      handleApiError(error, "خطا در حذف");
     }
   };
 

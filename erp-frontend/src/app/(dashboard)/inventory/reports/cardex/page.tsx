@@ -18,9 +18,10 @@ import {
 import { TableLookupCombobox } from "@/components/ui/TableLookupCombobox";
 
 import inventoryService from "@/services/inventoryService";
-import apiClient from "@/services/apiClient";
 import { useServerDataTable } from "@/hooks/useServerDataTable";
 import { ColumnConfig } from "@/types";
+import { handleApiError } from "@/lib/error-handling";
+import { productService } from "@/services/baseInfoService";
 
 // 🌟 هوک اختصاصی برای حفظ وضعیت فیلترها هنگام جابجایی در تب‌ها 🌟
 function usePersistentState<T>(key: string, initialValue: T) {
@@ -64,9 +65,9 @@ export default function ProductCardexPage() {
           pageNumber: 1,
           pageSize: 500,
         });
-        setWarehouses(whRes.items || whRes.data || []);
+        setWarehouses(whRes.items ?? []);
       } catch (error) {
-        toast.error("خطا در دریافت لیست انبارها");
+        handleApiError(error, "خطا در دریافت لیست انبارها");
       }
     };
     fetchWarehouses();
@@ -74,14 +75,14 @@ export default function ProductCardexPage() {
 
   const fetchProducts = useCallback(async (searchTerm: string = "") => {
     try {
-      const res = await apiClient.post("/BaseInfo/Products/search", {
+      const res = await productService.search({
         pageNumber: 1,
         pageSize: 50,
         searchTerm,
       });
-      setProductOptions(res.data?.items || res.data || []);
+      setProductOptions(res.items);
     } catch (error) {
-      toast.error("خطا در دریافت لیست کالاها");
+      handleApiError(error, "خطا در دریافت لیست کالاها");
     }
   }, []);
 
@@ -90,7 +91,7 @@ export default function ProductCardexPage() {
   }, [fetchProducts]);
 
   const { tableProps, refresh, totalCount } = useServerDataTable<any>({
-    endpoint: "/Inventory/Inventory/reports/cardex",
+    fetcher: inventoryService.getProductCardex,
     initialPageSize: 15,
     extraPayload: {
       warehouseId: selectedWarehouseId,

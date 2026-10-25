@@ -24,6 +24,7 @@ import { ColumnConfig } from "@/types";
 import { useServerDataTable } from "@/hooks/useServerDataTable";
 import { usePermissions } from "@/providers/PermissionProvider";
 import { StockRebuildDialog } from "@/components/inventory/StockRebuildDialog";
+import { handleApiError } from "@/lib/error-handling";
 
 // 🌟 هوک اختصاصی برای حفظ وضعیت فیلترها هنگام جابجایی در تب‌ها
 function usePersistentState<T>(key: string, initialValue: T) {
@@ -69,9 +70,9 @@ export default function CurrentStockReportPage() {
           pageNumber: 1,
           pageSize: 500,
         });
-        setWarehouses(res.items || res.data || []);
+        setWarehouses(res.items ?? []);
       } catch (error) {
-        toast.error("خطا در دریافت لیست انبارها");
+        handleApiError(error, "خطا در دریافت لیست انبارها");
       }
     };
     fetchWarehouses();
@@ -79,7 +80,7 @@ export default function CurrentStockReportPage() {
 
   const { tableProps, refresh, totalCount } =
     useServerDataTable<InventoryStockDto>({
-      endpoint: "/Inventory/Inventory/stock/current",
+      fetcher: inventoryService.getCurrentStock,
       initialPageSize: 15,
       extraPayload: {
         warehouseId: selectedWarehouseId,

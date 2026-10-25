@@ -32,6 +32,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddOpenApi("v1", options =>
 {
     options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
+    options.AddSchemaTransformer<ERPDotNet.API.OpenApi.RequiredNonNullablePropertiesTransformer>();
 });
 
 // CORS اصلی برای APIها
@@ -56,18 +57,22 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Database Migration
-await MigrateDatabaseAsync(app);
+// هنگام تولید سند OpenAPI در زمان build (ابزار GetDocument.Insider) دیتابیس در دسترس نیست
+var isGeneratingOpenApiDocument = System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name == "GetDocument.Insider";
 
-// Seed Database
-using (var scope = app.Services.CreateScope())
+if (!isGeneratingOpenApiDocument)
 {
+    // Database Migration
+    await MigrateDatabaseAsync(app);
+
+    // Seed Database
+    using var scope = app.Services.CreateScope();
     var initialiser = scope.ServiceProvider.GetRequiredService<ApplicationDbContextInitialiser>();
     await initialiser.InitialiseAsync();
     await initialiser.SeedAsync();
 }
 
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || isGeneratingOpenApiDocument)
 {
     app.MapOpenApi();
     app.MapScalarApiReference();

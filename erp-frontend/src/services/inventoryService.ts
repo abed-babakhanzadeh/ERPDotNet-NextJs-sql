@@ -6,6 +6,9 @@ import {
   CreateLocationCommand,
   DefineWarehouseCommand,
   InventoryDocDto,
+  ProductCardexDto,
+  InventoryStockDto,
+  WarehouseDto,
   SetItemWarehouseSettingCommand,
   StockRebuildResultDto,
   StockRebuildRowDto,
@@ -13,7 +16,14 @@ import {
   UpdateInventoryDocCommand,
   UpdateLocationCommand,
 } from "@/types/inventory";
-import apiClient from "./apiClient";
+import apiClient from "@/lib/api/client";
+import type {
+  DefineInventoryDocTypeCommand,
+  PagedQuery,
+  Paged,
+  UpdateInventoryDocTypeCommand,
+  UpdateWarehouseCommand,
+} from "@/types/api";
 
 const BASE_URL = "/Inventory/Inventory";
 const BASE_INFO_URL = "/BaseInfo"; // آدرس ماژول اطلاعات پایه
@@ -29,10 +39,11 @@ const inventoryService = {
   },
 
   // متد اصلی برای گرید (با پیجینیشن)
-  getWarehouses: async (payload: any) => {
-    const response = await apiClient.post(
+  getWarehouses: async (payload: PagedQuery, signal?: AbortSignal) => {
+    const response = await apiClient.post<Paged<WarehouseDto>>(
       `${BASE_URL}/warehouses/list`,
       payload,
+      { signal },
     );
     return response.data;
   },
@@ -71,7 +82,7 @@ const inventoryService = {
     return response.data;
   },
 
-  updateWarehouse: async (id: number, data: any) => {
+  updateWarehouse: async (id: number, data: UpdateWarehouseCommand) => {
     const response = await apiClient.put(`${BASE_URL}/warehouses/${id}`, data);
     return response.data;
   },
@@ -129,12 +140,12 @@ const inventoryService = {
     return response.data;
   },
 
-  createDocType: async (data: any) => {
+  createDocType: async (data: DefineInventoryDocTypeCommand) => {
     const response = await apiClient.post(`${BASE_URL}/doc-types`, data);
     return response.data;
   },
 
-  updateDocType: async (id: number, data: any) => {
+  updateDocType: async (id: number, data: UpdateInventoryDocTypeCommand) => {
     const response = await apiClient.put(`${BASE_URL}/doc-types/${id}`, data);
     return response.data;
   },
@@ -151,7 +162,7 @@ const inventoryService = {
 
   // ✅ متد جدید: جستجوی کالا (حل خطای DocForm)
   // وصل می‌شود به ProductsController در BaseInfo
-  searchProducts: async (payload: any) => {
+  searchProducts: async (payload: PagedQuery) => {
     const response = await apiClient.post(
       `${BASE_INFO_URL}/Products/search`,
       payload,
@@ -236,8 +247,12 @@ const inventoryService = {
   // 8. Inventory Documents (اسناد)
   // ==========================================
 
-  searchDocs: async (payload: any) => {
-    const response = await apiClient.post(`${BASE_URL}/docs/search`, payload);
+  searchDocs: async (payload: PagedQuery, signal?: AbortSignal) => {
+    const response = await apiClient.post<Paged<InventoryDocDto>>(
+      `${BASE_URL}/docs/search`,
+      payload,
+      { signal },
+    );
     return response.data;
   },
 
@@ -290,8 +305,12 @@ const inventoryService = {
   // ==========================================
 
   // دریافت گزارش موجودی لحظه‌ای
-  getCurrentStock: async (payload: any) => {
-    const response = await apiClient.post(`${BASE_URL}/stock/current`, payload);
+  getCurrentStock: async (payload: PagedQuery, signal?: AbortSignal) => {
+    const response = await apiClient.post<Paged<InventoryStockDto>>(
+      `${BASE_URL}/stock/current`,
+      payload,
+      { signal },
+    );
     return response.data;
   },
 
@@ -310,13 +329,15 @@ const inventoryService = {
     return response.data;
   },
 
-  getProductCardex: async (payload: any) => {
-    const response = await apiClient.post(
+  getProductCardex: async (payload: PagedQuery, signal?: AbortSignal) => {
+    const response = await apiClient.post<Paged<ProductCardexDto>>(
       `${BASE_URL}/reports/cardex`,
       payload,
+      { signal },
     );
     return response.data;
   },
+
 
   submitDoc: async (id: number) => {
     const response = await apiClient.post(`${BASE_URL}/docs/${id}/submit`);

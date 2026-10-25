@@ -39,6 +39,7 @@ public class PermissionConfiguration : IEntityTypeConfiguration<Permission>
 
             // === دسترسی ویژه ===
             new Permission { Id = 11, Name = "UserAccess.SpecialPermissions", Title = "مدیریت دسترسی‌های ویژه", IsMenu = false, ParentId = 2 },
+            new Permission { Id = 12, Name = "UserAccess.ResetPassword", Title = "تغییر رمز عبور کاربران", IsMenu = false, ParentId = 2 },
             
             // 4. تنظیمات 
             new Permission { Id = 90, Name = "General.Settings", Title = "تنظیمات سیستم", IsMenu = true, ParentId = 100, Url = "/settings" },

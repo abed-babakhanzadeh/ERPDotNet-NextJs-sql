@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import apiClient from "@/services/apiClient";
 import { toast } from "sonner";
 import { User } from "@/types/user";
+import { handleApiError } from "@/lib/error-handling";
+import { userService, roleService } from "@/services/userAccessService";
 
 interface Props {
   onSuccess: () => void;
@@ -39,10 +40,9 @@ export default function CreateUserForm({
   useEffect(() => {
     const fetchRoles = async () => {
       try {
-        const { data } = await apiClient.get<RoleOption[]>("/Roles");
-        setAvailableRoles(data);
+        setAvailableRoles(await roleService.getAll());
       } catch (error) {
-        console.error("Error fetching roles:", error);
+        handleApiError(error, "خطا در دریافت فهرست نقش‌ها");
       }
     };
     fetchRoles();
@@ -102,17 +102,15 @@ export default function CreateUserForm({
           concurrencyStamp: userToEdit.concurrencyStamp,
         };
 
-        await apiClient.put(`/Users/${userToEdit.id}`, payload);
+        await userService.update(userToEdit.id, payload);
         toast.success("کاربر ویرایش شد");
       } else {
-        await apiClient.post("/Users", formData);
+        await userService.create(formData);
         toast.success("کاربر جدید اضافه شد");
       }
       onSuccess();
-    } catch (error: any) {
-      console.error(error);
-      const msg = error.response?.data || "خطا در عملیات";
-      toast.error(typeof msg === "string" ? msg : "خطای ناشناخته");
+    } catch (error) {
+      handleApiError(error, "خطا در ذخیره کاربر");
     } finally {
       setLoading(false);
     }

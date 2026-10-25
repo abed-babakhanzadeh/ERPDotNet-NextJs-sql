@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import apiClient from "@/services/apiClient";
 import PermissionTree from "@/components/modules/roles/PermissionTree";
 import { toast } from "sonner";
 import { Save, Shield, Plus, Trash2, Loader2 } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import ProtectedPage from "@/components/ui/ProtectedPage";
+import { handleApiError } from "@/lib/error-handling";
+import { roleService, permissionService } from "@/services/userAccessService";
 
 // DTO
 interface Role {
@@ -81,10 +82,9 @@ export default function RolesPage() {
   // دریافت اولیه دیتا
   const fetchRoles = async () => {
     try {
-      const { data } = await apiClient.get<Role[]>("/Roles");
-      setRoles(data);
+      setRoles(await roleService.getAll());
     } catch (err) {
-      toast.error("خطا در دریافت لیست نقش‌ها");
+      handleApiError(err, "خطا در دریافت لیست نقش‌ها");
     }
   };
 
@@ -93,8 +93,11 @@ export default function RolesPage() {
       const init = async () => {
         setLoading(true);
         await fetchRoles();
-        const { data: tree } = await apiClient.get("/Permissions/tree");
-        setTreeData(tree);
+        try {
+          setTreeData(await permissionService.getTree());
+        } catch (error) {
+          handleApiError(error, "خطا در دریافت درخت دسترسی‌ها");
+        }
         setLoading(false);
       };
       init();
@@ -104,10 +107,9 @@ export default function RolesPage() {
   const handleRoleSelect = async (roleId: string) => {
     setSelectedRole(roleId);
     try {
-      const { data } = await apiClient.get<number[]>(`/Permissions/role/${roleId}`);
-      setSelectedPermIds(data);
+      setSelectedPermIds(await permissionService.getRolePermissionIds(roleId));
     } catch (error) {
-      toast.error("خطا در دریافت دسترسی‌ها");
+      handleApiError(error, "خطا در دریافت دسترسی‌ها");
     }
   };
 
@@ -163,13 +165,13 @@ export default function RolesPage() {
     if (!selectedRole) return;
     setSaveLoading(true);
     try {
-      await apiClient.post("/Permissions/assign-role", {
+      await permissionService.assignToRole({
         roleId: selectedRole,
-        permissionIds: selectedPermIds
+        permissionIds: selectedPermIds,
       });
       toast.success("دسترسی‌ها ذخیره شد");
     } catch (err) {
-      toast.error("خطا در ذخیره");
+      handleApiError(err, "خطا در ذخیره");
     } finally {
       setSaveLoading(false);
     }
@@ -181,13 +183,13 @@ export default function RolesPage() {
     if (!newRoleName.trim()) return;
 
     try {
-      await apiClient.post("/Roles", { name: newRoleName });
+      await roleService.create(newRoleName);
       toast.success("نقش جدید ایجاد شد");
       setNewRoleName("");
       setIsModalOpen(false);
       fetchRoles(); // رفرش لیست
     } catch (error: any) {
-      toast.error(error.response?.data || "خطا در ایجاد نقش");
+      handleApiError(error, "خطا در ایجاد نقش");
     }
   };
 
@@ -197,7 +199,7 @@ export default function RolesPage() {
     if (!confirm(`آیا از حذف نقش "${role.name}" اطمینان دارید؟`)) return;
 
     try {
-      await apiClient.delete(`/Roles/${role.id}`);
+      await roleService.remove(role.id);
       toast.success("نقش حذف شد");
       if (selectedRole === role.id) {
         setSelectedRole(null);
@@ -205,7 +207,7 @@ export default function RolesPage() {
       }
       fetchRoles();
     } catch (error: any) {
-      toast.error(error.response?.data || "خطا در حذف نقش");
+      handleApiError(error, "خطا در حذف نقش");
     }
   };
 

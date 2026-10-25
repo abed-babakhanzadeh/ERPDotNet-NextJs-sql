@@ -25,7 +25,7 @@ export default function WarehousesPage() {
 
   // استفاده از هوک با نام صحیح متد refresh و اندپوینت درست بک‌اند
   const { tableProps, refresh, totalCount } = useServerDataTable<WarehouseDto>({
-    endpoint: "/Inventory/Inventory/warehouses/list",
+    fetcher: inventoryService.getWarehouses,
     initialPageSize: 20,
   });
 
@@ -77,7 +77,7 @@ export default function WarehousesPage() {
   };
 
   const headerActions = (
-    <PermissionGuard permission="Inventory.Warehouses.Define">
+    <PermissionGuard permission="Inventory.Warehouses.Create">
       <TooltipProvider delayDuration={200}>
         <Tooltip>
           <TooltipTrigger asChild>

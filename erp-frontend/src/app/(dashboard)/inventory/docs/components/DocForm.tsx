@@ -229,8 +229,7 @@ export default function DocForm({
       const locs = Array.isArray(res) ? res : res?.items || [];
       setLocations(locs);
     } catch (error) {
-      console.error(error);
-      toast.error("خطا در دریافت لیست قفسه‌بندی");
+      handleApiError(error, "خطا در دریافت لیست قفسه‌بندی");
     }
   };
 
@@ -277,11 +276,11 @@ export default function DocForm({
         searchTerm: searchTerm || "",
         sortColumn: "Code",
         sortDescending: false,
-        Filters: [],
+        filters: [],
       });
       if (response?.items) setProductsList(response.items);
     } catch (error) {
-      console.error(error);
+      handleApiError(error, "خطا در جستجوی کالا");
     } finally {
       setProductsLoading(false);
     }

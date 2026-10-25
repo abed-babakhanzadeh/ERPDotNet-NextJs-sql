@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import apiClient from "@/services/apiClient";
 import { toast } from "sonner";
 import { Printer, Download, Network, Box, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,6 +17,8 @@ import {
 
 // 1. ایمپورت لایوت جدید
 import BaseListLayout from "@/components/layout/BaseListLayout";
+import { handleApiError } from "@/lib/error-handling";
+import { bomService } from "@/services/bomService";
 
 export default function BOMTreePage() {
   const params = useParams();
@@ -31,10 +32,9 @@ export default function BOMTreePage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await apiClient.get(`/ProductEngineering/BOMs/${id}/tree`);
-        setData(res.data);
+        setData(await bomService.getTree(Number(id)));
       } catch (error) {
-        toast.error("خطا در دریافت ساختار درختی");
+        handleApiError(error, "خطا در دریافت ساختار درختی");
       } finally {
         setLoading(false);
       }

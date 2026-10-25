@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo, use } from "react";
-import apiClient from "@/services/apiClient";
 import { toast } from "sonner";
 import { Unit } from "@/types/baseInfo";
 import { Ruler } from "lucide-react";
@@ -9,6 +8,8 @@ import BaseFormLayout from "@/components/layout/BaseFormLayout";
 import { useTabs } from "@/providers/TabsProvider";
 import { useFormPersist } from "@/hooks/useFormPersist";
 import AutoForm, { FieldConfig } from "@/components/form/AutoForm";
+import { handleApiError } from "@/lib/error-handling";
+import { unitService, productService } from "@/services/baseInfoService";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -42,14 +43,13 @@ export default function EditUnitPage({ params }: PageProps) {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [unitRes, unitsRes] = await Promise.all([
-          apiClient.get<Unit>(`/BaseInfo/Units/${id}`),
-          apiClient.get<Unit[]>("/BaseInfo/Units/lookup"),
+        const [fetchedUnit, allUnits] = await Promise.all([
+          unitService.getById(Number(id)),
+          unitService.lookup(),
         ]);
 
-        const fetchedUnit = unitRes.data;
         setUnit(fetchedUnit);
-        setUnits(unitsRes.data);
+        setUnits(allUnits);
 
         setFormData({
           title: fetchedUnit.title,
@@ -59,7 +59,7 @@ export default function EditUnitPage({ params }: PageProps) {
           isActive: fetchedUnit.isActive ?? true,
         });
       } catch (error) {
-        toast.error("خطا در دریافت اطلاعات واحد");
+        handleApiError(error, "خطا در دریافت اطلاعات واحد");
         closeTab(activeTabId);
       } finally {
         setLoadingData(false);
@@ -156,17 +156,13 @@ export default function EditUnitPage({ params }: PageProps) {
       console.log("Payload sent to server:", payload); // این را در کنسول مرورگر چک کنید
 
       // دقت کنید آدرس BaseInfo داشته باشد
-      await apiClient.put(`/BaseInfo/Units/${unit.id}`, payload);
+      await unitService.update(unit.id, payload);
 
       toast.success("واحد با موفقیت ویرایش شد");
       clearStorage();
       closeTab(activeTabId);
-    } catch (error: any) {
-      console.error(error);
-      const msg = error.response?.data?.errors
-        ? Object.values(error.response.data.errors).flat().join(" - ")
-        : "خطا در ویرایش واحد";
-      toast.error(msg);
+    } catch (error) {
+      handleApiError(error, "خطا در ویرایش واحد");
     } finally {
       setSubmitting(false);
     }

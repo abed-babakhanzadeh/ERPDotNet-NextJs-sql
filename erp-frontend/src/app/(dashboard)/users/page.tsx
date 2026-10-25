@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import apiClient from "@/services/apiClient";
 import { User } from "@/types/user";
 import { toast } from "sonner";
 import { Plus, Trash2, Edit, Key, UserCheck, UserX, Users } from "lucide-react";
@@ -31,6 +30,9 @@ import {
 
 import { ShieldCheck } from "lucide-react"; // آیکون جدید
 import ResetPasswordDialog from "./ResetPasswordDialog"; // ایمپورت کامپوننت جدید
+import { handleApiError } from "@/lib/error-handling";
+import type { UserDto } from "@/types/api";
+import { userService, permissionService, roleService } from "@/services/userAccessService";
 
 // --- توابع کمکی لاجیک دسترسی (بدون تغییر) ---
 const findNodeAndGetChildrenIds = (
@@ -85,8 +87,8 @@ const findNodeById = (nodes: any[], id: number): any | null => {
 };
 
 export default function UsersPage() {
-  const { tableProps, refresh, totalCount } = useServerDataTable<User>({
-    endpoint: "/Users/search",
+  const { tableProps, refresh, totalCount } = useServerDataTable<UserDto>({
+    fetcher: userService.search,
     initialPageSize: 10,
   });
 
@@ -193,11 +195,11 @@ export default function UsersPage() {
       return;
 
     try {
-      await apiClient.delete(`/Users/${id}`);
+      await userService.remove(id);
       toast.success("کاربر با موفقیت حذف شد");
       refresh();
     } catch (error: any) {
-      toast.error(error.response?.data || "خطا در حذف کاربر");
+      handleApiError(error, "خطا در حذف کاربر");
     }
   };
 
@@ -206,23 +208,18 @@ export default function UsersPage() {
     setLoadingPerms(true);
     try {
       if (allUsersForCopy.length === 0) {
-        const { data } = await apiClient.post("/Users/search", {
-          pageNumber: 1,
-          pageSize: 1000,
-        });
-        setAllUsersForCopy(data.items || []);
+        const data = await userService.search({ pageNumber: 1, pageSize: 1000 });
+        setAllUsersForCopy(data.items ?? []);
       }
 
       let currentTree = treeData;
       if (currentTree.length === 0) {
-        const { data } = await apiClient.get("/Permissions/tree");
+        const data = await permissionService.getTree();
         setTreeData(data);
         currentTree = data;
       }
 
-      const { data } = await apiClient.get<any>(
-        `/Permissions/user-detail/${user.id}`
-      );
+      const data = await permissionService.getUserDetail(user.id);
 
       const rIds: number[] = data.rolePermissionIds;
       const overrides: { permissionId: number; isGranted: boolean }[] =
@@ -239,8 +236,7 @@ export default function UsersPage() {
       setFinalSelectedIds(Array.from(initialSelected));
       setIsPermModalOpen(true);
     } catch (err) {
-      console.error(err);
-      toast.error("خطا در بارگذاری");
+      handleApiError(err, "خطا در بارگذاری");
     } finally {
       setLoadingPerms(false);
     }
@@ -294,7 +290,7 @@ export default function UsersPage() {
         }
       });
 
-      await apiClient.post("/Permissions/assign-user", {
+      await permissionService.assignToUser({
         userId: permUser.id,
         permissions: permissionsToSend,
       });
@@ -302,8 +298,7 @@ export default function UsersPage() {
       toast.success("دسترسی‌های ویژه با موفقیت ذخیره شد");
       setIsPermModalOpen(false);
     } catch (err) {
-      console.error(err);
-      toast.error("خطا در ذخیره دسترسی‌ها");
+      handleApiError(err, "خطا در ذخیره دسترسی‌ها");
     } finally {
       setLoadingPerms(false);
     }
@@ -320,14 +315,14 @@ export default function UsersPage() {
 
     setLoadingPerms(true);
     try {
-      await apiClient.post("/Permissions/copy", {
+      await permissionService.copy({
         sourceUserId: copySourceId,
         targetUserId: permUser.id,
       });
       toast.success("دسترسی‌ها کپی شد");
       setIsPermModalOpen(false);
     } catch (err) {
-      toast.error("خطا در کپی دسترسی");
+      handleApiError(err, "خطا در کپی دسترسی");
     } finally {
       setLoadingPerms(false);
     }

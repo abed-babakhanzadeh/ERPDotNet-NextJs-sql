@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import apiClient from "@/services/apiClient";
+import { authService } from "@/services/userAccessService";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { handleApiError } from "@/lib/error-handling";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -20,17 +21,10 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      // 1. ارسال درخواست به بک‌اند
-      // نکته: آدرس دقیق کنترلر AuthController است
-      const { data } = await apiClient.post("/Auth/login", {
+      await authService.login({
         username: formData.username,
         password: formData.password,
       });
-
-      // 2. ذخیره توکن (نکته حیاتی: نام کلید باید با apiClient یکی باشد)
-      // اگر در apiClient.ts از "token" استفاده کردید، اینجا هم باید "token" باشد.
-      // اگر بک‌اند آبجکت { token: "..." } برمی‌گرداند:
-      localStorage.setItem("accessToken", data.token);
 
       toast.success("خوش آمدید!", {
         description: "ورود شما با موفقیت انجام شد.",
@@ -39,20 +33,8 @@ export default function LoginPage() {
       // 3. هدایت به داشبورد
       // استفاده از replace به جای push تا کاربر با دکمه Back به لاگین برنگردد
       router.replace("/");
-    } catch (error: any) {
-      console.error("Login Error:", error);
-
-      // هندلینگ پیام خطای بک‌اند (چه فرمت استاندارد ProblemDetails چه پیام ساده)
-      const errorMsg =
-        error.response?.data?.detail || // فرمت جدید .NET 8
-        error.response?.data?.message || // اگر دستی مسیج دادیم
-        error.response?.data || // اگر رشته خالی فرستادیم
-        "نام کاربری یا رمز عبور اشتباه است.";
-
-      toast.error("خطا در ورود", {
-        description:
-          typeof errorMsg === "string" ? errorMsg : "مشکلی پیش آمده است.",
-      });
+    } catch (error) {
+      handleApiError(error, "ورود انجام نشد.");
     } finally {
       setLoading(false);
     }

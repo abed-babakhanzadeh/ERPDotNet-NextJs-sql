@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { Product, ColumnConfig } from "@/types";
-import apiClient from "@/services/apiClient";
+import { ColumnConfig } from "@/types";
 import { Box, Plus, ImageIcon } from "lucide-react";
 import ProtectedPage from "@/components/ui/ProtectedPage";
 import PermissionGuard from "@/components/ui/PermissionGuard";
@@ -20,6 +19,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import BaseListLayout from "@/components/layout/BaseListLayout";
+import { handleApiError } from "@/lib/error-handling";
+import { productService } from "@/services/baseInfoService";
+import type { ProductDto } from "@/types/api";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -28,8 +30,8 @@ export default function ProductsPage() {
 
   useTabPrefetch(["/base-info/products/create"]);
 
-  const { tableProps, refresh, totalCount } = useServerDataTable<Product>({
-    endpoint: "/BaseInfo/Products/search",
+  const { tableProps, refresh, totalCount } = useServerDataTable<ProductDto>({
+    fetcher: productService.search,
     initialPageSize: 30,
   });
 
@@ -114,24 +116,24 @@ export default function ProductsPage() {
     addTab("تعریف کالا جدید", "/base-info/products/create");
   };
 
-  const handleView = (row: Product) => {
+  const handleView = (row: ProductDto) => {
     addTab(`جزئیات ${row.name}`, `/base-info/products/view/${row.id}`);
   };
 
-  const handleEdit = (row: Product) => {
+  const handleEdit = (row: ProductDto) => {
     // اصلاح شد: مسیر جدید بدون کوئری پارامتر قدیمی
     addTab(`ویرایش ${row.name}`, `/base-info/products/edit/${row.id}`);
   };
 
-  const handleDelete = async (row: Product) => {
+  const handleDelete = async (row: ProductDto) => {
     if (!confirm(`آیا از حذف کالا "${row.name}" اطمینان دارید؟`)) return;
 
     try {
-      await apiClient.delete(`/BaseInfo/Products/${row.id}`);
+      await productService.remove(row.id);
       toast.success("کالا با موفقیت حذف شد");
       refresh();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "خطا در حذف کالا.");
+      handleApiError(error, "خطا در حذف کالا.");
     }
   };
 
@@ -158,7 +160,7 @@ export default function ProductsPage() {
   );
 
   return (
-    <ProtectedPage permission="BaseInfo.Products.View">
+    <ProtectedPage permission="BaseInfo.Products">
       <BaseListLayout
         title="مدیریت کالاها و اقلام"
         description="لیست کالاها، خدمات و محصولات با امکان تعریف واحدهای فرعی و تنظیمات انبار"

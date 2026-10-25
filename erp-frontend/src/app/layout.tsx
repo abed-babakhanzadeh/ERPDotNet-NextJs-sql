@@ -66,6 +66,7 @@ export default function RootLayout({
                   <ThemeCustomizer />
                   <Toaster
                     position="top-center"
+                    dir="rtl"
                     richColors
                     closeButton
                     toastOptions={{

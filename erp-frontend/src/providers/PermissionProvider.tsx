@@ -1,9 +1,9 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import apiClient from "@/services/apiClient";
 import { Loader2 } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { permissionService } from "@/services/userAccessService";
 
 interface PermissionContextType {
   permissions: string[];
@@ -41,8 +41,7 @@ export const PermissionProvider = ({
       }
 
       try {
-        const { data } = await apiClient.get<string[]>("/Permissions/mine"); // آدرس را چک کن
-        setPermissions(data);
+        setPermissions(await permissionService.getMine());
       } catch (error) {
         // حتی اگر ارور داد، ما لودینگ را فالس میکنیم که صفحه بالا بیاید
         console.error("خطا در دریافت مجوزها", error);
