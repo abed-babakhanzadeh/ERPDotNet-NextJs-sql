@@ -1,3 +1,4 @@
+using ERPDotNet.API.ErrorHandling;
 using ERPDotNet.Application.Modules.UserAccess.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -49,8 +50,17 @@ public class HasPermissionFilter : IAsyncAuthorizationFilter
         // 4. چک کردن مجوز
         if (!userPermissions.Contains(_permission))
         {
-            // کاربر لاگین هست اما دسترسی ندارد -> 403 Forbidden
-            context.Result = new ForbidResult();
+            // کاربر لاگین هست اما دسترسی ندارد -> 403 با پیام فارسی و نام مجوز (برای پیگیری)
+            var problem = new ProblemDetails
+            {
+                Status = StatusCodes.Status403Forbidden,
+                Title = "عدم دسترسی",
+                Detail = "شما دسترسی لازم برای این عملیات را ندارید."
+            };
+            problem.Extensions["code"] = ApiProblem.Codes.Forbidden;
+            problem.Extensions["permission"] = _permission;
+            ApiProblem.Enrich(context.HttpContext, problem);
+            context.Result = new ObjectResult(problem) { StatusCode = StatusCodes.Status403Forbidden };
             return;
         }
 

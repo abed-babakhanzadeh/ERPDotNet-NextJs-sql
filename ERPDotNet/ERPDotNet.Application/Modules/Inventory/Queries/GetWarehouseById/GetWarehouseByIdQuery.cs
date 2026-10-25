@@ -41,7 +41,7 @@ public class GetWarehouseByIdHandler : IRequestHandler<GetWarehouseByIdQuery, Wa
             ))
             .FirstOrDefaultAsync(cancellationToken);
 
-        if (result == null) throw new Exception("انبار یافت نشد.");
+        if (result == null) throw new KeyNotFoundException("انبار یافت نشد.");
         
         return result;
     }

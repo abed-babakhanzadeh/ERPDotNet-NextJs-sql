@@ -1,5 +1,6 @@
 using System.Reflection;
 using ERPDotNet.Application.Common.Behaviors;
+using ERPDotNet.Application.Common.Validation;
 using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,6 +11,7 @@ public static class ConfigureServices
 {
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
+        PersianValidation.Configure();
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
         
         services.AddMediatR(cfg => {
@@ -19,7 +21,7 @@ public static class ConfigureServices
             // 1. اول کشینگ (اگر پاسخ در کش بود، بقیه اجرا نشوند)
             cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(CachingBehavior<,>));
             
-            // 2. دوم ولیدیشن (دیتای غلط به دیتابیس نرسد) - این فایل را باید بسازید
+            // 2. دوم ولیدیشن (دیتای غلط به دیتابیس نرسد)
             cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
             // 3. سوم کش اینولیدیشن (بعد از موفقیت، کش‌های قدیمی پاک شوند)

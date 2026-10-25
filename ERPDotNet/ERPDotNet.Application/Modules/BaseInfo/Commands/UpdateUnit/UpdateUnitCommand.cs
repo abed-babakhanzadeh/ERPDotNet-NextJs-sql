@@ -1,3 +1,4 @@
+using ERPDotNet.Application.Common.Exceptions;
 using ERPDotNet.Application.Common.Attributes;
 using ERPDotNet.Application.Common.Interfaces;
 using ERPDotNet.Domain.Modules.BaseInfo.Entities;
@@ -91,7 +92,7 @@ public class UpdateUnitHandler : IRequestHandler<UpdateUnitCommand, bool>
         {
             // اینجا می‌توانید ارور خاص بدهید تا فرانت به کاربر بگوید:
             // "داده‌ها توسط کاربر دیگری تغییر کرده است. لطفاً صفحه را رفرش کنید."
-            throw new Exception("داده‌ها توسط کاربر دیگری تغییر کرده است. لطفاً صفحه را رفرش کنید.");
+            throw ConflictException.Concurrency();
         }
 
         return true;

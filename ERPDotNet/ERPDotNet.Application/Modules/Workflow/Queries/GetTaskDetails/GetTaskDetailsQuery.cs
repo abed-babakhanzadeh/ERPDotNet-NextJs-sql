@@ -23,7 +23,7 @@ public class GetTaskDetailsQueryHandler : IRequestHandler<GetTaskDetailsQuery, T
     public async Task<TaskDetailsDto> Handle(GetTaskDetailsQuery request, CancellationToken cancellationToken)
     {
         int companyId = int.TryParse(_currentUser.CompanyId, out var cid) ? cid : 
-                        throw new UnauthorizedAccessException("شناسه شرکت نامشخص است.");
+                        throw new ForbiddenAccessException("شناسه شرکت نامشخص است.");
 
         var task = await _context.BpmsTasks
             .AsNoTracking()

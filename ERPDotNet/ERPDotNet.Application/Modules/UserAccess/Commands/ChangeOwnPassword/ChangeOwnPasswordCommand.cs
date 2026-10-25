@@ -25,7 +25,7 @@ public class ChangeOwnPasswordHandler : IRequestHandler<ChangeOwnPasswordCommand
     public async Task<bool> Handle(ChangeOwnPasswordCommand request, CancellationToken cancellationToken)
     {
         var user = await _userManager.FindByIdAsync(request.UserId);
-        if (user == null) throw new UnauthorizedAccessException();
+        if (user == null) throw new KeyNotFoundException("کاربر یافت نشد.");
 
         // متد مخصوص Identity برای تغییر رمز با دانستن رمز قبلی
         var result = await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);

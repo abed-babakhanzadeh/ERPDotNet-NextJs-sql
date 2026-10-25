@@ -47,7 +47,7 @@ public class DeleteInventoryDocHandler : IRequestHandler<DeleteInventoryDocComma
         }
         catch 
         { 
-            throw new ValidationException("RowVersion نامعتبر است."); 
+            throw ConflictException.Concurrency(); 
         }
 
         // پاکسازی لاشه احتمالی در کارتابل (در صورتی که سند نیازمند اصلاح باشد، ممکن است سابقه در BPMS داشته باشد)

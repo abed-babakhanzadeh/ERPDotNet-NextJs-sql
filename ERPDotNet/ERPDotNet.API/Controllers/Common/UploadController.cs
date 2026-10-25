@@ -17,7 +17,7 @@ public class UploadController : ControllerBase
     public async Task<IActionResult> Upload(IFormFile file)
     {
         if (file == null || file.Length == 0)
-            return BadRequest("فایلی انتخاب نشده است.");
+            throw new FluentValidation.ValidationException("فایلی انتخاب نشده است.");
 
         // --- اصلاحیه مهم برای رفع خطای Null ---
         // اگر WebRootPath نال بود (یعنی پوشه wwwroot نیست)، مسیر را دستی میسازیم

@@ -36,7 +36,7 @@ public class LoginHandler : IRequestHandler<LoginCommand, string>
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.UserName == request.Username, cancellationToken);
 
-        if (user == null) throw new UnauthorizedAccessException();
+        if (user == null) throw new ValidationException("نام کاربری یا رمز عبور اشتباه است.");
 
         var roles = await _identityService.GetUserRolesAsync(user.Id);
         return _tokenService.GenerateToken(user, roles);

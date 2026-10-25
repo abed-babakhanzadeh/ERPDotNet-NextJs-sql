@@ -92,7 +92,7 @@ public class InventoryController : ControllerBase
     [HasPermission("Inventory.Docs.Approve")]
     public async Task<IActionResult> ApproveDocument(long id, [FromBody] ApproveInventoryDocCommand command)
     {
-        if (id != command.Id) return BadRequest("شناسه سند در آدرس و بدنه درخواست مغایرت دارد.");
+        if (id != command.Id) throw new FluentValidation.ValidationException("شناسه سند در آدرس و بدنه درخواست مغایرت دارد.");
         
         await _mediator.Send(command);
         return Ok(new { message = "سند با موفقیت تایید شد." });
@@ -103,7 +103,7 @@ public class InventoryController : ControllerBase
     [HasPermission("Inventory.Docs.Post")]
     public async Task<IActionResult> PostDocument(long id, [FromBody] PostInventoryDocCommand command)
     {
-        if (id != command.Id) return BadRequest("شناسه سند در آدرس و بدنه درخواست مغایرت دارد.");
+        if (id != command.Id) throw new FluentValidation.ValidationException("شناسه سند در آدرس و بدنه درخواست مغایرت دارد.");
 
         await _mediator.Send(command);
         return Ok(new { message = "سند با موفقیت در کاردکس قطعی شد." });
@@ -176,7 +176,7 @@ public class InventoryController : ControllerBase
     [HasPermission("Inventory.Docs.Edit")]
     public async Task<IActionResult> UpdateDocument(long id, [FromBody] UpdateInventoryDocCommand command)
     {
-        if (id != command.Id) return BadRequest("مغایرت شناسه.");
+        if (id != command.Id) throw new FluentValidation.ValidationException("شناسه در آدرس و بدنه درخواست مغایرت دارد.");
         await _mediator.Send(command);
         return Ok(new { message = "سند با موفقیت ویرایش شد." });
     }
@@ -219,7 +219,7 @@ public class InventoryController : ControllerBase
     [HasPermission("Inventory.Warehouses.Edit")]
     public async Task<IActionResult> UpdateWarehouse(int id, [FromBody] UpdateWarehouseCommand command)
     {
-        if (id != command.Id) return BadRequest("مغایرت شناسه.");
+        if (id != command.Id) throw new FluentValidation.ValidationException("شناسه در آدرس و بدنه درخواست مغایرت دارد.");
         await _mediator.Send(command);
         return Ok(new { message = "انبار با موفقیت ویرایش شد." });
     }
@@ -252,7 +252,7 @@ public class InventoryController : ControllerBase
     [HasPermission("Inventory.Warehouses.Edit")]
     public async Task<IActionResult> UpdateLocation(int id, [FromBody] UpdateLocationCommand command)
     {
-        if (id != command.Id) return BadRequest("مغایرت شناسه.");
+        if (id != command.Id) throw new FluentValidation.ValidationException("شناسه در آدرس و بدنه درخواست مغایرت دارد.");
         
         await _mediator.Send(command);
         return NoContent();
@@ -262,7 +262,7 @@ public class InventoryController : ControllerBase
     [HasPermission("Inventory.Warehouses.Delete")]
     public async Task<IActionResult> DeleteLocation(int id, [FromQuery] string rowVersion)
     {
-        if (string.IsNullOrEmpty(rowVersion)) return BadRequest("ارسال نسخه ردیف (RowVersion) الزامی است.");
+        if (string.IsNullOrEmpty(rowVersion)) throw new FluentValidation.ValidationException("نسخه رکورد ارسال نشده است. صفحه را تازه کنید.");
         
         // جایگزینی کاراکتر فاصله با + که در انتقال URL ممکن است تغییر کرده باشد
         var cleanRowVersion = rowVersion.Replace(" ", "+");
@@ -298,7 +298,7 @@ public class InventoryController : ControllerBase
     [HasPermission("Inventory.DocTypes.Edit")]
     public async Task<IActionResult> UpdateDocType(int id, [FromBody] UpdateInventoryDocTypeCommand command)
     {
-        if (id != command.Id) return BadRequest("مغایرت شناسه.");
+        if (id != command.Id) throw new FluentValidation.ValidationException("شناسه در آدرس و بدنه درخواست مغایرت دارد.");
         await _mediator.Send(command);
         return NoContent();
     }
@@ -307,7 +307,7 @@ public class InventoryController : ControllerBase
     [HasPermission("Inventory.DocTypes.Delete")]
     public async Task<IActionResult> DeleteDocType(int id, [FromQuery] string rowVersion)
     {
-        if (string.IsNullOrEmpty(rowVersion)) return BadRequest("RowVersion الزامی است.");
+        if (string.IsNullOrEmpty(rowVersion)) throw new FluentValidation.ValidationException("نسخه رکورد ارسال نشده است. صفحه را تازه کنید.");
         var cleanRowVersion = rowVersion.Replace(" ", "+");
         
         await _mediator.Send(new DeleteInventoryDocTypeCommand(id, cleanRowVersion));
@@ -388,7 +388,7 @@ public class InventoryController : ControllerBase
     [HasPermission("Inventory.ProductProfiles.Edit")]
     public async Task<IActionResult> UpdateBatch(int id, [FromBody] UpdateInventoryBatchCommand command)
     {
-        if (id != command.Id) return BadRequest("مغایرت شناسه.");
+        if (id != command.Id) throw new FluentValidation.ValidationException("شناسه در آدرس و بدنه درخواست مغایرت دارد.");
         await _mediator.Send(command);
         return NoContent();
     }
@@ -407,7 +407,7 @@ public class InventoryController : ControllerBase
     [HasPermission("Inventory.ProductProfiles.Edit")]
     public async Task<IActionResult> DeleteWarehouseSetting(int id, [FromQuery] string rowVersion)
     {
-        if (string.IsNullOrEmpty(rowVersion)) return BadRequest("RowVersion الزامی است.");
+        if (string.IsNullOrEmpty(rowVersion)) throw new FluentValidation.ValidationException("نسخه رکورد ارسال نشده است. صفحه را تازه کنید.");
         
         var cleanRowVersion = rowVersion.Replace(" ", "+");
         await _mediator.Send(new DeleteItemWarehouseSettingCommand(id, cleanRowVersion));

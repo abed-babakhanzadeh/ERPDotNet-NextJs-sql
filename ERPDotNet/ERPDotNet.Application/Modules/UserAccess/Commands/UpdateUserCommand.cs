@@ -1,3 +1,4 @@
+using ERPDotNet.Application.Common.Exceptions;
 using ERPDotNet.Application.Common.Attributes;
 using FluentValidation;
 using MediatR;
@@ -40,7 +41,7 @@ public class UpdateUserHandler : IRequestHandler<UpdateUserCommand, bool>
         // 1. چک کردن همروندی
         if (request.ConcurrencyStamp != null && user.ConcurrencyStamp != request.ConcurrencyStamp)
         {
-            throw new Exception("اطلاعات کاربر توسط شخص دیگری تغییر یافته است. لطفاً رفرش کنید.");
+            throw ConflictException.Concurrency();
         }
 
         // 2. آپدیت فیلدها

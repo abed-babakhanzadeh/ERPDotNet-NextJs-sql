@@ -40,7 +40,7 @@ public class SubmitInventoryDocHandler : IRequestHandler<SubmitInventoryDocComma
     {
         // استخراج CompanyId واقعی کاربر از توکن برای موتور گردش کار
         int userCompanyId = int.TryParse(_currentUserService.CompanyId, out var cid) ? cid : 
-                            throw new UnauthorizedAccessException("شناسه شرکت کاربر نامشخص است.");
+                            throw new ForbiddenAccessException("شناسه شرکت کاربر نامشخص است.");
 
         // 🌟 فیکس ارور اول: حذف CompanyId از این کوئری
         var doc = await _context.InventoryDocHeaders

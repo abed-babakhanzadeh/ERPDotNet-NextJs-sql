@@ -25,7 +25,7 @@ public class DeleteItemWarehouseSettingHandler : IRequestHandler<DeleteItemWareh
 
         // رفع خطای NotFoundException
         if (entity == null)
-            throw new Exception("تنظیمات انبار مورد نظر یافت نشد.");
+            throw new KeyNotFoundException("تنظیمات انبار مورد نظر یافت نشد.");
 
         // کنترل همروندی
         if (!string.IsNullOrEmpty(request.RowVersion))

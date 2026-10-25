@@ -43,10 +43,10 @@ public class CompleteTaskHandler : IRequestHandler<CompleteTaskCommand, bool>
     public async Task<bool> Handle(CompleteTaskCommand request, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(_currentUser.UserId))
-            throw new UnauthorizedAccessException("کاربر نامعتبر است.");
+            throw new ForbiddenAccessException("کاربر نامعتبر است.");
 
         int userCompanyId = int.TryParse(_currentUser.CompanyId, out var cid) ? cid : 
-                            throw new UnauthorizedAccessException("شناسه شرکت کاربر نامشخص است.");
+                            throw new ForbiddenAccessException("شناسه شرکت کاربر نامشخص است.");
 
         // 1. پیدا کردن تسک در کارتابل کاربر
         var task = await _context.BpmsTasks

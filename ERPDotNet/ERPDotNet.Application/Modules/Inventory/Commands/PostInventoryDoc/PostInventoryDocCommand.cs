@@ -24,7 +24,7 @@ public class PostInventoryDocValidator : AbstractValidator<PostInventoryDocComma
     public PostInventoryDocValidator()
     {
         RuleFor(v => v.Id).GreaterThan(0);
-        RuleFor(v => v.RowVersion).NotEmpty().WithMessage("RowVersion is required.");
+        RuleFor(v => v.RowVersion).NotEmpty().WithMessage("نسخه رکورد ارسال نشده است. صفحه را تازه کنید.");
     }
 }
 
@@ -81,7 +81,7 @@ public class PostInventoryDocHandler : IRequestHandler<PostInventoryDocCommand, 
         }
         catch 
         { 
-            throw new ValidationException("داده‌ها توسط کاربر دیگری تغییر کرده است. لطفاً صفحه را رفرش کنید."); 
+            throw ConflictException.Concurrency();
         }
 
         // 3. محاسبات دامین

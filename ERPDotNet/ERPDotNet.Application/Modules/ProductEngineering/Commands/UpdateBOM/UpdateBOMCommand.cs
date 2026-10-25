@@ -1,3 +1,4 @@
+using ERPDotNet.Application.Common.Exceptions;
 using ERPDotNet.Application.Common.Attributes;
 using ERPDotNet.Application.Common.Interfaces;
 using ERPDotNet.Domain.Modules.ProductEngineering.Entities;
@@ -194,12 +195,12 @@ public class UpdateBOMHandler : IRequestHandler<UpdateBOMCommand, bool>
             .ThenInclude(d => d.Substitutes)
             .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
 
-        if (entity == null) throw new KeyNotFoundException($"BOM with id {request.Id} not found.");
+        if (entity == null) throw new KeyNotFoundException("فرمول ساخت مورد نظر یافت نشد.");
 
         // کنترل همروندی (Optimistic Concurrency)
         if (request.RowVersion != null && !entity.RowVersion.SequenceEqual(request.RowVersion))
         {
-            throw new DbUpdateConcurrencyException("The record has been modified by another user.");
+            throw ConflictException.Concurrency();
         }
 
         // --- آپدیت فیلدهای هدر ---
@@ -277,7 +278,7 @@ public class UpdateBOMHandler : IRequestHandler<UpdateBOMCommand, bool>
             // هندل کردن خطای Unique Constraint (اگر کاربر سعی کرد دوتا Main فعال داشته باشد)
             if (ex.InnerException != null && ex.InnerException.Message.Contains("IX_")) 
             {
-                throw new Exception("امکان ثبت دو فرمول 'اصلی' فعال برای یک محصول وجود ندارد.");
+                throw new ConflictException("امکان ثبت دو فرمول 'اصلی' فعال برای یک محصول وجود ندارد.");
             }
             throw;
         }

@@ -80,7 +80,7 @@ public class BOMsController : ControllerBase
     [HasPermission("ProductEngineering.BOM.Edit")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateBOMCommand command)
     {
-        if (id != command.Id) return BadRequest("شناسه مسیر با شناسه بدنه درخواست همخوانی ندارد.");
+        if (id != command.Id) throw new FluentValidation.ValidationException("شناسه مسیر با شناسه بدنه درخواست همخوانی ندارد.");
         
         await _mediator.Send(command);
         return NoContent(); // استاندارد برای آپدیت موفق

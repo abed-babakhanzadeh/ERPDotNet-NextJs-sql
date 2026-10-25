@@ -1,3 +1,4 @@
+using ERPDotNet.Application.Common.Exceptions;
 using ERPDotNet.Application.Modules.ProductEngineering.Commands.UpdateBOM;
 using ERPDotNet.Domain.Modules.ProductEngineering.Entities;
 using ERPDotNet.Infrastructure.Persistence;
@@ -91,7 +92,7 @@ public class UpdateBOMCommandTests : IDisposable
         var command = Command(bom, new BOMDetailUpdateDto { Id = bom.Details.Single().Id, ChildProductId = 10, Quantity = 1m })
             with { RowVersion = [9] };
 
-        await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => Handler().Handle(command, default));
+        await Assert.ThrowsAsync<ConflictException>(() => Handler().Handle(command, default));
     }
 
     [Fact]
