@@ -494,23 +494,42 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
                     onSearchGrid("");
                 }}
                 onValueChange={async (newId, item) => {
-                  const units = await fetchProductUnits(newId as number);
-
-                  const newDetails = [...details];
-                  newDetails[index] = {
-                    ...newDetails[index],
-                    childProductId: newId as number,
-                    childProductName: item?.name,
-                    childProductCode: item?.code,
-                    baseUnitId: units[0].value,
-                    unitName: units[0].label,
-                    inputUnitId: units[0].value,
-                    inputQuantity: 1,
-                    quantity: 1,
-                    unitOptions: units,
-                    substitutes: [],
-                  };
-                  setDetails(newDetails);
+                  const productId = newId as number;
+                  // کالا همان لحظه ثبت می‌شود؛ واحدها بعد از پاسخ سرور اضافه می‌شوند.
+                  // به‌روزرسانی تابعی است تا مقداری که کاربر در این فاصله وارد کرده یا سطری که افزوده از دست نرود.
+                  setDetails((prev) =>
+                    prev.map((r, i) =>
+                      i === index
+                        ? {
+                            ...r,
+                            childProductId: productId,
+                            childProductName: item?.name,
+                            childProductCode: item?.code,
+                            inputQuantity: 1,
+                            quantity: 1,
+                            substitutes: [],
+                          }
+                        : r,
+                    ),
+                  );
+                  const units = await fetchProductUnits(productId);
+                  const mainUnit = units[0];
+                  if (!mainUnit) return;
+                  setDetails((prev) =>
+                    prev.map((r, i) =>
+                      i === index && r.childProductId === productId
+                        ? {
+                            ...r,
+                            baseUnitId: mainUnit.value,
+                            unitName: mainUnit.label,
+                            inputUnitId: mainUnit.value,
+                            unitOptions: units,
+                            // ضریب واحد اصلی ۱ است
+                            quantity: r.inputQuantity,
+                          }
+                        : r,
+                    ),
+                  );
                 }}
               />
             </div>
@@ -690,6 +709,12 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
     }
     if (details.length === 0) {
       toast.error("اقلام فرمول وارد نشده");
+      return;
+    }
+    // واحد ردیف بعد از انتخاب کالا از سرور می‌آید؛ تا نرسیده ثبت نمی‌کنیم تا واحد صفر نرود
+    const pendingUnit = details.findIndex((d) => d.childProductId && !d.inputUnitId);
+    if (pendingUnit >= 0) {
+      toast.error(`واحد ردیف ${pendingUnit + 1} هنوز بارگذاری نشده است؛ چند لحظه دیگر دوباره ثبت کنید.`);
       return;
     }
 
