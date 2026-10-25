@@ -52,6 +52,16 @@ public class FiscalYearServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task Without_company_a_closed_year_of_another_company_does_not_block()
+    {
+        // سال بسته با شروع زودتر، تا ترتیب تاریخ به‌تنهایی آن را انتخاب کند
+        await AddYear(companyId: 2, "1405-B", new DateTime(2026, 1, 1), new DateTime(2026, 12, 31), FiscalYearStatus.Closed);
+        var open = await AddYear(companyId: 1, "1405", new DateTime(2026, 3, 21), new DateTime(2027, 3, 20));
+
+        Assert.Equal(open, await new FiscalYearService(_db).ResolveOpenYearAsync(null, new DateTime(2026, 5, 1), default));
+    }
+
+    [Fact]
     public async Task Overlap_is_detected_within_a_company_only()
     {
         await AddYear(companyId: 1, "1405", new DateTime(2026, 3, 21), new DateTime(2027, 3, 20));

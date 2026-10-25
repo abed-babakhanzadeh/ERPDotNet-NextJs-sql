@@ -27,7 +27,9 @@ public class FiscalYearService : IFiscalYearService
         var day = date.Date;
         var year = await years
             .Where(x => x.StartDate.Date <= day && x.EndDate.Date >= day)
-            .OrderBy(x => x.StartDate)
+            // بدون شرکت، سال‌های چند شرکت ممکن است شامل تاریخ باشند؛ سال بستهٔ شرکت دیگر نباید سند را رد کند
+            .OrderBy(x => x.Status == FiscalYearStatus.Open ? 0 : 1)
+            .ThenBy(x => x.StartDate)
             .Select(x => new { x.Id, x.Title, x.Status })
             .FirstOrDefaultAsync(cancellationToken);
 
