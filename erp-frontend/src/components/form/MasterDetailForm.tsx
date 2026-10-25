@@ -22,6 +22,7 @@ interface MasterDetailFormProps {
   formId?: string;
   headerActions?: ReactNode;
   isDirty?: boolean;
+  noValidate?: boolean;
 }
 
 export default function MasterDetailForm({
@@ -35,6 +36,7 @@ export default function MasterDetailForm({
   formId = "master-detail-form",
   headerActions,
   isDirty,
+  noValidate,
 }: MasterDetailFormProps) {
   return (
     <BaseFormLayout
@@ -46,6 +48,7 @@ export default function MasterDetailForm({
       formId={formId}
       headerActions={headerActions}
       isDirty={isDirty}
+      noValidate={noValidate}
     >
       {/* ✅ اصلاح ریسپانسیو: 
          - در موبایل: ارتفاع اتوماتیک (h-auto) تا صفحه اسکرول طبیعی داشته باشد.
