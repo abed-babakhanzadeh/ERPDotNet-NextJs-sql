@@ -1,3 +1,4 @@
+using ERPDotNet.Application.Modules.Inventory.Services;
 using ERPDotNet.Application.Common.Exceptions;
 using ERPDotNet.Application.Common.Interfaces;
 using ERPDotNet.Application.Modules.Inventory.Extensions;
@@ -39,6 +40,7 @@ public class PostInventoryDocActionHandler : IBpmsActionHandler
         var doc = await _context.InventoryDocHeaders
             .Include(x => x.DocType)
             .Include(x => x.Details)
+                .ThenInclude(d => d.Serials)
             .FirstOrDefaultAsync(x => x.Id == context.TargetRecordId, cancellationToken);
 
         if (doc == null)
@@ -75,6 +77,8 @@ public class PostInventoryDocActionHandler : IBpmsActionHandler
         // 5. بروزرسانی موجودی‌ها در EF
         // کنترل موجودی منفی در سرویس دامین انجام شده و ثبت همزمان با RowVersion رکورد CurrentStock کنترل می‌شود
         await _context.AddNewStocksAsync(result.UpdatedStocks, cancellationToken);
+
+        await InventorySerialTracker.ApplyAsync(_context, doc, doc.DocType!.Nature, isReversal: false, cancellationToken);
 
         // 6. تغییر وضعیت سند
         doc.Status = InventoryDocStatus.Posted;

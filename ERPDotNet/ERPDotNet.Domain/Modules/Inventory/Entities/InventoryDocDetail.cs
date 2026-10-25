@@ -48,4 +48,7 @@ public class InventoryDocDetail : BaseEntity
     public long? ReferenceEntityLineId { get; set; } // ID سطر در جدول مبنا
 
     public string? Description { get; set; }
+
+    // فقط برای کالای سریال‌دار: سریال‌های این سطر (تعدادشان باید با مقدار سطر برابر باشد)
+    public ICollection<InventoryDocDetailSerial> Serials { get; set; } = new List<InventoryDocDetailSerial>();
 }

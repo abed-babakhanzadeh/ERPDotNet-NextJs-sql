@@ -803,6 +803,52 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.ToTable("InventoryDocDetails", "inventory");
                 });
 
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.InventoryDocDetailSerial", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("DocDetailId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("SerialNumber")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SerialNumber");
+
+                    b.HasIndex("DocDetailId", "SerialNumber")
+                        .IsUnique();
+
+                    b.ToTable("InventoryDocDetailSerials", "inventory");
+                });
+
             modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.InventoryDocHeader", b =>
                 {
                     b.Property<long>("Id")
@@ -1069,6 +1115,67 @@ namespace ERPDotNet.Infrastructure.Migrations
                                     .HasPeriodEnd("PeriodEnd")
                                     .HasColumnName("PeriodEnd");
                             }));
+                });
+
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.InventorySerial", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<long?>("LastDocHeaderId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("LastModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("LocationId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("SerialNumber")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("WarehouseId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LocationId");
+
+                    b.HasIndex("ProductId", "SerialNumber")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.HasIndex("WarehouseId", "ProductId", "Status");
+
+                    b.ToTable("InventorySerials", "inventory");
                 });
 
             modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.InventoryTransaction", b =>
@@ -2243,6 +2350,15 @@ namespace ERPDotNet.Infrastructure.Migrations
                             ParentId = 3300,
                             Title = "کاردکس کالا",
                             Url = "/inventory/reports/cardex"
+                        },
+                        new
+                        {
+                            Id = 3304,
+                            IsMenu = true,
+                            Name = "Inventory.Reports.Serials",
+                            ParentId = 3300,
+                            Title = "شماره سریال‌ها",
+                            Url = "/inventory/reports/serials"
                         },
                         new
                         {
@@ -3509,6 +3625,17 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.InventoryDocDetailSerial", b =>
+                {
+                    b.HasOne("ERPDotNet.Domain.Modules.Inventory.Entities.InventoryDocDetail", "DocDetail")
+                        .WithMany("Serials")
+                        .HasForeignKey("DocDetailId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DocDetail");
+                });
+
             modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.InventoryDocHeader", b =>
                 {
                     b.HasOne("ERPDotNet.Domain.Modules.Inventory.Entities.Warehouse", "DestinationWarehouse")
@@ -3576,6 +3703,29 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.Navigation("MainInventoryUnit");
 
                     b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.InventorySerial", b =>
+                {
+                    b.HasOne("ERPDotNet.Domain.Modules.Inventory.Entities.Location", "Location")
+                        .WithMany()
+                        .HasForeignKey("LocationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ERPDotNet.Domain.Modules.BaseInfo.Entities.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ERPDotNet.Domain.Modules.Inventory.Entities.Warehouse", "Warehouse")
+                        .WithMany()
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Location");
+
+                    b.Navigation("Warehouse");
                 });
 
             modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.InventoryTransaction", b =>
@@ -3967,6 +4117,11 @@ namespace ERPDotNet.Infrastructure.Migrations
             modelBuilder.Entity("ERPDotNet.Domain.Modules.BaseInfo.Entities.ProductCategory", b =>
                 {
                     b.Navigation("Children");
+                });
+
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.InventoryDocDetail", b =>
+                {
+                    b.Navigation("Serials");
                 });
 
             modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.InventoryDocHeader", b =>

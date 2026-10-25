@@ -23,6 +23,7 @@ import type {
   Paged,
   UpdateInventoryDocTypeCommand,
   UpdateWarehouseCommand,
+  InventorySerialDto,
 } from "@/types/api";
 
 const BASE_URL = "/Inventory/Inventory";
@@ -308,6 +309,16 @@ const inventoryService = {
   getCurrentStock: async (payload: PagedQuery, signal?: AbortSignal) => {
     const response = await apiClient.post<Paged<InventoryStockDto>>(
       `${BASE_URL}/stock/current`,
+      payload,
+      { signal },
+    );
+    return response.data;
+  },
+
+  // گزارش شماره سریال‌ها (کالای سریال‌دار)
+  searchSerials: async (payload: PagedQuery, signal?: AbortSignal) => {
+    const response = await apiClient.post<Paged<InventorySerialDto>>(
+      `${BASE_URL}/serials/search`,
       payload,
       { signal },
     );

@@ -87,3 +87,6 @@ export type UpdateInventoryDocTypeCommand = S["UpdateInventoryDocTypeCommand"];
 
 /** پروفایل کاربر جاری (GET /Auth/profile) */
 export type UserProfileDto = UserDto;
+
+// --- شماره سریال انبار ---
+export type InventorySerialDto = S["InventorySerialDto"];

@@ -38,6 +38,8 @@ public record CreateInventoryDocDetailDto
     public int? DestinationLocationId { get; set; }
     public int? BatchId { get; set; }
     public string? Description { get; set; }
+    // فقط برای کالای سریال‌دار
+    public List<string> SerialNumbers { get; set; } = new();
 }
 
 public class CreateInventoryDocValidator : AbstractValidator<CreateInventoryDocCommand>
@@ -54,6 +56,9 @@ public class CreateInventoryDocValidator : AbstractValidator<CreateInventoryDocC
             var errors = await InventoryDocRules.ValidateAsync(context, cmd.DocTypeId, cmd.WarehouseId, cmd.DestinationWarehouseId, lines, ct);
             errors.ForEach(validation.AddFailure);
         });
+        RuleFor(x => x).Custom((cmd, validation) =>
+            InventoryDocRules.ValidateSerials(cmd.Details.Select(d => (d.ProductId, (IEnumerable<string>?)d.SerialNumbers)))
+                .ForEach(validation.AddFailure));
         RuleFor(x => x.DocDate).NotEmpty();
         RuleForEach(x => x.Details).ChildRules(detail =>
         {
@@ -129,7 +134,10 @@ public class CreateInventoryDocHandler : IRequestHandler<CreateInventoryDocComma
                 LocationId = item.LocationId,
                 DestinationLocationId = isTransfer ? item.DestinationLocationId : null,
                 BatchId = item.BatchId,
-                Description = item.Description
+                Description = item.Description,
+                Serials = InventoryDocRules.NormalizeSerials(item.SerialNumbers)
+                    .Select(s => new InventoryDocDetailSerial { SerialNumber = s })
+                    .ToList()
             });
         }
 

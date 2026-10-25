@@ -14,6 +14,8 @@ export interface DocRow {
   destinationLocationId?: number | string | null;
   batchId?: number | string | null;
   batchNumber?: string;
+  /** فقط کالای سریال‌دار: سریال‌ها با کاما، فاصله یا خط جدید جدا می‌شوند */
+  serialNumbers?: string;
   description?: string;
 }
 
@@ -39,6 +41,17 @@ export const EMPTY_DOC: DocFormValues = {
   details: [],
 };
 
+/** سریال‌های واردشده در یک سطر، بدون فاصله و تکرار (هم‌راستا با InventoryDocRules.NormalizeSerials) */
+export const parseSerials = (text?: string | null) =>
+  Array.from(
+    new Set(
+      (text ?? "")
+        .split(/[\s,،]+/)
+        .map((s) => s.trim())
+        .filter(Boolean),
+    ),
+  );
+
 /** سطری که کالا دارد؛ سطرهای خالی هنگام ثبت نادیده گرفته می‌شوند */
 export const hasProduct = (row: DocRow) => !!row.productId && Number(row.productId) > 0;
 
@@ -46,7 +59,11 @@ export const hasProduct = (row: DocRow) => !!row.productId && Number(row.product
  * قواعد فرم سند انبار، هم‌راستا با CreateInventoryDocValidator و UpdateInventoryDocValidator.
  * ماهیت انتقال به نوع سند بستگی دارد، پس طرح با تابع isTransfer ساخته می‌شود.
  */
-export function makeDocSchema(opts: { isTransfer: (docTypeId: number | null) => boolean; requireLocation: boolean }) {
+export function makeDocSchema(opts: {
+  isTransfer: (docTypeId: number | null) => boolean;
+  requireLocation: boolean;
+  isSerialManaged: (productId: number) => boolean;
+}) {
   return z
     .object({
       docTypeId: z.number().nullable(),
@@ -87,6 +104,13 @@ export function makeDocSchema(opts: { isTransfer: (docTypeId: number | null) => 
           issue(["details", index, "locationId"], `ردیف ${n}: قفسه را انتخاب کنید.`);
         } else if (transfer && !row.destinationLocationId) {
           issue(["details", index, "destinationLocationId"], `ردیف ${n}: قفسه مقصد را انتخاب کنید.`);
+        } else if (opts.isSerialManaged(Number(row.productId))) {
+          const count = parseSerials(row.serialNumbers).length;
+          if (count !== Number(row.mainUnitQuantity))
+            issue(
+              ["details", index, "serialNumbers"],
+              `ردیف ${n}: کالا سریال‌دار است؛ ${row.mainUnitQuantity} شماره سریال لازم است (${count} وارد شده).`,
+            );
         }
       });
     });

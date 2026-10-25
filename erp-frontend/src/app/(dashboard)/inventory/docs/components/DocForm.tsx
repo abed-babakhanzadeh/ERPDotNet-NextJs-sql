@@ -58,6 +58,7 @@ import {
   firstDocError,
   hasProduct,
   makeDocSchema,
+  parseSerials,
   type DocFormValues,
   type DocRow,
 } from "./docFormSchema";
@@ -96,6 +97,8 @@ export default function DocForm({
   // بچ‌های تعریف‌شده هر کالا (از تب «بچ‌ها» در فرم کالا)
   const [batchesByProduct, setBatchesByProduct] = useState<Record<number, InventoryBatchDto[]>>({});
   const requestedBatches = useRef(new Set<number>());
+  // کالاهای سریال‌دار (از تنظیمات انبار کالا)؛ ستون سریال فقط برای آن‌ها لازم است
+  const [serialManaged, setSerialManaged] = useState<Record<number, boolean>>({});
 
   const isInitialized = useRef(false);
   // نسخه state همان پرچم؛ تا هشدار «تغییرات ذخیره‌نشده» پیش از پر شدن فرم نیاید
@@ -113,8 +116,9 @@ export default function DocForm({
         isTransfer: isTransferType,
         // بک‌اند قفسه را فقط هنگام ایجاد سند اجباری می‌داند
         requireLocation: initialMode === "create",
+        isSerialManaged: (productId) => !!serialManaged[productId],
       }),
-    [isTransferType, initialMode],
+    [isTransferType, initialMode, serialManaged],
   );
   const form = useForm<DocFormValues>({
     resolver: zodResolver(schema),
@@ -161,7 +165,12 @@ export default function DocForm({
             description: docData.description || "",
             targetPartyName: docData.targetPartyName || "",
             referenceExternalCode: docData.referenceExternalCode || "",
-            details: docData.details.map((d) => ({ ...d, tempId: d.id })) || [],
+            details:
+              docData.details.map((d) => ({
+                ...d,
+                tempId: d.id,
+                serialNumbers: (d.serialNumbers ?? []).join("، "),
+              })) || [],
           }
         : { ...EMPTY_DOC, docDate: new Date() };
       form.reset(base);
@@ -235,8 +244,12 @@ export default function DocForm({
     missing.forEach(async (productId) => {
       requestedBatches.current.add(productId);
       try {
-        const batches = await inventoryService.getProductBatches(productId, true);
+        const [batches, profile] = await Promise.all([
+          inventoryService.getProductBatches(productId, true),
+          inventoryService.getProductProfile(productId).catch(() => null),
+        ]);
         setBatchesByProduct((prev) => ({ ...prev, [productId]: batches }));
+        setSerialManaged((prev) => ({ ...prev, [productId]: !!profile?.isSerialManaged }));
       } catch {
         requestedBatches.current.delete(productId);
       }
@@ -393,6 +406,8 @@ export default function DocForm({
     },
   ];
 
+  const hasSerialRows = gridData.some((r) => serialManaged[Number(r.productId)]);
+
   const gridColumns: GridColumn<any>[] = useMemo(
     () => [
       {
@@ -475,6 +490,19 @@ export default function DocForm({
           })),
         disabled: isReadOnly,
       },
+      // فقط وقتی کالای سریال‌داری در سند هست
+      ...(hasSerialRows
+        ? [
+            {
+              key: "serialNumbers",
+              title: "شماره سریال‌ها",
+              type: "text" as const,
+              width: "240px",
+              placeholder: "با کاما جدا کنید",
+              disabled: isReadOnly,
+            },
+          ]
+        : []),
       {
         key: "description",
         title: "توضیحات ردیف",
@@ -491,6 +519,7 @@ export default function DocForm({
       productsLoading,
       isReadOnly,
       batchesByProduct,
+      hasSerialRows,
     ],
   );
 
@@ -516,6 +545,7 @@ export default function DocForm({
             ? Number(row.destinationLocationId)
             : null,
         batchId: row.batchId ? Number(row.batchId) : null,
+        serialNumbers: serialManaged[Number(row.productId)] ? parseSerials(row.serialNumbers) : [],
         description: row.description || "",
       }));
 

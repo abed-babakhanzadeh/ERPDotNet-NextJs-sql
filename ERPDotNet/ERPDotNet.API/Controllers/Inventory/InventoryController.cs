@@ -1,3 +1,4 @@
+using ERPDotNet.Application.Modules.Inventory.Queries.GetInventorySerials;
 using ERPDotNet.API.Attributes;
 using ERPDotNet.Application.Common.Models;
 using ERPDotNet.Application.Modules.Inventory.Commands.ApproveInventoryDoc;
@@ -140,6 +141,13 @@ public class InventoryController : ControllerBase
     }
 
     // بازسازی موجودی لحظه‌ای از روی دفتر تراکنش‌ها: ابتدا پیش‌نمایش، سپس اعمال
+    [HttpPost("serials/search")]
+    [HasPermission("Inventory.Reports.Serials")]
+    public async Task<ActionResult<PaginatedResult<InventorySerialDto>>> SearchSerials([FromBody] GetInventorySerialsQuery query)
+    {
+        return Ok(await _mediator.Send(query));
+    }
+
     [HttpGet("stock/rebuild/preview")]
     [HasPermission("Inventory.Stock.Rebuild")]
     public async Task<ActionResult<List<StockRebuildRowDto>>> PreviewStockRebuild()

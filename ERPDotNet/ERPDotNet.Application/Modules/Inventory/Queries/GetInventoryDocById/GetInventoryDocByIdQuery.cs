@@ -35,6 +35,9 @@ public class GetInventoryDocByIdHandler : IRequestHandler<GetInventoryDocByIdQue
                 .ThenInclude(d => d.Location)
             .Include(x => x.Details)
                 .ThenInclude(d => d.DestinationLocation)
+            .Include(x => x.Details)
+                .ThenInclude(d => d.Serials)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
 
         if (doc == null) return null;
@@ -87,7 +90,8 @@ public class GetInventoryDocByIdHandler : IRequestHandler<GetInventoryDocByIdQue
                 BatchId = d.BatchId,
                 BatchNumber = d.Batch?.BatchNumber, // می‌تواند نال باشد
                 
-                Description = d.Description
+                Description = d.Description,
+                SerialNumbers = d.Serials.OrderBy(s => s.SerialNumber).Select(s => s.SerialNumber).ToList()
             }).ToList()
         };
 

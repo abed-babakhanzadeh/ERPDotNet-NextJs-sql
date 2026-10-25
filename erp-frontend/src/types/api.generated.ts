@@ -1889,6 +1889,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Inventory/Inventory/serials/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["GetInventorySerialsQuery"];
+                    "text/json": components["schemas"]["GetInventorySerialsQuery"];
+                    "application/*+json": components["schemas"]["GetInventorySerialsQuery"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PaginatedResultOfInventorySerialDto"];
+                        "application/json": components["schemas"]["PaginatedResultOfInventorySerialDto"];
+                        "text/json": components["schemas"]["PaginatedResultOfInventorySerialDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Inventory/Inventory/stock/rebuild/preview": {
         parameters: {
             query?: never;
@@ -4492,6 +4535,7 @@ export interface components {
             /** Format: int32 */
             batchId?: null | number;
             description?: null | string;
+            serialNumbers: string[];
         };
         CreateLocationCommand: {
             /** Format: int32 */
@@ -4728,6 +4772,21 @@ export interface components {
             filters?: null | components["schemas"]["FilterModel"][];
             searchTerm?: null | string;
         };
+        GetInventorySerialsQuery: {
+            /** Format: int32 */
+            productId?: null | number;
+            /** Format: int32 */
+            warehouseId?: null | number;
+            status: null | components["schemas"]["InventorySerialStatus"];
+            /** Format: int32 */
+            pageNumber: number;
+            /** Format: int32 */
+            pageSize: number;
+            sortColumn?: null | string;
+            sortDescending: boolean;
+            searchTerm?: null | string;
+            filters?: null | components["schemas"]["FilterModel"][];
+        };
         GetProductCardexQuery: {
             /** Format: int32 */
             warehouseId?: null | number;
@@ -4835,6 +4894,7 @@ export interface components {
             batchId?: null | number;
             batchNumber?: null | string;
             description?: null | string;
+            serialNumbers: string[];
         };
         InventoryDocDto: {
             /** Format: int64 */
@@ -4895,6 +4955,27 @@ export interface components {
             warehouseSettings: components["schemas"]["ItemWarehouseSettingDto"][];
         };
         InventoryNature: number;
+        InventorySerialDto: {
+            /** Format: int64 */
+            id: number;
+            /** Format: int32 */
+            productId: number;
+            productCode: string;
+            productName: string;
+            serialNumber: string;
+            /** Format: int32 */
+            statusId: number;
+            statusTitle: string;
+            /** Format: int32 */
+            warehouseId: null | number;
+            warehouseTitle: null | string;
+            locationTitle: null | string;
+            /** Format: int64 */
+            lastDocHeaderId: null | number;
+            /** Format: int64 */
+            lastDocNumber: null | number;
+        };
+        InventorySerialStatus: number;
         InventoryStockDto: {
             /** Format: int64 */
             id: number;
@@ -5008,6 +5089,17 @@ export interface components {
         };
         PaginatedResultOfInventoryDocDto: {
             items: components["schemas"]["InventoryDocDto"][];
+            /** Format: int32 */
+            pageNumber: number;
+            /** Format: int32 */
+            totalPages: number;
+            /** Format: int32 */
+            totalCount: number;
+            hasPreviousPage: boolean;
+            hasNextPage: boolean;
+        };
+        PaginatedResultOfInventorySerialDto: {
+            items: components["schemas"]["InventorySerialDto"][];
             /** Format: int32 */
             pageNumber: number;
             /** Format: int32 */
@@ -5440,6 +5532,7 @@ export interface components {
             /** Format: int32 */
             batchId?: null | number;
             description?: null | string;
+            serialNumbers: string[];
         };
         UpdateInventoryDocTypeCommand: {
             /** Format: int32 */
