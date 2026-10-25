@@ -172,7 +172,7 @@ export default function EditableGrid<T extends { id?: number | string }>({
                     style={{ width: col.width }}
                   >
                     {col.title}{" "}
-                    {col.required && <span className="text-red-500">*</span>}
+                    {col.required && <span className="text-destructive">*</span>}
                   </th>
                 ))}
                 {!readOnly && (
@@ -212,7 +212,7 @@ export default function EditableGrid<T extends { id?: number | string }>({
                             "w-full h-7 rounded border border-input bg-background px-2 text-xs focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary disabled:opacity-50 text-right transition-all",
                             !row[col.key] &&
                               col.required &&
-                              "border-red-300 bg-red-50/50 dark:bg-red-900/10",
+                              "border-destructive/40 bg-destructive/5 ",
                           )}
                         >
                           <option value="">انتخاب...</option>
@@ -252,7 +252,7 @@ export default function EditableGrid<T extends { id?: number | string }>({
                               : "text-right",
                             !row[col.key] &&
                               col.required &&
-                              "border-red-300 bg-red-50/50 dark:bg-red-900/10",
+                              "border-destructive/40 bg-destructive/5 ",
                           )}
                         />
                       )}
@@ -267,7 +267,7 @@ export default function EditableGrid<T extends { id?: number | string }>({
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 text-blue-500 hover:text-blue-600 hover:bg-blue-50"
+                            className="h-6 w-6 text-primary hover:text-primary hover:bg-primary/10"
                             onClick={() => onView(row)}
                             title="مشاهده جزئیات"
                           >
@@ -280,7 +280,7 @@ export default function EditableGrid<T extends { id?: number | string }>({
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 text-amber-500 hover:text-amber-600 hover:bg-amber-50"
+                            className="h-6 w-6 text-warning hover:text-warning hover:bg-warning/10"
                             onClick={() => onEdit(row)}
                             title="ویرایش"
                           >
@@ -324,8 +324,8 @@ export default function EditableGrid<T extends { id?: number | string }>({
         </div>
 
         {loading && (
-          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200 dark:bg-gray-800 overflow-hidden">
-            <div className="h-full bg-blue-500 dark:bg-blue-600 animate-loading-bar"></div>
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-muted overflow-hidden">
+            <div className="h-full bg-primary animate-loading-bar"></div>
           </div>
         )}
       </div>
@@ -350,7 +350,7 @@ export default function EditableGrid<T extends { id?: number | string }>({
       {contextMenu && (
         <div
           ref={contextMenuRef}
-          className="fixed z-50 min-w-[160px] bg-white dark:bg-zinc-900 border rounded-md shadow-lg p-1 animate-in fade-in zoom-in-95 duration-100"
+          className="fixed z-50 min-w-[160px] bg-card border rounded-md shadow-lg p-1 animate-in fade-in zoom-in-95 duration-100"
           style={{
             top: contextMenu.y,
             left: contextMenu.x,
@@ -363,7 +363,7 @@ export default function EditableGrid<T extends { id?: number | string }>({
                 className="flex items-center gap-2 px-2 py-1.5 text-xs text-foreground hover:bg-accent rounded-sm w-full text-right transition-colors"
                 onClick={() => handleAction("view", contextMenu.rowIndex)}
               >
-                <Eye className="w-3.5 h-3.5 text-blue-500" />
+                <Eye className="w-3.5 h-3.5 text-primary" />
                 <span>مشاهده جزئیات</span>
               </button>
             )}
@@ -372,13 +372,13 @@ export default function EditableGrid<T extends { id?: number | string }>({
                 className="flex items-center gap-2 px-2 py-1.5 text-xs text-foreground hover:bg-accent rounded-sm w-full text-right transition-colors"
                 onClick={() => handleAction("edit", contextMenu.rowIndex)}
               >
-                <Edit className="w-3.5 h-3.5 text-amber-500" />
+                <Edit className="w-3.5 h-3.5 text-warning" />
                 <span>ویرایش</span>
               </button>
             )}
             {permissions.delete && (
               <button
-                className="flex items-center gap-2 px-2 py-1.5 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-sm w-full text-right transition-colors"
+                className="flex items-center gap-2 px-2 py-1.5 text-xs text-destructive hover:bg-destructive/10 rounded-sm w-full text-right transition-colors"
                 onClick={() => handleAction("delete", contextMenu.rowIndex)}
               >
                 <Trash2 className="w-3.5 h-3.5" />

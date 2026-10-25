@@ -46,8 +46,8 @@ const TreeNode = ({ node, selectedIds, roleIds, onToggle }: { node: PermissionNo
   // آیا در حالت مقایسه هستیم؟ (یعنی آیا roleIds پاس داده شده؟)
   const isCompareMode = roleIds !== undefined && roleIds.length > 0;
 
-  let colorClass = "text-gray-700";
-  let checkboxClass = "text-blue-600 border-gray-300 focus:ring-blue-500";
+  let colorClass = "text-foreground";
+  let checkboxClass = "text-primary border-border focus:ring-ring";
   let statusLabel = null;
 
   if (isCompareMode) {
@@ -56,20 +56,20 @@ const TreeNode = ({ node, selectedIds, roleIds, onToggle }: { node: PermissionNo
 
     if (isInRole && !isSelectedInFinal) {
       // محرومیت (Deny)
-      colorClass = "text-red-600 line-through decoration-red-500/50";
-      checkboxClass = "border-red-500 bg-red-50 focus:ring-red-500";
-      statusLabel = <span className="text-[10px] bg-red-100 text-red-700 px-1 rounded mr-2">لغو شده</span>;
+      colorClass = "text-destructive line-through decoration-destructive";
+      checkboxClass = "border-destructive bg-destructive/10 focus:ring-destructive";
+      statusLabel = <span className="text-[10px] bg-destructive/15 text-destructive px-1 rounded mr-2">لغو شده</span>;
     } 
     else if (!isInRole && isSelectedInFinal) {
       // ویژه (Grant)
-      colorClass = "text-green-700 font-medium";
-      checkboxClass = "text-green-600 border-green-500 focus:ring-green-500";
-      statusLabel = <span className="text-[10px] bg-green-100 text-green-700 px-1 rounded mr-2">ویژه</span>;
+      colorClass = "text-success font-medium";
+      checkboxClass = "text-success border-success focus:ring-success";
+      statusLabel = <span className="text-[10px] bg-success/15 text-success px-1 rounded mr-2">ویژه</span>;
     }
     else if (isInRole && isSelectedInFinal) {
       // ارث‌بری عادی
-      colorClass = "text-gray-500";
-      checkboxClass = "text-gray-400 border-gray-300 focus:ring-gray-400";
+      colorClass = "text-muted-foreground";
+      checkboxClass = "text-muted-foreground border-border focus:ring-ring";
     }
   }
 
@@ -78,17 +78,17 @@ const TreeNode = ({ node, selectedIds, roleIds, onToggle }: { node: PermissionNo
   };
 
   return (
-    <div className="mr-4 border-r border-gray-200 pr-4">
+    <div className="mr-4 border-r border-border pr-4">
       <div className="flex items-center gap-2 py-1">
         {hasChildren ? (
-          <button onClick={() => setIsOpen(!isOpen)} className="text-gray-400 hover:text-blue-600">
+          <button onClick={() => setIsOpen(!isOpen)} className="text-muted-foreground hover:text-primary">
             {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
           </button>
         ) : (
           <span className="w-4" />
         )}
 
-        <label className="flex items-center gap-2 cursor-pointer select-none hover:bg-gray-50 rounded px-1 flex-1">
+        <label className="flex items-center gap-2 cursor-pointer select-none hover:bg-muted rounded px-1 flex-1">
           <IndeterminateCheckbox 
             checked={isChecked}
             indeterminate={isIndeterminate}
@@ -121,7 +121,7 @@ const TreeNode = ({ node, selectedIds, roleIds, onToggle }: { node: PermissionNo
 
 export default function PermissionTree({ nodes, selectedIds, roleIds, onToggle }: TreeProps) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm max-h-[500px] overflow-y-auto custom-scrollbar">
+    <div className="rounded-lg border border-border bg-card p-4 shadow-sm max-h-[500px] overflow-y-auto custom-scrollbar">
       {nodes.map((node) => (
         <TreeNode 
             key={node.id} 

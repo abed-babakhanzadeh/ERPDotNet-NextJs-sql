@@ -100,12 +100,12 @@ export function StockRebuildDialog({ onRebuilt }: StockRebuildDialogProps) {
             </div>
           ) : rows.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-10 text-sm text-muted-foreground">
-              <CheckCircle2 className="h-8 w-8 text-emerald-500" />
+              <CheckCircle2 className="h-8 w-8 text-success" />
               موجودی همه کالاها با تراکنش‌ها مطابقت دارد.
             </div>
           ) : (
             <>
-              <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">
+              <div className="flex items-start gap-2 rounded-md border border-warning/30 bg-warning/10 p-3 text-sm text-warning">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                 <span>
                   {fmt(rows.length)} ردیف موجودی با تراکنش‌ها نمی‌خواند. پیش از
@@ -142,7 +142,7 @@ export function StockRebuildDialog({ onRebuilt }: StockRebuildDialogProps) {
                           {fmt(r.expectedQuantity)}
                         </TableCell>
                         <TableCell
-                          className={`text-left font-medium tabular-nums ${r.difference < 0 ? "text-red-600" : "text-emerald-600"}`}
+                          className={`text-left font-medium tabular-nums ${r.difference < 0 ? "text-destructive" : "text-success"}`}
                           dir="ltr"
                         >
                           {r.difference > 0 ? "+" : ""}

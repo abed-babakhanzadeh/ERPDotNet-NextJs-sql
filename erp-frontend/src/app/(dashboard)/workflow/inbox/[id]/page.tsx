@@ -107,7 +107,7 @@ export default function TaskDetailsPage({
 
   if (!task) {
     return (
-      <div className="text-center p-12 text-gray-500">
+      <div className="text-center p-12 text-muted-foreground">
         پرونده مورد نظر یافت نشد.
       </div>
     );
@@ -116,7 +116,7 @@ export default function TaskDetailsPage({
   return (
     <div className="flex flex-col gap-6 p-4 max-w-[1400px] mx-auto">
       {/* 🌟 بخش هدر و پنل عملیات گردش کار */}
-      <Card className="border-blue-100 shadow-sm bg-blue-50/30">
+      <Card className="border-primary/15 shadow-sm bg-primary/5">
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row justify-between gap-8">
             {/* قسمت اطلاعات تسک */}
@@ -129,39 +129,39 @@ export default function TaskDetailsPage({
                 >
                   <ArrowRight className="w-4 h-4 ml-1" /> بازگشت
                 </Button>
-                <h1 className="text-2xl font-bold text-slate-800">
+                <h1 className="text-2xl font-bold text-foreground">
                   {task.processTitle}
                 </h1>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-6 text-sm">
                 <div>
-                  <p className="text-slate-500 mb-1">اقدام مورد نیاز</p>
-                  <p className="font-semibold flex items-center gap-1.5 text-slate-700">
-                    <FileText className="w-4 h-4 text-blue-500" />{" "}
+                  <p className="text-muted-foreground mb-1">اقدام مورد نیاز</p>
+                  <p className="font-semibold flex items-center gap-1.5 text-foreground">
+                    <FileText className="w-4 h-4 text-primary" />{" "}
                     {task.taskTitle}
                   </p>
                 </div>
                 <div>
-                  <p className="text-slate-500 mb-1">مرحله فعلی پرونده</p>
-                  <p className="font-semibold text-blue-600">
+                  <p className="text-muted-foreground mb-1">مرحله فعلی پرونده</p>
+                  <p className="font-semibold text-primary">
                     {task.stateTitle}
                   </p>
                 </div>
                 <div>
-                  <p className="text-slate-500 mb-1">شماره مرجع (دیتابیس)</p>
+                  <p className="text-muted-foreground mb-1">شماره مرجع (دیتابیس)</p>
                   <p className="font-semibold">{task.targetRecordId}</p>
                 </div>
               </div>
             </div>
 
             {/* قسمت دکمه‌های تایید و کامنت */}
-            <div className="w-full md:w-[450px] border-t md:border-t-0 md:border-r border-blue-200 pt-6 md:pt-0 md:pr-8 flex flex-col">
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+            <div className="w-full md:w-[450px] border-t md:border-t-0 md:border-r border-primary/30 pt-6 md:pt-0 md:pr-8 flex flex-col">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 یادداشت / پاراف مدیر (اختیاری)
               </label>
               <textarea
-                className="w-full p-3 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-white mb-4 resize-none"
+                className="w-full p-3 border border-border rounded-md focus:ring-2 focus:ring-ring outline-none text-sm bg-background mb-4 resize-none"
                 rows={2}
                 placeholder="دلایل تایید یا رد خود را بنویسید..."
                 value={comment}
@@ -189,7 +189,7 @@ export default function TaskDetailsPage({
                   </Button>
                 ))}
                 {task.availableTransitions.length === 0 && (
-                  <div className="w-full p-2 bg-red-50 text-red-600 text-sm text-center rounded-md border border-red-200">
+                  <div className="w-full p-2 bg-destructive/10 text-destructive text-sm text-center rounded-md border border-destructive/30">
                     دسترسی یا دکمه‌ای برای این مرحله تعریف نشده است.
                   </div>
                 )}
@@ -203,9 +203,9 @@ export default function TaskDetailsPage({
       <div className="w-full relative">
         {task.processCode === "INVENTORY_V1" ? (
           businessLoading ? (
-            <div className="flex justify-center p-12 bg-white rounded-xl border">
+            <div className="flex justify-center p-12 bg-card rounded-xl border">
               <Loader2 className="animate-spin text-primary w-8 h-8" />
-              <span className="mr-3 text-slate-500">
+              <span className="mr-3 text-muted-foreground">
                 در حال دریافت محتوای سند انبار...
               </span>
             </div>
@@ -220,12 +220,12 @@ export default function TaskDetailsPage({
               />
             </div>
           ) : (
-            <div className="text-center p-8 bg-red-50 text-red-500 rounded-lg border border-red-100">
+            <div className="text-center p-8 bg-destructive/10 text-destructive rounded-lg border border-destructive/15">
               خطا در بارگذاری دیتای سند انبار! احتمالاً سند حذف شده است.
             </div>
           )
         ) : (
-          <div className="p-8 bg-slate-50 rounded-lg border border-dashed border-slate-300 text-center text-slate-500">
+          <div className="p-8 bg-muted rounded-lg border border-dashed border-border text-center text-muted-foreground">
             طراحی فرم برای فرآیند <b>{task.processCode}</b> هنوز به کارتابل متصل
             نشده است.
           </div>

@@ -54,7 +54,7 @@ export default function ProductUnitsTab({
       <div className="flex items-center justify-between border-b pb-4">
         <div>
           <h3 className="font-semibold flex items-center gap-2 text-base">
-            <ArrowLeftRight className="w-5 h-5 text-blue-500" />
+            <ArrowLeftRight className="w-5 h-5 text-primary" />
             واحدهای شمارش و ضرایب تبدیل
           </h3>
           <p className="text-sm text-muted-foreground mt-1">
@@ -69,7 +69,7 @@ export default function ProductUnitsTab({
           <Button
             onClick={addConversionRow}
             size="sm"
-            className="gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+            className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
           >
             <Plus size={16} /> واحد فرعی جدید
           </Button>

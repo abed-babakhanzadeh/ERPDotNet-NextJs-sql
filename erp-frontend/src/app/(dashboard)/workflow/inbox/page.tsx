@@ -54,12 +54,12 @@ export default function InboxPage() {
   return (
     <div className="flex flex-col gap-4 p-6">
       <div className="flex justify-between items-center mb-2">
-        <h1 className="text-2xl font-bold text-gray-800">
+        <h1 className="text-2xl font-bold text-foreground">
           کارتابل وظایف (Inbox)
         </h1>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+      <div className="bg-card rounded-xl shadow-sm border overflow-hidden">
         <DataTable
           columns={columns}
           {...tableProps}

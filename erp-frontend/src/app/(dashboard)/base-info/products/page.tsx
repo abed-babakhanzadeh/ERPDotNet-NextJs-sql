@@ -50,7 +50,7 @@ export default function ProductsPage() {
               </div>
             );
           return (
-            <div className="w-8 h-8 rounded overflow-hidden border bg-white hover:scale-[2.5] transition-transform cursor-pointer shadow-sm relative z-0 hover:z-50 origin-left">
+            <div className="w-8 h-8 rounded overflow-hidden border bg-card hover:scale-[2.5] transition-transform cursor-pointer shadow-sm relative z-0 hover:z-50 origin-left">
               <img
                 src={`${BACKEND_URL}${row.imagePath}`}
                 alt={row.name}
@@ -101,7 +101,7 @@ export default function ProductsPage() {
         type: "boolean",
         render: (val: boolean) =>
           val ? (
-            <Badge className="bg-emerald-500 hover:bg-emerald-600 h-5 text-[10px]">
+            <Badge className="bg-success hover:bg-success/90 h-5 text-[10px]">
               فعال
             </Badge>
           ) : (

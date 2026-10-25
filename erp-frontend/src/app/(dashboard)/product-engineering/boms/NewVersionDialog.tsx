@@ -104,7 +104,7 @@ export default function NewVersionDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Copy className="w-5 h-5 text-blue-600" />
+            <Copy className="w-5 h-5 text-primary" />
             ایجاد نسخه جدید (Revision)
           </DialogTitle>
           <DialogDescription>
@@ -115,7 +115,7 @@ export default function NewVersionDialog({
 
         <form onSubmit={handleCopy} className="space-y-5 py-2">
           {/* انتخاب نوع کاربرد (Usage) */}
-          <div className="space-y-3 border p-3 rounded-md bg-slate-50">
+          <div className="space-y-3 border p-3 rounded-md bg-muted">
             <Label className="text-sm font-medium">نوع فرمول جدید:</Label>
             <RadioGroup
               value={targetUsage.toString()}
@@ -139,9 +139,9 @@ export default function NewVersionDialog({
             {targetUsage === 1 && (
               <Alert
                 variant="default"
-                className="bg-yellow-50 border-yellow-200 text-yellow-800 py-2 mt-2"
+                className="bg-warning/10 border-warning/30 text-warning py-2 mt-2"
               >
-                <AlertTriangle className="h-4 w-4 text-yellow-600 ml-2" />
+                <AlertTriangle className="h-4 w-4 text-warning ml-2" />
                 <AlertDescription className="text-xs leading-5">
                   توجه: هر کالا فقط می‌تواند <b>یک</b> فرمول اصلیِ فعال داشته
                   باشد.
@@ -193,7 +193,7 @@ export default function NewVersionDialog({
             <Button
               type="submit"
               disabled={loading || fetchingVersion}
-              className="gap-2 bg-blue-600 hover:bg-blue-700"
+              className="gap-2 bg-primary hover:bg-primary/90"
             >
               {loading ? (
                 <Loader2 className="animate-spin w-4 h-4" />

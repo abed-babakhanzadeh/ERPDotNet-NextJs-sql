@@ -87,7 +87,7 @@ export default function WorkflowDesignerPage() {
       render: (_, row: ProcessDto) => (
         <Badge
           variant="outline"
-          className="bg-blue-50 text-blue-700 border-blue-200"
+          className="bg-primary/10 text-primary border-primary/30"
         >
           v{row.activeVersionNumber || 1}
         </Badge>
@@ -111,7 +111,7 @@ export default function WorkflowDesignerPage() {
         <Button
           variant="ghost"
           size="sm"
-          className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+          className="text-primary hover:text-primary hover:bg-primary/10"
           onClick={() => router.push(`/workflow/designer/${row.id}`)}
         >
           <Activity className="w-4 h-4 ml-1" /> طراحی مراحل
@@ -124,11 +124,11 @@ export default function WorkflowDesignerPage() {
     <div className="flex flex-col gap-6 p-4">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Settings2 className="w-6 h-6 text-primary" /> طراح گردش کار
             (Workflow Builder)
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             مدیریت و طراحی فرآیندهای تایید و ارجاع سیستم
           </p>
         </div>

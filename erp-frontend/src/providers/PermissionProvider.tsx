@@ -67,10 +67,10 @@ export const PermissionProvider = ({
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-50">
+      <div className="flex h-screen items-center justify-center bg-muted">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
-          <p className="text-sm text-gray-500">در حال دریافت مجوزها...</p>
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">در حال دریافت مجوزها...</p>
         </div>
       </div>
     );

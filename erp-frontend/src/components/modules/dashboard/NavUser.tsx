@@ -299,7 +299,7 @@ export function NavUser() {
 
               <DropdownMenuItem
                 onClick={handleLogout}
-                className="gap-2 text-destructive focus:text-destructive cursor-pointer bg-red-50 dark:bg-red-950/30 flex flex-row items-center justify-start"
+                className="gap-2 text-destructive focus:text-destructive cursor-pointer bg-destructive/10 flex flex-row items-center justify-start"
               >
                 <LogOut className="size-4" />
                 <span>خروج از حساب</span>

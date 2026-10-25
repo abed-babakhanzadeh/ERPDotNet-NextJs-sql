@@ -97,7 +97,7 @@ export default function LocationTree({ warehouseId }: LocationTreeProps) {
     setDialogOpen(true);
   };
 
-  if (error) return <div className="text-red-500">خطا در دریافت اطلاعات</div>;
+  if (error) return <div className="text-destructive">خطا در دریافت اطلاعات</div>;
 
   return (
     <div className="space-y-4 border rounded-lg p-4 bg-card">
@@ -179,7 +179,7 @@ export default function LocationTree({ warehouseId }: LocationTreeProps) {
                     ) : (
                       <Badge
                         variant="secondary"
-                        className="gap-1 text-[10px] text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border-emerald-200"
+                        className="gap-1 text-[10px] text-success bg-success/10 hover:bg-success/15 border-success/30"
                       >
                         <CheckCircle2 className="h-3 w-3" /> فعال
                       </Badge>
@@ -204,7 +204,7 @@ export default function LocationTree({ warehouseId }: LocationTreeProps) {
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => handleDelete(loc)}
-                          className="text-red-600 focus:text-red-600"
+                          className="text-destructive focus:text-destructive"
                         >
                           <Trash2 className="ml-2 h-4 w-4" />
                           حذف

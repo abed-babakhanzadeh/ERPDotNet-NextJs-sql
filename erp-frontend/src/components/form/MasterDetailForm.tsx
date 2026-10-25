@@ -85,7 +85,7 @@ export default function MasterDetailForm({
 
             {/* Tab Content */}
             {/* در موبایل اسکرول داخلی را حذف می‌کنیم تا با اسکرول اصلی صفحه یکی شود */}
-            <div className="flex-1 p-0 bg-white dark:bg-zinc-950 flex flex-col md:overflow-hidden">
+            <div className="flex-1 p-0 bg-card flex flex-col md:overflow-hidden">
               {tabs.map((tab) => (
                 <TabsContent
                   key={tab.key}

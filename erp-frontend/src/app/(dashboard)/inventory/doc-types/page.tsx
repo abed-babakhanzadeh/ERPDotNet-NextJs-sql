@@ -122,7 +122,7 @@ export default function DocTypesListPage() {
         sortable: true,
         render: (value, row) => (
           <div className="flex items-center gap-2 font-medium">
-            <FileText className="h-4 w-4 text-blue-500" />
+            <FileText className="h-4 w-4 text-primary" />
             {value}
           </div>
         ),
@@ -141,8 +141,8 @@ export default function DocTypesListPage() {
               variant={isInput ? "secondary" : "outline"}
               className={
                 isInput
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-200" // سبز برای وارده
-                  : "bg-amber-50 text-amber-700 border-amber-200" // زرد برای صادره/انتقال
+                  ? "bg-success/10 text-success border-success/30" // سبز برای وارده
+                  : "bg-warning/10 text-warning border-warning/30" // زرد برای صادره/انتقال
               }
             >
               {/* خواندن متن از مپینگ استاندارد */}
@@ -170,9 +170,9 @@ export default function DocTypesListPage() {
         type: "boolean",
         render: (val) =>
           val ? (
-            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+            <CheckCircle2 className="h-4 w-4 text-success" />
           ) : (
-            <XCircle className="h-4 w-4 text-slate-300" />
+            <XCircle className="h-4 w-4 text-muted-foreground/50" />
           ),
       },
       {
@@ -181,7 +181,7 @@ export default function DocTypesListPage() {
         type: "boolean",
         render: (val) =>
           val ? (
-            <span className="text-xs font-bold text-blue-600">بله</span>
+            <span className="text-xs font-bold text-primary">بله</span>
           ) : (
             <span className="text-muted-foreground">-</span>
           ),

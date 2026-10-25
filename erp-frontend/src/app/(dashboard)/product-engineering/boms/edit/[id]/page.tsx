@@ -19,7 +19,7 @@ export default function EditBOMPage() {
 
   if (isNaN(id)) {
     return (
-      <div className="flex h-full items-center justify-center text-red-500">
+      <div className="flex h-full items-center justify-center text-destructive">
         شناسه نامعتبر است
       </div>
     );

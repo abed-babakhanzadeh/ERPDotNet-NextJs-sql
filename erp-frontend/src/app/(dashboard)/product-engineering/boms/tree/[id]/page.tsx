@@ -115,7 +115,7 @@ export default function BOMTreePage() {
         {/* اینفو بار: نمایش اطلاعات کالا/قلم/قلم (جایگزین اطلاعات هدر قبلی) */}
         <div className="flex flex-wrap items-center justify-between gap-3 bg-card border rounded-lg p-3 shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-md text-purple-600 dark:text-purple-400">
+            <div className="p-2 bg-primary/15 rounded-md text-primary">
               <Box size={20} />
             </div>
             <div className="flex flex-col gap-0.5">

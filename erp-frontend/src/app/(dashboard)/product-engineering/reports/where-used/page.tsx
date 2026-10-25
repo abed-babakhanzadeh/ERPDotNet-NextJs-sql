@@ -205,8 +205,8 @@ export default function WhereUsedPage() {
             className={cn(
               "text-xs px-2 py-1 rounded border",
               val && val.includes("سطح")
-                ? "bg-purple-50 text-purple-700 border-purple-200"
-                : "bg-blue-50 text-blue-700 border-blue-200"
+                ? "bg-primary/10 text-primary border-primary/30"
+                : "bg-primary/10 text-primary border-primary/30"
             )}
           >
             {val}
@@ -255,7 +255,7 @@ export default function WhereUsedPage() {
           }}
           className="gap-2 cursor-pointer"
         >
-          <Layers className="w-4 h-4 text-blue-600" />
+          <Layers className="w-4 h-4 text-primary" />
           <span>مشاهده فرم BOM</span>
         </DropdownMenuItem>
 
@@ -266,7 +266,7 @@ export default function WhereUsedPage() {
           }}
           className="gap-2 cursor-pointer"
         >
-          <Network className="w-4 h-4 text-purple-600" />
+          <Network className="w-4 h-4 text-primary" />
           <span>مشاهده در درخت کالا/قلم</span>
         </DropdownMenuItem>
       </>
@@ -381,7 +381,7 @@ export default function WhereUsedPage() {
                     <TooltipTrigger asChild>
                       <Button
                         variant="ghost"
-                        className="h-8 w-8 p-0 text-blue-600 hover:bg-blue-50"
+                        className="h-8 w-8 p-0 text-primary hover:bg-primary/10"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleOpenBOM(row);
@@ -397,7 +397,7 @@ export default function WhereUsedPage() {
                     <TooltipTrigger asChild>
                       <Button
                         variant="ghost"
-                        className="h-8 w-8 p-0 text-purple-600 hover:bg-purple-50"
+                        className="h-8 w-8 p-0 text-primary hover:bg-primary/10"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleOpenVisualTree(row);

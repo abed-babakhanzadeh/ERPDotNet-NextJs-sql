@@ -511,7 +511,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-blue-600"
+                className="h-8 w-8 text-muted-foreground hover:text-primary"
                 title="مشاهده موارد مصرف"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -630,7 +630,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
               size="sm"
               className={`h-7 text-xs gap-1 ${
                 subCount > 0
-                  ? "bg-emerald-600 hover:bg-emerald-700"
+                  ? "bg-success hover:bg-success/90"
                   : "text-muted-foreground border-dashed"
               }`}
               onClick={(e) => {
@@ -828,7 +828,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-9 text-purple-700 border-purple-200 hover:bg-purple-50 flex items-center gap-2"
+                      className="h-9 text-primary border-primary/30 hover:bg-primary/10 flex items-center gap-2"
                       onClick={() =>
                         addTab(
                           `درخت کالا/قلم`,
@@ -853,7 +853,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
                       size="sm"
                       onClick={() => setTemplateDialogOpen(true)}
                       disabled={submitting}
-                      className="h-9 text-blue-700 border-blue-200 hover:bg-blue-50 flex items-center gap-2"
+                      className="h-9 text-primary border-primary/30 hover:bg-primary/10 flex items-center gap-2"
                     >
                       <CopyPlus size={16} />
                       <span className="hidden sm:inline">فراخوانی از الگو</span>
@@ -870,7 +870,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
                       type="button"
                       size="sm"
                       onClick={handleGoToEdit}
-                      className="h-9 bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-2"
+                      className="h-9 bg-success hover:bg-success/90 text-success-foreground flex items-center gap-2"
                     >
                       <Pencil size={16} />
                       <span className="hidden sm:inline">ویرایش</span>
