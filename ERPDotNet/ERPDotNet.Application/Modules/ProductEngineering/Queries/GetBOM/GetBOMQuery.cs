@@ -30,6 +30,9 @@ public class GetBOMHandler : IRequestHandler<GetBOMQuery, BOMDto?>
             .Include(x => x.Details)
                 .ThenInclude(d => d.Substitutes)
                     .ThenInclude(s => s.SubstituteProduct)
+            .Include(x => x.Outputs)
+                .ThenInclude(o => o.Product)
+                    .ThenInclude(p => p!.Unit)
             .AsSplitQuery()
             .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
 
@@ -87,6 +90,19 @@ public class GetBOMHandler : IRequestHandler<GetBOMQuery, BOMDto?>
                     s.MaxMixPercentage,
                     s.Note
                 )).OrderBy(s => s.Priority).ToList()
+            )).ToList(),
+
+            bom.BaseQuantity,
+            bom.Outputs.OrderBy(o => o.Type).ThenBy(o => o.Id).Select(o => new BOMOutputDto(
+                o.Id,
+                o.ProductId,
+                o.Product!.Name,
+                o.Product.Code,
+                o.Product.Unit?.Title ?? "-",
+                (int)o.Type,
+                o.Type.ToDisplay(),
+                o.Quantity,
+                o.CostSharePercent
             )).ToList()
         );
     }

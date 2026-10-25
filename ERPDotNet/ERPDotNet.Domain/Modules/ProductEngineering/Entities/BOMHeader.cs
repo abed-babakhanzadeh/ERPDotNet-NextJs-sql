@@ -30,7 +30,11 @@ public class BOMHeader : BaseEntity
 
     public bool IsActive { get; set; } = true; 
 
+    // مقادیر اقلام و خروجی‌ها برای ساخت این مقدار از محصول است (مثلاً ۱۰۰ کیلو)
+    public decimal BaseQuantity { get; set; } = 1;
+
     public ICollection<BOMDetail> Details { get; set; } = new List<BOMDetail>();
+    public ICollection<BOMOutput> Outputs { get; set; } = new List<BOMOutput>();
 }
 
 // --- Enum جدید ---

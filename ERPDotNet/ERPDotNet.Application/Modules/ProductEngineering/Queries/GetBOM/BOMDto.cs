@@ -28,7 +28,23 @@ public record BOMDto(
     
     byte[] RowVersion, 
     
-    List<BOMDetailDto> Details
+    List<BOMDetailDto> Details,
+
+    decimal BaseQuantity,
+    List<BOMOutputDto> Outputs
+);
+
+// خروجی جانبی فرمول (محصول همزاد یا فرعی)
+public record BOMOutputDto(
+    int Id,
+    int ProductId,
+    string ProductName,
+    string ProductCode,
+    string UnitName,
+    int TypeId,
+    string TypeTitle,
+    decimal Quantity,
+    decimal CostSharePercent
 );
 
 // بقیه کلاس‌ها (BOMDetailDto و ...) تغییری نمی‌کنند مگر اینکه بخواهید ورژن را در آن‌ها هم نشان دهید

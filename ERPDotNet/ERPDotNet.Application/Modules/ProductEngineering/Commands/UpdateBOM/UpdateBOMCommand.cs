@@ -28,8 +28,10 @@ public record UpdateBOMCommand : IRequest<bool>
     public DateTime? ToDate { get; set; }
 
     public byte[]? RowVersion { get; set; }
+    public decimal BaseQuantity { get; set; } = 1;
 
     public List<BOMDetailUpdateDto> Details { get; set; } = new();
+    public List<BOMOutputInputDto> Outputs { get; set; } = new();
 }
 
 public record BOMDetailUpdateDto
@@ -83,6 +85,16 @@ public class UpdateBOMValidator : AbstractValidator<UpdateBOMCommand>
             .MustAsync(NotHaveDuplicateActiveMain)
             .WithMessage("برای این محصول قبلاً یک فرمول 'اصلی' فعال ثبت شده است. لطفاً ابتدا فرمول قبلی را غیرفعال کنید یا این فرمول را به عنوان 'فرعی' ثبت نمایید.");
 
+
+        RuleFor(v => v.BaseQuantity).GreaterThan(0).WithMessage(BOMOutputRules.BaseQuantityMessage);
+        RuleForEach(v => v.Outputs).SetValidator(new BOMOutputInputValidator());
+        RuleFor(v => v.Outputs).Must(BOMOutputRules.AreDistinct).WithMessage(BOMOutputRules.DuplicateMessage);
+        RuleFor(v => v.Outputs).Must(BOMOutputRules.LeavesShareForMainProduct).WithMessage(BOMOutputRules.CostShareMessage);
+
+        RuleFor(x => x)
+            .MustAsync(NotOutputMainProduct)
+            .WithMessage(BOMOutputRules.MainProductMessage);
+
         // 2. ولیدیشن‌های لیست مواد اولیه (Details)
         RuleForEach(x => x.Details).SetValidator(new BOMDetailUpdateValidator());
 
@@ -121,6 +133,14 @@ public class UpdateBOMValidator : AbstractValidator<UpdateBOMCommand>
                            && b.IsDeleted == false, token);
 
         return !hasOtherActiveMain;
+    }
+
+    private async Task<bool> NotOutputMainProduct(UpdateBOMCommand command, CancellationToken token)
+    {
+        if (command.Outputs.Count == 0) return true;
+        var productId = await _context.BOMHeaders.AsNoTracking()
+            .Where(b => b.Id == command.Id).Select(b => (int?)b.ProductId).FirstOrDefaultAsync(token);
+        return productId == null || command.Outputs.All(o => o.ProductId != productId);
     }
 
     // لاجیک جلوگیری از لوپ (پدر در هیچ سطحی از فرزندان نباشد)
@@ -193,6 +213,7 @@ public class UpdateBOMHandler : IRequestHandler<UpdateBOMCommand, bool>
         var entity = await _context.BOMHeaders
             .Include(x => x.Details)
             .ThenInclude(d => d.Substitutes)
+            .Include(x => x.Outputs)
             .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
 
         if (entity == null) throw new KeyNotFoundException("فرمول ساخت مورد نظر یافت نشد.");
@@ -212,6 +233,8 @@ public class UpdateBOMHandler : IRequestHandler<UpdateBOMCommand, bool>
         entity.IsActive = request.IsActive;
         entity.FromDate = request.FromDate;
         entity.ToDate = request.ToDate;
+        entity.BaseQuantity = request.BaseQuantity;
+        BOMOutputRules.Sync(entity, request.Outputs);
 
         // --- آپدیت دیتیل‌ها (منطق قبلی شما حفظ شد) ---
         // 1. حذف شده‌ها

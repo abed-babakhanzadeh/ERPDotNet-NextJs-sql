@@ -4224,6 +4224,9 @@ export interface components {
             /** Format: byte */
             rowVersion: string;
             details: components["schemas"]["BOMDetailDto"][];
+            /** Format: double */
+            baseQuantity: number;
+            outputs: components["schemas"]["BOMOutputDto"][];
         };
         BOMListDto: {
             /** Format: int32 */
@@ -4244,6 +4247,32 @@ export interface components {
             /** Format: byte */
             rowVersion: string;
         };
+        BOMOutputDto: {
+            /** Format: int32 */
+            id: number;
+            /** Format: int32 */
+            productId: number;
+            productName: string;
+            productCode: string;
+            unitName: string;
+            /** Format: int32 */
+            typeId: number;
+            typeTitle: string;
+            /** Format: double */
+            quantity: number;
+            /** Format: double */
+            costSharePercent: number;
+        };
+        BOMOutputInputDto: {
+            /** Format: int32 */
+            productId: number;
+            type: components["schemas"]["BOMOutputType"];
+            /** Format: double */
+            quantity: number;
+            /** Format: double */
+            costSharePercent: number;
+        };
+        BOMOutputType: number;
         BOMStatus: number;
         BOMSubstituteDto: {
             /** Format: int32 */
@@ -4389,7 +4418,10 @@ export interface components {
             /** Format: date-time */
             toDate?: null | string;
             isActive: boolean;
+            /** Format: double */
+            baseQuantity: number;
             details: components["schemas"]["BOMDetailInputDto"][];
+            outputs: components["schemas"]["BOMOutputInputDto"][];
         };
         CreateCompanyCommand: {
             code: string;
@@ -5322,7 +5354,10 @@ export interface components {
             toDate?: null | string;
             /** Format: byte */
             rowVersion?: null | string;
+            /** Format: double */
+            baseQuantity: number;
             details: components["schemas"]["BOMDetailUpdateDto"][];
+            outputs: components["schemas"]["BOMOutputInputDto"][];
         };
         UpdateCompanyCommand: {
             /** Format: int32 */

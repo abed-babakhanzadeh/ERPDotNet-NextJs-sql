@@ -35,6 +35,7 @@ public class AppDbContext : IdentityDbContext<User>, IApplicationDbContext
     public DbSet<BOMHeader> BOMHeaders { get; set; }
     public DbSet<BOMDetail> BOMDetails { get; set; }
     public DbSet<BOMSubstitute> BOMSubstitutes { get; set; }
+    public DbSet<BOMOutput> BOMOutputs { get; set; }
 
     // جداول ماژول انبار (Inventory)
     public DbSet<Warehouse> Warehouses { get; set; }

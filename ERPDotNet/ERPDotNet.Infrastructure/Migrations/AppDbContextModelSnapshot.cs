@@ -1424,6 +1424,10 @@ namespace ERPDotNet.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<decimal>("BaseQuantity")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -1483,6 +1487,61 @@ namespace ERPDotNet.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("bom_headers", "eng");
+                });
+
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.ProductEngineering.Entities.BOMOutput", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BOMHeaderId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("CostSharePercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("BOMHeaderId", "ProductId")
+                        .IsUnique();
+
+                    b.ToTable("bom_outputs", "eng");
                 });
 
             modelBuilder.Entity("ERPDotNet.Domain.Modules.ProductEngineering.Entities.BOMSubstitute", b =>
@@ -3618,6 +3677,25 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.ProductEngineering.Entities.BOMOutput", b =>
+                {
+                    b.HasOne("ERPDotNet.Domain.Modules.ProductEngineering.Entities.BOMHeader", "BOMHeader")
+                        .WithMany("Outputs")
+                        .HasForeignKey("BOMHeaderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ERPDotNet.Domain.Modules.BaseInfo.Entities.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("BOMHeader");
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("ERPDotNet.Domain.Modules.ProductEngineering.Entities.BOMSubstitute", b =>
                 {
                     b.HasOne("ERPDotNet.Domain.Modules.ProductEngineering.Entities.BOMDetail", "BOMDetail")
@@ -3926,6 +4004,8 @@ namespace ERPDotNet.Infrastructure.Migrations
             modelBuilder.Entity("ERPDotNet.Domain.Modules.ProductEngineering.Entities.BOMHeader", b =>
                 {
                     b.Navigation("Details");
+
+                    b.Navigation("Outputs");
                 });
 
             modelBuilder.Entity("ERPDotNet.Domain.Modules.UserAccess.Entities.Permission", b =>
