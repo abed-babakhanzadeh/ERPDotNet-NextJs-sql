@@ -23,15 +23,13 @@ public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TReques
 
         var context = new ValidationContext<TRequest>(request);
 
-        // اجرای تمام ولیدیتورهای مرتبط با این درخواست به صورت همزمان
-        var validationResults = await Task.WhenAll(
-            _validators.Select(v => v.ValidateAsync(context, cancellationToken)));
-
-        // جمع‌آوری خطاها
-        var failures = validationResults
-            .Where(r => r.Errors.Any())
-            .SelectMany(r => r.Errors)
-            .ToList();
+        // اجرای ترتیبی: ولیدیتورها DbContext مشترک دارند و EF اجرای همزمان دو کوئری روی یک Context را نمی‌پذیرد
+        var failures = new List<FluentValidation.Results.ValidationFailure>();
+        foreach (var validator in _validators)
+        {
+            var result = await validator.ValidateAsync(context, cancellationToken);
+            failures.AddRange(result.Errors);
+        }
 
         // اگر خطایی بود، پرتاب کن (که بعداً توسط GlobalExceptionHandler گرفته می‌شود)
         if (failures.Any())

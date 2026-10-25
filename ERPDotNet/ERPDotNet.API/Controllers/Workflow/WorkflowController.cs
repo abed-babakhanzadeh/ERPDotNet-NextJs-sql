@@ -45,7 +45,7 @@ public class TasksController : ControllerBase
     public async Task<IActionResult> CompleteTask(long id, [FromBody] CompleteTaskCommand command)
     {
         if (id != command.TaskId)
-            return BadRequest("شناسه مغایرت دارد.");
+            throw new FluentValidation.ValidationException("شناسه مغایرت دارد.");
 
         await _mediator.Send(command);
         return Ok(new { message = "وظیفه با موفقیت انجام شد." });

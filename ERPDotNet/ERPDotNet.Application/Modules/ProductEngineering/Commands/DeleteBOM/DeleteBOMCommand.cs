@@ -1,3 +1,4 @@
+using ERPDotNet.Application.Common.Exceptions;
 using ERPDotNet.Application.Common.Attributes;
 using ERPDotNet.Application.Common.Interfaces;
 using MediatR;
@@ -47,7 +48,7 @@ public class DeleteBOMHandler : IRequestHandler<DeleteBOMCommand, int>
         }
         catch (DbUpdateConcurrencyException)
         {
-             throw new Exception("این رکورد همزمان توسط کاربر دیگری تغییر یافته است.");
+             throw ConflictException.Concurrency();
         }
         
         return entity.Id;

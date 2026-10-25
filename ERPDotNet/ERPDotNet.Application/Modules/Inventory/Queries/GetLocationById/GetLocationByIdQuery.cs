@@ -23,7 +23,7 @@ public class GetLocationByIdQueryHandler : IRequestHandler<GetLocationByIdQuery,
             .FirstOrDefaultAsync(x => x.Id == request.Id && !x.IsDeleted, cancellationToken);
 
         if (entity == null)
-            throw new Exception("لوکیشن مورد نظر یافت نشد.");
+            throw new KeyNotFoundException("لوکیشن مورد نظر یافت نشد.");
 
         return new LocationDto
         {

@@ -16,6 +16,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
 
@@ -23,6 +27,7 @@
     <ProjectReference Include="..\ERPDotNet.Infrastructure\ERPDotNet.Infrastructure.csproj" />
     <ProjectReference Include="..\ERPDotNet.Application\ERPDotNet.Application.csproj" />
     <ProjectReference Include="..\ERPDotNet.Domain\ERPDotNet.Domain.csproj" />
+    <ProjectReference Include="..\ERPDotNet.API\ERPDotNet.API.csproj" />
   </ItemGroup>
 
 </Project>

@@ -102,7 +102,7 @@ public class UpdateInventoryDocHandler : IRequestHandler<UpdateInventoryDocComma
         }
         catch 
         { 
-            throw new ValidationException("RowVersion نامعتبر است."); 
+            throw ConflictException.Concurrency(); 
         }
 
         if (!await TransferDestinationRule.IsValidAsync(_context, doc.DocTypeId, doc.WarehouseId, request.DestinationWarehouseId, cancellationToken))

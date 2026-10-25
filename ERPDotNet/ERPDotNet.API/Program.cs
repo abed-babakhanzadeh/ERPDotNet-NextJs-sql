@@ -1,3 +1,4 @@
+using ERPDotNet.API.ErrorHandling;
 using ERPDotNet.API.Services;
 using ERPDotNet.Application;
 using ERPDotNet.Application.Common.Interfaces;
@@ -19,7 +20,13 @@ builder.Services.AddApplicationServices();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IFileService, FileService>();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    // خطای تبدیل JSON / نوع داده هم با همان قرارداد فارسی برگردد
+    .ConfigureApiBehaviorOptions(o => o.InvalidModelStateResponseFactory = ModelStateProblem.Create);
+
+// مدیریت سراسری خطا: همه خطاها به ProblemDetails فارسی با traceId تبدیل می‌شوند
+builder.Services.AddProblemDetails(o => o.CustomizeProblemDetails = ApiProblem.Customize);
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddOpenApi("v1", options =>
@@ -43,6 +50,7 @@ builder.Services.AddCors(options =>
              )
               .AllowAnyMethod()
               .AllowAnyHeader()
+              .WithExposedHeaders("X-Trace-Id")
               .AllowCredentials());
 });
 
@@ -64,6 +72,11 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.MapScalarApiReference();
 }
+
+// باید اولین middleware باشد تا خطای همه مراحل بعدی را بگیرد؛
+// پاسخ‌های خالی 401/403/404 هم با StatusCodePages به ProblemDetails فارسی تبدیل می‌شوند
+app.UseExceptionHandler();
+app.UseStatusCodePages();
 
 app.UseCors("AllowPublicIP");
 app.UseAuthentication();

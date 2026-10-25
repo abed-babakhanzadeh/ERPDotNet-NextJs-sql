@@ -1,3 +1,4 @@
+using ERPDotNet.Application.Common.Exceptions;
 using ERPDotNet.Application.Common.Extensions;
 using ERPDotNet.Application.Common.Interfaces;
 using ERPDotNet.Application.Common.Models;
@@ -35,7 +36,7 @@ public class GetInboxTasksHandler : IRequestHandler<GetInboxTasksQuery, Paginate
     public async Task<PaginatedResult<InboxTaskDto>> Handle(GetInboxTasksQuery request, CancellationToken cancellationToken)
     {
         int companyId = int.TryParse(_currentUser.CompanyId, out var cid) ? cid : 
-                        throw new UnauthorizedAccessException("شناسه شرکت نامشخص است.");
+                        throw new ForbiddenAccessException("شناسه شرکت نامشخص است.");
 
         // 1. کوئری پایه: فقط تسک‌های باز مربوط به شرکت فعلی
         // نکته: اگر بعداً AssignedToUserId به BpmsTask اضافه کردید، اینجا فیلتر کنید

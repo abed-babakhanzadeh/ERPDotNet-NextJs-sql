@@ -27,7 +27,7 @@ public class DeleteLocationHandler : IRequestHandler<DeleteLocationCommand, int>
 
         // رفع خطای NotFoundException: طبق الگوی شما اکسپشن معمولی پرتاب می‌کنیم
         if (entity == null)
-            throw new Exception("لوکیشن مورد نظر یافت نشد.");
+            throw new KeyNotFoundException("لوکیشن مورد نظر یافت نشد.");
 
         // 2. اعمال کنترل همروندی (Optimistic Concurrency)
         if (!string.IsNullOrEmpty(request.RowVersion))

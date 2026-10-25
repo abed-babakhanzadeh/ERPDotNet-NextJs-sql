@@ -54,7 +54,7 @@ public class UsersController : ControllerBase
     [HasPermission("UserAccess.Edit")]
     public async Task<IActionResult> Update(string id, [FromBody] UpdateUserCommand command)
     {
-        if (id != command.Id) return BadRequest("شناسه مغایرت دارد.");
+        if (id != command.Id) throw new FluentValidation.ValidationException("شناسه مغایرت دارد.");
 
         // نکته: command.ConcurrencyStamp باید از فرانت پر شده باشد
         await _mediator.Send(command);

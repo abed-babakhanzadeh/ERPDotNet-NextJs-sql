@@ -1,3 +1,5 @@
+using ERPDotNet.Application.Common.Exceptions;
+using ERPDotNet.Application.Common.Extensions;
 using ERPDotNet.Application.Common.Attributes;
 using ERPDotNet.Application.Common.Interfaces;
 using ERPDotNet.Domain.Modules.Inventory.Enums;
@@ -40,7 +42,7 @@ public class ApproveInventoryDocHandler : IRequestHandler<ApproveInventoryDocCom
 
         // 1. فقط اسناد درفت (یا در جریان بررسی) قابل تایید هستند
         if (doc.Status != InventoryDocStatus.Draft && doc.Status != InventoryDocStatus.InProcess)
-            throw new InvalidOperationException($"تغییر وضعیت از {doc.Status} به Approved مجاز نیست.");
+            throw new BusinessRuleException($"سند در وضعیت «{doc.Status.ToDisplay()}» قابل تأیید نیست.");
 
         // 2. کنترل همروندی
         _context.Entry(doc).Property(x => x.RowVersion).OriginalValue = request.RowVersion;

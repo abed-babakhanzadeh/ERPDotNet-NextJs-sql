@@ -1,3 +1,4 @@
+using ERPDotNet.Application.Common.Exceptions;
 using ERPDotNet.Application.Common.Interfaces;
 using ERPDotNet.Application.Modules.Inventory.Interfaces; // استفاده از اینترفیس لایه اپلیکیشن
 using ERPDotNet.Domain.Modules.Inventory.Entities;
@@ -81,11 +82,11 @@ public class DocumentNumberingService : IDocumentNumberingService
             catch (DbUpdateConcurrencyException)
             {
                 retries--;
-                if (retries == 0) throw new Exception("ترافیک بالای ثبت سند: سیستم قادر به تولید شماره سند نیست.");
+                if (retries == 0) throw new ConflictException("ترافیک بالای ثبت سند: شماره سند تولید نشد. لطفاً دوباره تلاش کنید.");
                 _context.ChangeTracker.Clear();
             }
         }
         
-        throw new Exception("خطای نامشخص در تولید شماره سند.");
+        throw new ConflictException("شماره سند تولید نشد. لطفاً دوباره تلاش کنید.");
     }
 }

@@ -1,3 +1,4 @@
+using ERPDotNet.Application.Common.Exceptions;
 using ERPDotNet.Application.Common.Attributes;
 using ERPDotNet.Application.Common.Interfaces;
 using ERPDotNet.Domain.Modules.BaseInfo.Entities;
@@ -183,7 +184,7 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, bool>
         catch (DbUpdateConcurrencyException)
         {
             // پرتاب خطا به سمت فرانت برای نمایش پیام مناسب
-            throw new Exception("این رکورد توسط کاربر دیگری تغییر یافته است. لطفاً صفحه را رفرش کنید.");
+            throw ConflictException.Concurrency();
         }
 
         return true;

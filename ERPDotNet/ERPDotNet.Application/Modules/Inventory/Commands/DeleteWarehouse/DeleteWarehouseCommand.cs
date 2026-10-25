@@ -18,7 +18,7 @@ public class DeleteWarehouseCommandHandler(IApplicationDbContext context) : IReq
             .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
 
         if (entity == null)
-            throw new Exception("انبار مورد نظر یافت نشد.");
+            throw new KeyNotFoundException("انبار مورد نظر یافت نشد.");
 
         // اعمال کنترل همروندی با RowVersion
         var rowVersionBytes = Convert.FromBase64String(request.RowVersion);

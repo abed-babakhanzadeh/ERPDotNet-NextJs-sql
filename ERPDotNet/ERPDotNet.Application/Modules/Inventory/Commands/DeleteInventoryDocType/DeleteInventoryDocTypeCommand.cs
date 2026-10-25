@@ -25,7 +25,7 @@ public class DeleteInventoryDocTypeHandler : IRequestHandler<DeleteInventoryDocT
             .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
 
         if (entity == null)
-            throw new Exception("نوع سند یافت نشد.");
+            throw new KeyNotFoundException("نوع سند یافت نشد.");
 
         // کنترل همروندی
         if (!string.IsNullOrEmpty(request.RowVersion))

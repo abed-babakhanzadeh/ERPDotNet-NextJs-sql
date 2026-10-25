@@ -24,7 +24,7 @@ public class GetInventoryDocTypeByIdHandler : IRequestHandler<GetInventoryDocTyp
             .Include(x => x.AllowedReferences)
             .FirstOrDefaultAsync(x => x.Id == request.Id && !x.IsDeleted, cancellationToken);
 
-        if (entity == null) throw new Exception("نوع سند یافت نشد.");
+        if (entity == null) throw new KeyNotFoundException("نوع سند یافت نشد.");
 
         return new InventoryDocTypeDto
         {
