@@ -23,6 +23,7 @@ import BaseListLayout from "@/components/layout/BaseListLayout";
 import { handleApiError } from "@/lib/error-handling";
 import { unitService } from "@/services/baseInfoService";
 import type { UnitDto } from "@/types/api";
+import { useConfirm } from "@/providers/ConfirmProvider";
 
 const PlaceholderWrapper: React.FC<{
   children: React.ReactNode;
@@ -37,6 +38,7 @@ const PermissionGuardPlaceholder =
   PermissionGuard || (({ children }) => <>{children}</>);
 
 export default function UnitsPage() {
+  const confirm = useConfirm();
   const { addTab } = useTabs();
 
   useTabPrefetch(["/base-info/units/create"]);
@@ -85,7 +87,7 @@ export default function UnitsPage() {
   );
 
   const handleDelete = async (row: UnitDto) => {
-    if (!confirm(`آیا از حذف واحد "${row.title}" اطمینان دارید؟`)) return;
+    if (!(await confirm({ title: `آیا از حذف واحد "${row.title}" اطمینان دارید؟`, tone: "danger", confirmText: "حذف" }))) return;
     try {
       await unitService.remove(row.id);
       toast.success("واحد با موفقیت حذف شد");

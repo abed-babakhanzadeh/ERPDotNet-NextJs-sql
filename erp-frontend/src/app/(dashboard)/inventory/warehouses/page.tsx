@@ -19,8 +19,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useConfirm } from "@/providers/ConfirmProvider";
 
 export default function WarehousesPage() {
+  const confirm = useConfirm();
   const { addTab } = useTabs();
 
   // استفاده از هوک با نام صحیح متد refresh و اندپوینت درست بک‌اند
@@ -60,7 +62,7 @@ export default function WarehousesPage() {
   };
 
   const handleDelete = async (row: WarehouseDto) => {
-    if (!confirm(`آیا از حذف انبار "${row.title}" اطمینان دارید؟`)) return;
+    if (!(await confirm({ title: `آیا از حذف انبار "${row.title}" اطمینان دارید؟`, tone: "danger", confirmText: "حذف" }))) return;
 
     try {
       // اصلاح خطا: ارسال هر دو آرگومان (id و rowVersion)

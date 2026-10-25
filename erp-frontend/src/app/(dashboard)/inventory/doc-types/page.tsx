@@ -30,8 +30,10 @@ import {
 } from "@/types/inventory";
 import { ColumnConfig, SortConfig, ColumnFilter } from "@/types";
 import { handleApiError } from "@/lib/error-handling";
+import { useConfirm } from "@/providers/ConfirmProvider";
 
 export default function DocTypesListPage() {
+  const confirm = useConfirm();
   const router = useRouter();
   const { addTab } = useTabs(); // 1. فراخوانی هوک تب
 
@@ -64,7 +66,7 @@ export default function DocTypesListPage() {
   }, []);
 
   const handleDelete = async (item: InventoryDocTypeDto) => {
-    if (!confirm(`آیا از حذف نوع سند "${item.title}" اطمینان دارید؟`)) return;
+    if (!(await confirm({ title: `آیا از حذف نوع سند "${item.title}" اطمینان دارید؟`, tone: "danger", confirmText: "حذف" }))) return;
 
     try {
       await inventoryService.deleteDocType(item.id, item.rowVersion);

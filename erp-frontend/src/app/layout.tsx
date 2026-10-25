@@ -6,6 +6,7 @@ import { CustomThemeProvider } from "@/providers/CustomThemeProvider";
 import { ThemeCustomizer } from "@/components/theme/ThemeCustomizer";
 import { PermissionProvider } from "@/providers/PermissionProvider";
 import { TabsProvider } from "@/providers/TabsProvider";
+import { ConfirmProvider } from "@/providers/ConfirmProvider";
 import { FontProvider } from "@/providers/FontProvider"; // اضافه شدن FontProvider
 
 export const metadata: Metadata = {
@@ -57,24 +58,26 @@ export default function RootLayout({
           <CustomThemeProvider>
             <FontProvider> {/* اضافه شدن دربرگیرنده فونت */}
               <PermissionProvider>
-                <TabsProvider>
-                  <div className="h-screen w-screen overflow-hidden">
-                    {children}
-                  </div>
+                <ConfirmProvider>
+                  <TabsProvider>
+                    <div className="h-screen w-screen overflow-hidden">
+                      {children}
+                    </div>
 
-                  {/* ابزارهای شناور */}
-                  <ThemeCustomizer />
-                  <Toaster
-                    position="top-center"
-                    dir="rtl"
-                    richColors
-                    closeButton
-                    toastOptions={{
-                      className: "text-xs",
-                      duration: 3000,
-                    }}
-                  />
-                </TabsProvider>
+                    {/* ابزارهای شناور */}
+                    <ThemeCustomizer />
+                    <Toaster
+                      position="top-center"
+                      dir="rtl"
+                      richColors
+                      closeButton
+                      toastOptions={{
+                        className: "text-xs",
+                        duration: 3000,
+                      }}
+                    />
+                  </TabsProvider>
+                </ConfirmProvider>
               </PermissionProvider>
             </FontProvider>
           </CustomThemeProvider>

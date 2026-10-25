@@ -38,6 +38,7 @@ import inventoryService from "@/services/inventoryService";
 import { Unit } from "@/types/baseInfo";
 import { InventoryItemProfileDto } from "@/types/inventory";
 import { handleApiError } from "@/lib/error-handling";
+import { useConfirm } from "@/providers/ConfirmProvider";
 
 const warehouseSettingSchema = z.object({
   warehouseId: z.coerce.number().min(1, "انبار الزامی است"),
@@ -61,6 +62,7 @@ export default function InventorySettingsTab({
   isViewMode,
   onProfileUpdate,
 }: Props) {
+  const confirm = useConfirm();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<InventoryItemProfileDto | null>(null);
   const [warehouses, setWarehouses] = useState<any[]>([]);
@@ -180,7 +182,7 @@ export default function InventorySettingsTab({
   };
 
   const onDeleteSetting = async (id: number, rowVersion: string) => {
-    if (!confirm("آیا از حذف تنظیمات این انبار مطمئن هستید؟")) return;
+    if (!(await confirm({ title: "آیا از حذف تنظیمات این انبار مطمئن هستید؟", tone: "danger", confirmText: "حذف" }))) return;
     try {
       await inventoryService.deleteWarehouseSetting(id, rowVersion);
       toast.success("حذف شد");

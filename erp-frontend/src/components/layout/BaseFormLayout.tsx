@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import {
   Loader2,
   ArrowRight,
@@ -18,6 +19,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils"; // اضافه شدن cn
+import { DISCARD_CHANGES, useConfirm } from "@/providers/ConfirmProvider";
 
 interface BaseFormLayoutProps {
   title: string;
@@ -31,6 +33,8 @@ interface BaseFormLayoutProps {
   showActions?: boolean;
   headerActions?: React.ReactNode;
   formId?: string;
+  /** فرم تغییر ذخیره‌نشده دارد: نشانگر، تأیید قبل از ترک فرم و هشدار مرورگر */
+  isDirty?: boolean;
 }
 
 export default function BaseFormLayout({
@@ -44,12 +48,52 @@ export default function BaseFormLayout({
   showActions = true,
   headerActions,
   formId = "base-form-id",
+  isDirty = false,
 }: BaseFormLayoutProps) {
-  const { closeTab, activeTabId } = useTabs();
+  const { closeTab, activeTabId, setTabDirty } = useTabs();
+  const pathname = usePathname();
+  const confirm = useConfirm();
   // --- استیت جدید برای تمام صفحه ---
   const [isFullscreen, setIsFullscreen] = useState(false);
+  // هنگام ثبت یا بارگذاری، فرم «کثیف» حساب نمی‌شود تا بستن تب یا رفتن به صفحه بعد از ذخیره موفق تأیید نخواهد
+  const hasUnsavedChanges = isDirty && !isSubmitting && !isLoading;
 
-  const handleCancel = () => {
+  useEffect(() => {
+    setTabDirty(pathname, hasUnsavedChanges);
+    return () => setTabDirty(pathname, false);
+  }, [pathname, hasUnsavedChanges, setTabDirty]);
+
+  // رفرش یا بستن مرورگر
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [hasUnsavedChanges]);
+
+  // Ctrl+S / Cmd+S برای ثبت فرم
+  useEffect(() => {
+    if (!onSubmit) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        if (isSubmitting || isLoading) return;
+        const form = document.getElementById(formId);
+        if (form instanceof HTMLFormElement) form.requestSubmit();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onSubmit, formId, isSubmitting, isLoading]);
+
+  const handleCancel = async () => {
+    if (hasUnsavedChanges) {
+      if (!(await confirm(DISCARD_CHANGES))) return;
+      setTabDirty(pathname, false);
+    }
     if (onCancel) {
       onCancel();
     } else {
@@ -91,6 +135,15 @@ export default function BaseFormLayout({
           <h1 className="truncate text-sm font-bold text-foreground sm:text-base">
             {title}
           </h1>
+          {hasUnsavedChanges && (
+            <span
+              className="flex shrink-0 items-center gap-1.5 rounded-full bg-warning/15 px-2 py-0.5 text-[11px] font-medium text-warning"
+              role="status"
+            >
+              <span className="size-1.5 rounded-full bg-warning" aria-hidden />
+              <span className="hidden sm:inline">ذخیره نشده</span>
+            </span>
+          )}
         </div>
 
         {/* Action Buttons */}
@@ -134,6 +187,7 @@ export default function BaseFormLayout({
                         size="sm"
                         disabled={isSubmitting || isLoading}
                         className="h-8 gap-2"
+                        aria-keyshortcuts="Control+S"
                       >
                         {isSubmitting ? (
                           <>
