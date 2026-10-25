@@ -33,22 +33,14 @@ public class InventoryDomainRepository : IInventoryDomainRepository
             .FirstOrDefaultAsync(x => x.Id == batchId, cancellationToken);
     }
 
-    public async Task<int?> GetDefaultLocationIdAsync(int productId, int warehouseId, CancellationToken cancellationToken)
-    {
-        return await _context.Set<ItemWarehouseSetting>()
-            .Where(x => x.WarehouseId == warehouseId && x.InventoryItemProfile!.ProductId == productId)
-            .Select(x => x.DefaultLocationId)
-            .FirstOrDefaultAsync(cancellationToken);
-    }
-
-    public async Task<long?> GetLastTransactionIdAsync(long docDetailId, int warehouseId, CancellationToken cancellationToken)
+    public async Task<PostedTransactionRef?> GetLastTransactionAsync(long docDetailId, int warehouseId, CancellationToken cancellationToken)
     {
         // برای پیدا کردن تراکنش اصلی جهت ابطال
         // آخرین تراکنشی که برای این سطر سند در این انبار ثبت شده را می‌گیریم
         return await _context.Set<InventoryTransaction>()
             .Where(x => x.DocDetailId == docDetailId && x.WarehouseId == warehouseId)
             .OrderByDescending(x => x.Id) // آخرین رکورد
-            .Select(x => (long?)x.Id) // بدون nullable، نبود تراکنش به‌جای null مقدار 0 برمی‌گرداند
+            .Select(x => new PostedTransactionRef(x.Id, x.LocationId))
             .FirstOrDefaultAsync(cancellationToken);
     }
 }

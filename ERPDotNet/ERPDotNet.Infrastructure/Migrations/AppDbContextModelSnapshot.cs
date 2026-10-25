@@ -488,6 +488,9 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("DestinationLocationId")
+                        .HasColumnType("int");
+
                     b.Property<long>("HeaderId")
                         .HasColumnType("bigint");
 
@@ -532,6 +535,8 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("BatchId");
+
+                    b.HasIndex("DestinationLocationId");
 
                     b.HasIndex("HeaderId");
 
@@ -2982,6 +2987,11 @@ namespace ERPDotNet.Infrastructure.Migrations
                         .HasForeignKey("BatchId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("ERPDotNet.Domain.Modules.Inventory.Entities.Location", "DestinationLocation")
+                        .WithMany()
+                        .HasForeignKey("DestinationLocationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("ERPDotNet.Domain.Modules.Inventory.Entities.InventoryDocHeader", "Header")
                         .WithMany("Details")
                         .HasForeignKey("HeaderId")
@@ -3000,6 +3010,8 @@ namespace ERPDotNet.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Batch");
+
+                    b.Navigation("DestinationLocation");
 
                     b.Navigation("Header");
 

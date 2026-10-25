@@ -34,6 +34,8 @@ public class UpdateInventoryDocDetailDto
     public decimal MainUnitQuantity { get; set; }
     public decimal SubUnitQuantity { get; set; }
     public int LocationId { get; set; }
+    // فقط برای سند انتقال
+    public int? DestinationLocationId { get; set; }
     public int? BatchId { get; set; }
     public string? Description { get; set; }
 }
@@ -105,15 +107,20 @@ public class UpdateInventoryDocHandler : IRequestHandler<UpdateInventoryDocComma
             throw ConflictException.Concurrency(); 
         }
 
-        if (!await TransferDestinationRule.IsValidAsync(_context, doc.DocTypeId, doc.WarehouseId, request.DestinationWarehouseId, cancellationToken))
+        var ruleErrors = await InventoryDocRules.ValidateAsync(
+            _context, doc.DocTypeId, doc.WarehouseId, request.DestinationWarehouseId,
+            request.Details.Select((d, i) => new InventoryDocRules.Line(i + 1, d.LocationId, d.DestinationLocationId)).ToList(),
+            cancellationToken);
+        if (ruleErrors.Count > 0)
         {
-            throw new BusinessRuleException(TransferDestinationRule.Message);
+            throw new BusinessRuleException(string.Join("\n", ruleErrors));
         }
+        var isTransfer = await InventoryDocRules.IsTransferAsync(_context, doc.DocTypeId, cancellationToken);
 
         // 4. آپدیت هدر
         doc.DocDate = request.DocDate;
         doc.Description = request.Description;
-        doc.DestinationWarehouseId = request.DestinationWarehouseId;
+        doc.DestinationWarehouseId = isTransfer ? request.DestinationWarehouseId : null;
         // نکته: Audit Fields (ModifiedBy, ModifiedAt) توسط اینترسپتور خودکار پر می‌شوند
 
         // ==================================================
@@ -150,6 +157,7 @@ public class UpdateInventoryDocHandler : IRequestHandler<UpdateInventoryDocComma
                     existingItem.MainUnitQuantity = reqDetail.MainUnitQuantity;
                     existingItem.SubUnitQuantity = reqDetail.SubUnitQuantity;
                     existingItem.LocationId = reqDetail.LocationId;
+                    existingItem.DestinationLocationId = isTransfer ? reqDetail.DestinationLocationId : null;
                     existingItem.BatchId = reqDetail.BatchId;
                     existingItem.Description = reqDetail.Description;
                     // اینجا ModifiedAt خودکار آپدیت می‌شود
@@ -165,6 +173,7 @@ public class UpdateInventoryDocHandler : IRequestHandler<UpdateInventoryDocComma
                     MainUnitQuantity = reqDetail.MainUnitQuantity,
                     SubUnitQuantity = reqDetail.SubUnitQuantity,
                     LocationId = reqDetail.LocationId,
+                    DestinationLocationId = isTransfer ? reqDetail.DestinationLocationId : null,
                     BatchId = reqDetail.BatchId,
                     Description = reqDetail.Description
                     // CreatedAt, CreatedBy خودکار پر می‌شوند

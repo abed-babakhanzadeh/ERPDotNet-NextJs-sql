@@ -34,6 +34,8 @@ public record CreateInventoryDocDetailDto
     public decimal MainUnitQuantity { get; set; }
     public decimal SubUnitQuantity { get; set; }
     public int LocationId { get; set; }
+    // فقط برای سند انتقال
+    public int? DestinationLocationId { get; set; }
     public int? BatchId { get; set; }
     public string? Description { get; set; }
 }
@@ -44,9 +46,14 @@ public class CreateInventoryDocValidator : AbstractValidator<CreateInventoryDocC
     {
         RuleFor(x => x.DocTypeId).GreaterThan(0);
         RuleFor(x => x.WarehouseId).GreaterThan(0);
-        RuleFor(x => x)
-            .MustAsync((cmd, ct) => TransferDestinationRule.IsValidAsync(context, cmd.DocTypeId, cmd.WarehouseId, cmd.DestinationWarehouseId, ct))
-            .WithMessage(TransferDestinationRule.Message);
+        RuleFor(x => x).CustomAsync(async (cmd, validation, ct) =>
+        {
+            var lines = cmd.Details
+                .Select((d, i) => new InventoryDocRules.Line(i + 1, d.LocationId, d.DestinationLocationId))
+                .ToList();
+            var errors = await InventoryDocRules.ValidateAsync(context, cmd.DocTypeId, cmd.WarehouseId, cmd.DestinationWarehouseId, lines, ct);
+            errors.ForEach(validation.AddFailure);
+        });
         RuleFor(x => x.DocDate).NotEmpty();
         RuleForEach(x => x.Details).ChildRules(detail =>
         {
@@ -104,6 +111,7 @@ public class CreateInventoryDocHandler : IRequestHandler<CreateInventoryDocComma
             Description = request.Description
         };
 
+        var isTransfer = await InventoryDocRules.IsTransferAsync(_context, request.DocTypeId, cancellationToken);
         foreach (var item in request.Details)
         {
             docHeader.Details.Add(new InventoryDocDetail
@@ -112,6 +120,7 @@ public class CreateInventoryDocHandler : IRequestHandler<CreateInventoryDocComma
                 MainUnitQuantity = item.MainUnitQuantity,
                 SubUnitQuantity = item.SubUnitQuantity,
                 LocationId = item.LocationId,
+                DestinationLocationId = isTransfer ? item.DestinationLocationId : null,
                 BatchId = item.BatchId,
                 Description = item.Description
             });

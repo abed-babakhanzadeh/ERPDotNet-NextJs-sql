@@ -44,6 +44,10 @@ public class InventoryDocDetailDto
     
     public int LocationId { get; set; }
     public string LocationCode { get; set; } = string.Empty;
+
+    // فقط سند انتقال
+    public int? DestinationLocationId { get; set; }
+    public string? DestinationLocationCode { get; set; }
     
     public int? BatchId { get; set; }
     public string? BatchNumber { get; set; }
