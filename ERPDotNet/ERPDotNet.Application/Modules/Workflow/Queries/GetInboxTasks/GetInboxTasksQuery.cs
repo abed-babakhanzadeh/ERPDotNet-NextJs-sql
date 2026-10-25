@@ -50,7 +50,14 @@ public class GetInboxTasksHandler : IRequestHandler<GetInboxTasksQuery, Paginate
         var executableTransitions = _context.BpmsTransitions
             .Where(tr => tr.IsActive)
             .Where(BpmsTransitionAccess.CanExecute(userRoles));
-        query = query.Where(t => executableTransitions.Any(tr => tr.FromStateId == t.Instance.CurrentStateId));
+        // و کارهای سررسیدگذشته‌ای که به نقش کاربر ارجاع شده‌اند
+        var now = DateTime.UtcNow;
+        var roleIds = userRoles.AllRoleIds.ToList();
+        bool isAdmin = userRoles.IsAdmin;
+        query = query.Where(t =>
+            executableTransitions.Any(tr => tr.FromStateId == t.Instance.CurrentStateId) ||
+            (t.DueDate < now && t.State.EscalationRoleId != null &&
+             (isAdmin || roleIds.Contains(t.State.EscalationRoleId))));
 
         if (!string.IsNullOrWhiteSpace(request.ProcessCode))
         {
@@ -67,7 +74,9 @@ public class GetInboxTasksHandler : IRequestHandler<GetInboxTasksQuery, Paginate
             TaskTitle = t.Title,
             StateTitle = t.Instance.CurrentState.Title,
             TargetRecordId = t.Instance.TargetRecordId,
-            CreatedAt = t.CreatedAt
+            CreatedAt = t.CreatedAt,
+            DueDate = t.DueDate,
+            IsOverdue = t.DueDate < now
         });
 
         // 3. جستجوی کلی (SearchBox)
@@ -123,6 +132,7 @@ public class GetInboxTasksHandler : IRequestHandler<GetInboxTasksQuery, Paginate
         "statetitle" => "StateTitle",
         "targetrecordid" => "TargetRecordId",
         "createdat" => "CreatedAt",
+        "duedate" => "DueDate",
         _ => column ?? string.Empty 
     };
 }

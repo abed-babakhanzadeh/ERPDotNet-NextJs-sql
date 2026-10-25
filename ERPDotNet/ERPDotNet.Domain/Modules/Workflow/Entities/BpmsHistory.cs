@@ -13,6 +13,9 @@ public class BpmsHistory : BaseEntity
     public required string PerformedByUserId { get; set; }
     public string? Comment { get; set; }
 
+    // وقتی اقدام با تفویض اختیار انجام شده، کاربری که اختیارش تفویض شده بود
+    public string? OnBehalfOfUserId { get; set; }
+
     public BpmsInstance Instance { get; set; } = null!;
     public BpmsState FromState { get; set; } = null!;
     public BpmsState ToState { get; set; } = null!;

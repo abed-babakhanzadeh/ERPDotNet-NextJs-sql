@@ -378,6 +378,183 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Workflow/Tasks/states/{id}/sla": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateStateSlaCommand"];
+                    "text/json": components["schemas"]["UpdateStateSlaCommand"];
+                    "application/*+json": components["schemas"]["UpdateStateSlaCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Workflow/Tasks/delegations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DelegationDto"][];
+                        "application/json": components["schemas"]["DelegationDto"][];
+                        "text/json": components["schemas"]["DelegationDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateDelegationCommand"];
+                    "text/json": components["schemas"]["CreateDelegationCommand"];
+                    "application/*+json": components["schemas"]["CreateDelegationCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": number;
+                        "application/json": number;
+                        "text/json": number;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Workflow/Tasks/delegations/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DelegateUserDto"][];
+                        "application/json": components["schemas"]["DelegateUserDto"][];
+                        "text/json": components["schemas"]["DelegateUserDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Workflow/Tasks/delegations/{id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Workflow/Tasks/transitions/{id}/roles": {
         parameters: {
             query?: never;
@@ -4763,6 +4940,14 @@ export interface components {
             /** Format: int32 */
             parentId?: null | number;
         };
+        CreateDelegationCommand: {
+            toUserId: string;
+            /** Format: date-time */
+            startDate: string;
+            /** Format: date-time */
+            endDate: string;
+            reason?: null | string;
+        };
         CreateFiscalYearCommand: {
             /** Format: int32 */
             companyId: number;
@@ -4861,6 +5046,9 @@ export interface components {
             title: string;
             stateCode: string;
             type: components["schemas"]["BpmsStateType"];
+            /** Format: int32 */
+            slaHours?: null | number;
+            escalationRoleId?: null | string;
         };
         CreateStockCountCommand: {
             /** Format: int32 */
@@ -4923,6 +5111,27 @@ export interface components {
             /** Format: int32 */
             companyId?: null | number;
             isActive: boolean;
+        };
+        DelegateUserDto: {
+            id: string;
+            fullName: string;
+            userName: string;
+        };
+        DelegationDto: {
+            /** Format: int32 */
+            id: number;
+            fromUserId: string;
+            fromUserName: string;
+            toUserId: string;
+            toUserName: string;
+            /** Format: date-time */
+            startDate: string;
+            /** Format: date-time */
+            endDate: string;
+            reason: null | string;
+            isRevoked: boolean;
+            isActive: boolean;
+            isMine: boolean;
         };
         FefoAllocationDto: {
             lines: components["schemas"]["FefoLineDto"][];
@@ -5201,6 +5410,9 @@ export interface components {
             targetRecordId: number;
             /** Format: date-time */
             createdAt: string;
+            /** Format: date-time */
+            dueDate?: null | string;
+            isOverdue: boolean;
         };
         InventoryBatchDto: {
             /** Format: int32 */
@@ -5716,6 +5928,10 @@ export interface components {
             stateCode: string;
             /** Format: int32 */
             type: number;
+            /** Format: int32 */
+            slaHours?: null | number;
+            escalationRoleId?: null | string;
+            escalationRoleName?: null | string;
         };
         StockCountDto: {
             /** Format: int32 */
@@ -5832,7 +6048,20 @@ export interface components {
             targetRecordId: number;
             /** Format: date-time */
             createdAt: string;
+            /** Format: date-time */
+            dueDate?: null | string;
+            isOverdue: boolean;
+            viaEscalation: boolean;
             availableTransitions: components["schemas"]["TaskTransitionDto"][];
+            history: components["schemas"]["TaskHistoryDto"][];
+        };
+        TaskHistoryDto: {
+            actionTitle: string;
+            performedBy: string;
+            onBehalfOf?: null | string;
+            comment?: null | string;
+            /** Format: date-time */
+            createdAt: string;
         };
         TaskTransitionDto: {
             /** Format: int32 */
@@ -6037,6 +6266,13 @@ export interface components {
         UpdateRolePermissionsCommand: {
             roleId: string;
             permissionIds: (number)[];
+        };
+        UpdateStateSlaCommand: {
+            /** Format: int32 */
+            id: number;
+            /** Format: int32 */
+            slaHours?: null | number;
+            escalationRoleId?: null | string;
         };
         UpdateStockCountCommand: {
             /** Format: int32 */

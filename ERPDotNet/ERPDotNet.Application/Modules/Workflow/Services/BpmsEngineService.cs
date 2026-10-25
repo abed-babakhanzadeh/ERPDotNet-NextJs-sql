@@ -110,6 +110,7 @@ public class BpmsEngineService : IBpmsEngineService
             var transition = await _context.BpmsTransitions
                 .Include(x => x.Rules)
                 .Include(x => x.AllowedRoles)
+                .Include(x => x.FromState)
                 .Include(x => x.ToState)
                 .FirstOrDefaultAsync(x => x.Id == request.TransitionId &&
                                           x.FromStateId == instance.CurrentStateId &&
@@ -125,7 +126,10 @@ public class BpmsEngineService : IBpmsEngineService
             }
 
             // 4. اعتبارسنجی سطح دسترسی و موتور قوانین (Rule Evaluation)
-            await ValidateTransitionAsync(transition, request.UserId, instance.Variables.Data, cancellationToken);
+            // کار سررسید گذشته به نقش ارجاع مرحله هم اجازه اقدام می‌دهد
+            bool overdue = instance.Tasks.Any(t => t.DueDate < DateTime.UtcNow);
+            var onBehalfOfUserId = await ValidateTransitionAsync(
+                transition, request.UserId, overdue, instance.Variables.Data, cancellationToken);
 
             // 5. تغییر وضعیت (State Change)
             int oldStateId = instance.CurrentStateId;
@@ -152,6 +156,7 @@ public class BpmsEngineService : IBpmsEngineService
                 ToStateId = transition.ToStateId,
                 ActionTitle = transition.ActionTitle,
                 PerformedByUserId = request.UserId,
+                OnBehalfOfUserId = onBehalfOfUserId,
                 Comment = request.Comment
             };
             _context.BpmsHistories.Add(history);
@@ -211,15 +216,17 @@ public class BpmsEngineService : IBpmsEngineService
     // متدهای کمکی خصوصی
     // ==============================================================================
 
-    private async Task ValidateTransitionAsync(
+    // خروجی: کاربری که اقدام از طرف او (با تفویض) انجام شده، یا null
+    private async Task<string?> ValidateTransitionAsync(
         BpmsTransition transition,
         string userId,
+        bool overdue,
         IReadOnlyDictionary<string, object?> variables,
         CancellationToken cancellationToken)
     {
-        // الف) بررسی سطح دسترسی بر اساس نقش‌های مجاز گذار
+        // الف) بررسی سطح دسترسی بر اساس نقش‌های مجاز گذار، تفویض و ارجاع پس از سررسید
         var userRoles = await BpmsTransitionAccess.GetUserRolesAsync(_context, userId, cancellationToken);
-        if (!BpmsTransitionAccess.CanExecute(userRoles).Compile()(transition))
+        if (!BpmsTransitionAccess.TryAuthorize(userRoles, transition, overdue, out var onBehalfOfUserId))
         {
             throw new BusinessRuleException("شما دسترسی اجرای این عملیات را ندارید.");
         }
@@ -233,13 +240,18 @@ public class BpmsEngineService : IBpmsEngineService
                 throw new BusinessRuleException("شرایط لازم برای انتقال به این وضعیت (طبق قوانین تعریف‌شده) برقرار نیست.");
             }
         }
+
+        return onBehalfOfUserId;
     }
 
     private async Task CreateTasksForStateAsync(BpmsInstance instance, int stateId, int companyId, CancellationToken cancellationToken)
     {
-        // در یک سیستم واقعی، اینجا بر اساس تنظیمات State، تعیین می‌کنیم که تسک برای چه نقشی برود.
-        // فعلاً یک تسک عمومی (برای کارتابل) می‌سازیم.
-        
+        // کار برای کارتابل عمومی ساخته می‌شود؛ دسترسی را نقش‌های دکمه‌های مرحله تعیین می‌کنند
+        var slaHours = await _context.BpmsStates
+            .Where(s => s.Id == stateId)
+            .Select(s => s.SlaHours)
+            .FirstOrDefaultAsync(cancellationToken);
+
         var task = new BpmsTask
         {
             Instance = instance,
@@ -247,10 +259,10 @@ public class BpmsEngineService : IBpmsEngineService
             CompanyId = companyId,
             Title = $"بررسی پرونده شماره {instance.TargetRecordId}",
             IsCompleted = false,
+            DueDate = slaHours > 0 ? DateTime.UtcNow.AddHours(slaHours.Value) : null,
             // می‌توان دیتای حیاتی (مبلغ و غیره) را در SummaryJson ذخیره کرد تا کارتابل سریع لود شود
         };
 
         _context.BpmsTasks.Add(task);
-        await Task.CompletedTask;
     }
 }

@@ -64,6 +64,7 @@ public class AppDbContext : IdentityDbContext<User>, IApplicationDbContext
     public DbSet<BpmsInstance> BpmsInstances { get; set; }
     public DbSet<BpmsTask> BpmsTasks { get; set; }
     public DbSet<BpmsHistory> BpmsHistories { get; set; }
+    public DbSet<BpmsDelegation> BpmsDelegations { get; set; }
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
