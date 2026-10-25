@@ -212,6 +212,7 @@ export async function createDoc(
       quantity: number;
       locationId: number;
       destinationLocationId?: number;
+      batchId?: number;
       serialNumbers?: string[];
     }[];
   },
@@ -230,6 +231,7 @@ export async function createDoc(
         subUnitQuantity: 0,
         locationId: l.locationId,
         destinationLocationId: l.destinationLocationId ?? null,
+        batchId: l.batchId ?? null,
         serialNumbers: l.serialNumbers ?? [],
       })),
     },
@@ -264,7 +266,12 @@ export async function stockOf(
 /** کالا را بچ‌دار می‌کند و یک بچ برایش می‌سازد */
 export async function createBatch(
   api: APIRequestContext,
-  p: { productId: number; unitId: number; batchNumber: string },
+  p: {
+    productId: number;
+    unitId: number;
+    batchNumber: string;
+    expiryDate?: Date;
+  },
 ): Promise<number> {
   const profile = await api.post("/api/Inventory/Inventory/products/profile", {
     data: {
@@ -279,7 +286,11 @@ export async function createBatch(
       `تنظیم بچ کالا: ${profile.status()} ${await profile.text()}`,
     );
   const res = await api.post("/api/Inventory/Inventory/batches", {
-    data: { productId: p.productId, batchNumber: p.batchNumber },
+    data: {
+      productId: p.productId,
+      batchNumber: p.batchNumber,
+      expiryDate: p.expiryDate?.toISOString() ?? null,
+    },
   });
   if (!res.ok())
     throw new Error(`ساخت بچ: ${res.status()} ${await res.text()}`);

@@ -2783,6 +2783,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Inventory/Inventory/batches/fefo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["GetFefoAllocationQuery"];
+                    "text/json": components["schemas"]["GetFefoAllocationQuery"];
+                    "application/*+json": components["schemas"]["GetFefoAllocationQuery"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["FefoAllocationDto"];
+                        "application/json": components["schemas"]["FefoAllocationDto"];
+                        "text/json": components["schemas"]["FefoAllocationDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Inventory/Inventory/batches/{id}": {
         parameters: {
             query?: never;
@@ -4633,6 +4676,25 @@ export interface components {
             companyId?: null | number;
             isActive: boolean;
         };
+        FefoAllocationDto: {
+            lines: components["schemas"]["FefoLineDto"][];
+            /** Format: double */
+            shortage: number;
+        };
+        FefoLineDto: {
+            /** Format: int32 */
+            batchId: number;
+            batchNumber: string;
+            /** Format: date-time */
+            expiryDate: null | string;
+            /** Format: int32 */
+            locationId: null | number;
+            locationCode: null | string;
+            /** Format: double */
+            available: number;
+            /** Format: double */
+            quantity: number;
+        };
         FilterModel: {
             propertyName: string;
             operation: string;
@@ -4740,6 +4802,16 @@ export interface components {
             filters?: null | components["schemas"]["FilterModel"][];
             searchTerm?: null | string;
             excludeZeroBalances: boolean;
+        };
+        GetFefoAllocationQuery: {
+            /** Format: int32 */
+            productId: number;
+            /** Format: int32 */
+            warehouseId: number;
+            /** Format: double */
+            quantity: number;
+            /** Format: date-time */
+            asOfDate?: null | string;
         };
         GetFiscalYearsQuery: {
             /** Format: int32 */

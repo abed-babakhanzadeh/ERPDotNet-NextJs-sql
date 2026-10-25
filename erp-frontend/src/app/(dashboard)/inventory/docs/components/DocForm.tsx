@@ -19,6 +19,7 @@ import {
   Loader2,
   Pencil,
   Send,
+  CalendarClock,
 } from "lucide-react";
 
 import MasterDetailForm from "@/components/form/MasterDetailForm";
@@ -99,6 +100,8 @@ export default function DocForm({
   const requestedBatches = useRef(new Set<number>());
   // کالاهای سریال‌دار (از تنظیمات انبار کالا)؛ ستون سریال فقط برای آن‌ها لازم است
   const [serialManaged, setSerialManaged] = useState<Record<number, boolean>>({});
+  const [batchManaged, setBatchManaged] = useState<Record<number, boolean>>({});
+  const [allocating, setAllocating] = useState(false);
 
   const isInitialized = useRef(false);
   // نسخه state همان پرچم؛ تا هشدار «تغییرات ذخیره‌نشده» پیش از پر شدن فرم نیاید
@@ -250,6 +253,7 @@ export default function DocForm({
         ]);
         setBatchesByProduct((prev) => ({ ...prev, [productId]: batches }));
         setSerialManaged((prev) => ({ ...prev, [productId]: !!profile?.isSerialManaged }));
+        setBatchManaged((prev) => ({ ...prev, [productId]: !!profile?.isBatchManaged }));
       } catch {
         requestedBatches.current.delete(productId);
       }
@@ -339,6 +343,64 @@ export default function DocForm({
 
 
   const isTransfer = isTransferType(headerData.docTypeId ?? null);
+  const nature = docTypes.find((dt) => dt.id === Number(headerData.docTypeId))?.natureValue;
+  const isOutgoing = nature === InventoryNature.Output || nature === InventoryNature.Transfer;
+  // سطرهای خروجی کالای بچ‌دار که هنوز بچ ندارند
+  const needsBatch = (row: DocRow) =>
+    batchManaged[Number(row.productId)] && !row.batchId && Number(row.mainUnitQuantity) > 0;
+  const canAllocateFefo = isOutgoing && !isReadOnly && gridData.some(needsBatch);
+
+  // هر سطر به یک یا چند سطر با بچ و قفسه پیشنهادی (زودترین انقضا اول) شکسته می‌شود
+  const handleFefo = async () => {
+    if (!headerData.warehouseId) {
+      toast.error("ابتدا انبار را انتخاب کنید");
+      return;
+    }
+    setAllocating(true);
+    try {
+      const shortages: string[] = [];
+      const next: DocRow[] = [];
+      for (const row of gridData) {
+        if (!needsBatch(row)) {
+          next.push(row);
+          continue;
+        }
+        const res = await inventoryService.suggestFefo({
+          productId: Number(row.productId),
+          warehouseId: Number(headerData.warehouseId),
+          quantity: Number(row.mainUnitQuantity),
+          asOfDate: headerData.docDate ? new Date(headerData.docDate).toISOString() : undefined,
+        });
+        if (res.shortage > 0) shortages.push(`${row.productName || row.productCode}: ${res.shortage}`);
+        if (res.lines.length === 0) {
+          next.push(row);
+          continue;
+        }
+        res.lines.forEach((l, i) =>
+          next.push({
+            ...row,
+            id: i === 0 ? row.id : null,
+            tempId: i === 0 ? row.tempId : undefined,
+            mainUnitQuantity: l.quantity,
+            batchId: l.batchId,
+            batchNumber: l.batchNumber,
+            locationId: l.locationId ?? row.locationId,
+          }),
+        );
+        // کسری روی سطر جداگانه بدون بچ می‌ماند تا کاربر تصمیم بگیرد
+        if (res.shortage > 0)
+          next.push({ ...row, id: null, tempId: undefined, mainUnitQuantity: res.shortage, batchId: null });
+      }
+      setGridData(next);
+      if (shortages.length)
+        toast.warning(`موجودی بچ‌های قابل خروج کافی نیست (${shortages.join("، ")})`);
+      else toast.success("بچ‌ها به روش FEFO تخصیص داده شدند");
+    } catch (error) {
+      handleApiError(error, "خطا در پیشنهاد بچ");
+    } finally {
+      setAllocating(false);
+    }
+  };
 
   const headerFields: FieldConfig[] = [
     {
@@ -791,6 +853,22 @@ export default function DocForm({
               {isReloading && (
                 <div className="absolute inset-0 bg-background/50 backdrop-blur-sm z-50 flex items-center justify-center">
                   <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                </div>
+              )}
+              {canAllocateFefo && (
+                <div className="flex items-center justify-between gap-2 border-b bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                  <span>برای سطرهای بدون بچ، بچ و قفسه از زودترین تاریخ انقضا پیشنهاد می‌شود.</span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleFefo}
+                    disabled={allocating}
+                    className="h-7 gap-1.5 text-xs"
+                  >
+                    {allocating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CalendarClock className="w-3.5 h-3.5" />}
+                    تخصیص بچ (FEFO)
+                  </Button>
                 </div>
               )}
               <AdvancedEditableGrid
