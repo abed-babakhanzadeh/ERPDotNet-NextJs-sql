@@ -381,6 +381,27 @@ export interface UpdateInventoryDocCommand {
 // Current Stock (موجودی لحظه‌ای)
 // ==========================================
 
+/** ردیفی که موجودی لحظه‌ای آن با جمع تراکنش‌ها نمی‌خواند */
+export interface StockRebuildRowDto {
+  stockId: number | null;
+  warehouseId: number;
+  warehouseTitle: string;
+  productId: number;
+  productCode: string;
+  productName: string;
+  locationId: number | null;
+  batchId: number | null;
+  currentQuantity: number;
+  expectedQuantity: number;
+  difference: number;
+}
+
+export interface StockRebuildResultDto {
+  updated: number;
+  created: number;
+  zeroed: number;
+}
+
 export interface InventoryStockDto {
   id: number;
   warehouseTitle: string;

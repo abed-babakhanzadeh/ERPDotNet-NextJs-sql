@@ -115,6 +115,7 @@ public class PermissionConfiguration : IEntityTypeConfiguration<Permission>
             new Permission { Id = 3300, Name = "Inventory.Reports", Title = "گزارشات", IsMenu = true, ParentId = 3000 },
             new Permission { Id = 3301, Name = "Inventory.Reports.CurrentStock", Title = "موجودی لحظه‌ای", IsMenu = true, ParentId = 3300, Url = "/inventory/reports/current-stock" },
             new Permission { Id = 3302, Name = "Inventory.Reports.Cardex", Title = "کاردکس کالا", IsMenu = true, ParentId = 3300, Url = "/inventory/reports/cardex" },
+            new Permission { Id = 3303, Name = "Inventory.Stock.Rebuild", Title = "بازسازی موجودی از روی تراکنش‌ها", IsMenu = false, ParentId = 3301 },
 
             // =========================================================
             // === ماژول گردش کار و کارتابل (Workflow) - سری 4000 ===
