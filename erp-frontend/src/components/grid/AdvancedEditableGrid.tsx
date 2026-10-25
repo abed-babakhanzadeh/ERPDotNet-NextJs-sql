@@ -182,6 +182,7 @@ export default function AdvancedEditableGrid<
                       ) : /* 4. حالت سلکت */
                       col.type === "select" ? (
                         <select
+                          aria-label={`${col.title} ردیف ${index + 1}`}
                           disabled={readOnly || loading || col.disabled}
                           value={String(row[col.key] || "")}
                           onChange={(e) =>
@@ -205,6 +206,7 @@ export default function AdvancedEditableGrid<
                         /* 5. حالت پیش‌فرض (Input Text/Number) */
                         <input
                           type={col.type}
+                          aria-label={`${col.title} ردیف ${index + 1}`}
                           disabled={readOnly || loading || col.disabled}
                           value={String(row[col.key] || "")}
                           placeholder={col.placeholder}
@@ -234,6 +236,7 @@ export default function AdvancedEditableGrid<
                           size="icon"
                           className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                           onClick={() => handleRemoveRow(index)}
+                          aria-label={`حذف ردیف ${index + 1}`}
                         >
                           <Trash2 size={15} />
                         </Button>

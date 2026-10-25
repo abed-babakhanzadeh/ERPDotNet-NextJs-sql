@@ -203,6 +203,7 @@ export default function EditableGrid<T extends { id?: number | string }>({
                         col.render(row, index)
                       ) : col.type === "select" ? (
                         <select
+                          aria-label={`${col.title} ردیف ${index + 1}`}
                           disabled={readOnly || loading || col.disabled}
                           value={String(row[col.key] || "")}
                           onChange={(e) =>
@@ -239,6 +240,7 @@ export default function EditableGrid<T extends { id?: number | string }>({
                       ) : (
                         <input
                           type={col.type}
+                          aria-label={`${col.title} ردیف ${index + 1}`}
                           disabled={readOnly || loading || col.disabled}
                           value={String(row[col.key] || "")}
                           placeholder={col.placeholder}

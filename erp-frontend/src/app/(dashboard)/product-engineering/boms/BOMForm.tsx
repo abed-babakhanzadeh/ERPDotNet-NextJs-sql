@@ -486,6 +486,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
                 searchableFields={["code", "name"]}
                 displayFields={["code", "name"]}
                 placeholder={row.childProductName || "جستجو..."}
+                ariaLabel={`ماده اولیه ردیف ${index + 1}`}
                 disabled={isReadOnly}
                 onSearch={onSearchGrid}
                 onOpenChange={(isOpen) => {
@@ -493,23 +494,42 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
                     onSearchGrid("");
                 }}
                 onValueChange={async (newId, item) => {
-                  const units = await fetchProductUnits(newId as number);
-
-                  const newDetails = [...details];
-                  newDetails[index] = {
-                    ...newDetails[index],
-                    childProductId: newId as number,
-                    childProductName: item?.name,
-                    childProductCode: item?.code,
-                    baseUnitId: units[0].value,
-                    unitName: units[0].label,
-                    inputUnitId: units[0].value,
-                    inputQuantity: 1,
-                    quantity: 1,
-                    unitOptions: units,
-                    substitutes: [],
-                  };
-                  setDetails(newDetails);
+                  const productId = newId as number;
+                  // کالا همان لحظه ثبت می‌شود؛ واحدها بعد از پاسخ سرور اضافه می‌شوند.
+                  // به‌روزرسانی تابعی است تا مقداری که کاربر در این فاصله وارد کرده یا سطری که افزوده از دست نرود.
+                  setDetails((prev) =>
+                    prev.map((r, i) =>
+                      i === index
+                        ? {
+                            ...r,
+                            childProductId: productId,
+                            childProductName: item?.name,
+                            childProductCode: item?.code,
+                            inputQuantity: 1,
+                            quantity: 1,
+                            substitutes: [],
+                          }
+                        : r,
+                    ),
+                  );
+                  const units = await fetchProductUnits(productId);
+                  const mainUnit = units[0];
+                  if (!mainUnit) return;
+                  setDetails((prev) =>
+                    prev.map((r, i) =>
+                      i === index && r.childProductId === productId
+                        ? {
+                            ...r,
+                            baseUnitId: mainUnit.value,
+                            unitName: mainUnit.label,
+                            inputUnitId: mainUnit.value,
+                            unitOptions: units,
+                            // ضریب واحد اصلی ۱ است
+                            quantity: r.inputQuantity,
+                          }
+                        : r,
+                    ),
+                  );
                 }}
               />
             </div>
@@ -549,6 +569,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
         render: (row, index) => (
           <input
             type="number"
+            aria-label={`مقدار مصرفی ردیف ${index + 1}`}
             className="w-full h-8 border rounded px-2 text-center focus:ring-2 focus:ring-primary/20 outline-none"
             value={row.inputQuantity}
             disabled={isReadOnly}
@@ -575,6 +596,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
         disabled: isReadOnly,
         render: (row, index) => (
           <select
+            aria-label={`واحد مصرفی ردیف ${index + 1}`}
             className="w-full h-8 border rounded px-1 text-xs bg-background focus:ring-2 focus:ring-primary/20 outline-none"
             value={row.inputUnitId}
             disabled={isReadOnly}
@@ -689,6 +711,12 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
       toast.error("اقلام فرمول وارد نشده");
       return;
     }
+    // واحد ردیف بعد از انتخاب کالا از سرور می‌آید؛ تا نرسیده ثبت نمی‌کنیم تا واحد صفر نرود
+    const pendingUnit = details.findIndex((d) => d.childProductId && !d.inputUnitId);
+    if (pendingUnit >= 0) {
+      toast.error(`واحد ردیف ${pendingUnit + 1} هنوز بارگذاری نشده است؛ چند لحظه دیگر دوباره ثبت کنید.`);
+      return;
+    }
 
     setSubmitting(true);
 
@@ -789,6 +817,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
             displayFields={["code", "name"]}
             disabled={isReadOnly || mode === "edit"}
             placeholder={headerData.productName || "جستجو..."}
+            ariaLabel="کالا/قلم (محصول یا نیمه ساخته)"
             onValueChange={(val, item) => {
               setHeaderData((prev) => ({
                 ...prev,
@@ -989,6 +1018,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
                 { key: "title", label: "عنوان", width: "40%" },
               ]}
               searchableFields={["productName", "productCode", "title"]}
+              ariaLabel="انتخاب BOM منبع"
               displayFields={["productName", "version"]}
               onSearch={onSearchTemplate}
               onOpenChange={(isOpen) => {

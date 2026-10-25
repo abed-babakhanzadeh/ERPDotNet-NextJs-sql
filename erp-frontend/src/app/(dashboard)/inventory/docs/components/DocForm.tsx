@@ -362,6 +362,7 @@ export default function DocForm({
             loading={productsLoading}
             onSearch={handleProductSearch}
             placeholder="کد یا نام کالا..."
+            ariaLabel={`کالا ردیف ${index + 1}`}
             displayFields={["code", "name"]}
             disabled={isReadOnly}
           />
