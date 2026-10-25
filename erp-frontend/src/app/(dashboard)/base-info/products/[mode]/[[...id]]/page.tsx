@@ -27,7 +27,7 @@ export default function ProductPage({ params }: PageProps) {
   // پرمیشن گارد بر اساس مود
   const requiredPermission =
     mode === "view"
-      ? "BaseInfo.Products.View"
+      ? "BaseInfo.Products"
       : mode === "create"
         ? "BaseInfo.Products.Create"
         : "BaseInfo.Products.Edit";
