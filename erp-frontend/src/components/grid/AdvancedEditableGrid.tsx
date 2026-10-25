@@ -126,7 +126,7 @@ export default function AdvancedEditableGrid<
                     style={{ width: col.width }}
                   >
                     {col.title}{" "}
-                    {col.required && <span className="text-red-500">*</span>}
+                    {col.required && <span className="text-destructive">*</span>}
                   </th>
                 ))}
                 {!readOnly && (
@@ -191,7 +191,7 @@ export default function AdvancedEditableGrid<
                             "w-full h-8 rounded border border-input bg-background px-2 text-xs focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary disabled:opacity-50 text-right transition-all",
                             !row[col.key] &&
                               col.required &&
-                              "border-red-300 bg-red-50/50",
+                              "border-destructive/40 bg-destructive/5",
                           )}
                         >
                           <option value="">انتخاب...</option>
@@ -218,7 +218,7 @@ export default function AdvancedEditableGrid<
                               : "text-right",
                             !row[col.key] &&
                               col.required &&
-                              "border-red-300 bg-red-50/50",
+                              "border-destructive/40 bg-destructive/5",
                           )}
                         />
                       )}

@@ -199,35 +199,35 @@ export default function ProcessDesignerPage({
 
   if (loading)
     return (
-      <div className="p-8 text-center text-slate-500">
+      <div className="p-8 text-center text-muted-foreground">
         در حال بارگذاری اطلاعات طراح...
       </div>
     );
   if (!process)
-    return <div className="p-8 text-center text-red-500">فرآیند یافت نشد.</div>;
+    return <div className="p-8 text-center text-destructive">فرآیند یافت نشد.</div>;
 
   return (
     <div className="flex flex-col gap-6 p-4 max-w-[1400px] mx-auto">
       {/* هدر فرآیند */}
-      <div className="flex items-center justify-between bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+      <div className="flex items-center justify-between bg-card p-6 rounded-xl border border-border shadow-sm">
         <div className="flex items-center gap-4">
           <Button
             variant="outline"
             size="icon"
             onClick={() => router.push("/workflow/designer")}
           >
-            <ArrowRight className="w-5 h-5 text-slate-600" />
+            <ArrowRight className="w-5 h-5 text-muted-foreground" />
           </Button>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-slate-800">
+              <h1 className="text-2xl font-bold text-foreground">
                 {process.title}
               </h1>
-              <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+              <Badge variant="secondary" className="bg-primary/15 text-primary">
                 v{process.activeVersionNumber}
               </Badge>
             </div>
-            <p className="text-sm text-slate-500 mt-1 font-mono">
+            <p className="text-sm text-muted-foreground mt-1 font-mono">
               {process.processCode} • Target: {process.targetEntityName}
             </p>
           </div>
@@ -238,14 +238,14 @@ export default function ProcessDesignerPage({
         {/* پنل سمت راست: لیست مراحل (States) */}
         <Card className="border-t-4 border-t-emerald-500 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-lg flex items-center gap-2 text-slate-800">
-              <ListChecks className="w-5 h-5 text-emerald-600" /> مراحل گردش کار
+            <CardTitle className="text-lg flex items-center gap-2 text-foreground">
+              <ListChecks className="w-5 h-5 text-success" /> مراحل گردش کار
               (States)
             </CardTitle>
             <Button
               size="sm"
               onClick={() => setIsStateModalOpen(true)}
-              className="bg-emerald-600 hover:bg-emerald-700"
+              className="bg-success hover:bg-success/90"
             >
               <Plus className="w-4 h-4 ml-1" /> افزودن مرحله
             </Button>
@@ -253,20 +253,20 @@ export default function ProcessDesignerPage({
           <CardContent>
             <div className="space-y-3 mt-4">
               {process.states.length === 0 ? (
-                <p className="text-sm text-slate-500 text-center py-4">
+                <p className="text-sm text-muted-foreground text-center py-4">
                   هنوز مرحله‌ای تعریف نشده است.
                 </p>
               ) : (
                 process.states.map((state: StateDto) => (
                   <div
                     key={state.id}
-                    className="flex items-center justify-between p-3 bg-slate-50 border rounded-lg"
+                    className="flex items-center justify-between p-3 bg-muted border rounded-lg"
                   >
                     <div className="flex flex-col">
-                      <span className="font-semibold text-slate-800">
+                      <span className="font-semibold text-foreground">
                         {state.title}
                       </span>
-                      <span className="text-xs text-slate-500 font-mono">
+                      <span className="text-xs text-muted-foreground font-mono">
                         Code: {state.stateCode}
                       </span>
                     </div>
@@ -295,14 +295,14 @@ export default function ProcessDesignerPage({
         {/* پنل سمت چپ: لیست ارتباطات و دکمه‌ها (Transitions) */}
         <Card className="border-t-4 border-t-blue-500 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-lg flex items-center gap-2 text-slate-800">
-              <GitMerge className="w-5 h-5 text-blue-600" /> ارتباطات و دکمه‌ها
+            <CardTitle className="text-lg flex items-center gap-2 text-foreground">
+              <GitMerge className="w-5 h-5 text-primary" /> ارتباطات و دکمه‌ها
               (Transitions)
             </CardTitle>
             <Button
               size="sm"
               onClick={() => setIsTransitionModalOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-primary hover:bg-primary/90"
             >
               <Plus className="w-4 h-4 ml-1" /> اتصال مراحل
             </Button>
@@ -310,17 +310,17 @@ export default function ProcessDesignerPage({
           <CardContent>
             <div className="space-y-3 mt-4">
               {process.transitions.length === 0 ? (
-                <p className="text-sm text-slate-500 text-center py-4">
+                <p className="text-sm text-muted-foreground text-center py-4">
                   هنوز هیچ دکمه یا ارتباطی تعریف نشده است.
                 </p>
               ) : (
                 process.transitions.map((t) => (
                   <div
                     key={t.id}
-                    className="flex flex-col p-3 bg-blue-50/30 border border-blue-100 rounded-lg relative overflow-hidden"
+                    className="flex flex-col p-3 bg-primary/5 border border-primary/15 rounded-lg relative overflow-hidden"
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <span className="font-bold text-blue-900 text-sm bg-blue-100 px-2 py-1 rounded">
+                      <span className="font-bold text-primary text-sm bg-primary/15 px-2 py-1 rounded">
                         دکمه: {t.actionTitle}
                       </span>
                       {t.actionCode && (
@@ -332,14 +332,14 @@ export default function ProcessDesignerPage({
                         </Badge>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-slate-600">
-                      <CircleDot className="w-4 h-4 text-amber-500" />
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <CircleDot className="w-4 h-4 text-warning" />
                       <span>{t.fromStateTitle}</span>
-                      <ArrowRight className="w-4 h-4 text-slate-400 mx-1" />
-                      <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                      <ArrowRight className="w-4 h-4 text-muted-foreground mx-1" />
+                      <CheckCircle2 className="w-4 h-4 text-success" />
                       <span>{t.toStateTitle}</span>
                     </div>
-                    <div className="mt-3 flex items-center justify-between gap-2 border-t border-blue-100 pt-2">
+                    <div className="mt-3 flex items-center justify-between gap-2 border-t border-primary/15 pt-2">
                       <div className="flex flex-wrap items-center gap-1">
                         {t.roles.length === 0 ? (
                           <Badge
@@ -460,7 +460,7 @@ export default function ProcessDesignerPage({
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label className="text-amber-600">از مرحله (مبدا)</Label>
+                <Label className="text-warning">از مرحله (مبدا)</Label>
                 <Select
                   value={newTransition.fromStateId}
                   onValueChange={(v) =>
@@ -480,7 +480,7 @@ export default function ProcessDesignerPage({
                 </Select>
               </div>
               <div className="grid gap-2">
-                <Label className="text-emerald-600">به مرحله (مقصد)</Label>
+                <Label className="text-success">به مرحله (مقصد)</Label>
                 <Select
                   value={newTransition.toStateId}
                   onValueChange={(v) =>
@@ -553,7 +553,7 @@ export default function ProcessDesignerPage({
                   })
                 }
               />
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 اگر این دکمه باید کدی در بک‌اند (مثل تغییر وضعیت سند یا کسر
                 موجودی) اجرا کند، ActionCode مربوطه را بنویسید.
               </p>

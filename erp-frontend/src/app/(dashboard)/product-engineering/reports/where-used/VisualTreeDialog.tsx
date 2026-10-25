@@ -197,34 +197,34 @@ export default function VisualTreeDialog({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-[75vw] w-full h-[90vh] flex flex-col p-0 gap-0 overflow-hidden border-none shadow-2xl rounded-xl">
         {/* Header */}
-        <DialogHeader className="px-6 py-5 border-b bg-gradient-to-r from-purple-50 via-blue-50 to-indigo-50 relative overflow-hidden z-20 flex-shrink-0">
+        <DialogHeader className="px-6 py-5 border-b bg-card relative overflow-hidden z-20 flex-shrink-0">
           <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] -z-10" />
           <DialogTitle className="flex items-center gap-3 text-xl">
-            <div className="p-2 bg-gradient-to-br from-purple-500 to-blue-600 rounded-lg shadow-lg">
-              <Layers className="w-5 h-5 text-white" />
+            <div className="p-2 bg-primary rounded-lg">
+              <Layers className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent font-bold">
+            <span className="text-foreground font-bold">
               نمایش گرافیکی ساختار کالا/قلم/قلم
             </span>
           </DialogTitle>
           <DialogDescription className="text-base mt-2 flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-purple-500" />
+            <Sparkles className="w-4 h-4 text-primary" />
             ساختار درختی کالا/قلم/قلم{" "}
-            <span className="font-bold text-purple-700 bg-purple-100 px-2 py-0.5 rounded">
+            <span className="font-bold text-primary bg-primary/15 px-2 py-0.5 rounded">
               {rootProductName}
             </span>
           </DialogDescription>
         </DialogHeader>
 
         {/* Toolbar */}
-        <div className="absolute top-24 right-8 z-30 flex flex-col gap-2 bg-white/90 backdrop-blur border rounded-lg p-1.5 shadow-xl ring-1 ring-slate-900/5">
+        <div className="absolute top-24 right-8 z-30 flex flex-col gap-2 bg-white/90 backdrop-blur border rounded-lg p-1.5 shadow-xl ring-1 ring-ring">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setScale((s) => Math.min(s + 0.2, 5))}
             title="بزرگنمایی"
           >
-            <ZoomIn className="w-5 h-5 text-slate-700" />
+            <ZoomIn className="w-5 h-5 text-foreground" />
           </Button>
           <Button
             variant="ghost"
@@ -232,7 +232,7 @@ export default function VisualTreeDialog({
             onClick={() => setScale((s) => Math.max(s - 0.2, 0.1))}
             title="کوچک‌نمایی"
           >
-            <ZoomOut className="w-5 h-5 text-slate-700" />
+            <ZoomOut className="w-5 h-5 text-foreground" />
           </Button>
           <Button
             variant="ghost"
@@ -240,7 +240,7 @@ export default function VisualTreeDialog({
             onClick={handleFitToScreen}
             title="Fit to Screen"
           >
-            <Maximize className="w-5 h-5 text-slate-700" />
+            <Maximize className="w-5 h-5 text-foreground" />
           </Button>
         </div>
 
@@ -248,7 +248,7 @@ export default function VisualTreeDialog({
         <div
           ref={containerRef}
           className={cn(
-            "flex-1 relative overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30",
+            "flex-1 relative overflow-hidden bg-muted/40",
             isDragging ? "cursor-grabbing" : "cursor-grab"
           )}
           style={{ touchAction: "none" }} // مهم: جلوگیری از اسکرول مرورگر در موبایل
@@ -279,9 +279,9 @@ export default function VisualTreeDialog({
           {loading ? (
             <div className="flex h-full items-center justify-center flex-col gap-3 text-muted-foreground relative z-10">
               <div className="relative">
-                <Loader2 className="w-12 h-12 animate-spin text-purple-500" />
+                <Loader2 className="w-12 h-12 animate-spin text-primary" />
                 <div className="absolute inset-0 w-12 h-12 animate-ping opacity-20">
-                  <Loader2 className="w-12 h-12 text-purple-500" />
+                  <Loader2 className="w-12 h-12 text-primary" />
                 </div>
               </div>
               <span className="text-lg font-medium">
@@ -290,10 +290,10 @@ export default function VisualTreeDialog({
             </div>
           ) : error ? (
             <div className="flex h-full items-center justify-center flex-col gap-3 relative z-10">
-              <div className="p-4 bg-red-50 rounded-full">
-                <AlertCircle className="w-12 h-12 text-red-500" />
+              <div className="p-4 bg-destructive/10 rounded-full">
+                <AlertCircle className="w-12 h-12 text-destructive" />
               </div>
-              <span className="text-lg font-semibold text-red-700">
+              <span className="text-lg font-semibold text-destructive">
                 {error}
               </span>
             </div>
@@ -315,7 +315,7 @@ export default function VisualTreeDialog({
           ) : (
             <div className="flex h-full items-center justify-center text-muted-foreground relative z-10">
               <div className="text-center">
-                <Box className="w-16 h-16 mx-auto mb-3 text-slate-300" />
+                <Box className="w-16 h-16 mx-auto mb-3 text-muted-foreground/50" />
                 <p className="text-lg">اطلاعاتی برای نمایش وجود ندارد</p>
               </div>
             </div>
@@ -323,14 +323,14 @@ export default function VisualTreeDialog({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-3 border-t bg-slate-50 flex items-center justify-between text-xs text-muted-foreground flex-shrink-0 z-20">
+        <div className="px-6 py-3 border-t bg-muted flex items-center justify-between text-xs text-muted-foreground flex-shrink-0 z-20">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 shadow-sm" />
+              <div className="w-3 h-3 rounded-full bg-warning shadow-sm" />
               <span>قطعه مورد نظر</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-white border-2 border-slate-300 shadow-sm" />
+              <div className="w-3 h-3 rounded-full bg-card border-2 border-border shadow-sm" />
               <span>سایر قطعات</span>
             </div>
           </div>
@@ -366,22 +366,22 @@ const TreeNode = ({
         className={cn(
           "relative flex flex-col items-center justify-center rounded-xl px-5 py-4 min-w-[160px] transition-all duration-500 z-10 backdrop-blur-sm",
           isTarget
-            ? "bg-gradient-to-br from-yellow-100 via-yellow-50 to-amber-100 border-2 border-yellow-400 shadow-[0_0_30px_rgba(250,204,21,0.4)] scale-110 ring-4 ring-yellow-300/50 animate-pulse"
+            ? "bg-warning/10 border-2 border-warning shadow-lg scale-110 ring-4 ring-warning animate-pulse"
             : level === 0
-            ? "bg-gradient-to-br from-purple-100 via-white to-blue-100 border-2 border-purple-300 shadow-xl hover:shadow-2xl hover:scale-105 hover:border-purple-400"
-            : "bg-white/90 border-2 border-slate-200 shadow-lg hover:shadow-xl hover:scale-105 hover:border-blue-300"
+            ? "bg-card border-2 border-primary/40 shadow-xl hover:shadow-2xl hover:scale-105 hover:border-primary"
+            : "bg-white/90 border-2 border-border shadow-lg hover:shadow-xl hover:scale-105 hover:border-primary/40"
         )}
       >
         <div
           className={cn(
             "mb-3 p-2 rounded-lg transition-all duration-300",
             isTarget
-              ? "bg-gradient-to-br from-yellow-300 to-yellow-500 text-yellow-900 shadow-lg"
+              ? "bg-warning text-warning-foreground shadow-lg"
               : level === 0
-              ? "bg-gradient-to-br from-purple-500 to-blue-500 text-white shadow-md"
+              ? "bg-primary text-primary-foreground shadow-md"
               : hasChildren
-              ? "bg-gradient-to-br from-blue-400 to-indigo-500 text-white shadow-md"
-              : "bg-gradient-to-br from-slate-400 to-slate-500 text-white shadow-md"
+              ? "bg-info text-info-foreground shadow-md"
+              : "bg-muted-foreground text-background shadow-md"
           )}
         >
           <NodeIcon className="w-5 h-5" />
@@ -391,10 +391,10 @@ const TreeNode = ({
           className={cn(
             "font-bold text-sm text-center mb-2 leading-tight",
             isTarget
-              ? "text-yellow-900"
+              ? "text-warning"
               : level === 0
-              ? "text-purple-900"
-              : "text-slate-800"
+              ? "text-primary"
+              : "text-foreground"
           )}
         >
           {node.productName}
@@ -404,8 +404,8 @@ const TreeNode = ({
           className={cn(
             "text-[10px] font-mono px-2 py-1 rounded-md border shadow-sm",
             isTarget
-              ? "bg-yellow-200 text-yellow-800 border-yellow-300"
-              : "bg-slate-100 text-slate-600 border-slate-200"
+              ? "bg-warning/30 text-warning border-warning/40"
+              : "bg-muted text-muted-foreground border-border"
           )}
         >
           {node.productCode}
@@ -416,8 +416,8 @@ const TreeNode = ({
             className={cn(
               "mt-3 text-[11px] px-3 py-1 rounded-full font-semibold shadow-md border",
               isTarget
-                ? "bg-gradient-to-r from-yellow-300 to-yellow-400 text-yellow-900 border-yellow-400"
-                : "bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-blue-400"
+                ? "bg-warning text-warning-foreground border-warning"
+                : "bg-primary text-primary-foreground border-primary"
             )}
           >
             تعداد: {Number(node.quantity).toLocaleString()}
@@ -425,7 +425,7 @@ const TreeNode = ({
         )}
 
         {isTarget && (
-          <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-yellow-400/20 to-amber-400/20 animate-pulse pointer-events-none" />
+          <div className="absolute inset-0 rounded-xl bg-warning/20 animate-pulse pointer-events-none" />
         )}
       </div>
 
@@ -434,11 +434,11 @@ const TreeNode = ({
           className={cn(
             "w-0.5 h-10 relative",
             isTarget
-              ? "bg-gradient-to-b from-yellow-400 to-yellow-300"
-              : "bg-gradient-to-b from-slate-300 to-slate-400"
+              ? "bg-warning"
+              : "bg-border"
           )}
         >
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-slate-300 shadow-sm" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-muted shadow-sm" />
         </div>
       )}
 
@@ -446,7 +446,7 @@ const TreeNode = ({
         <div className="flex gap-10 relative pt-2">
           {node.children.length > 1 && (
             <div
-              className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-slate-300 to-transparent"
+              className="absolute top-0 left-0 right-0 h-0.5 bg-border"
               style={{
                 left: "50%",
                 right: "50%",
@@ -458,7 +458,7 @@ const TreeNode = ({
 
           {node.children.map((child, idx) => (
             <div key={idx} className="flex flex-col items-center relative">
-              <div className="w-0.5 h-8 bg-gradient-to-b from-slate-300 to-transparent mb-2" />
+              <div className="w-0.5 h-8 bg-border mb-2" />
               <TreeNode
                 node={child}
                 highlightId={highlightId}

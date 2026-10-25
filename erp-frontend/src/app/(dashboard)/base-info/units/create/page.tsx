@@ -125,12 +125,12 @@ export default function CreateUnitPage() {
       showActions={true}
     >
       {/* کارت اصلی */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-100 dark:border-slate-800">
-          <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg">
-            <Ruler className="w-5 h-5 text-white" />
+      <div className="bg-card border border-border rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-border">
+          <div className="p-2 bg-primary/10 text-primary rounded-lg">
+            <Ruler className="w-5 h-5" />
           </div>
-          <h3 className="font-semibold text-base text-slate-800 dark:text-slate-200">
+          <h3 className="font-semibold text-base text-foreground">
             اطلاعات واحد سنجش
           </h3>
         </div>
@@ -146,8 +146,8 @@ export default function CreateUnitPage() {
 
         {/* راهنما */}
         {formData.baseUnitId && (
-          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/30 rounded-lg text-sm">
-            <p className="text-blue-700 dark:text-blue-400">
+          <div className="mt-4 p-3 bg-primary/10 border border-primary/30 rounded-lg text-sm">
+            <p className="text-primary">
               <strong>نکته:</strong> اگر واحد پایه انتخاب کنید، این واحد به صورت
               فرعی (تبدیل‌پذیر) خواهد بود.
               <br />

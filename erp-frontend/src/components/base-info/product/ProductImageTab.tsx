@@ -87,9 +87,9 @@ export default function ProductImageTab({
           "relative w-full max-w-2xl flex flex-col items-center p-6 rounded-xl border-2 border-dashed transition-all duration-200",
           isDragging
             ? "border-primary bg-primary/5 scale-[1.01]"
-            : "border-slate-200 dark:border-slate-700 bg-card",
+            : "border-border  bg-card",
           isViewMode
-            ? "border-solid border-slate-100 dark:border-slate-800"
+            ? "border-solid border-border "
             : "",
         )}
         onDragOver={handleDragOver}
@@ -99,7 +99,7 @@ export default function ProductImageTab({
         {imagePreview ? (
           // === حالت نمایش تصویر (پر شده) ===
           <div className="flex flex-col items-center w-full">
-            <div className="relative group w-full max-w-sm aspect-square bg-slate-100 dark:bg-slate-900 rounded-lg overflow-hidden shadow-sm border">
+            <div className="relative group w-full max-w-sm aspect-square bg-muted rounded-lg overflow-hidden shadow-sm border">
               <img
                 src={imagePreview}
                 alt="Product Preview"
@@ -111,7 +111,7 @@ export default function ProductImageTab({
                 <Button
                   variant="secondary"
                   size="sm"
-                  className="opacity-0 group-hover:opacity-100 transition-opacity gap-2 shadow-lg backdrop-blur-md bg-white/80 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-800"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity gap-2 shadow-lg backdrop-blur-md bg-white/80 hover:bg-card"
                   onClick={() => setShowModal(true)}
                 >
                   <Eye size={16} /> مشاهده تصویر اصلی
@@ -133,7 +133,7 @@ export default function ProductImageTab({
                 </Button>
                 <Button
                   variant="destructive"
-                  className="flex-1 gap-2 bg-red-50 text-red-600 hover:bg-red-100 border border-red-100 shadow-none"
+                  className="flex-1 gap-2 bg-destructive/10 text-destructive hover:bg-destructive/15 border border-destructive/15 shadow-none"
                   onClick={onImageRemove}
                   type="button"
                 >
@@ -145,7 +145,7 @@ export default function ProductImageTab({
 
             {/* اطلاعات فایل در حالت مشاهده */}
             {isViewMode && (
-              <div className="mt-4 flex items-center gap-2 text-muted-foreground text-sm bg-slate-50 px-4 py-2 rounded-full">
+              <div className="mt-4 flex items-center gap-2 text-muted-foreground text-sm bg-muted px-4 py-2 rounded-full">
                 <ImageIcon size={14} />
                 <span>تصویر فعلی کالا</span>
               </div>
@@ -159,7 +159,7 @@ export default function ProductImageTab({
                 "w-20 h-20 rounded-full flex items-center justify-center mb-4 transition-colors",
                 isDragging
                   ? "bg-primary/10 text-primary"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-400",
+                  : "bg-muted  text-muted-foreground",
               )}
             >
               {isDragging ? <Upload size={32} /> : <FileImage size={32} />}
@@ -179,7 +179,7 @@ export default function ProductImageTab({
                   <ImagePlus size={18} />
                   انتخاب فایل
                 </Button>
-                <p className="text-xs text-slate-400 mt-6 font-mono">
+                <p className="text-xs text-muted-foreground mt-6 font-mono">
                   JPG, PNG, WEBP • Max 5MB
                 </p>
               </>

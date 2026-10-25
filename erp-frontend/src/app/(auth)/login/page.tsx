@@ -41,23 +41,23 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100 p-4">
-      <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl">
-        <div className="bg-blue-600 p-8 text-center">
-          <h1 className="text-3xl font-bold text-white">ERP DotNet</h1>
-          <p className="mt-2 text-blue-100">سیستم مدیریت منابع سازمانی</p>
+    <div className="flex min-h-screen items-center justify-center bg-muted p-4">
+      <div className="w-full max-w-md overflow-hidden rounded-2xl bg-card shadow-xl">
+        <div className="bg-primary p-8 text-center">
+          <h1 className="text-3xl font-bold text-primary-foreground">ERP DotNet</h1>
+          <p className="mt-2 text-primary-foreground/80">سیستم مدیریت منابع سازمانی</p>
         </div>
 
         <div className="p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">
+              <label className="mb-2 block text-sm font-medium text-foreground">
                 نام کاربری
               </label>
               <input
                 type="text"
                 required
-                className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 outline-none"
+                className="block w-full rounded-lg border border-border bg-muted p-2.5 text-sm text-foreground focus:border-primary focus:ring-ring outline-none"
                 placeholder="admin"
                 value={formData.username}
                 onChange={(e) =>
@@ -67,13 +67,13 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">
+              <label className="mb-2 block text-sm font-medium text-foreground">
                 رمز عبور
               </label>
               <input
                 type="password"
                 required
-                className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 outline-none"
+                className="block w-full rounded-lg border border-border bg-muted p-2.5 text-sm text-foreground focus:border-primary focus:ring-ring outline-none"
                 placeholder="••••••••"
                 value={formData.password}
                 onChange={(e) =>
@@ -85,7 +85,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex justify-center items-center gap-2 rounded-lg bg-blue-700 px-5 py-3 text-center text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="w-full flex justify-center items-center gap-2 rounded-lg bg-primary px-5 py-3 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-4 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               {loading ? (
                 <>

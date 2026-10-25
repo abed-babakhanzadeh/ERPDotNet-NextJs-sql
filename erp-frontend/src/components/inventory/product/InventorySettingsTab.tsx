@@ -203,7 +203,7 @@ export default function InventorySettingsTab({
       {/* 1. تنظیمات عمومی */}
       <div className="bg-card border rounded-lg p-6 shadow-sm">
         <h3 className="font-semibold text-base mb-4 flex items-center gap-2">
-          <Warehouse className="w-5 h-5 text-orange-500" />
+          <Warehouse className="w-5 h-5 text-warning" />
           تنظیمات عمومی انبارداری
         </h3>
 
@@ -312,7 +312,7 @@ export default function InventorySettingsTab({
 
           {!isViewMode && (
             <div
-              className={`p-4 rounded-md mb-6 border border-dashed transition-colors ${editingSettingId ? "bg-orange-50 border-orange-200" : "bg-muted/30"}`}
+              className={`p-4 rounded-md mb-6 border border-dashed transition-colors ${editingSettingId ? "bg-warning/10 border-warning/30" : "bg-muted/30"}`}
             >
               <div className="text-xs font-bold mb-2 text-muted-foreground">
                 {editingSettingId ? "ویرایش تنظیمات" : "افزودن تنظیمات جدید"}
@@ -471,7 +471,7 @@ export default function InventorySettingsTab({
                     <TableCell className="text-center">
                       {ws.maxStock.toLocaleString()}
                     </TableCell>
-                    <TableCell className="text-center font-bold text-orange-600">
+                    <TableCell className="text-center font-bold text-warning">
                       {ws.reorderPoint.toLocaleString()}
                     </TableCell>
                     <TableCell>
@@ -480,7 +480,7 @@ export default function InventorySettingsTab({
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="h-8 w-8 text-blue-500 hover:bg-blue-50"
+                            className="h-8 w-8 text-primary hover:bg-primary/10"
                             onClick={() => onEditSetting(ws)}
                           >
                             <Pencil size={16} />
@@ -488,7 +488,7 @@ export default function InventorySettingsTab({
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="h-8 w-8 text-red-500 hover:bg-red-50"
+                            className="h-8 w-8 text-destructive hover:bg-destructive/10"
                             onClick={() =>
                               onDeleteSetting(ws.id, ws.rowVersion)
                             }

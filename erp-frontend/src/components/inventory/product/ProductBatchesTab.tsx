@@ -216,7 +216,7 @@ export default function ProductBatchesTab({ productId, isViewMode }: Props) {
                       <FormItem>
                         <FormLabel>
                           شماره بچ (Batch No){" "}
-                          <span className="text-red-500">*</span>
+                          <span className="text-destructive">*</span>
                         </FormLabel>
                         <FormControl>
                           <Input
@@ -315,7 +315,7 @@ export default function ProductBatchesTab({ productId, isViewMode }: Props) {
         )}
       </div>
 
-      <div className="border rounded-md bg-white">
+      <div className="border rounded-md bg-card">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
@@ -375,7 +375,7 @@ export default function ProductBatchesTab({ productId, isViewMode }: Props) {
                       )}
                       {batch.expiryDate && (
                         <div
-                          className={`flex items-center gap-1 ${batch.isExpired ? "text-red-600 font-bold" : ""}`}
+                          className={`flex items-center gap-1 ${batch.isExpired ? "text-destructive font-bold" : ""}`}
                         >
                           <span className="text-muted-foreground w-4">ا:</span>
                           <span>
@@ -384,7 +384,7 @@ export default function ProductBatchesTab({ productId, isViewMode }: Props) {
                             )}
                           </span>
                           {batch.isExpired && (
-                            <span className="text-[10px] bg-red-100 px-1 rounded">
+                            <span className="text-[10px] bg-destructive/15 px-1 rounded">
                               منقضی
                             </span>
                           )}
@@ -409,7 +409,7 @@ export default function ProductBatchesTab({ productId, isViewMode }: Props) {
                     ) : (
                       <Badge
                         variant="secondary"
-                        className="gap-1 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-2"
+                        className="gap-1 bg-success/15 text-success hover:bg-success/30 px-2"
                       >
                         <CheckCircle size={12} /> فعال
                       </Badge>
@@ -422,7 +422,7 @@ export default function ProductBatchesTab({ productId, isViewMode }: Props) {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 text-blue-600 hover:bg-blue-50"
+                          className="h-8 w-8 text-primary hover:bg-primary/10"
                           title="ویرایش"
                           onClick={() => onEditClick(batch)}
                         >
@@ -431,7 +431,7 @@ export default function ProductBatchesTab({ productId, isViewMode }: Props) {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className={`h-8 w-auto px-3 text-xs border ${batch.isBlocked ? "border-emerald-200 text-emerald-600 hover:bg-emerald-50" : "border-red-200 text-red-600 hover:bg-red-50"}`}
+                          className={`h-8 w-auto px-3 text-xs border ${batch.isBlocked ? "border-success/30 text-success hover:bg-success/10" : "border-destructive/30 text-destructive hover:bg-destructive/10"}`}
                           onClick={() => toggleBlock(batch)}
                         >
                           {batch.isBlocked ? "آزاد" : "مسدود"}

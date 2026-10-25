@@ -75,7 +75,7 @@ export default function UnitsPage() {
         type: "boolean",
         render: (val) =>
           val ? (
-            <Badge className="bg-emerald-500 hover:bg-emerald-600">فعال</Badge>
+            <Badge className="bg-success hover:bg-success/90">فعال</Badge>
           ) : (
             <Badge variant="destructive">غیرفعال</Badge>
           ),

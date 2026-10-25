@@ -176,7 +176,7 @@ export default function AutoForm({
                 <input
                   type="checkbox"
                   id={`field-${field.name}`}
-                  className="h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
+                  className="h-3.5 w-3.5 rounded border-border text-primary focus:ring-primary"
                   checked={!!fieldValue}
                   onChange={(e) => onChange(field.name, e.target.checked)}
                   disabled={loading || field.disabled}
@@ -216,7 +216,7 @@ export default function AutoForm({
                 <div className="flex flex-col items-center justify-center text-center gap-1.5 w-full">
                   {fieldValue instanceof File ? (
                     <div className="relative w-full flex flex-col items-center">
-                      <div className="w-16 h-16 rounded-lg overflow-hidden shadow-sm relative border bg-white mb-1">
+                      <div className="w-16 h-16 rounded-lg overflow-hidden shadow-sm relative border bg-card mb-1">
                         <img
                           src={URL.createObjectURL(fieldValue)}
                           alt="Preview"

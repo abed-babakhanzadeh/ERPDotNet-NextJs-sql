@@ -65,7 +65,7 @@ export default function ResetPasswordDialog({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-amber-600">
+          <DialogTitle className="flex items-center gap-2 text-warning">
             <KeyRound className="w-5 h-5" />
             تغییر رمز عبور
           </DialogTitle>
@@ -121,7 +121,7 @@ export default function ResetPasswordDialog({
             <Button
               type="submit"
               disabled={loading}
-              className="bg-amber-600 hover:bg-amber-700 text-white gap-2"
+              className="bg-warning hover:bg-warning/90 text-warning-foreground gap-2"
             >
               {loading ? (
                 <Loader2 className="animate-spin w-4 h-4" />

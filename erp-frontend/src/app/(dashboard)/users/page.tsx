@@ -141,7 +141,7 @@ export default function UsersPage() {
               <Badge
                 key={role}
                 variant="secondary"
-                className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200"
+                className="bg-primary/10 text-primary hover:bg-primary/15 border-primary/30"
               >
                 {role}
               </Badge>
@@ -160,14 +160,14 @@ export default function UsersPage() {
         isActive ? (
           <Badge
             variant="outline"
-            className="bg-emerald-50 text-emerald-700 border-emerald-200 gap-1"
+            className="bg-success/10 text-success border-success/30 gap-1"
           >
             <UserCheck size={12} /> فعال
           </Badge>
         ) : (
           <Badge
             variant="outline"
-            className="bg-red-50 text-red-700 border-red-200 gap-1"
+            className="bg-destructive/10 text-destructive border-destructive/30 gap-1"
           >
             <UserX size={12} /> غیرفعال
           </Badge>
@@ -343,7 +343,7 @@ export default function UsersPage() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-blue-600 hover:bg-blue-50"
+                className="h-8 w-8 text-primary hover:bg-primary/10"
                 onClick={() => handleEdit(user)}
               >
                 <Edit size={16} />
@@ -359,7 +359,7 @@ export default function UsersPage() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-amber-600 hover:bg-amber-50"
+                className="h-8 w-8 text-warning hover:bg-warning/10"
                 onClick={() => handleSpecialPermissions(user)}
               >
                 <Key size={16} />
@@ -375,7 +375,7 @@ export default function UsersPage() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-slate-600 hover:bg-slate-100"
+                className="h-8 w-8 text-muted-foreground hover:bg-muted"
                 onClick={() => handleResetPassword(user)}
               >
                 <ShieldCheck size={16} />
@@ -391,7 +391,7 @@ export default function UsersPage() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-red-600 hover:bg-red-50 hover:text-red-700"
+                className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
                 onClick={() => handleDelete(user.id)}
               >
                 <Trash2 size={16} />
@@ -420,7 +420,7 @@ export default function UsersPage() {
             }}
             className="flex items-center gap-2 cursor-pointer text-right"
           >
-            <Edit className="w-4 h-4 text-blue-600" />
+            <Edit className="w-4 h-4 text-primary" />
             <span>ویرایش اطلاعات</span>
           </DropdownMenuItem>
         </PermissionGuard>
@@ -433,7 +433,7 @@ export default function UsersPage() {
             }}
             className="flex items-center gap-2 cursor-pointer text-right"
           >
-            <Key className="w-4 h-4 text-amber-600" />
+            <Key className="w-4 h-4 text-warning" />
             <span>دسترسی‌های ویژه</span>
           </DropdownMenuItem>
         </PermissionGuard>
@@ -446,7 +446,7 @@ export default function UsersPage() {
             }}
             className="flex items-center gap-2 cursor-pointer text-right"
           >
-            <ShieldCheck className="w-4 h-4 text-slate-600" />
+            <ShieldCheck className="w-4 h-4 text-muted-foreground" />
             <span>تغییر رمز عبور</span>
           </DropdownMenuItem>
         </PermissionGuard>
@@ -479,7 +479,7 @@ export default function UsersPage() {
           <PermissionGuard permission="UserAccess.Create">
             <Button
               onClick={handleCreate}
-              className="gap-2 bg-blue-600 hover:bg-blue-700 text-white h-9"
+              className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground h-9"
             >
               <Plus size={16} />
               افزودن کاربر جدید
@@ -517,13 +517,13 @@ export default function UsersPage() {
           title={`دسترسی‌های ویژه: ${permUser?.username}`}
         >
           {/* محتویات مودال دسترسی (بدون تغییر) */}
-          <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-            <label className="block text-xs font-bold text-gray-700 mb-2">
+          <div className="mb-4 p-3 bg-muted rounded-lg border border-border">
+            <label className="block text-xs font-bold text-foreground mb-2">
               کپی دسترسی از کاربر دیگر:
             </label>
             <div className="flex gap-2">
               <select
-                className="flex-1 text-sm border border-gray-300 rounded p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="flex-1 text-sm border border-border rounded p-1.5 bg-background focus:outline-none focus:ring-1 focus:ring-ring"
                 onChange={(e) => setCopySourceId(e.target.value)}
               >
                 <option value="">انتخاب کاربر...</option>
@@ -539,7 +539,7 @@ export default function UsersPage() {
                 onClick={handleCopyPermissions}
                 disabled={!copySourceId || loadingPerms}
                 size="sm"
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-primary hover:bg-primary/90"
               >
                 کپی و اعمال
               </Button>
@@ -548,11 +548,11 @@ export default function UsersPage() {
           <hr className="my-4" />
 
           <div className="space-y-4">
-            <div className="bg-yellow-50 p-3 rounded text-xs text-yellow-800 border border-yellow-100">
+            <div className="bg-warning/10 p-3 rounded text-xs text-warning border border-warning/15">
               نکته: تیک‌های{" "}
-              <span className="font-bold text-green-700">سبز</span> دسترسی
+              <span className="font-bold text-success">سبز</span> دسترسی
               اضافه، و موارد{" "}
-              <span className="font-bold text-red-600 line-through">قرمز</span>{" "}
+              <span className="font-bold text-destructive line-through">قرمز</span>{" "}
               محرومیت هستند.
             </div>
 
@@ -576,7 +576,7 @@ export default function UsersPage() {
               <Button
                 onClick={saveUserPermissions}
                 disabled={loadingPerms}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 {loadingPerms ? "در حال ذخیره..." : "ذخیره تغییرات"}
               </Button>

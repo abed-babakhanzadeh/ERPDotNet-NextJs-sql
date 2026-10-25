@@ -123,8 +123,8 @@ export default function BOMsListPage() {
               variant="secondary"
               className={`gap-1.5 font-normal border ${
                 isMain
-                  ? "bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100"
-                  : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                  ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/15"
+                  : "bg-muted text-muted-foreground border-border hover:bg-muted"
               }`}
             >
               {isMain ? (
@@ -256,7 +256,7 @@ export default function BOMsListPage() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10"
                 onClick={() => handleView(row)}
               >
                 <Eye size={16} />
@@ -271,7 +271,7 @@ export default function BOMsListPage() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                  className="h-8 w-8 text-success hover:text-success hover:bg-success/10"
                   onClick={() => handleEdit(row)}
                 >
                   <Pencil size={16} />
@@ -285,7 +285,7 @@ export default function BOMsListPage() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                  className="h-8 w-8 text-warning hover:text-warning hover:bg-warning/10"
                   onClick={() => handleOpenCopyModal(row)}
                 >
                   <Copy size={16} />
@@ -300,7 +300,7 @@ export default function BOMsListPage() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10"
                 onClick={() => handleViewTree(row)}
               >
                 <Network size={16} />
@@ -315,7 +315,7 @@ export default function BOMsListPage() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                  className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                   onClick={() => handleDelete(row)}
                 >
                   <Trash2 size={16} />
@@ -339,7 +339,7 @@ export default function BOMsListPage() {
           }}
           className="gap-2 cursor-pointer"
         >
-          <Eye className="w-4 h-4 text-blue-600" />
+          <Eye className="w-4 h-4 text-primary" />
           <span>مشاهده جزئیات</span>
         </DropdownMenuItem>
 
@@ -351,7 +351,7 @@ export default function BOMsListPage() {
             }}
             className="gap-2 cursor-pointer"
           >
-            <Pencil className="w-4 h-4 text-emerald-600" />
+            <Pencil className="w-4 h-4 text-success" />
             <span>ویرایش فرمول</span>
           </DropdownMenuItem>
 
@@ -362,7 +362,7 @@ export default function BOMsListPage() {
             }}
             className="gap-2 cursor-pointer"
           >
-            <Copy className="w-4 h-4 text-orange-600" />
+            <Copy className="w-4 h-4 text-warning" />
             <span>ایجاد نسخه جدید</span>
           </DropdownMenuItem>
 
@@ -375,7 +375,7 @@ export default function BOMsListPage() {
             }}
             className="gap-2 cursor-pointer"
           >
-            <Network className="w-4 h-4 text-purple-600" />
+            <Network className="w-4 h-4 text-primary" />
             <span>نمایش درختی</span>
           </DropdownMenuItem>
 

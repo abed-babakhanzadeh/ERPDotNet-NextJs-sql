@@ -23,7 +23,7 @@ export default function IndeterminateCheckbox({ indeterminate = false, ...props 
       type="checkbox"
       ref={ref}
       {...props}
-      className={`w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer ${props.className}`}
+      className={`w-4 h-4 rounded border-border text-primary focus:ring-ring cursor-pointer ${props.className}`}
     />
   );
 }

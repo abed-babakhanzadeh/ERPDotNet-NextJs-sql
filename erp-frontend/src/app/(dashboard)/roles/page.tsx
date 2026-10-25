@@ -221,7 +221,7 @@ return (
           <button 
             onClick={handleSavePermissions} 
             disabled={saveLoading}
-            className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700 disabled:opacity-50 transition-all duration-200"
+            className="flex items-center gap-2 rounded-lg bg-success px-4 py-2 text-success-foreground hover:bg-success/90 disabled:opacity-50 transition-all duration-200"
           >
             <Save size={18} />
             {saveLoading ? "در حال ذخیره..." : "ذخیره تغییرات دسترسی"}

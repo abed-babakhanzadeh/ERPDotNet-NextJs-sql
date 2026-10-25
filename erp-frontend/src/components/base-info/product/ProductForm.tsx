@@ -214,7 +214,7 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
           <Button
             variant="outline"
             size="sm"
-            className="gap-2 border-orange-200 text-orange-600 hover:bg-orange-50"
+            className="gap-2 border-warning/30 text-warning hover:bg-warning/10"
             onClick={() => router.push(`/base-info/products/edit/${productId}`)}
           >
             <Pencil size={16} /> ویرایش
@@ -230,7 +230,7 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
                 type="button"
                 onClick={form.handleSubmit(onSubmitGeneral)}
                 size="sm"
-                className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+                className="gap-2 bg-success hover:bg-success/90 text-success-foreground"
                 disabled={loading}
               >
                 {loading ? (
@@ -245,7 +245,7 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
             {activeTab === "inventory" && (
               <label
                 htmlFor="submit-inventory-profile"
-                className={`cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-emerald-600 text-white hover:bg-emerald-700 h-9 px-4 gap-2 shadow-sm ${loading ? "opacity-50 pointer-events-none" : ""}`}
+                className={`cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-success text-success-foreground hover:bg-success/90 h-9 px-4 gap-2 shadow-sm ${loading ? "opacity-50 pointer-events-none" : ""}`}
               >
                 <Save size={16} /> ثبت تنظیمات انبار
               </label>
@@ -302,7 +302,7 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
                 <TabsTrigger
                   value="inventory"
                   disabled={isCreate}
-                  className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-orange-500 data-[state=active]:text-orange-600 px-4 text-sm"
+                  className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-warning data-[state=active]:text-warning px-4 text-sm"
                 >
                   <Warehouse className="w-4 h-4 ml-2" /> تنظیمات انبار
                 </TabsTrigger>
@@ -310,7 +310,7 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
                 {isBatchManaged && !isCreate && (
                   <TabsTrigger
                     value="batches"
-                    className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-orange-500 data-[state=active]:text-orange-600 px-4 text-sm animate-in fade-in zoom-in duration-300"
+                    className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-warning data-[state=active]:text-warning px-4 text-sm animate-in fade-in zoom-in duration-300"
                   >
                     <Tag className="w-4 h-4 ml-2" /> مدیریت بچ‌ها
                   </TabsTrigger>
@@ -318,7 +318,7 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
               </TabsList>
             </div>
 
-            <div className="flex-1 p-4 md:p-6 overflow-y-auto bg-slate-50/50 dark:bg-slate-900/20 w-full">
+            <div className="flex-1 p-4 md:p-6 overflow-y-auto bg-muted/50 w-full">
               <TabsContent value="general" className="mt-0 h-full w-full">
                 <div className="w-full bg-card border rounded-lg p-6 shadow-sm">
                   <Form {...form}>
@@ -369,7 +369,7 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
                           control={form.control}
                           name="isActive"
                           render={({ field }) => (
-                            <FormItem className="flex flex-row items-center space-x-3 space-x-reverse rounded-md border p-3 shadow-sm h-10 mt-8 bg-white">
+                            <FormItem className="flex flex-row items-center space-x-3 space-x-reverse rounded-md border p-3 shadow-sm h-10 mt-8 bg-card">
                               <FormControl>
                                 <Checkbox
                                   checked={field.value}

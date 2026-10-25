@@ -141,6 +141,13 @@
 }
 
 @layer base {
+  /* رنگ پیش‌فرض همه حاشیه‌ها از توکن؛ بدون این، حاشیه‌ها در حالت تیره خاکستری روشن می‌شوند */
+  *,
+  ::before,
+  ::after {
+    @apply border-border;
+  }
+
   /* اعمال فونت با !important برای اطمینان از اعمال روی input و سایر عناصر */
   html,
   body,
@@ -221,53 +228,29 @@
 
   /* کلاس‌های custom برای هدر و محتوا */
   .bom-header {
-    @apply bg-white;
+    @apply bg-card;
   }
 
-  .dark .bom-header {
-    @apply bg-slate-800;
-  }
 
-  .custom .bom-header {
-    @apply bg-purple-900;
-  }
 
   .bom-content {
-    @apply p-4 h-full bg-white;
+    @apply p-4 h-full bg-background;
   }
 
-  .dark .bom-content {
-    @apply bg-slate-950;
-  }
 
-  .custom .bom-content {
-    @apply bg-purple-950;
-  }
 
   /* کلاس‌های جدید برای صفحات دیگر (Products, Units, Users, Dashboard) */
   .page-header {
     @apply bg-card text-card-foreground p-4 rounded-xl;
   }
 
-  .dark .page-header {
-    @apply bg-slate-800 text-card-foreground;
-  }
 
-  .custom .page-header {
-    @apply bg-purple-900 text-primary-foreground;
-  }
 
   .page-content {
-    @apply p-4 h-full bg-gray-50 text-foreground;
+    @apply p-4 h-full bg-background text-foreground;
   }
 
-  .dark .page-content {
-    @apply bg-slate-900 text-foreground;
-  }
 
-  .custom .page-content {
-    @apply bg-purple-900 text-primary-foreground;
-  }
 
   /* headings inside page-header/content to ensure contrast */
   .page-header h1,
@@ -282,13 +265,7 @@
     @apply rounded-2xl p-4 bg-card border border-border shadow-md;
   }
 
-  .dark .permission-card {
-    @apply bg-slate-900;
-  }
 
-  .custom .permission-card {
-    @apply bg-purple-900/90;
-  }
 
   .permission-card-header {
     @apply flex items-center justify-between gap-4 mb-4;
@@ -405,11 +382,11 @@
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-gray-300 dark:bg-gray-700 rounded-full;
+    @apply bg-border rounded-full;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-400 dark:bg-gray-600;
+    @apply bg-muted-foreground/40;
   }
 
   /* Hide Scrollbar */

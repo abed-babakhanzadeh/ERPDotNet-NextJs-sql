@@ -115,7 +115,7 @@ export default function BaseListLayout({
                   )}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-[10px] ">
+              <TooltipContent side="bottom" className="text-[10px]">
                 {isFullscreen ? "خروج از تمام صفحه" : "تمام صفحه"}
               </TooltipContent>
             </Tooltip>

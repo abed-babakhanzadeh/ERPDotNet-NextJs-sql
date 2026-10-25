@@ -21,7 +21,7 @@ export default function ViewBOMPage() {
   // اگر پارامتر آمد ولی عدد نبود (مثلا حروف بود)
   if (isNaN(id)) {
     return (
-      <div className="flex h-full items-center justify-center text-red-500">
+      <div className="flex h-full items-center justify-center text-destructive">
         شناسه نامعتبر است
       </div>
     );

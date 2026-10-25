@@ -70,38 +70,38 @@ const statusStyles: Record<
 > = {
   [InventoryDocStatus.Draft]: {
     label: "پیش‌نویس",
-    className: "bg-slate-100 text-slate-700 border-slate-200",
+    className: "bg-muted text-foreground border-border",
     icon: FileText,
   },
   [InventoryDocStatus.InProcess]: {
     label: "در انتظار تایید",
-    className: "bg-blue-50 text-blue-700 border-blue-200",
+    className: "bg-primary/10 text-primary border-primary/30",
     icon: Loader2,
   },
   [InventoryDocStatus.RequiresRevision]: {
     label: "نیازمند اصلاح",
-    className: "bg-orange-50 text-orange-700 border-orange-200",
+    className: "bg-warning/10 text-warning border-warning/30",
     icon: Undo2,
   },
   [InventoryDocStatus.Approved]: {
     label: "تایید شده",
-    className: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    className: "bg-success/10 text-success border-success/30",
     icon: CheckCircle2,
   },
   [InventoryDocStatus.Rejected]: {
     label: "رد شده",
-    className: "bg-red-50 text-red-700 border-red-200",
+    className: "bg-destructive/10 text-destructive border-destructive/30",
     icon: AlertTriangle,
   },
   [InventoryDocStatus.Posted]: {
     label: "قطعی شده",
-    className: "bg-slate-800 text-white border-slate-700",
+    className: "bg-foreground text-background border-input",
     icon: Archive,
   },
   [InventoryDocStatus.Cancelled]: {
     label: "ابطال شده",
     className:
-      "bg-gray-100 text-gray-400 border-gray-200 line-through decoration-gray-400",
+      "bg-muted text-muted-foreground border-border line-through decoration-muted-foreground",
     icon: Ban,
   },
 };
@@ -598,7 +598,7 @@ export default function DocForm({
         <Button
           variant="outline"
           size="sm"
-          className="h-8 gap-1.5 px-3 text-slate-600 hover:text-slate-900 border-slate-300"
+          className="h-8 gap-1.5 px-3 text-muted-foreground hover:text-foreground border-border"
         >
           <MoreVertical className="w-4 h-4" />
           <span className="hidden sm:inline text-xs">عملیات</span>
@@ -612,7 +612,7 @@ export default function DocForm({
             onClick={handleSwitchToEdit}
             className="cursor-pointer"
           >
-            <Pencil className="w-4 h-4 ml-2 text-blue-600" />
+            <Pencil className="w-4 h-4 ml-2 text-primary" />
             ویرایش سند
           </DropdownMenuItem>
         )}
@@ -633,7 +633,7 @@ export default function DocForm({
           onClick={() => window.print()}
           className="cursor-pointer"
         >
-          <Printer className="w-4 h-4 ml-2 text-slate-600" />
+          <Printer className="w-4 h-4 ml-2 text-muted-foreground" />
           چاپ سند
         </DropdownMenuItem>
 
@@ -644,7 +644,7 @@ export default function DocForm({
               <DropdownMenuItem
                 onClick={handleSubmitToWorkflow}
                 disabled={submitting}
-                className="text-blue-600 font-bold bg-blue-50 focus:bg-blue-100 cursor-pointer"
+                className="text-primary font-bold bg-primary/10 focus:bg-primary/15 cursor-pointer"
               >
                 <Send className="w-4 h-4 ml-2" />
                 تایید و ارسال
@@ -683,7 +683,7 @@ export default function DocForm({
             variant="ghost"
             size="sm"
             onClick={() => router.back()}
-            className="h-8 w-8 px-0 sm:w-auto sm:px-3 text-slate-600 hover:bg-slate-100"
+            className="h-8 w-8 px-0 sm:w-auto sm:px-3 text-muted-foreground hover:bg-muted"
           >
             <ArrowRight className="w-4 h-4 sm:ml-1.5" />
             <span className="hidden sm:inline text-xs">بازگشت</span>
@@ -711,7 +711,7 @@ export default function DocForm({
                   onClick={handleSubmitToWorkflow}
                   disabled={submitting}
                   size="sm"
-                  className="h-8 gap-1.5 bg-blue-600 hover:bg-blue-700 text-white"
+                  className="h-8 gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
                   <Send className="w-4 h-4" />
                   <span className="hidden sm:inline text-xs">

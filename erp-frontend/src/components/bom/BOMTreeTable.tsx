@@ -92,17 +92,17 @@ export default function BOMTreeTable({ data }: BOMTreeTableProps) {
 
   const getLevelStyle = (level: number) => {
     const colors = [
-      "bg-slate-800 text-white border-slate-900", // Level 0
-      "bg-blue-100 text-blue-700 border-blue-200",
-      "bg-indigo-100 text-indigo-700 border-indigo-200",
-      "bg-purple-100 text-purple-700 border-purple-200",
-      "bg-fuchsia-100 text-fuchsia-700 border-fuchsia-200",
-      "bg-pink-100 text-pink-700 border-pink-200",
-      "bg-rose-100 text-rose-700 border-rose-200",
-      "bg-orange-100 text-orange-700 border-orange-200",
-      "bg-amber-100 text-amber-700 border-amber-200",
-      "bg-lime-100 text-lime-700 border-lime-200",
-      "bg-emerald-100 text-emerald-700 border-emerald-200",
+      "bg-foreground text-background border-input", // Level 0
+      "bg-primary/15 text-primary border-primary/30",
+      "bg-primary/15 text-primary border-primary/30",
+      "bg-primary/15 text-primary border-primary/30",
+      "bg-primary/15 text-primary border-primary/30",
+      "bg-destructive/15 text-destructive border-destructive/30",
+      "bg-destructive/15 text-destructive border-destructive/30",
+      "bg-warning/15 text-warning border-warning/30",
+      "bg-warning/15 text-warning border-warning/30",
+      "bg-success/15 text-success border-success/30",
+      "bg-success/15 text-success border-success/30",
     ];
     return colors[Math.min(level, 10)];
   };
@@ -149,7 +149,7 @@ export default function BOMTreeTable({ data }: BOMTreeTableProps) {
           </thead>
 
           {/* --- بدنه جدول --- */}
-          <tbody className="divide-y divide-border bg-white dark:bg-card">
+          <tbody className="divide-y divide-border bg-card">
             {flatData.map((row) => {
               if (!isVisible(row)) return null;
 
@@ -169,7 +169,7 @@ export default function BOMTreeTable({ data }: BOMTreeTableProps) {
                       {/* خط راهنما */}
                       {row.level > 0 && (
                         <div
-                          className="absolute right-0 top-0 bottom-0 border-r border-dashed border-slate-200"
+                          className="absolute right-0 top-0 bottom-0 border-r border-dashed border-border"
                           style={{ right: `${row.level * 28 - 14}px` }}
                         />
                       )}
@@ -179,7 +179,7 @@ export default function BOMTreeTable({ data }: BOMTreeTableProps) {
                         onClick={() => toggleExpand(row.path)}
                         disabled={!row.hasChildren}
                         className={cn(
-                          "w-5 h-5 flex items-center justify-center ml-1 rounded hover:bg-slate-200 text-slate-500 transition-colors",
+                          "w-5 h-5 flex items-center justify-center ml-1 rounded hover:bg-muted text-muted-foreground transition-colors",
                           !row.hasChildren && "invisible"
                         )}
                       >
@@ -207,8 +207,8 @@ export default function BOMTreeTable({ data }: BOMTreeTableProps) {
                           className={cn(
                             "flex items-center gap-1.5",
                             row.level === 0
-                              ? "font-bold text-slate-800"
-                              : "text-slate-700"
+                              ? "font-bold text-foreground"
+                              : "text-foreground"
                           )}
                         >
                           {getLevelIcon(row.level, row.hasChildren)}
@@ -222,21 +222,21 @@ export default function BOMTreeTable({ data }: BOMTreeTableProps) {
 
                   {/* ستون نوع */}
                   <td className="px-4 py-2 text-right">
-                    <span className="text-[11px] text-muted-foreground bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                    <span className="text-[11px] text-muted-foreground bg-muted px-2 py-0.5 rounded border border-border">
                       {row.type || (row.hasChildren ? "ساختنی" : "خریدنی")}
                     </span>
                   </td>
 
                   {/* ستون کد محصول */}
                   <td className="px-4 py-2 text-left">
-                    <span className="font-mono text-[11px] text-slate-600 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
+                    <span className="font-mono text-[11px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border">
                       {row.productCode}
                     </span>
                   </td>
 
                   {/* ستون مقدار پایه */}
                   <td className="px-4 py-2 text-center">
-                    <div className="font-mono font-medium text-slate-700 dir-ltr inline-block text-xs">
+                    <div className="font-mono font-medium text-foreground dir-ltr inline-block text-xs">
                       {Number(row.quantity).toLocaleString()}
                     </div>
                   </td>
@@ -245,13 +245,13 @@ export default function BOMTreeTable({ data }: BOMTreeTableProps) {
                   <td className="px-4 py-2 text-center">
                     {row.wastePercentage > 0 ? (
                       <div className="flex items-center justify-center gap-1">
-                        <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                        <span className="text-[11px] font-semibold text-warning bg-warning/10 px-1.5 py-0.5 rounded border border-warning/30">
                           {row.wastePercentage}%
                         </span>
-                        <AlertTriangle className="w-3 h-3 text-amber-500" />
+                        <AlertTriangle className="w-3 h-3 text-warning" />
                       </div>
                     ) : (
-                      <span className="text-slate-300 text-[10px]">-</span>
+                      <span className="text-muted-foreground/50 text-[10px]">-</span>
                     )}
                   </td>
 
