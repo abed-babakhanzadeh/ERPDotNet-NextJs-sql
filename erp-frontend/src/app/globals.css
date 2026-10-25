@@ -25,7 +25,8 @@
     --popover: 210 100% 100%;
     --popover-foreground: 222 84% 5%;
 
-    --primary: 217 91% 60%;
+    /* تیره‌تر از قبل تا متن سفید روی دکمه و متن رنگی روی زمینه کم‌رنگ کنتراست WCAG AA (۴.۵:۱) داشته باشد */
+    --primary: 221 83% 48%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 216 100% 81%;
@@ -37,20 +38,20 @@
     --accent: 207 70% 70%;
     --accent-foreground: 222 84% 5%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 72% 44%;
     --destructive-foreground: 0 0% 98%;
 
     /* رنگ‌های معنایی وضعیت (badge، دکمه موفق، هشدار) */
-    --success: 152 69% 31%;
+    --success: 152 69% 28%;
     --success-foreground: 0 0% 100%;
-    --warning: 32 95% 44%;
+    --warning: 28 92% 35%;
     --warning-foreground: 0 0% 100%;
-    --info: 217 91% 50%;
+    --info: 210 90% 40%;
     --info-foreground: 0 0% 100%;
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 217 91% 60%;
+    --ring: 221 83% 48%;
 
     --radius: 0.5rem;
 
@@ -111,7 +112,8 @@
     --popover: 210 100% 100%;
     --popover-foreground: 222 84% 5%;
 
-    --primary: 217 91% 60%;
+    /* تیره‌تر از قبل تا متن سفید روی دکمه و متن رنگی روی زمینه کم‌رنگ کنتراست WCAG AA (۴.۵:۱) داشته باشد */
+    --primary: 221 83% 48%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 216 100% 81%;
@@ -123,20 +125,20 @@
     --accent: 207 70% 70%;
     --accent-foreground: 222 84% 5%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 72% 44%;
     --destructive-foreground: 0 0% 98%;
 
     /* رنگ‌های معنایی وضعیت (badge، دکمه موفق، هشدار) */
-    --success: 152 69% 31%;
+    --success: 152 69% 28%;
     --success-foreground: 0 0% 100%;
-    --warning: 32 95% 44%;
+    --warning: 28 92% 35%;
     --warning-foreground: 0 0% 100%;
-    --info: 217 91% 50%;
+    --info: 210 90% 40%;
     --info-foreground: 0 0% 100%;
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 217 91% 60%;
+    --ring: 221 83% 48%;
   }
 }
 

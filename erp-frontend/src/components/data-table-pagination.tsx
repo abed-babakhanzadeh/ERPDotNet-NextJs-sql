@@ -94,7 +94,10 @@ export function DataTablePagination({
               setPageSize(Number(value));
             }}
           >
-            <SelectTrigger className="h-7 sm:h-9 w-[60px] sm:w-[75px] text-[10px] sm:text-xs">
+            <SelectTrigger
+              aria-label="تعداد ردیف در صفحه"
+              className="h-7 sm:h-9 w-[60px] sm:w-[75px] text-[10px] sm:text-xs"
+            >
               <SelectValue placeholder={pagination.pageSize} />
             </SelectTrigger>
             <SelectContent side="top">
@@ -151,6 +154,7 @@ export function DataTablePagination({
             max={pageCount > 0 ? pageCount : 1}
             value={pageCount > 0 ? pagination.pageIndex + 1 : 1}
             onChange={handlePageInputChange}
+            aria-label="شماره صفحه"
             className="h-7 w-12 sm:h-9 sm:w-16 text-center text-[10px] sm:text-xs font-medium"
             disabled={pageCount <= 1}
           />

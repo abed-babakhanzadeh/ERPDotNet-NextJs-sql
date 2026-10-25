@@ -43,7 +43,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <meta
           name="viewport"
-          content="width=device-width, initial-scale=1, maximum-scale=1"
+          content="width=device-width, initial-scale=1"
         />
       </head>
       {/* نکته مهم: کلاس font-sans حذف شد تا فونت کاستوم اعمال شود */}

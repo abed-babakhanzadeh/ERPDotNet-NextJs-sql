@@ -237,10 +237,10 @@ return (
           <div className="md:col-span-1 flex flex-col gap-4">
           <div className="rounded-2xl border border-border bg-card p-4 h-fit shadow-sm hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-foreground flex items-center gap-2">
+              <h2 className="font-bold text-foreground flex items-center gap-2">
                 <Shield size={18} />
                 نقش‌ها
-              </h3>
+              </h2>
               <button 
                 onClick={() => setIsModalOpen(true)}
                 className="p-1 text-primary hover:bg-primary/10 rounded-full transition-colors" 

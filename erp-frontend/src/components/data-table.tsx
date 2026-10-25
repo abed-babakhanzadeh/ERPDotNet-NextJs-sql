@@ -177,6 +177,35 @@ export function DataTable<TData extends TableRow>({
     }
   };
 
+  /**
+   * کیبورد روی ردیف‌ها: بالا/پایین بین ردیف‌ها، Enter همان دوبار کلیک،
+   * Shift+F10 یا کلید منو همان راست‌کلیک. فقط ردیف انتخاب‌شده (یا اولی) در ترتیب Tab است.
+   */
+  const handleRowKeyDown = (e: React.KeyboardEvent<HTMLTableRowElement>, row: TData) => {
+    if (e.target !== e.currentTarget) return; // کلیدهای دکمه‌های داخل ردیف
+    const focusSibling = (el: Element | null) => {
+      if (el instanceof HTMLTableRowElement && el.dataset.rowIndex !== undefined) {
+        e.preventDefault();
+        el.focus();
+        el.click();
+      }
+    };
+    if (e.key === "ArrowDown") focusSibling(e.currentTarget.nextElementSibling);
+    else if (e.key === "ArrowUp") focusSibling(e.currentTarget.previousElementSibling);
+    else if (e.key === "Enter") {
+      e.preventDefault();
+      handleRowDoubleClick(row);
+    } else if (e.key === "ContextMenu" || (e.key === "F10" && e.shiftKey)) {
+      if (!renderContextMenu) return;
+      e.preventDefault();
+      const rect = e.currentTarget.getBoundingClientRect();
+      setSelectedRowId(row.id);
+      setContextMenuRow(row);
+      setContextMenuPosition({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+      setContextMenuOpen(true);
+    }
+  };
+
   const handleContextMenu = (e: React.MouseEvent, row: TData) => {
     e.preventDefault();
     setSelectedRowId(row.id);
@@ -411,11 +440,20 @@ export function DataTable<TData extends TableRow>({
                 data.map((row, index) => (
                   <TableRow
                     key={row.id || index}
+                    data-row-index={index}
+                    tabIndex={
+                      selectedRowId === row.id ||
+                      (index === 0 && !data.some((r) => r.id === selectedRowId))
+                        ? 0
+                        : -1
+                    }
+                    aria-selected={selectedRowId === row.id}
+                    onKeyDown={(e) => handleRowKeyDown(e, row)}
                     onClick={() => handleRowClick(row)}
                     onDoubleClick={() => handleRowDoubleClick(row)}
                     onContextMenu={(e) => handleContextMenu(e, row)}
                     className={cn(
-                      "cursor-pointer border-b border-border transition-colors h-9",
+                      "cursor-pointer border-b border-border transition-colors h-9 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
 
                       // ۱. حالت انتخاب شده (بالاترین اولویت)
                       selectedRowId === row.id
@@ -486,8 +524,13 @@ export function DataTable<TData extends TableRow>({
 
         {/* منوی راست کلیک */}
         <DropdownMenu open={contextMenuOpen} onOpenChange={setContextMenuOpen}>
+          {/* لنگر نامرئی منو در محل کلیک؛ button است چون Radix ویژگی‌های دکمه را روی trigger می‌گذارد */}
           <DropdownMenuTrigger asChild>
-            <div
+            <button
+              type="button"
+              tabIndex={-1}
+              aria-hidden
+              className="pointer-events-none size-0 opacity-0"
               style={{
                 position: "fixed",
                 left: contextMenuPosition.x,

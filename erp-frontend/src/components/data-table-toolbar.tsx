@@ -40,6 +40,7 @@ export function DataTableToolbar({
           <Search className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground pointer-events-none" />
           <Input
             placeholder="جستجو..."
+            aria-label="جستجو در همه ستون‌ها"
             value={globalFilter}
             onChange={(event) => onGlobalFilterChange(event.target.value)}
             className="h-6 w-full sm:w-52 ps-7 text-xs border-border/50 focus-visible:ring-1"
@@ -67,6 +68,7 @@ export function DataTableToolbar({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
+                aria-label="پاک کردن همه فیلترها"
                 variant="ghost"
                 size="icon"
                 onClick={onClearAllFilters}
@@ -84,6 +86,7 @@ export function DataTableToolbar({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
+                aria-label="بازخوانی"
                   variant="ghost"
                   size="icon"
                   onClick={onRefresh}
@@ -102,6 +105,7 @@ export function DataTableToolbar({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
+                aria-label="خروجی Excel"
                 variant="ghost"
                 size="icon"
                 onClick={onExport}
@@ -119,6 +123,7 @@ export function DataTableToolbar({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
+                aria-label="چاپ"
                 variant="ghost"
                 size="icon"
                 onClick={onPrint}

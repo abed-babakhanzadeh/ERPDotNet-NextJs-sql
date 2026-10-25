@@ -53,7 +53,13 @@ export default function InventoryDocsListPage() {
         render: (_: any, row: InventoryDocDto) => (
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger>
+              <TooltipTrigger
+                aria-label={
+                  row.nature === InventoryNature.Input
+                    ? "وارده (رسید)"
+                    : "صادره (حواله)"
+                }
+              >
                 {row.nature === InventoryNature.Input ? (
                   <ArrowDownCircle className="w-5 h-5 text-success" />
                 ) : (
