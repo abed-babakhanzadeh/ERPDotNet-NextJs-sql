@@ -103,6 +103,7 @@ public class CopyBOMHandler : IRequestHandler<CopyBOMCommand, int>
             .IgnoreQueryFilters() // اجازه کپی از فرمول‌های حذف شده یا غیرفعال
             .Include(x => x.Details)
                 .ThenInclude(d => d.Substitutes)
+            .Include(x => x.Outputs)
             .AsSplitQuery()
             .FirstOrDefaultAsync(x => x.Id == request.SourceBomId, cancellationToken);
 
@@ -120,8 +121,21 @@ public class CopyBOMHandler : IRequestHandler<CopyBOMCommand, int>
             Type = sourceBom.Type,
             Status = BOMStatus.Draft, // معمولاً کپی جدید به صورت Draft ایجاد می‌شود تا بررسی شود
             FromDate = DateTime.UtcNow,
-            IsActive = request.IsActive 
+            IsActive = request.IsActive,
+            BaseQuantity = sourceBom.BaseQuantity
         };
+
+        foreach (var output in sourceBom.Outputs)
+        {
+            newBom.Outputs.Add(new BOMOutput
+            {
+                BOMHeaderId = 0,
+                ProductId = output.ProductId,
+                Type = output.Type,
+                Quantity = output.Quantity,
+                CostSharePercent = output.CostSharePercent
+            });
+        }
 
         // 3. کپی کردن دیتیل‌ها (با تمام فیلدهای جدید)
         foreach (var sourceDetail in sourceBom.Details)

@@ -34,6 +34,7 @@ public interface IApplicationDbContext
     DbSet<BOMHeader> BOMHeaders { get; }
     DbSet<BOMDetail> BOMDetails { get; }
     DbSet<BOMSubstitute> BOMSubstitutes { get; }
+    DbSet<BOMOutput> BOMOutputs { get; }
 
     // === ماژول Inventory (جدید) ===
     DbSet<Warehouse> Warehouses { get; }

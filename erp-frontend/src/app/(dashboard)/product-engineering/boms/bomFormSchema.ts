@@ -27,6 +27,20 @@ export interface BOMRow {
   substitutes: SubstituteRow[];
 }
 
+/** خروجی جانبی فرمول؛ مقدار و سهم بها از ورودی‌های جدول به صورت رشته هم می‌آیند */
+export interface BOMOutputRow {
+  id: string;
+  productId: number | null;
+  productCode?: string;
+  productName?: string;
+  unitName?: string;
+  type: number | string; // 1=همزاد، 2=فرعی
+  quantity: number | string;
+  costSharePercent: number | string;
+}
+
+export const OUTPUT_TYPE = { coProduct: 1, byProduct: 2 } as const;
+
 export interface BOMHeaderState {
   productId: number | null;
   productName?: string;
@@ -37,10 +51,12 @@ export interface BOMHeaderState {
   fromDate: string;
   toDate?: string;
   isActive: boolean;
+  baseQuantity: number | string;
 }
 
 export interface BOMFormValues extends BOMHeaderState {
   details: BOMRow[];
+  outputs: BOMOutputRow[];
 }
 
 export const emptyBOM = (): BOMFormValues => ({
@@ -52,13 +68,16 @@ export const emptyBOM = (): BOMFormValues => ({
   fromDate: new Date().toISOString().split("T")[0],
   toDate: undefined,
   isActive: true,
+  baseQuantity: 1,
   details: [],
+  outputs: [],
 });
 
 /** سربرگ فرم بدون سطرها */
 export const headerOf = (values: BOMFormValues): BOMHeaderState => {
   const header: Partial<BOMFormValues> = { ...values };
   delete header.details;
+  delete header.outputs;
   return header as BOMHeaderState;
 };
 
@@ -79,7 +98,9 @@ export const bomSchema = z
     fromDate: z.union([z.string(), z.date()]),
     toDate: z.union([z.string(), z.date()]).optional().nullable(),
     isActive: z.boolean(),
+    baseQuantity: z.union([z.number(), z.string()]),
     details: z.array(z.custom<BOMRow>()),
+    outputs: z.array(z.custom<BOMOutputRow>()),
   })
   .superRefine((v, ctx) => {
     const issue = (path: (string | number)[], message: string) =>
@@ -88,10 +109,13 @@ export const bomSchema = z
     if (!v.productId) issue(["productId"], "کالا/قلم نهایی انتخاب نشده");
     if (!v.title.trim()) issue(["title"], "عنوان فرمول الزامی است.");
     if (!(Number(v.version) > 0)) issue(["version"], "شماره نسخه باید بزرگتر از صفر باشد.");
+    if (!(Number(v.baseQuantity) > 0)) issue(["baseQuantity"], "مقدار پایه فرمول باید بیشتر از صفر باشد.");
     const from = toTime(v.fromDate);
     const to = toTime(v.toDate);
     if (!isNaN(from) && !isNaN(to) && to <= from)
       issue(["toDate"], "تاریخ پایان باید بعد از تاریخ شروع باشد.");
+
+    validateOutputs(v.outputs, v.productId, issue);
 
     if (v.details.length === 0) {
       issue(["details"], "اقلام فرمول وارد نشده");
@@ -119,6 +143,47 @@ export const bomSchema = z
     });
   });
 
+/** قواعد خروجی‌های جانبی، هم‌راستا با BOMOutputInputValidator و BOMOutputRules در بک‌اند */
+function validateOutputs(
+  outputs: BOMOutputRow[],
+  mainProductId: number | null,
+  issue: (path: (string | number)[], message: string) => void,
+) {
+  const seen = new Set<number>();
+  let coProductShare = 0;
+  outputs.forEach((row, index) => {
+    const n = index + 1;
+    const share = Number(row.costSharePercent || 0);
+    const isByProduct = Number(row.type) === OUTPUT_TYPE.byProduct;
+    if (!row.productId) {
+      issue(["outputs", index, "productId"], `خروجی ${n}: کالا انتخاب نشده است.`);
+    } else if (row.productId === mainProductId) {
+      issue(["outputs", index, "productId"], "محصول اصلی فرمول نمی‌تواند خروجی جانبی همان فرمول باشد.");
+    } else if (seen.has(row.productId)) {
+      issue(["outputs", index, "productId"], "یک کالا نمی‌تواند چند بار در خروجی‌های جانبی تکرار شود.");
+    } else if (!(Number(row.quantity) > 0)) {
+      issue(["outputs", index, "quantity"], `خروجی ${n}: مقدار باید بیشتر از صفر باشد.`);
+    } else if (!(share >= 0 && share <= 100)) {
+      issue(["outputs", index, "costSharePercent"], `خروجی ${n}: سهم بها باید بین ۰ تا ۱۰۰ باشد.`);
+    } else if (isByProduct && share !== 0) {
+      issue(["outputs", index, "costSharePercent"], `خروجی ${n}: محصول فرعی سهمی از بهای تمام‌شده ندارد.`);
+    }
+    if (row.productId) seen.add(row.productId);
+    if (!isByProduct) coProductShare += share;
+  });
+  if (coProductShare >= 100)
+    issue(["outputs"], "جمع سهم بهای محصولات همزاد باید کمتر از ۱۰۰ باشد تا سهمی برای محصول اصلی بماند.");
+}
+
 /** اولین پیام خطا به ترتیب فیلدهای فرم؛ برای نمایش در toast */
 export const firstBOMError = (errors: Record<string, unknown>) =>
-  firstFormError(errors, ["productId", "title", "version", "fromDate", "toDate", "details"]);
+  firstFormError(errors, [
+    "productId",
+    "title",
+    "version",
+    "baseQuantity",
+    "fromDate",
+    "toDate",
+    "details",
+    "outputs",
+  ]);

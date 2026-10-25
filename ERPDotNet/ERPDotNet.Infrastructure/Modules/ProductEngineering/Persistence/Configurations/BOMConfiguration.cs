@@ -24,6 +24,7 @@ public class BOMHeaderConfiguration : IEntityTypeConfiguration<BOMHeader>
         // ---------------------------------------------
         
         builder.Property(x => x.RowVersion).IsRowVersion();
+        builder.Property(x => x.BaseQuantity).HasPrecision(18, 6);
 
         // ایندکس ترکیبی برای جلوگیری از ورژن تکراری (همچنان لازم است)
         builder.HasIndex(x => new { x.ProductId, x.Version }).IsUnique();
@@ -39,6 +40,11 @@ public class BOMHeaderConfiguration : IEntityTypeConfiguration<BOMHeader>
                .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasMany(x => x.Details)
+               .WithOne(x => x.BOMHeader)
+               .HasForeignKey(x => x.BOMHeaderId)
+               .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(x => x.Outputs)
                .WithOne(x => x.BOMHeader)
                .HasForeignKey(x => x.BOMHeaderId)
                .OnDelete(DeleteBehavior.Cascade);
@@ -93,6 +99,25 @@ public class BOMSubstituteConfiguration : IEntityTypeConfiguration<BOMSubstitute
         builder.HasOne(x => x.SubstituteProduct)
                .WithMany()
                .HasForeignKey(x => x.SubstituteProductId)
+               .OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
+// 4. تنظیمات خروجی‌های جانبی (محصول همزاد و فرعی)
+public class BOMOutputConfiguration : IEntityTypeConfiguration<BOMOutput>
+{
+    public void Configure(EntityTypeBuilder<BOMOutput> builder)
+    {
+        builder.ToTable("bom_outputs", "eng");
+
+        builder.Property(x => x.Quantity).HasPrecision(18, 6);
+        builder.Property(x => x.CostSharePercent).HasPrecision(5, 2);
+
+        builder.HasIndex(x => new { x.BOMHeaderId, x.ProductId }).IsUnique();
+
+        builder.HasOne(x => x.Product)
+               .WithMany()
+               .HasForeignKey(x => x.ProductId)
                .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -152,6 +152,7 @@ export async function createBom(
     productId: number;
     title: string;
     components: { productId: number; unitId: number; quantity: number }[];
+    baseQuantity?: number;
   },
 ): Promise<number> {
   return postId(
@@ -166,6 +167,7 @@ export async function createBom(
       fromDate: new Date().toISOString(),
       toDate: null,
       isActive: true,
+      baseQuantity: b.baseQuantity ?? 1,
       details: b.components.map((c) => ({
         childProductId: c.productId,
         quantity: c.quantity,

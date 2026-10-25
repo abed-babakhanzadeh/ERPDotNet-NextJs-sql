@@ -44,8 +44,8 @@ public class GetBOMTreeHandler : IRequestHandler<GetBOMTreeQuery, BOMTreeNodeDto
                     NULL AS ParentProductId,
                     H.ProductId,
                     H.Id AS BomId,
-                    CAST(1 AS DECIMAL(18,4)) AS Quantity,
-                    CAST(1 AS DECIMAL(18,4)) AS TotalQuantity,
+                    CAST(H.BaseQuantity AS DECIMAL(18,4)) AS Quantity,
+                    CAST(H.BaseQuantity AS DECIMAL(18,4)) AS TotalQuantity,
                     CAST(0 AS DECIMAL(18,4)) AS WastePercentage
                 FROM [eng].[bom_headers] H
                 WHERE H.Id = @RootBomId
@@ -62,11 +62,13 @@ public class GetBOMTreeHandler : IRequestHandler<GetBOMTreeQuery, BOMTreeNodeDto
                     (SELECT BomId FROM LatestBOMs LB WHERE LB.ProductId = D.ChildProductId) AS BomId,
                     
                     CAST(D.Quantity AS DECIMAL(18,4)), 
-                    CAST(D.Quantity * RB.TotalQuantity AS DECIMAL(18,4)), 
+                    -- مقدار سطر برای مقدار پایه فرمول والد است؛ به نسبت نیاز والد مقیاس می‌شود
+                    CAST(D.Quantity * RB.TotalQuantity / PH.BaseQuantity AS DECIMAL(18,4)), 
                     CAST(D.WastePercentage AS DECIMAL(18,4))
 
                 FROM [eng].[bom_details] D
                 JOIN RecursiveBOM RB ON D.BOMHeaderId = RB.BomId
+                JOIN [eng].[bom_headers] PH ON PH.Id = RB.BomId
             )
 
             SELECT 

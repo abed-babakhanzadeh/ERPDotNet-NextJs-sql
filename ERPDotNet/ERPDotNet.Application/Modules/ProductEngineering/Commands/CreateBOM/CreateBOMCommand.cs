@@ -19,8 +19,10 @@ public record CreateBOMCommand : IRequest<int>
     public DateTime FromDate { get; set; } = DateTime.UtcNow;
     public DateTime? ToDate { get; set; }
     public bool IsActive { get; set; } = true;
+    public decimal BaseQuantity { get; set; } = 1;
 
     public List<BOMDetailInputDto> Details { get; set; } = new();
+    public List<BOMOutputInputDto> Outputs { get; set; } = new();
 }
 
 public record BOMDetailInputDto
@@ -79,6 +81,15 @@ public class CreateBOMValidator : AbstractValidator<CreateBOMCommand>
         RuleFor(x => x.Details)
             .Must(details => details.Select(d => d.ChildProductId).Distinct().Count() == details.Count)
             .WithMessage("یک کالا نمی‌تواند چند بار در لیست مواد اولیه تکرار شود.");
+
+        RuleFor(v => v)
+            .Must(v => v.Outputs.All(o => o.ProductId != v.ProductId))
+            .WithMessage(BOMOutputRules.MainProductMessage);
+
+        RuleFor(v => v.BaseQuantity).GreaterThan(0).WithMessage(BOMOutputRules.BaseQuantityMessage);
+        RuleForEach(v => v.Outputs).SetValidator(new BOMOutputInputValidator());
+        RuleFor(v => v.Outputs).Must(BOMOutputRules.AreDistinct).WithMessage(BOMOutputRules.DuplicateMessage);
+        RuleFor(v => v.Outputs).Must(BOMOutputRules.LeavesShareForMainProduct).WithMessage(BOMOutputRules.CostShareMessage);
 
         // ولیدیشن داخلی اقلام
         RuleForEach(v => v.Details).SetValidator(new BOMDetailInputValidator());
@@ -167,7 +178,8 @@ public class CreateBOMHandler : IRequestHandler<CreateBOMCommand, int>
             FromDate = utcFromDate,
             ToDate = utcToDate,
             Status = BOMStatus.Active, 
-            IsActive = request.IsActive
+            IsActive = request.IsActive,
+            BaseQuantity = request.BaseQuantity
         };
 
         foreach (var detailInput in request.Details)
@@ -198,6 +210,8 @@ public class CreateBOMHandler : IRequestHandler<CreateBOMCommand, int>
 
             bom.Details.Add(detail);
         }
+
+        BOMOutputRules.Sync(bom, request.Outputs);
 
         _context.BOMHeaders.Add(bom);
         await _context.SaveChangesAsync(cancellationToken);

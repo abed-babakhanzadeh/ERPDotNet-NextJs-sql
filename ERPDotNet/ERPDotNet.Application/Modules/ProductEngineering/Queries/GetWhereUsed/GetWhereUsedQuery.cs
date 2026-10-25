@@ -49,7 +49,8 @@ public class GetWhereUsedHandler : IRequestHandler<GetWhereUsedQuery, PaginatedR
                     u.Title AS UnitName,
                     
                     CAST(N'ماده اولیه' AS NVARCHAR(50)) AS UsageType,
-                    d.Quantity,
+                    -- مصرف به ازای یک واحد محصول پدر (مقدار سطر برای مقدار پایه فرمول است)
+                    CAST(d.Quantity / h.BaseQuantity AS DECIMAL(18,6)) AS Quantity,
                     1 AS Level,
                     CAST(p.Name AS NVARCHAR(MAX)) AS Path
                 FROM [eng].[bom_details] d
@@ -104,7 +105,7 @@ public class GetWhereUsedHandler : IRequestHandler<GetWhereUsedQuery, PaginatedR
                     u.Title,
 
                     CAST(N'نیمه ساخته' AS NVARCHAR(50)),
-                    d.Quantity,
+                    CAST(d.Quantity / h.BaseQuantity AS DECIMAL(18,6)),
                     cte.Level + 1,
                     CAST(cte.Path + N' > ' + p.Name AS NVARCHAR(MAX))
                 FROM WhereUsed_CTE cte

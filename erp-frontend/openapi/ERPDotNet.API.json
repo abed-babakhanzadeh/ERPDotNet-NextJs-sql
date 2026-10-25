@@ -4993,7 +4993,9 @@
           "toDate",
           "isActive",
           "rowVersion",
-          "details"
+          "details",
+          "baseQuantity",
+          "outputs"
         ],
         "type": "object",
         "properties": {
@@ -5093,6 +5095,20 @@
             "items": {
               "$ref": "#/components/schemas/BOMDetailDto"
             }
+          },
+          "baseQuantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "outputs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BOMOutputDto"
+            }
           }
         }
       },
@@ -5173,6 +5189,115 @@
             "format": "byte"
           }
         }
+      },
+      "BOMOutputDto": {
+        "required": [
+          "id",
+          "productId",
+          "productName",
+          "productCode",
+          "unitName",
+          "typeId",
+          "typeTitle",
+          "quantity",
+          "costSharePercent"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "productId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "productName": {
+            "type": "string"
+          },
+          "productCode": {
+            "type": "string"
+          },
+          "unitName": {
+            "type": "string"
+          },
+          "typeId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "typeTitle": {
+            "type": "string"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "costSharePercent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "BOMOutputInputDto": {
+        "required": [
+          "productId",
+          "type",
+          "quantity",
+          "costSharePercent"
+        ],
+        "type": "object",
+        "properties": {
+          "productId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "type": {
+            "$ref": "#/components/schemas/BOMOutputType"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "costSharePercent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "BOMOutputType": {
+        "type": "integer"
       },
       "BOMStatus": {
         "type": "integer"
@@ -5754,7 +5879,9 @@
           "type",
           "fromDate",
           "isActive",
-          "details"
+          "baseQuantity",
+          "details",
+          "outputs"
         ],
         "type": "object",
         "properties": {
@@ -5797,10 +5924,24 @@
           "isActive": {
             "type": "boolean"
           },
+          "baseQuantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
           "details": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/BOMDetailInputDto"
+            }
+          },
+          "outputs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BOMOutputInputDto"
             }
           }
         }
@@ -9876,7 +10017,9 @@
           "status",
           "isActive",
           "fromDate",
-          "details"
+          "baseQuantity",
+          "details",
+          "outputs"
         ],
         "type": "object",
         "properties": {
@@ -9929,10 +10072,24 @@
             ],
             "format": "byte"
           },
+          "baseQuantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
           "details": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/BOMDetailUpdateDto"
+            }
+          },
+          "outputs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BOMOutputInputDto"
             }
           }
         }

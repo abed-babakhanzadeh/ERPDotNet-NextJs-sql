@@ -11,6 +11,7 @@ import {
   CopyPlus,
   Network,
   FileSearch,
+  Recycle,
 } from "lucide-react";
 
 // Components
@@ -36,6 +37,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import SubstitutesDialog from "./SubstitutesDialog";
+import BOMOutputsGrid from "./BOMOutputsGrid";
 import {
   bomSchema,
   emptyBOM,
@@ -43,6 +45,7 @@ import {
   headerOf,
   type BOMFormValues,
   type BOMHeaderState,
+  type BOMOutputRow,
   type BOMRow,
   type UnitOption,
 } from "./bomFormSchema";
@@ -91,10 +94,11 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
   });
   const watched = useWatch({ control: form.control }) as BOMFormValues;
   const details = watched.details ?? [];
+  const outputs = watched.outputs ?? [];
   const headerData = useMemo(() => headerOf(watched), [watched]);
   const headerErrors = Object.fromEntries(
     Object.entries(form.formState.errors)
-      .filter(([key]) => key !== "details")
+      .filter(([key]) => key !== "details" && key !== "outputs")
       .map(([key, err]) => [key, (err as { message?: string })?.message]),
   ) as Record<string, string | undefined>;
 
@@ -104,6 +108,11 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
     const rows = typeof next === "function" ? next(form.getValues("details")) : next;
     form.setValue("details", rows, { shouldDirty: true });
     form.clearErrors("details");
+  };
+  const setOutputs: React.Dispatch<React.SetStateAction<BOMOutputRow[]>> = (next) => {
+    const rows = typeof next === "function" ? next(form.getValues("outputs")) : next;
+    form.setValue("outputs", rows, { shouldDirty: true });
+    form.clearErrors("outputs");
   };
   const setHeaderData: React.Dispatch<React.SetStateAction<BOMHeaderState>> = (next) => {
     const prev = headerOf(form.getValues());
@@ -215,6 +224,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
           : new Date().toISOString().split("T")[0],
         toDate: data.toDate ? data.toDate.split("T")[0] : undefined,
         isActive: data.isActive ?? true,
+        baseQuantity: data.baseQuantity ?? 1,
       };
 
       const initialProductOption = {
@@ -266,7 +276,18 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
         })
       );
 
-      form.reset({ ...header, details: mappedDetails });
+      const mappedOutputs: BOMOutputRow[] = (data.outputs ?? []).map((o) => ({
+        id: Math.random().toString(36).slice(2, 11),
+        productId: o.productId,
+        productCode: o.productCode,
+        productName: o.productName,
+        unitName: o.unitName,
+        type: o.typeId,
+        quantity: o.quantity,
+        costSharePercent: o.costSharePercent,
+      }));
+
+      form.reset({ ...header, details: mappedDetails, outputs: mappedOutputs });
       setLoaded(true);
     } catch (error) {
       handleApiError(error, "خطا در دریافت اطلاعات BOM");
@@ -410,6 +431,14 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
           { label: "فرمول اصلی (Main)", value: 1 },
           { label: "فرمول جایگزین (Alternate)", value: 2 },
         ],
+        colSpan: 1,
+      },
+      {
+        name: "baseQuantity",
+        label: "مقدار پایه (اقلام برای این مقدار)",
+        type: "number",
+        required: true,
+        disabled: isReadOnly,
         colSpan: 1,
       },
       {
@@ -684,13 +713,14 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
   );
 
   useFormPersist(`${persistKey}-details`, details, setDetails, mode !== "view");
+  useFormPersist(`${persistKey}-outputs`, outputs, setOutputs, mode !== "view");
 
   const onInvalid = (errors: FieldErrors<BOMFormValues>) => {
     toast.error(firstBOMError(errors) ?? "اطلاعات فرم کامل نیست.");
   };
 
   const onValid = async (values: BOMFormValues) => {
-    const { details } = values;
+    const { details, outputs } = values;
     const headerData = values;
     setSubmitting(true);
 
@@ -733,7 +763,14 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
         fromDate: safeFromDate,
         toDate: cleanToDate,
         isActive: headerData.isActive,
+        baseQuantity: Number(headerData.baseQuantity),
         details: cleanDetails,
+        outputs: outputs.map((o) => ({
+          productId: Number(o.productId),
+          type: Number(o.type),
+          quantity: Number(o.quantity),
+          costSharePercent: Number(o.costSharePercent || 0),
+        })),
       };
 
       if (mode === "edit" && bomId) {
@@ -751,6 +788,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
 
       localStorage.removeItem(`${persistKey}-header`);
       localStorage.removeItem(`${persistKey}-details`);
+      localStorage.removeItem(`${persistKey}-outputs`);
       // مقدار ثبت‌شده مبنای جدید است تا بستن تب هشدار تغییرات ذخیره‌نشده ندهد
       form.reset(values);
 
@@ -936,6 +974,22 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
                             substitutes: [],
                           })
                     }
+                  />
+                </div>
+              ),
+            },
+            {
+              key: "outputs",
+              label: `محصولات همزاد و فرعی${outputs.length ? ` (${outputs.length})` : ""}`,
+              icon: Recycle,
+              content: (
+                <div className="h-full overflow-hidden p-1 [&_input:disabled]:cursor-default [&_select:disabled]:cursor-default">
+                  <BOMOutputsGrid
+                    rows={outputs}
+                    onChange={setOutputs}
+                    readOnly={isReadOnly}
+                    baseQuantity={headerData.baseQuantity}
+                    error={(form.formState.errors.outputs as { message?: string } | undefined)?.message}
                   />
                 </div>
               ),
