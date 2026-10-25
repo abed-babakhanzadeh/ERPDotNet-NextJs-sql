@@ -6,6 +6,7 @@ using ERPDotNet.Domain.Modules.Inventory.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
+using ERPDotNet.Application.Modules.Inventory.Services;
 
 namespace ERPDotNet.Application.Modules.Inventory.Queries.GetInventoryDocs;
 
@@ -29,10 +30,12 @@ public class GetInventoryDocsQuery : IRequest<PaginatedResult<InventoryDocDto>>
 public class GetInventoryDocsHandler : IRequestHandler<GetInventoryDocsQuery, PaginatedResult<InventoryDocDto>>
 {
     private readonly IApplicationDbContext _context;
+    private readonly IWarehouseAccessService _warehouseAccess;
 
-    public GetInventoryDocsHandler(IApplicationDbContext context)
+    public GetInventoryDocsHandler(IApplicationDbContext context, IWarehouseAccessService warehouseAccess)
     {
         _context = context;
+        _warehouseAccess = warehouseAccess;
     }
 
     public async Task<PaginatedResult<InventoryDocDto>> Handle(GetInventoryDocsQuery request, CancellationToken cancellationToken)
@@ -43,6 +46,12 @@ public class GetInventoryDocsHandler : IRequestHandler<GetInventoryDocsQuery, Pa
             .Include(x => x.DocType)
             .Include(x => x.Warehouse)
             .AsQueryable();
+
+        // دسترسی سطح داده: سند انبار مبدأ یا مقصد (انتقال) مجاز
+        var allowedWarehouses = await _warehouseAccess.GetAllowedWarehouseIdsAsync(cancellationToken);
+        if (allowedWarehouses != null)
+            query = query.Where(x => allowedWarehouses.Contains(x.WarehouseId) ||
+                                     (x.DestinationWarehouseId != null && allowedWarehouses.Contains(x.DestinationWarehouseId.Value)));
 
         // 2. جستجوی کلی (SearchBox)
         if (!string.IsNullOrWhiteSpace(request.SearchTerm))

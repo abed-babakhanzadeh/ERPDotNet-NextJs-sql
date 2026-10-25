@@ -6,12 +6,14 @@ using ERPDotNet.Domain.Modules.Inventory.Enums;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using ERPDotNet.Application.Modules.Inventory.Services;
 
 namespace ERPDotNet.Application.Modules.Inventory.Commands.ApproveInventoryDoc;
 
 [CacheInvalidation("InventoryDocs")]
-public record ApproveInventoryDocCommand : IRequest<bool>
+public record ApproveInventoryDocCommand : IRequest<bool>, IInventoryDocScopedRequest
 {
+    long IInventoryDocScopedRequest.ScopedDocId => Id;
     public long Id { get; set; }
     public byte[] RowVersion { get; set; } = Array.Empty<byte>();
 }

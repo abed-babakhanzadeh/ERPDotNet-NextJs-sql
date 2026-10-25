@@ -7,10 +7,14 @@ using ERPDotNet.Domain.Modules.Workflow.Enums;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using ERPDotNet.Application.Modules.Inventory.Services;
 
 namespace ERPDotNet.Application.Modules.Inventory.Commands.SubmitInventoryDoc;
 
-public record SubmitInventoryDocCommand(long Id) : IRequest<bool>;
+public record SubmitInventoryDocCommand(long Id) : IRequest<bool>, IInventoryDocScopedRequest
+{
+    long IInventoryDocScopedRequest.ScopedDocId => Id;
+}
 
 public class SubmitInventoryDocValidator : AbstractValidator<SubmitInventoryDocCommand>
 {

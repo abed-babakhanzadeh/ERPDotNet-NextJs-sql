@@ -7,12 +7,15 @@ using ERPDotNet.Domain.Modules.Inventory.Enums;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using ERPDotNet.Application.Modules.Inventory.Services;
 
 namespace ERPDotNet.Application.Modules.Inventory.Commands.UpdateInventoryDoc;
 
 [CacheInvalidation("InventoryDocs")]
-public class UpdateInventoryDocCommand : IRequest<bool>
+public class UpdateInventoryDocCommand : IRequest<bool>, IInventoryDocScopedRequest, IWarehouseScopedRequest
 {
+    long IInventoryDocScopedRequest.ScopedDocId => Id;
+    IEnumerable<int> IWarehouseScopedRequest.ScopedWarehouseIds => [WarehouseId];
     public long Id { get; set; }
     public DateTime DocDate { get; set; }
     public string? Description { get; set; }

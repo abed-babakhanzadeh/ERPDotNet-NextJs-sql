@@ -5,6 +5,7 @@ using ERPDotNet.Domain.Modules.Inventory.Entities;
 using ERPDotNet.Domain.Modules.Inventory.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using ERPDotNet.Application.Modules.Inventory.Services;
 
 namespace ERPDotNet.Application.Modules.Inventory.Commands.StockCounts;
 
@@ -14,8 +15,9 @@ public record FinalizeStockCountResult(long? SurplusDocId, long? ShortageDocId);
 /// نهایی کردن انبارگردانی: اضافی‌ها سند وارده و کسری‌ها سند صادره (پیش‌نویس) می‌شوند.
 /// نوع سند فقط وقتی لازم است که اختلافی از همان جنس وجود داشته باشد.
 /// </summary>
-public record FinalizeStockCountCommand : IRequest<FinalizeStockCountResult>
+public record FinalizeStockCountCommand : IRequest<FinalizeStockCountResult>, IStockCountScopedRequest
 {
+    int IStockCountScopedRequest.ScopedStockCountId => Id;
     public int Id { get; set; }
     public int? SurplusDocTypeId { get; set; }
     public int? ShortageDocTypeId { get; set; }

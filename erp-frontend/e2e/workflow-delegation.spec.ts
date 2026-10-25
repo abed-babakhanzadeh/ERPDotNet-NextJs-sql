@@ -1,13 +1,8 @@
+import { expect, test, type APIRequestContext } from "@playwright/test";
 import {
-  expect,
-  request,
-  test,
-  type APIRequestContext,
-  type APIResponse,
-} from "@playwright/test";
-import {
-  API_URL,
   adminApi,
+  createUserWithRole,
+  ok,
   createDoc,
   createProduct,
   createReceiptDocType,
@@ -19,12 +14,6 @@ import {
 const PROCESS_CODE = "INVENTORY_V1";
 // مجوزهای کارتابل: مشاهده، جزئیات، اقدام و تفویض
 const INBOX_PERMISSIONS = [4100, 4101, 4102, 4103, 4104];
-
-async function ok(res: APIResponse, what: string): Promise<APIResponse> {
-  if (!res.ok())
-    throw new Error(`${what}: ${res.status()} ${await res.text()}`);
-  return res;
-}
 
 /** فرآیند تأیید اسناد انبار؛ روی دیتابیس تازه با ابزار توسعه ساخته می‌شود */
 async function inventoryProcess(api: APIRequestContext) {
@@ -42,64 +31,6 @@ async function inventoryProcess(api: APIRequestContext) {
     await ok(await api.get("/api/Workflow/Tasks/ultimate-seed"), "ساخت فرآیند");
   const { id } = await find();
   return (await api.get(`/api/Workflow/Tasks/processes/${id}`)).json();
-}
-
-async function createUserWithRole(
-  api: APIRequestContext,
-  tag: string,
-  name: string,
-) {
-  const roleName = `${name}-${tag}`;
-  const role = await (
-    await ok(
-      await api.post("/api/Roles", { data: { name: roleName } }),
-      "ساخت نقش",
-    )
-  ).json();
-  await ok(
-    await api.post("/api/Permissions/assign-role", {
-      data: { roleId: role.id, permissionIds: INBOX_PERMISSIONS },
-    }),
-    "دسترسی نقش",
-  );
-  const username = `${name.toLowerCase()}${tag}`;
-  const password = "Passw0rd!x";
-  const user = await (
-    await ok(
-      await api.post("/api/Users", {
-        data: {
-          firstName: name,
-          lastName: tag,
-          username,
-          email: `${username}@e2e.local`,
-          password,
-          roles: [roleName],
-        },
-      }),
-      "ساخت کاربر",
-    )
-  ).json();
-  const login = await (
-    await ok(
-      await (
-        await request.newContext({ baseURL: API_URL })
-      ).post("/api/Auth/login", {
-        data: { username, password },
-      }),
-      "ورود کاربر",
-    )
-  ).json();
-  const client = await request.newContext({
-    baseURL: API_URL,
-    extraHTTPHeaders: { Authorization: `Bearer ${login.token}` },
-  });
-  return {
-    id: user.id as string,
-    roleId: role.id as string,
-    fullName: `${name} ${tag}`,
-    token: login.token as string,
-    api: client,
-  };
 }
 
 async function inboxTask(api: APIRequestContext, docId: number) {
@@ -137,8 +68,18 @@ test.describe("سررسید و تفویض اختیار کارتابل", () => {
     const review = process.states.find(
       (s: { stateCode: string }) => s.stateCode === "REVIEW",
     );
-    const approver = await createUserWithRole(api, tag, "Approver");
-    const clerk = await createUserWithRole(api, tag, "Clerk");
+    const approver = await createUserWithRole(
+      api,
+      tag,
+      "Approver",
+      INBOX_PERMISSIONS,
+    );
+    const clerk = await createUserWithRole(
+      api,
+      tag,
+      "Clerk",
+      INBOX_PERMISSIONS,
+    );
 
     // مرحله بررسی: مهلت ۴ ساعت و دکمه‌هایش فقط برای نقش تأییدکننده
     await page.goto(`/workflow/designer/${process.id}`);

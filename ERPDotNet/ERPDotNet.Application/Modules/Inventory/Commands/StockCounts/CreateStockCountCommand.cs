@@ -3,12 +3,14 @@ using ERPDotNet.Domain.Modules.Inventory.Entities;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using ERPDotNet.Application.Modules.Inventory.Services;
 
 namespace ERPDotNet.Application.Modules.Inventory.Commands.StockCounts;
 
 /// <summary>شروع انبارگردانی؛ سطرها از موجودی فعلی انبار (و در صورت انتخاب، فقط یک قفسه) ساخته می‌شوند</summary>
-public record CreateStockCountCommand : IRequest<int>
+public record CreateStockCountCommand : IRequest<int>, IWarehouseScopedRequest
 {
+    IEnumerable<int> IWarehouseScopedRequest.ScopedWarehouseIds => [WarehouseId];
     public required int WarehouseId { get; set; }
     public int? LocationId { get; set; }
     public DateTime CountDate { get; set; } = DateTime.UtcNow;

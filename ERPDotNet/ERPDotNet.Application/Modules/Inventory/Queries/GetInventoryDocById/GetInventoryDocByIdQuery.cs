@@ -3,10 +3,15 @@ using ERPDotNet.Application.Modules.Inventory.DTOs;
 using ERPDotNet.Domain.Modules.Inventory.Enums; // برای InventoryNature
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using ERPDotNet.Application.Modules.Inventory.Services;
 
 namespace ERPDotNet.Application.Modules.Inventory.Queries.GetInventoryDocById;
 
-public record GetInventoryDocByIdQuery(long Id) : IRequest<InventoryDocDto?>;
+public record GetInventoryDocByIdQuery(long Id) : IRequest<InventoryDocDto?>, IInventoryDocScopedRequest
+{
+    long IInventoryDocScopedRequest.ScopedDocId => Id;
+    bool IInventoryDocScopedRequest.ReadOnlyAccess => true;
+}
 
 public class GetInventoryDocByIdHandler : IRequestHandler<GetInventoryDocByIdQuery, InventoryDocDto?>
 {

@@ -4,6 +4,7 @@ using ERPDotNet.Application.Common.Models;
 using ERPDotNet.Domain.Modules.Inventory.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using ERPDotNet.Application.Modules.Inventory.Services;
 
 namespace ERPDotNet.Application.Modules.Inventory.Queries.StockCounts;
 
@@ -28,15 +29,19 @@ public record GetStockCountsQuery : PaginatedRequest, IRequest<PaginatedResult<S
 public class GetStockCountsHandler : IRequestHandler<GetStockCountsQuery, PaginatedResult<StockCountListItemDto>>
 {
     private readonly IApplicationDbContext _context;
+    private readonly IWarehouseAccessService _warehouseAccess;
 
-    public GetStockCountsHandler(IApplicationDbContext context)
+    public GetStockCountsHandler(IApplicationDbContext context, IWarehouseAccessService warehouseAccess)
     {
         _context = context;
+        _warehouseAccess = warehouseAccess;
     }
 
     public async Task<PaginatedResult<StockCountListItemDto>> Handle(GetStockCountsQuery request, CancellationToken cancellationToken)
     {
         var query = _context.StockCounts.AsNoTracking();
+        var allowedWarehouses = await _warehouseAccess.GetAllowedWarehouseIdsAsync(cancellationToken);
+        if (allowedWarehouses != null) query = query.Where(c => allowedWarehouses.Contains(c.WarehouseId));
         if (request.WarehouseId.HasValue) query = query.Where(x => x.WarehouseId == request.WarehouseId);
         if (request.Status.HasValue) query = query.Where(x => x.Status == request.Status);
 

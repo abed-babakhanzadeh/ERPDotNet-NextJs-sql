@@ -39,6 +39,7 @@ public class AppDbContext : IdentityDbContext<User>, IApplicationDbContext
 
     // جداول ماژول انبار (Inventory)
     public DbSet<Warehouse> Warehouses { get; set; }
+    public DbSet<WarehouseUserAccess> WarehouseUserAccesses { get; set; }
     public DbSet<Location> Locations { get; set; }
     public DbSet<InventoryItemProfile> InventoryItemProfiles { get; set; }
     public DbSet<ItemWarehouseSetting> ItemWarehouseSettings { get; set; }

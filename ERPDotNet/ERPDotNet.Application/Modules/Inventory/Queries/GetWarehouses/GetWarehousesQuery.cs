@@ -5,20 +5,22 @@ using ERPDotNet.Application.Common.Models;
 using ERPDotNet.Application.Modules.Inventory.DTOs;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using ERPDotNet.Application.Modules.Inventory.Services;
 
 namespace ERPDotNet.Application.Modules.Inventory.Queries.GetWarehouses;
 
-// اضافه کردن کش با زمان 10 دقیقه و تگ انبارها
-[Cached(timeToLiveSeconds: 600, "Warehouses")]
+// بدون کش: نتیجه به دسترسی سطح داده کاربر بستگی دارد
 public record GetWarehousesQuery : PaginatedRequest, IRequest<PaginatedResult<WarehouseDto>>;
 
 public class GetWarehousesHandler : IRequestHandler<GetWarehousesQuery, PaginatedResult<WarehouseDto>>
 {
     private readonly IApplicationDbContext _context;
+    private readonly IWarehouseAccessService _warehouseAccess;
 
-    public GetWarehousesHandler(IApplicationDbContext context)
+    public GetWarehousesHandler(IApplicationDbContext context, IWarehouseAccessService warehouseAccess)
     {
         _context = context;
+        _warehouseAccess = warehouseAccess;
     }
 
     public async Task<PaginatedResult<WarehouseDto>> Handle(GetWarehousesQuery request, CancellationToken cancellationToken)
@@ -26,6 +28,9 @@ public class GetWarehousesHandler : IRequestHandler<GetWarehousesQuery, Paginate
     // حذف AsNoTracking از ابتدای زنجیره برای اطمینان از اعمال Global Filter
     // در پروژه‌های Tier-0، بهتر است AsNoTracking را بعد از فیلترهای پایه اعمال کنید
     var query = _context.Warehouses.AsQueryable(); 
+
+    var allowedWarehouses = await _warehouseAccess.GetAllowedWarehouseIdsAsync(cancellationToken);
+    if (allowedWarehouses != null) query = query.Where(x => allowedWarehouses.Contains(x.Id));
 
     // اعمال فیلترهای داینامیک و جستجو
     query = query.ApplyDynamicFilters(request.Filters); 

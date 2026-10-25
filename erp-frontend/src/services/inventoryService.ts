@@ -19,6 +19,7 @@ import {
 } from "@/types/inventory";
 import apiClient from "@/lib/api/client";
 import type {
+  WarehouseUserDto,
   DefineInventoryDocTypeCommand,
   PagedQuery,
   Paged,
@@ -251,6 +252,16 @@ const inventoryService = {
   updateBatch: async (id: number, data: UpdateBatchCommand) => {
     const response = await apiClient.put(`${BASE_URL}/batches/${id}`, data);
     return response.data;
+  },
+
+  // دسترسی سطح داده: کاربران مجاز انبار
+  getWarehouseUsers: async (warehouseId: number): Promise<WarehouseUserDto[]> => {
+    const response = await apiClient.get<WarehouseUserDto[]>(`${BASE_URL}/warehouses/${warehouseId}/users`);
+    return response.data;
+  },
+
+  setWarehouseUsers: async (warehouseId: number, userIds: string[]) => {
+    await apiClient.put(`${BASE_URL}/warehouses/${warehouseId}/users`, userIds);
   },
 
   setBatchQc: async (id: number, data: SetBatchQcStatusCommand) => {

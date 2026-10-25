@@ -18,6 +18,9 @@ public static class ConfigureServices
             cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
             
             // ترتیب اجرای پایپ‌لاین (Middleware):
+            // 0. دسترسی سطح داده به انبار (پیش از هر کش یا اجرا)
+            cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ERPDotNet.Application.Modules.Inventory.Services.WarehouseAccessBehavior<,>));
+
             // 1. اول کشینگ (اگر پاسخ در کش بود، بقیه اجرا نشوند)
             cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(CachingBehavior<,>));
             

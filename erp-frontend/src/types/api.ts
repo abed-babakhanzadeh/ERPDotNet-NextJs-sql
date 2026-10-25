@@ -90,6 +90,7 @@ export type CreateDelegationCommand = S["CreateDelegationCommand"];
 export type UpdateWarehouseCommand = S["UpdateWarehouseCommand"];
 export type DefineInventoryDocTypeCommand = S["DefineInventoryDocTypeCommand"];
 export type UpdateInventoryDocTypeCommand = S["UpdateInventoryDocTypeCommand"];
+export type WarehouseUserDto = S["WarehouseUserDto"];
 
 /** پروفایل کاربر جاری (GET /Auth/profile) */
 export type UserProfileDto = UserDto;

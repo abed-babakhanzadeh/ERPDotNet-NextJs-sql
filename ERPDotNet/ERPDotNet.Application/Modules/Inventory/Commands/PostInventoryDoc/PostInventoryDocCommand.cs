@@ -15,8 +15,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ERPDotNet.Application.Modules.Inventory.Commands.PostInventoryDoc;
 
-public class PostInventoryDocCommand : IRequest<bool>
+public class PostInventoryDocCommand : IRequest<bool>, IInventoryDocScopedRequest
 {
+    long IInventoryDocScopedRequest.ScopedDocId => Id;
     public long Id { get; set; }
     public string RowVersion { get; set; } = string.Empty;
 }

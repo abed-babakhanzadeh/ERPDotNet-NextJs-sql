@@ -6,11 +6,14 @@ using ERPDotNet.Application.Modules.Inventory.DTOs;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using ERPDotNet.Application.Modules.Inventory.Services;
+using ERPDotNet.Application.Modules.Inventory.Services;
 
 namespace ERPDotNet.Application.Modules.Inventory.Queries.GetCurrentStock;
 
-public record GetCurrentStockQuery : IRequest<PaginatedResult<InventoryStockDto>>
+public record GetCurrentStockQuery : IRequest<PaginatedResult<InventoryStockDto>>, IWarehouseScopedRequest
 {
+    IEnumerable<int> IWarehouseScopedRequest.ScopedWarehouseIds => WarehouseId is int id ? [id] : [];
     public int? WarehouseId { get; set; }
     public int? ProductId { get; set; }
     
@@ -36,11 +39,13 @@ public class GetCurrentStockValidator : AbstractValidator<GetCurrentStockQuery>
 public class GetCurrentStockHandler : IRequestHandler<GetCurrentStockQuery, PaginatedResult<InventoryStockDto>>
 {
     private readonly IApplicationDbContext _context;
+    private readonly IWarehouseAccessService _warehouseAccess;
     private readonly ICacheService _cacheService;
 
-    public GetCurrentStockHandler(IApplicationDbContext context, ICacheService cacheService)
+    public GetCurrentStockHandler(IApplicationDbContext context, ICacheService cacheService, IWarehouseAccessService warehouseAccess)
     {
         _context = context;
+        _warehouseAccess = warehouseAccess;
         _cacheService = cacheService;
     }
 
@@ -68,6 +73,10 @@ public class GetCurrentStockHandler : IRequestHandler<GetCurrentStockQuery, Pagi
             .Include(x => x.Location)
             .Include(x => x.Batch)
             .AsQueryable();
+
+        // دسترسی سطح داده: انبار مشخص را رفتار پایپ‌لاین بررسی کرده؛ اینجا فهرست کلی محدود می‌شود
+        var allowedWarehouses = await _warehouseAccess.GetAllowedWarehouseIdsAsync(cancellationToken);
+        if (allowedWarehouses != null) query = query.Where(x => allowedWarehouses.Contains(x.WarehouseId));
 
         // فیلترهای پایه سیستم
         if (request.WarehouseId.HasValue && request.WarehouseId.Value > 0)

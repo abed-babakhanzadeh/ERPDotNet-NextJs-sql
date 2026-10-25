@@ -2346,6 +2346,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Inventory/Inventory/warehouses/{id}/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["WarehouseUserDto"][];
+                        "application/json": components["schemas"]["WarehouseUserDto"][];
+                        "text/json": components["schemas"]["WarehouseUserDto"][];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": string[];
+                    "text/json": string[];
+                    "application/*+json": string[];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Inventory/Inventory/warehouse-types": {
         parameters: {
             query?: never;
@@ -6378,6 +6442,14 @@ export interface components {
             rowVersion?: null | string;
         };
         WarehouseType: number;
+        WarehouseUserDto: {
+            id: string;
+            fullName: string;
+            userName: string;
+            isAllowed: boolean;
+            /** Format: int32 */
+            assignedWarehouses: number;
+        };
         WhereUsedDto: {
             /** Format: int32 */
             id: number;
