@@ -1,4 +1,5 @@
 import apiClient from "./apiClient";
+import type { WorkflowRoleDto } from "@/types/workflow";
 
 // 🌟 مسیر پایه با توجه به کلاس TasksController در بک‌اند
 const BASE_URL = "/Workflow/Tasks";
@@ -53,6 +54,16 @@ export const workflowService = {
 
   createTransition: async (data: any) => {
     const response = await apiClient.post(`${BASE_URL}/transitions`, data);
+    return response.data;
+  },
+
+  // نقش‌های مجاز یک دکمه را کامل جایگزین می‌کند؛ لیست خالی = آزاد برای همه
+  updateTransitionRoles: async (transitionId: number, roleIds: string[]) => {
+    await apiClient.put(`${BASE_URL}/transitions/${transitionId}/roles`, roleIds);
+  },
+
+  getRoles: async (): Promise<WorkflowRoleDto[]> => {
+    const response = await apiClient.get<WorkflowRoleDto[]>(`${BASE_URL}/roles`);
     return response.data;
   },
 };

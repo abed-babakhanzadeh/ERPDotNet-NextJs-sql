@@ -111,8 +111,9 @@ public class BpmsEngineService : IBpmsEngineService
                 .Include(x => x.Rules)
                 .Include(x => x.AllowedRoles)
                 .Include(x => x.ToState)
-                .FirstOrDefaultAsync(x => x.Id == request.TransitionId && 
-                                          x.FromStateId == instance.CurrentStateId, cancellationToken);
+                .FirstOrDefaultAsync(x => x.Id == request.TransitionId &&
+                                          x.FromStateId == instance.CurrentStateId &&
+                                          x.IsActive, cancellationToken);
 
             if (transition == null)
                 throw new BusinessRuleException("انتقال درخواستی معتبر نیست یا پرونده در وضعیت دیگری قرار دارد.");
@@ -124,7 +125,7 @@ public class BpmsEngineService : IBpmsEngineService
             }
 
             // 4. اعتبارسنجی سطح دسترسی و موتور قوانین (Rule Evaluation)
-            ValidateTransition(transition, request.UserId, instance.Variables.Data);
+            await ValidateTransitionAsync(transition, request.UserId, instance.Variables.Data, cancellationToken);
 
             // 5. تغییر وضعیت (State Change)
             int oldStateId = instance.CurrentStateId;
@@ -210,14 +211,18 @@ public class BpmsEngineService : IBpmsEngineService
     // متدهای کمکی خصوصی
     // ==============================================================================
 
-    private void ValidateTransition(BpmsTransition transition, string userId, IReadOnlyDictionary<string, object?> variables)
+    private async Task ValidateTransitionAsync(
+        BpmsTransition transition,
+        string userId,
+        IReadOnlyDictionary<string, object?> variables,
+        CancellationToken cancellationToken)
     {
-        // الف) بررسی سطح دسترسی (فعلاً در فاز اولیه از دسترسی صرف‌نظر می‌کنیم یا باید سرویس UserRoles اینجا چک شود)
-        // در پروژه‌های واقعی، لیست Roleهای کاربر را از ICurrentUserService می‌گیریم و با transition.AllowedRoles تطبیق می‌دهیم.
-        /* var userRoles = _currentUserService.GetRoles();
-        if (transition.AllowedRoles.Any() && !transition.AllowedRoles.Any(r => userRoles.Contains(r.RoleId)))
+        // الف) بررسی سطح دسترسی بر اساس نقش‌های مجاز گذار
+        var userRoles = await BpmsTransitionAccess.GetUserRolesAsync(_context, userId, cancellationToken);
+        if (!BpmsTransitionAccess.CanExecute(userRoles).Compile()(transition))
+        {
             throw new BusinessRuleException("شما دسترسی اجرای این عملیات را ندارید.");
-        */
+        }
 
         // ب) اجرای موتور قوانین
         if (transition.Rules.Any())

@@ -10,6 +10,8 @@ import {
   ListChecks,
   CheckCircle2,
   CircleDot,
+  ShieldCheck,
+  Users,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -33,8 +35,14 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 
+import { RolePicker } from "@/components/modules/workflow/RolePicker";
 import { workflowService } from "@/services/workflowService";
-import { ProcessDetailsDto, StateDto } from "@/types/workflow";
+import {
+  ProcessDetailsDto,
+  StateDto,
+  TransitionDto,
+  WorkflowRoleDto,
+} from "@/types/workflow";
 
 export default function ProcessDesignerPage({
   params,
@@ -65,7 +73,45 @@ export default function ProcessDesignerPage({
     actionTitle: "",
     actionCode: "",
     buttonVariant: 1, // 🌟 مقدار پیش‌فرض شد 1 (معادل Default)
+    roleIds: [] as string[],
   });
+
+  // نقش‌ها برای انتخاب دسترسی دکمه‌ها
+  const [roles, setRoles] = useState<WorkflowRoleDto[]>([]);
+  const [editingRolesFor, setEditingRolesFor] = useState<TransitionDto | null>(
+    null,
+  );
+  const [editingRoleIds, setEditingRoleIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    workflowService
+      .getRoles()
+      .then(setRoles)
+      .catch(() => toast.error("خطا در دریافت فهرست نقش‌ها"));
+  }, []);
+
+  const openRolesEditor = (transition: TransitionDto) => {
+    setEditingRolesFor(transition);
+    setEditingRoleIds(transition.roles.map((r) => r.id));
+  };
+
+  const handleSaveRoles = async () => {
+    if (!editingRolesFor) return;
+    try {
+      setIsSubmitting(true);
+      await workflowService.updateTransitionRoles(
+        editingRolesFor.id,
+        editingRoleIds,
+      );
+      toast.success("دسترسی دکمه به‌روزرسانی شد");
+      setEditingRolesFor(null);
+      loadProcessDetails();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "خطا در ذخیره دسترسی");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const loadProcessDetails = async () => {
     try {
@@ -130,6 +176,7 @@ export default function ProcessDesignerPage({
           : null,
         // 🌟 این خط جا افتاده بود و باعث ارور 500 می‌شد!
         buttonVariant: Number(newTransition.buttonVariant),
+        roleIds: newTransition.roleIds,
       });
       toast.success("ارتباط جدید با موفقیت ایجاد شد");
       setIsTransitionModalOpen(false);
@@ -139,6 +186,7 @@ export default function ProcessDesignerPage({
         actionTitle: "",
         actionCode: "",
         buttonVariant: 1,
+        roleIds: [],
       });
       loadProcessDetails();
     } catch (error: any) {
@@ -289,6 +337,35 @@ export default function ProcessDesignerPage({
                       <ArrowRight className="w-4 h-4 text-slate-400 mx-1" />
                       <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                       <span>{t.toStateTitle}</span>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between gap-2 border-t border-blue-100 pt-2">
+                      <div className="flex flex-wrap items-center gap-1">
+                        {t.roles.length === 0 ? (
+                          <Badge
+                            variant="secondary"
+                            className="gap-1 font-normal"
+                          >
+                            <Users className="h-3 w-3" /> همه کاربران
+                          </Badge>
+                        ) : (
+                          t.roles.map((r) => (
+                            <Badge
+                              key={r.id}
+                              variant="outline"
+                              className="gap-1 font-normal"
+                            >
+                              <ShieldCheck className="h-3 w-3" /> {r.name}
+                            </Badge>
+                          ))
+                        )}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openRolesEditor(t)}
+                      >
+                        ویرایش دسترسی
+                      </Button>
                     </div>
                   </div>
                 ))
@@ -480,6 +557,16 @@ export default function ProcessDesignerPage({
                 موجودی) اجرا کند، ActionCode مربوطه را بنویسید.
               </p>
             </div>
+            <div className="grid gap-2 mt-2">
+              <Label>نقش‌های مجاز به زدن این دکمه</Label>
+              <RolePicker
+                roles={roles}
+                value={newTransition.roleIds}
+                onChange={(roleIds) =>
+                  setNewTransition({ ...newTransition, roleIds })
+                }
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button
@@ -490,6 +577,38 @@ export default function ProcessDesignerPage({
             </Button>
             <Button onClick={handleCreateTransition} disabled={isSubmitting}>
               {isSubmitting ? "در حال ثبت..." : "ذخیره ارتباط"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* مودال ویرایش دسترسی دکمه */}
+      <Dialog
+        open={editingRolesFor !== null}
+        onOpenChange={(open) => !open && setEditingRolesFor(null)}
+      >
+        <DialogContent className="sm:max-w-[460px]">
+          <DialogHeader>
+            <DialogTitle>
+              دسترسی دکمه «{editingRolesFor?.actionTitle}»
+            </DialogTitle>
+            <DialogDescription>
+              فقط کاربرانی که یکی از نقش‌های انتخاب‌شده را دارند این دکمه را در
+              کارتابل می‌بینند و می‌توانند اجرایش کنند.
+            </DialogDescription>
+          </DialogHeader>
+          <RolePicker
+            roles={roles}
+            value={editingRoleIds}
+            onChange={setEditingRoleIds}
+            disabled={isSubmitting}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingRolesFor(null)}>
+              انصراف
+            </Button>
+            <Button onClick={handleSaveRoles} disabled={isSubmitting}>
+              {isSubmitting ? "در حال ذخیره..." : "ذخیره دسترسی"}
             </Button>
           </DialogFooter>
         </DialogContent>

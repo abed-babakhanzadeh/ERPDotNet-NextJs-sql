@@ -1,6 +1,7 @@
 using ERPDotNet.Application.Common.Exceptions;
 using ERPDotNet.Application.Common.Interfaces;
 using ERPDotNet.Application.Modules.Workflow.DTOs;
+using ERPDotNet.Application.Modules.Workflow.Services;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -35,10 +36,12 @@ public class GetTaskDetailsQueryHandler : IRequestHandler<GetTaskDetailsQuery, T
         if (task == null)
             throw new KeyNotFoundException("وظیفه مورد نظر یافت نشد.");
 
-        // 🌟 واکشی دکمه‌ها همراه با رنگ (ButtonVariant)
+        // 🌟 واکشی دکمه‌ها همراه با رنگ (ButtonVariant) — فقط دکمه‌هایی که کاربر اجازه اجرایشان را دارد
+        var userRoles = await BpmsTransitionAccess.GetUserRolesAsync(_context, _currentUser.UserId, cancellationToken);
         var availableTransitions = await _context.BpmsTransitions
             .AsNoTracking()
             .Where(tr => tr.FromStateId == task.Instance.CurrentStateId && tr.IsActive)
+            .Where(BpmsTransitionAccess.CanExecute(userRoles))
             .Select(tr => new TaskTransitionDto
             {
                 TransitionId = tr.Id,

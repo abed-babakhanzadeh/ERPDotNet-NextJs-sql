@@ -230,7 +230,7 @@ export default function UsersPage() {
 
       setRolePermIds(rIds);
 
-      let initialSelected = new Set(rIds);
+      const initialSelected = new Set(rIds);
       overrides.forEach((ov) => {
         if (ov.isGranted) initialSelected.add(ov.permissionId);
         else initialSelected.delete(ov.permissionId);
@@ -251,7 +251,7 @@ export default function UsersPage() {
     const idsToUpdate = [targetId, ...childrenIds];
 
     setFinalSelectedIds((prev) => {
-      let newSet = new Set(prev);
+      const newSet = new Set(prev);
       if (checked) {
         idsToUpdate.forEach((id) => newSet.add(id));
       } else {

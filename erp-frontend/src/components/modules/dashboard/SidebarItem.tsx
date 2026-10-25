@@ -24,12 +24,12 @@ export default function SidebarItem({
   onCollapsedIconClick,
   onItemClick, // دریافت پراپ
 }: Props) {
-  if (!item) return null;
-
   const pathname = usePathname();
   const { hasPermission } = usePermissions();
   const { addTab } = useTabs();
   const [isOpen, setIsOpen] = useState(false);
+
+  if (!item) return null;
 
   const hasDirectAccess = item.permission
     ? hasPermission(item.permission)

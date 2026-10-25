@@ -18,7 +18,6 @@ export default function InboxPage() {
   const columns: ColumnConfig[] = [
     {
       key: "processTitle",
-      title: "نوع فرآیند",
       label: "نوع فرآیند",
       type: "string",
       sortable: true,
@@ -26,7 +25,6 @@ export default function InboxPage() {
     },
     {
       key: "taskTitle",
-      title: "عنوان وظیفه",
       label: "عنوان وظیفه",
       type: "string",
       sortable: true,
@@ -34,7 +32,6 @@ export default function InboxPage() {
     },
     {
       key: "targetRecordId",
-      title: "شماره سند",
       label: "شماره سند",
       type: "number",
       sortable: true,
@@ -42,14 +39,12 @@ export default function InboxPage() {
     },
     {
       key: "stateTitle",
-      title: "مرحله فعلی",
       label: "مرحله فعلی",
       type: "string",
       render: (val: string) => <Badge variant="secondary">{val}</Badge>,
     },
     {
       key: "createdAt",
-      title: "تاریخ ارجاع",
       label: "تاریخ ارجاع",
       type: "date",
       sortable: true,

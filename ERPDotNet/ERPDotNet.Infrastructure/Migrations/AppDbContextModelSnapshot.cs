@@ -1782,6 +1782,14 @@ namespace ERPDotNet.Infrastructure.Migrations
                         },
                         new
                         {
+                            Id = 3303,
+                            IsMenu = false,
+                            Name = "Inventory.Stock.Rebuild",
+                            ParentId = 3301,
+                            Title = "بازسازی موجودی از روی تراکنش‌ها"
+                        },
+                        new
+                        {
                             Id = 4000,
                             IsMenu = true,
                             Name = "Workflow",

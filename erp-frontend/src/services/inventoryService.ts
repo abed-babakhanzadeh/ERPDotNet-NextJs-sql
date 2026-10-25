@@ -7,6 +7,8 @@ import {
   DefineWarehouseCommand,
   InventoryDocDto,
   SetItemWarehouseSettingCommand,
+  StockRebuildResultDto,
+  StockRebuildRowDto,
   UpdateBatchCommand,
   UpdateInventoryDocCommand,
   UpdateLocationCommand,
@@ -290,6 +292,21 @@ const inventoryService = {
   // دریافت گزارش موجودی لحظه‌ای
   getCurrentStock: async (payload: any) => {
     const response = await apiClient.post(`${BASE_URL}/stock/current`, payload);
+    return response.data;
+  },
+
+  // اختلاف موجودی لحظه‌ای با جمع تراکنش‌ها (بدون تغییر داده)
+  previewStockRebuild: async (): Promise<StockRebuildRowDto[]> => {
+    const response = await apiClient.get<StockRebuildRowDto[]>(
+      `${BASE_URL}/stock/rebuild/preview`,
+    );
+    return response.data;
+  },
+
+  rebuildStock: async (): Promise<StockRebuildResultDto> => {
+    const response = await apiClient.post<StockRebuildResultDto>(
+      `${BASE_URL}/stock/rebuild`,
+    );
     return response.data;
   },
 

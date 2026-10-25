@@ -60,33 +60,11 @@ public class BpmsInstanceConfiguration : IEntityTypeConfiguration<BpmsInstance>
         
         try
         {
-            var dict = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
-            if (dict == null) return result;
-
-            var parsedDict = new Dictionary<string, object?>();
-            foreach (var kvp in dict) parsedDict[kvp.Key] = ConvertElement(kvp.Value);
-            
-            result.SetVariables(parsedDict);
+            // مقادیر JsonElement را خود ProcessVariables به نوع واقعی (عدد/تاریخ/...) تبدیل می‌کند
+            var dict = JsonSerializer.Deserialize<Dictionary<string, object?>>(json);
+            result.SetVariables(dict);
             return result;
         }
         catch { return result; }
-    }
-
-    private static object? ConvertElement(JsonElement element)
-    {
-        switch (element.ValueKind)
-        {
-            case JsonValueKind.Number:
-                if (element.TryGetInt64(out long l)) return l;
-                if (element.TryGetDecimal(out decimal d)) return d;
-                return element.GetDouble();
-            case JsonValueKind.True: return true;
-            case JsonValueKind.False: return false;
-            case JsonValueKind.String:
-                if (element.TryGetDateTime(out DateTime dt)) return dt;
-                return element.GetString();
-            case JsonValueKind.Null: return null; 
-            default: return element.GetRawText();
-        }
     }
 }

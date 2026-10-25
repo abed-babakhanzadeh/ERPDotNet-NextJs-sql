@@ -22,6 +22,8 @@ import inventoryService from "@/services/inventoryService";
 import { InventoryStockDto } from "@/types/inventory";
 import { ColumnConfig } from "@/types";
 import { useServerDataTable } from "@/hooks/useServerDataTable";
+import { usePermissions } from "@/providers/PermissionProvider";
+import { StockRebuildDialog } from "@/components/inventory/StockRebuildDialog";
 
 // 🌟 هوک اختصاصی برای حفظ وضعیت فیلترها هنگام جابجایی در تب‌ها
 function usePersistentState<T>(key: string, initialValue: T) {
@@ -47,6 +49,7 @@ function usePersistentState<T>(key: string, initialValue: T) {
 }
 
 export default function CurrentStockReportPage() {
+  const { hasPermission } = usePermissions();
   const [warehouses, setWarehouses] = useState<any[]>([]);
 
   // استفاده از هوک برای حفظ دیتا در Session Storage
@@ -212,6 +215,10 @@ export default function CurrentStockReportPage() {
           بدون موجودی صفر
         </UILabel>
       </div>
+
+      {hasPermission("Inventory.Stock.Rebuild") && (
+        <StockRebuildDialog onRebuilt={refresh} />
+      )}
 
       {/* دکمه رفرش آیکونی */}
       <Button

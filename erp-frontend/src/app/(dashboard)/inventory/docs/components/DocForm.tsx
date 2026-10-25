@@ -53,6 +53,7 @@ import {
   UpdateInventoryDocCommand,
   InventoryDocDto,
   InventoryDocStatus,
+  InventoryNature,
 } from "@/types/inventory";
 
 interface DocFormProps {
@@ -288,6 +289,10 @@ export default function DocForm({
     statusStyles[currentStatus] || statusStyles[InventoryDocStatus.Draft];
   const StatusIcon = statusInfo.icon || FileText;
 
+  const isTransfer =
+    docTypes.find((dt) => dt.id === Number(headerData.docTypeId))
+      ?.natureValue === InventoryNature.Transfer;
+
   const headerFields: FieldConfig[] = [
     {
       name: "docTypeId",
@@ -329,14 +334,22 @@ export default function DocForm({
       colSpan: 1,
       disabled: isReadOnly,
     },
-    {
-      name: "destinationWarehouseId",
-      label: "انبار مقصد",
-      type: "select",
-      options: warehouses.map((w) => ({ label: w.title, value: w.id })),
-      colSpan: 1,
-      disabled: isReadOnly,
-    },
+    // انبار مقصد فقط برای سند انتقال معنا دارد
+    ...(isTransfer
+      ? [
+          {
+            name: "destinationWarehouseId",
+            label: "انبار مقصد",
+            type: "select",
+            options: warehouses
+              .filter((w) => w.id !== Number(headerData.warehouseId))
+              .map((w) => ({ label: w.title, value: w.id })),
+            required: true,
+            colSpan: 1,
+            disabled: isReadOnly,
+          } satisfies FieldConfig,
+        ]
+      : []),
     {
       name: "description",
       label: "توضیحات",
@@ -420,6 +433,17 @@ export default function DocForm({
       return toast.error("لطفا نوع سند و انبار را انتخاب کنید.");
     }
 
+    if (
+      isTransfer &&
+      (!headerData.destinationWarehouseId ||
+        Number(headerData.destinationWarehouseId) ===
+          Number(headerData.warehouseId))
+    ) {
+      return toast.error(
+        "برای سند انتقال، انبار مقصدی متفاوت از انبار مبدأ انتخاب کنید.",
+      );
+    }
+
     const validDetails = gridData.filter(
       (row) => row.productId && Number(row.productId) > 0,
     );
@@ -468,6 +492,9 @@ export default function DocForm({
           docDate: headerData.docDate,
           description: headerData.description,
           warehouseId: headerData.warehouseId,
+          destinationWarehouseId: isTransfer
+            ? headerData.destinationWarehouseId
+            : null,
           rowVersion: docData.rowVersion,
           details: detailsDto,
         };

@@ -33,7 +33,6 @@ export type ColumnFilter = {
 
 // types.ts
 export type ColumnConfig = {
-  title: any;
   key: string;
   label: string;
   type: "string" | "number" | "boolean" | "date" | "text" | "custom"; // اضافه شدن date

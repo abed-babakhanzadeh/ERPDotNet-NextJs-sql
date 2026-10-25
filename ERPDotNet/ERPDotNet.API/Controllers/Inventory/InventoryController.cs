@@ -7,6 +7,7 @@ using ERPDotNet.Application.Modules.Inventory.Commands.CreateLocation;
 using ERPDotNet.Application.Modules.Inventory.Commands.DefineDocType;
 using ERPDotNet.Application.Modules.Inventory.Commands.DefineWarehouse;
 using ERPDotNet.Application.Modules.Inventory.Commands.PostInventoryDoc;
+using ERPDotNet.Application.Modules.Inventory.Commands.RebuildCurrentStock;
 using ERPDotNet.Application.Modules.Inventory.Commands.SetItemWarehouseSetting;
 using ERPDotNet.Application.Modules.Inventory.Commands.ConfigureItemProfile;
 using ERPDotNet.Application.Modules.Inventory.DTOs;
@@ -136,6 +137,21 @@ public class InventoryController : ControllerBase
     {
         var result = await _mediator.Send(query);
         return Ok(result);
+    }
+
+    // بازسازی موجودی لحظه‌ای از روی دفتر تراکنش‌ها: ابتدا پیش‌نمایش، سپس اعمال
+    [HttpGet("stock/rebuild/preview")]
+    [HasPermission("Inventory.Stock.Rebuild")]
+    public async Task<ActionResult<List<StockRebuildRowDto>>> PreviewStockRebuild()
+    {
+        return Ok(await _mediator.Send(new PreviewStockRebuildQuery()));
+    }
+
+    [HttpPost("stock/rebuild")]
+    [HasPermission("Inventory.Stock.Rebuild")]
+    public async Task<ActionResult<StockRebuildResultDto>> RebuildStock()
+    {
+        return Ok(await _mediator.Send(new RebuildCurrentStockCommand()));
     }
 
     [HttpPost("reports/cardex")] // تغییر از HttpGet به HttpPost

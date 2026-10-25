@@ -1,5 +1,6 @@
 using ERPDotNet.Application.Common.Exceptions;
 using ERPDotNet.Application.Common.Interfaces;
+using ERPDotNet.Application.Modules.Inventory.Extensions;
 using ERPDotNet.Application.Modules.Workflow.Contracts;
 using ERPDotNet.Domain.Modules.Inventory.Enums;
 using ERPDotNet.Domain.Modules.Inventory.Interfaces;
@@ -71,50 +72,9 @@ public class PostInventoryDocActionHandler : IBpmsActionHandler
             await _context.InventoryTransactions.AddRangeAsync(result.GeneratedTransactions, cancellationToken);
         }
 
-        // 🌟 5. بروزرسانی موجودی‌ها در EF (همراه با گارد محافظتی هم‌روندی)
-        if (result.UpdatedStocks.Any())
-        {
-            var warehouseIds = result.UpdatedStocks.Select(s => s.WarehouseId).Distinct().ToList();
-            var productIds = result.UpdatedStocks.Select(s => s.ProductId).Distinct().ToList();
-
-            var existingStocks = await _context.CurrentStocks
-                .Where(x => warehouseIds.Contains(x.WarehouseId) && productIds.Contains(x.ProductId))
-                .ToListAsync(cancellationToken);
-
-            foreach (var stockUpdate in result.UpdatedStocks)
-            {
-                var existingStock = existingStocks.FirstOrDefault(x => 
-                    x.WarehouseId == stockUpdate.WarehouseId && 
-                    x.ProductId == stockUpdate.ProductId &&
-                    x.BatchId == stockUpdate.BatchId && 
-                    x.LocationId == stockUpdate.LocationId);
-
-                if (existingStock == null)
-                {
-                    // گارد محافظ: اگر کالا کلاً وجود ندارد و ما داریم خروج می‌زنیم
-                    if (stockUpdate.QuantityOnHand < 0 && !_policy.CanGoNegative(doc.DocType!, stockUpdate.WarehouseId))
-                    {
-                        throw new BusinessRuleException($"موجودی کالای {stockUpdate.ProductId} برای خروج از انبار کافی نیست.");
-                    }
-
-                    await _context.CurrentStocks.AddAsync(stockUpdate, cancellationToken);
-                    existingStocks.Add(stockUpdate); 
-                }
-                else
-                {
-                    // 🌟 گارد محافظتی اصلی (Race Condition Guard): 
-                    // بررسی موجودی دقیقاً در لحظه جمع و تفریق حافظه
-                    var newQuantity = existingStock.QuantityOnHand + stockUpdate.QuantityOnHand;
-                    
-                    if (newQuantity < 0 && !_policy.CanGoNegative(doc.DocType!, existingStock.WarehouseId))
-                    {
-                        throw new BusinessRuleException($"به دلیل ثبت اسناد همزمان، موجودی کالای {existingStock.ProductId} به اتمام رسیده است و امکان خروج وجود ندارد.");
-                    }
-
-                    existingStock.QuantityOnHand = newQuantity;
-                }
-            }
-        }
+        // 5. بروزرسانی موجودی‌ها در EF
+        // کنترل موجودی منفی در سرویس دامین انجام شده و ثبت همزمان با RowVersion رکورد CurrentStock کنترل می‌شود
+        await _context.AddNewStocksAsync(result.UpdatedStocks, cancellationToken);
 
         // 6. تغییر وضعیت سند
         doc.Status = InventoryDocStatus.Posted;

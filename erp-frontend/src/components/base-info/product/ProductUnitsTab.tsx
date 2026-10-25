@@ -60,7 +60,7 @@ export default function ProductUnitsTab({
           <p className="text-sm text-muted-foreground mt-1">
             واحد اصلی کالا{" "}
             <span className="font-bold text-foreground mx-1">
-              "{mainUnitTitle}"
+              «{mainUnitTitle}»
             </span>{" "}
             است.
           </p>

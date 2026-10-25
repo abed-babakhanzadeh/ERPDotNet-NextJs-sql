@@ -20,3 +20,10 @@
 **/out/
 **/npm-debug.log*
 **/.DS_Store
+
+# =========================
+# Python (AI agent)
+# =========================
+**/__pycache__/
+*.pyc
+**/.venv/

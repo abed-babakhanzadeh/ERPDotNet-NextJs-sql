@@ -16,7 +16,8 @@ public class UpdateInventoryDocCommand : IRequest<bool>
     public DateTime DocDate { get; set; }
     public string? Description { get; set; }
     public int WarehouseId { get; set; }
-    
+    public int? DestinationWarehouseId { get; set; }
+
     // ✅ اضافه شد: برای کنترل همروندی
     public string RowVersion { get; set; } = string.Empty; 
 
@@ -104,9 +105,15 @@ public class UpdateInventoryDocHandler : IRequestHandler<UpdateInventoryDocComma
             throw new ValidationException("RowVersion نامعتبر است."); 
         }
 
+        if (!await TransferDestinationRule.IsValidAsync(_context, doc.DocTypeId, doc.WarehouseId, request.DestinationWarehouseId, cancellationToken))
+        {
+            throw new BusinessRuleException(TransferDestinationRule.Message);
+        }
+
         // 4. آپدیت هدر
         doc.DocDate = request.DocDate;
         doc.Description = request.Description;
+        doc.DestinationWarehouseId = request.DestinationWarehouseId;
         // نکته: Audit Fields (ModifiedBy, ModifiedAt) توسط اینترسپتور خودکار پر می‌شوند
 
         // ==================================================

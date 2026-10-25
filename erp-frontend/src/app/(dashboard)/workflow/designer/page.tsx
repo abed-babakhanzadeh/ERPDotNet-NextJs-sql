@@ -63,29 +63,24 @@ export default function WorkflowDesignerPage() {
     }
   };
 
-  // 🌟 اصلاح نهایی: اضافه شدن title به تمام ستون‌ها (طبق ساختار ColumnConfig شما)
   const columns: ColumnConfig[] = [
     {
       key: "processCode",
-      title: "کد فرآیند",
       label: "کد فرآیند",
       type: "string",
     },
     {
       key: "title",
-      title: "عنوان فرآیند",
       label: "عنوان فرآیند",
       type: "string",
     },
     {
       key: "targetEntityName",
-      title: "موجودیت هدف",
       label: "موجودیت هدف",
       type: "string",
     },
     {
       key: "activeVersionNumber",
-      title: "نسخه فعال",
       label: "نسخه فعال",
       type: "custom",
       render: (_, row: ProcessDto) => (
@@ -99,7 +94,6 @@ export default function WorkflowDesignerPage() {
     },
     {
       key: "isActive",
-      title: "وضعیت",
       label: "وضعیت",
       type: "custom",
       render: (_, row: ProcessDto) => (
@@ -110,7 +104,6 @@ export default function WorkflowDesignerPage() {
     },
     {
       key: "actions",
-      title: "عملیات",
       label: "عملیات",
       type: "custom",
       render: (_, row: ProcessDto) => (
