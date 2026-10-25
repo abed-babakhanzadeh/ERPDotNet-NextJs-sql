@@ -73,7 +73,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost("{id}/change-password")]
-    // [HasPermission("UserAccess.ResetPassword")] // پیشنهاد: حتماً چک کردن پرمیشن را فعال کنید
+    [HasPermission("UserAccess.ResetPassword")]
     public async Task<IActionResult> ChangePassword(string id, [FromBody] ChangePasswordDto body)
     {
         await _mediator.Send(new ChangeUserPasswordCommand 
