@@ -132,6 +132,58 @@ test.describe("فرمول ساخت (BOM)", () => {
     await expect(page).toHaveURL(/\/boms\/create$/);
     await api.dispose();
   });
+
+  test("اعتبارسنجی فرم قبل از ارسال", async ({ page }) => {
+    const api = await adminApi();
+    const tag = uid();
+    const unitId = await createUnit(api, `عدد ${tag}`);
+    const parentCode = `VL-${tag}`;
+    await createProduct(api, {
+      code: parentCode,
+      name: `کمد ${tag}`,
+      unitId,
+      supplyType: 2,
+    });
+
+    let posted = false;
+    page.on("request", (r) => {
+      if (r.method() === "POST" && /\/ProductEngineering\/BOMs$/.test(r.url()))
+        posted = true;
+    });
+    const toast = page.locator("[data-sonner-toast]");
+    const title = page.getByLabel("عنوان فرمول");
+
+    await page.goto("/product-engineering/boms/create");
+    await page.getByRole("button", { name: "ثبت", exact: true }).click();
+    await expect(
+      toast.filter({ hasText: "کالا/قلم نهایی انتخاب نشده" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("combobox", { name: "کالا/قلم (محصول یا نیمه ساخته)" }),
+    ).toHaveAttribute("aria-invalid", "true");
+    await expect(title).toHaveAttribute("aria-invalid", "true");
+    await expect(page.getByText("عنوان فرمول الزامی است.")).toBeVisible();
+
+    await pickProduct(page, "کالا/قلم (محصول یا نیمه ساخته)", parentCode);
+    await title.fill(`کمد ${tag}`);
+    await expect(title).not.toHaveAttribute("aria-invalid", "true");
+
+    await page.getByRole("button", { name: "ثبت", exact: true }).click();
+    await expect(
+      toast.filter({ hasText: "اقلام فرمول وارد نشده" }),
+    ).toBeVisible();
+
+    // سطر خالی با شماره همان ردیف جدول گزارش می‌شود
+    await page.getByRole("button", { name: "افزودن سطر جدید" }).click();
+    await page.getByRole("button", { name: "ثبت", exact: true }).click();
+    await expect(
+      toast.filter({ hasText: "ردیف 1: کالا/قلم انتخاب نشده است." }),
+    ).toBeVisible();
+
+    await expect(page).toHaveURL(/\/boms\/create$/);
+    expect(posted).toBe(false);
+    await api.dispose();
+  });
 });
 
 test.describe("فرمول ساخت (BOM): جایگزین و ویرایش", () => {

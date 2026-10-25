@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { firstFormError } from "@/lib/form-errors";
 
 /** سطر جدول اقلام؛ مقدار ورودی‌های جدول رشته است و هنگام ارسال به عدد تبدیل می‌شود */
 export interface DocRow {
@@ -91,24 +92,5 @@ export function makeDocSchema(opts: { isTransfer: (docTypeId: number | null) => 
 }
 
 /** اولین پیام خطا به ترتیب فیلدهای فرم؛ برای نمایش در toast */
-export function firstDocError(errors: Record<string, unknown>): string | undefined {
-  const order = ["docTypeId", "warehouseId", "destinationWarehouseId", "details"];
-  for (const key of order) {
-    const found = findMessage(errors[key]);
-    if (found) return found;
-  }
-  return undefined;
-}
-
-function findMessage(node: unknown): string | undefined {
-  if (!node || typeof node !== "object") return undefined;
-  const { message } = node as { message?: unknown };
-  if (typeof message === "string" && message) return message;
-  // خطای سطرها آرایه‌ای به ترتیب ردیف است؛ ref عنصر DOM است و نباید پیمایش شود
-  for (const [key, child] of Object.entries(node as Record<string, unknown>)) {
-    if (key === "ref") continue;
-    const found = findMessage(child);
-    if (found) return found;
-  }
-  return undefined;
-}
+export const firstDocError = (errors: Record<string, unknown>) =>
+  firstFormError(errors, ["docTypeId", "warehouseId", "destinationWarehouseId", "details"]);

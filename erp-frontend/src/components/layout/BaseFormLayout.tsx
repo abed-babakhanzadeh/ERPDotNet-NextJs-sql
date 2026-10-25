@@ -35,6 +35,8 @@ interface BaseFormLayoutProps {
   formId?: string;
   /** فرم تغییر ذخیره‌نشده دارد: نشانگر، تأیید قبل از ترک فرم و هشدار مرورگر */
   isDirty?: boolean;
+  /** اعتبارسنجی با خود فرم است (مثلاً zod)، نه با پیام‌های بومی مرورگر */
+  noValidate?: boolean;
 }
 
 export default function BaseFormLayout({
@@ -49,6 +51,7 @@ export default function BaseFormLayout({
   headerActions,
   formId = "base-form-id",
   isDirty = false,
+  noValidate,
 }: BaseFormLayoutProps) {
   const { closeTab, activeTabId, setTabDirty } = useTabs();
   const pathname = usePathname();
@@ -257,6 +260,7 @@ export default function BaseFormLayout({
               <form
                 id={formId}
                 onSubmit={onSubmit}
+                noValidate={noValidate}
                 className="flex flex-col gap-4 h-full" // h-full added
               >
                 {children}

@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
+import { useForm, useWatch, type FieldErrors } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import {
   Layers,
@@ -33,13 +35,22 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import SubstitutesDialog, { SubstituteRow } from "./SubstitutesDialog";
+import SubstitutesDialog from "./SubstitutesDialog";
+import {
+  bomSchema,
+  emptyBOM,
+  firstBOMError,
+  headerOf,
+  type BOMFormValues,
+  type BOMHeaderState,
+  type BOMRow,
+  type UnitOption,
+} from "./bomFormSchema";
 
 // Hooks & Providers
 import { usePermissions } from "@/providers/PermissionProvider";
 import { useTabs } from "@/providers/TabsProvider";
 import { useFormPersist } from "@/hooks/useFormPersist";
-import { useDirtySnapshot } from "@/hooks/useDirtySnapshot";
 import { handleApiError } from "@/lib/error-handling";
 import { productService } from "@/services/baseInfoService";
 import { bomService } from "@/services/bomService";
@@ -62,44 +73,6 @@ interface ProductLookupDto {
 
 type BOMLookupDto = BOMListDto;
 
-// اینترفیس استیت هدر (اصلاح شده)
-interface BOMHeaderState {
-  productId: number | null;
-  productName?: string;
-  title: string;
-  version: number; // int شد
-  usage: number; // اضافه شد (1=Main, 2=Alternate)
-  type: number;
-  fromDate: string;
-  toDate?: string;
-  isActive: boolean;
-}
-
-interface UnitOption {
-  value: number;
-  label: string;
-  factor: number;
-}
-
-interface BOMRow {
-  id: string;
-  childProductId: number | null;
-  childProductCode?: string;
-  childProductName?: string;
-
-  unitName: string;
-  baseUnitId: number;
-  quantity: number;
-
-  inputQuantity: number;
-  inputUnitId: number;
-
-  unitOptions: UnitOption[];
-
-  wastePercentage: number;
-  substitutes: SubstituteRow[];
-}
-
 export default function BOMForm({ mode, bomId }: BOMFormProps) {
   const { closeTab, activeTabId, addTab } = useTabs();
   const { hasPermission } = usePermissions();
@@ -111,25 +84,39 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
   const [submitting, setSubmitting] = useState(false);
   const [fetchingVersion, setFetchingVersion] = useState(false);
 
-  // --- State مدیریت فرم (با مقادیر پیش‌فرض جدید) ---
-  const [headerData, setHeaderData] = useState<BOMHeaderState>({
-    productId: null,
-    title: "",
-    version: 1, // پیش‌فرض 1
-    usage: 1, // پیش‌فرض اصلی (Main)
-    type: 1,
-    fromDate: new Date().toISOString().split("T")[0],
-    toDate: undefined,
-    isActive: true,
+  // سربرگ و سطرها در یک فرم react-hook-form؛ مبنای «تغییرات ذخیره‌نشده» مقدار reset شده است
+  const form = useForm<BOMFormValues>({
+    resolver: zodResolver(bomSchema),
+    defaultValues: emptyBOM(),
   });
+  const watched = useWatch({ control: form.control }) as BOMFormValues;
+  const details = watched.details ?? [];
+  const headerData = useMemo(() => headerOf(watched), [watched]);
+  const headerErrors = Object.fromEntries(
+    Object.entries(form.formState.errors)
+      .filter(([key]) => key !== "details")
+      .map(([key, err]) => [key, (err as { message?: string })?.message]),
+  ) as Record<string, string | undefined>;
 
-  const [details, setDetails] = useState<BOMRow[]>([]);
-  // در ویرایش، مبنای «تغییرات ذخیره‌نشده» بعد از دریافت داده سرور گرفته می‌شود
+  // به‌روزرسانی‌ها همیشه روی مقدار فعلی فرم انجام می‌شوند (نه مقدار زمان رندر)،
+  // تا پاسخ دیر سرور مقداری را که کاربر در این فاصله وارد کرده پاک نکند
+  const setDetails: React.Dispatch<React.SetStateAction<BOMRow[]>> = (next) => {
+    const rows = typeof next === "function" ? next(form.getValues("details")) : next;
+    form.setValue("details", rows, { shouldDirty: true });
+    form.clearErrors("details");
+  };
+  const setHeaderData: React.Dispatch<React.SetStateAction<BOMHeaderState>> = (next) => {
+    const prev = headerOf(form.getValues());
+    const header = typeof next === "function" ? next(prev) : next;
+    (Object.keys(header) as (keyof BOMHeaderState)[]).forEach((key) => {
+      if (header[key] === prev[key]) return;
+      form.setValue(key, header[key] as never, { shouldDirty: true });
+      form.clearErrors(key);
+    });
+  };
+
   const [loaded, setLoaded] = useState(mode === "create");
-  const isDirty = useDirtySnapshot(
-    { headerData, details },
-    !isReadOnly && loaded && !loadingData
-  );
+  const isDirty = form.formState.isDirty && !isReadOnly && loaded && !loadingData;
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [activeRowIndex, setActiveRowIndex] = useState<number | null>(null);
@@ -162,7 +149,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
         setFetchingVersion(true);
         try {
           const nextVersion = await bomService.getNextVersion(Number(headerData.productId));
-          setHeaderData((prev) => ({ ...prev, version: nextVersion }));
+          form.setValue("version", nextVersion, { shouldDirty: true });
         } catch (error) {
           console.error("Error fetching next version:", error);
         } finally {
@@ -171,7 +158,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
       };
       fetchNext();
     }
-  }, [headerData.productId, mode]);
+  }, [headerData.productId, mode, form]);
 
   const safeCloseTab = () => {
     setTimeout(() => {
@@ -216,7 +203,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
     try {
       const data = await bomService.getById(id);
 
-      setHeaderData({
+      const header: BOMHeaderState = {
         productId: data.productId,
         productName: data.productName,
         title: data.title || "",
@@ -228,7 +215,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
           : new Date().toISOString().split("T")[0],
         toDate: data.toDate ? data.toDate.split("T")[0] : undefined,
         isActive: data.isActive ?? true,
-      });
+      };
 
       const initialProductOption = {
         id: data.productId,
@@ -279,7 +266,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
         })
       );
 
-      setDetails(mappedDetails);
+      form.reset({ ...header, details: mappedDetails });
       setLoaded(true);
     } catch (error) {
       handleApiError(error, "خطا در دریافت اطلاعات BOM");
@@ -575,15 +562,14 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
             disabled={isReadOnly}
             onChange={(e) => {
               const val = Number(e.target.value);
-              const newDetails = [...details];
-              const currentRow = newDetails[index];
-              const selectedUnit = currentRow.unitOptions?.find(
-                (u) => u.value == currentRow.inputUnitId
+              setDetails((prev) =>
+                prev.map((r, i) => {
+                  if (i !== index) return r;
+                  const factor =
+                    r.unitOptions?.find((u) => u.value == r.inputUnitId)?.factor ?? 1;
+                  return { ...r, inputQuantity: val, quantity: val * factor };
+                }),
               );
-              const factor = selectedUnit ? selectedUnit.factor : 1;
-              currentRow.inputQuantity = val;
-              currentRow.quantity = val * factor;
-              setDetails(newDetails);
             }}
           />
         ),
@@ -602,15 +588,14 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
             disabled={isReadOnly}
             onChange={(e) => {
               const newUnitId = Number(e.target.value);
-              const newDetails = [...details];
-              const currentRow = newDetails[index];
-              const selectedUnit = currentRow.unitOptions?.find(
-                (u) => u.value == newUnitId
+              setDetails((prev) =>
+                prev.map((r, i) => {
+                  if (i !== index) return r;
+                  const factor =
+                    r.unitOptions?.find((u) => u.value == newUnitId)?.factor ?? 1;
+                  return { ...r, inputUnitId: newUnitId, quantity: r.inputQuantity * factor };
+                }),
               );
-              const factor = selectedUnit ? selectedUnit.factor : 1;
-              currentRow.inputUnitId = newUnitId;
-              currentRow.quantity = currentRow.inputQuantity * factor;
-              setDetails(newDetails);
             }}
           >
             {row.unitOptions?.map((u) => (
@@ -700,25 +685,13 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
 
   useFormPersist(`${persistKey}-details`, details, setDetails, mode !== "view");
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isReadOnly) return;
+  const onInvalid = (errors: FieldErrors<BOMFormValues>) => {
+    toast.error(firstBOMError(errors) ?? "اطلاعات فرم کامل نیست.");
+  };
 
-    if (!headerData.productId) {
-      toast.error("کالا/قلم نهایی انتخاب نشده");
-      return;
-    }
-    if (details.length === 0) {
-      toast.error("اقلام فرمول وارد نشده");
-      return;
-    }
-    // واحد ردیف بعد از انتخاب کالا از سرور می‌آید؛ تا نرسیده ثبت نمی‌کنیم تا واحد صفر نرود
-    const pendingUnit = details.findIndex((d) => d.childProductId && !d.inputUnitId);
-    if (pendingUnit >= 0) {
-      toast.error(`واحد ردیف ${pendingUnit + 1} هنوز بارگذاری نشده است؛ چند لحظه دیگر دوباره ثبت کنید.`);
-      return;
-    }
-
+  const onValid = async (values: BOMFormValues) => {
+    const { details } = values;
+    const headerData = values;
     setSubmitting(true);
 
     try {
@@ -729,10 +702,6 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
           : null;
 
       const cleanDetails = details.map((d) => {
-        if (!d.childProductId) {
-          throw new Error("یکی از ردیف‌های جدول فاقد کالا/قلم است.");
-        }
-
         const validSubstitutes = (d.substitutes || [])
           .filter(
             (s) => s.substituteProductId && Number(s.substituteProductId) > 0
@@ -782,20 +751,23 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
 
       localStorage.removeItem(`${persistKey}-header`);
       localStorage.removeItem(`${persistKey}-details`);
+      // مقدار ثبت‌شده مبنای جدید است تا بستن تب هشدار تغییرات ذخیره‌نشده ندهد
+      form.reset(values);
 
       safeCloseTab();
     } catch (error) {
-      if (
-        error instanceof Error &&
-        error.message === "یکی از ردیف‌های جدول فاقد کالا/قلم است."
-      ) {
-        toast.error(error.message);
-      } else {
-        handleApiError(error, "خطا در ذخیره فرمول ساخت");
-      }
+      handleApiError(error, "خطا در ذخیره فرمول ساخت");
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    if (isReadOnly) {
+      e.preventDefault();
+      return;
+    }
+    return form.handleSubmit(onValid, onInvalid)(e);
   };
 
   const handleGoToEdit = () => {
@@ -819,6 +791,8 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
             disabled={isReadOnly || mode === "edit"}
             placeholder={headerData.productName || "جستجو..."}
             ariaLabel="کالا/قلم (محصول یا نیمه ساخته)"
+            aria-invalid={!!headerErrors.productId}
+            aria-describedby={headerErrors.productId ? "bom-product-error" : undefined}
             onValueChange={(val, item) => {
               setHeaderData((prev) => ({
                 ...prev,
@@ -827,11 +801,17 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
               }));
             }}
           />
+          {headerErrors.productId && (
+            <p id="bom-product-error" className="text-[0.8rem] font-medium text-destructive">
+              {headerErrors.productId}
+            </p>
+          )}
         </div>
       </div>
       <AutoForm
         fields={headerFields}
         data={headerData}
+        errors={headerErrors}
         onChange={(name, val) =>
           setHeaderData((prev) => ({ ...prev, [name]: val }))
         }
@@ -857,6 +837,8 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
           submitting={submitting}
           isLoading={loadingData}
           isDirty={isDirty}
+          // قواعد ثبت در bomSchema است و خطا زیر هر فیلد نمایش داده می‌شود
+          noValidate
           headerContent={headerContent}
           headerActions={
             <div className="flex items-center gap-2">
@@ -991,9 +973,9 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
           initialData={details[activeRowIndex]?.substitutes || []}
           onSave={(newSubs) => {
             if (isReadOnly) return;
-            const newDetails = [...details];
-            newDetails[activeRowIndex].substitutes = newSubs;
-            setDetails(newDetails);
+            setDetails((prev) =>
+              prev.map((r, i) => (i === activeRowIndex ? { ...r, substitutes: newSubs } : r)),
+            );
           }}
         />
       )}
