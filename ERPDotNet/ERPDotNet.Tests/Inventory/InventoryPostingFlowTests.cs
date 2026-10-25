@@ -117,23 +117,13 @@ public class InventoryPostingFlowTests : IDisposable
     {
         var repo = new InventoryDomainRepository(_db);
 
-        Assert.Null(await repo.GetLastTransactionIdAsync(12345, WarehouseId, default));
+        Assert.Null(await repo.GetLastTransactionAsync(12345, WarehouseId, default));
     }
 
     [Fact]
     public async Task Posting_and_reverting_a_transfer_moves_stock_between_warehouses()
     {
         await SeedStock(100);
-        using (var seed = NewContext())
-        {
-            var profile = new InventoryItemProfile { ProductId = ProductId, MainInventoryUnitId = 1, RowVersion = RowVersion };
-            profile.WarehouseSettings.Add(new ItemWarehouseSetting
-            {
-                InventoryItemProfileId = 0, WarehouseId = DestinationId, DefaultLocationId = 77, RowVersion = RowVersion
-            });
-            seed.InventoryItemProfiles.Add(profile);
-            await seed.SaveChangesAsync();
-        }
         var docId = await SeedDoc(InventoryNature.Transfer, InventoryDocStatus.Approved, 30, DestinationId);
 
         await PostHandler(_db).Handle(new PostInventoryDocCommand { Id = docId, RowVersion = Convert.ToBase64String(RowVersion) }, default);
@@ -190,7 +180,14 @@ public class InventoryPostingFlowTests : IDisposable
             DestinationWarehouseId = destinationWarehouseId,
             Status = status,
             RowVersion = RowVersion,
-            Details = { new InventoryDocDetail { ProductId = ProductId, MainUnitQuantity = qty, RowVersion = RowVersion } }
+            Details =
+            {
+                new InventoryDocDetail
+                {
+                    ProductId = ProductId, MainUnitQuantity = qty, RowVersion = RowVersion,
+                    DestinationLocationId = destinationWarehouseId.HasValue ? 77 : null
+                }
+            }
         };
         seed.InventoryDocHeaders.Add(doc);
         await seed.SaveChangesAsync();

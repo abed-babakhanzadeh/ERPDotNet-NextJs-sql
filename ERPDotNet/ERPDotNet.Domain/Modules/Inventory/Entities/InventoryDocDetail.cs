@@ -32,6 +32,10 @@ public class InventoryDocDetail : BaseEntity
     public int? LocationId { get; set; }
     public Location? Location { get; set; }
 
+    // فقط برای سند انتقال: کالا در انبار مقصد در کدام قفسه قرار گرفته؟
+    public int? DestinationLocationId { get; set; }
+    public Location? DestinationLocation { get; set; }
+
     // کالا مربوط به کدام بچ نامبر است؟
     public int? BatchId { get; set; }
     public InventoryBatch? Batch { get; set; }

@@ -133,7 +133,7 @@ public class InventoryPostingServiceTests
     public async Task Reversal_of_receipt_decreases_stock_and_links_original_transaction()
     {
         _repo.Stocks.Add(Stock(25));
-        _repo.LastTransactionIds[(1, WarehouseId)] = 555;
+        _repo.LastTransactions[(1, WarehouseId)] = new(555, null);
         var context = Context(InventoryNature.Input, Line(1, 25));
 
         var result = await _sut.ReverseDocumentAsync(context, default);
@@ -157,10 +157,9 @@ public class InventoryPostingServiceTests
     }
 
     [Fact]
-    public async Task Transfer_moves_stock_from_source_to_destination_default_location()
+    public async Task Transfer_moves_stock_from_source_to_the_line_destination_location()
     {
         _repo.Stocks.Add(Stock(100));
-        _repo.DefaultLocations[(ProductId, DestinationId)] = 77;
         var context = Context(InventoryNature.Transfer, Line(1, 30));
 
         var result = await _sut.ProcessDocumentAsync(context, default);
@@ -169,7 +168,7 @@ public class InventoryPostingServiceTests
         Assert.Equal(70, result.UpdatedStocks.Single(s => s.WarehouseId == WarehouseId).QuantityOnHand);
         var destination = result.UpdatedStocks.Single(s => s.WarehouseId == DestinationId);
         Assert.Equal(30, destination.QuantityOnHand);
-        Assert.Equal(77, destination.LocationId);
+        Assert.Equal(DestinationLocation, destination.LocationId);
         Assert.Equal(2, result.GeneratedTransactions.Count);
         Assert.Contains(result.GeneratedTransactions, t => t.WarehouseId == WarehouseId && t.Sign == InventoryTransactionSign.Decrease);
         Assert.Contains(result.GeneratedTransactions, t => t.WarehouseId == DestinationId && t.Sign == InventoryTransactionSign.Increase);
@@ -204,9 +203,9 @@ public class InventoryPostingServiceTests
     public async Task Transfer_reversal_returns_stock_to_source()
     {
         _repo.Stocks.Add(Stock(70));
-        _repo.Stocks.Add(new CurrentStock { WarehouseId = DestinationId, ProductId = ProductId, QuantityOnHand = 30 });
-        _repo.LastTransactionIds[(1, WarehouseId)] = 10;
-        _repo.LastTransactionIds[(1, DestinationId)] = 11;
+        _repo.Stocks.Add(new CurrentStock { WarehouseId = DestinationId, ProductId = ProductId, LocationId = DestinationLocation, QuantityOnHand = 30 });
+        _repo.LastTransactions[(1, WarehouseId)] = new(10, null);
+        _repo.LastTransactions[(1, DestinationId)] = new(11, DestinationLocation);
         var context = Context(InventoryNature.Transfer, Line(1, 30));
 
         var result = await _sut.ReverseDocumentAsync(context, default);
@@ -222,9 +221,9 @@ public class InventoryPostingServiceTests
     public async Task Transfer_reversal_fails_when_destination_stock_was_consumed()
     {
         _repo.Stocks.Add(Stock(70));
-        _repo.Stocks.Add(new CurrentStock { WarehouseId = DestinationId, ProductId = ProductId, QuantityOnHand = 5 });
-        _repo.LastTransactionIds[(1, WarehouseId)] = 10;
-        _repo.LastTransactionIds[(1, DestinationId)] = 11;
+        _repo.Stocks.Add(new CurrentStock { WarehouseId = DestinationId, ProductId = ProductId, LocationId = DestinationLocation, QuantityOnHand = 5 });
+        _repo.LastTransactions[(1, WarehouseId)] = new(10, null);
+        _repo.LastTransactions[(1, DestinationId)] = new(11, DestinationLocation);
         var context = Context(InventoryNature.Transfer, Line(1, 30));
 
         var result = await _sut.ReverseDocumentAsync(context, default);
@@ -232,7 +231,38 @@ public class InventoryPostingServiceTests
         Assert.False(result.IsSuccess);
     }
 
+    [Fact]
+    public async Task Transfer_line_without_destination_location_fails()
+    {
+        _repo.Stocks.Add(Stock(100));
+        var context = Context(InventoryNature.Transfer, Line(1, 30));
+        context.Header.Details.Single().DestinationLocationId = null;
+
+        var result = await _sut.ProcessDocumentAsync(context, default);
+
+        Assert.False(result.IsSuccess);
+    }
+
+    [Fact]
+    public async Task Reversal_uses_the_location_of_the_original_transaction()
+    {
+        // سند با نسخه قبلی ثبت شده و سطرش لوکیشن مقصد ندارد؛ تراکنش اصلی در لوکیشن 55 بوده
+        _repo.Stocks.Add(Stock(70));
+        _repo.Stocks.Add(new CurrentStock { WarehouseId = DestinationId, ProductId = ProductId, LocationId = 55, QuantityOnHand = 30 });
+        _repo.LastTransactions[(1, WarehouseId)] = new(10, null);
+        _repo.LastTransactions[(1, DestinationId)] = new(11, 55);
+        var context = Context(InventoryNature.Transfer, Line(1, 30));
+        context.Header.Details.Single().DestinationLocationId = null;
+
+        var result = await _sut.ReverseDocumentAsync(context, default);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(0, result.UpdatedStocks.Single(s => s.WarehouseId == DestinationId).QuantityOnHand);
+        Assert.Equal(55, result.GeneratedTransactions.Single(t => t.WarehouseId == DestinationId).LocationId);
+    }
+
     private const int DestinationId = 2;
+    private const int DestinationLocation = 77;
 
     private InventoryPostingContext Context(InventoryNature nature, params InventoryDocDetail[] lines)
     {
@@ -250,7 +280,7 @@ public class InventoryPostingServiceTests
     }
 
     private static InventoryDocDetail Line(long id, decimal qty, int? batchId = null) =>
-        new() { Id = id, ProductId = ProductId, MainUnitQuantity = qty, BatchId = batchId };
+        new() { Id = id, ProductId = ProductId, MainUnitQuantity = qty, BatchId = batchId, DestinationLocationId = DestinationLocation };
 
     private static CurrentStock Stock(decimal onHand, int? batchId = null) =>
         new() { WarehouseId = WarehouseId, ProductId = ProductId, BatchId = batchId, QuantityOnHand = onHand };
@@ -269,8 +299,7 @@ public class InventoryPostingServiceTests
     {
         public List<CurrentStock> Stocks { get; } = new();
         public List<InventoryBatch> Batches { get; } = new();
-        public Dictionary<(long DetailId, int WarehouseId), long> LastTransactionIds { get; } = new();
-        public Dictionary<(int ProductId, int WarehouseId), int> DefaultLocations { get; } = new();
+        public Dictionary<(long DetailId, int WarehouseId), PostedTransactionRef> LastTransactions { get; } = new();
 
         public Task<CurrentStock?> GetCurrentStockAsync(int warehouseId, int productId, int? locationId, int? batchId, CancellationToken cancellationToken) =>
             Task.FromResult(Stocks.FirstOrDefault(s =>
@@ -279,10 +308,7 @@ public class InventoryPostingServiceTests
         public Task<InventoryBatch?> GetBatchAsync(int batchId, CancellationToken cancellationToken) =>
             Task.FromResult(Batches.FirstOrDefault(b => b.Id == batchId));
 
-        public Task<long?> GetLastTransactionIdAsync(long docDetailId, int warehouseId, CancellationToken cancellationToken) =>
-            Task.FromResult(LastTransactionIds.TryGetValue((docDetailId, warehouseId), out var id) ? id : (long?)null);
-
-        public Task<int?> GetDefaultLocationIdAsync(int productId, int warehouseId, CancellationToken cancellationToken) =>
-            Task.FromResult(DefaultLocations.TryGetValue((productId, warehouseId), out var id) ? id : (int?)null);
+        public Task<PostedTransactionRef?> GetLastTransactionAsync(long docDetailId, int warehouseId, CancellationToken cancellationToken) =>
+            Task.FromResult(LastTransactions.GetValueOrDefault((docDetailId, warehouseId)));
     }
 }

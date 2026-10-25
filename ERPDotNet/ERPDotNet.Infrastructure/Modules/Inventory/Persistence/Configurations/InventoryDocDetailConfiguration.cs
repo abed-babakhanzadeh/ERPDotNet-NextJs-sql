@@ -26,6 +26,11 @@ public class InventoryDocDetailConfiguration : IEntityTypeConfiguration<Inventor
                .HasForeignKey(x => x.LocationId)
                .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne(x => x.DestinationLocation)
+               .WithMany()
+               .HasForeignKey(x => x.DestinationLocationId)
+               .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasOne(x => x.Batch)
                .WithMany()
                .HasForeignKey(x => x.BatchId)
