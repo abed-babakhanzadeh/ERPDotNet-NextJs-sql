@@ -3,8 +3,9 @@ using MediatR;
 
 namespace ERPDotNet.Application.Common.Behaviors;
 
+// قید notnull (نه IRequest<TResponse>) تا دستورهای بدون خروجی (IRequest) هم اعتبارسنجی شوند
 public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
-    where TRequest : IRequest<TResponse>
+    where TRequest : notnull
 {
     private readonly IEnumerable<IValidator<TRequest>> _validators;
 

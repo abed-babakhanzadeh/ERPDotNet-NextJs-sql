@@ -26,4 +26,22 @@ public class InventoryBatch : BaseEntity
     // وضعیت کیفی
     public bool IsBlocked { get; set; } = false; 
     [MaxLength(200)] public string? BlockReason { get; set; }
+
+    // کنترل کیفیت: فقط بچ تأییدشده خارج (مصرف/فروش) می‌شود
+    public BatchQcStatus QcStatus { get; set; } = BatchQcStatus.Released;
+    [MaxLength(500)] public string? QcNote { get; set; }
+    public DateTime? QcCheckedAt { get; set; }
+    [MaxLength(450)] public string? QcCheckedBy { get; set; }
+}
+
+public enum BatchQcStatus
+{
+    [Display(Name = "تأیید شده")]
+    Released = 1,
+
+    [Display(Name = "قرنطینه (در انتظار QC)")]
+    Quarantine = 2,
+
+    [Display(Name = "مردود")]
+    Rejected = 3
 }

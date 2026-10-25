@@ -1,4 +1,5 @@
 using ERPDotNet.Application.Common.Interfaces;
+using ERPDotNet.Domain.Modules.Inventory.Entities;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +12,7 @@ public record FefoAllocationDto(List<FefoLineDto> Lines, decimal Shortage);
 
 /// <summary>
 /// پیشنهاد بچ برای خروج به روش FEFO: اول بچی که زودتر منقضی می‌شود.
-/// بچ مسدود و منقضی‌شده (تا تاریخ سند) پیشنهاد نمی‌شود؛ بچ بدون تاریخ انقضا آخر می‌آید.
+/// بچ مسدود، تأییدنشده در QC و منقضی‌شده (تا تاریخ سند) پیشنهاد نمی‌شود؛ بچ بدون تاریخ انقضا آخر می‌آید.
 /// </summary>
 public record GetFefoAllocationQuery(int ProductId, int WarehouseId, decimal Quantity, DateTime? AsOfDate = null)
     : IRequest<FefoAllocationDto>;
@@ -46,6 +47,7 @@ public class GetFefoAllocationHandler : IRequestHandler<GetFefoAllocationQuery, 
                         && s.BatchId != null
                         && s.QuantityOnHand - s.QuantityReserved > 0
                         && !s.Batch!.IsBlocked
+                        && s.Batch.QcStatus == BatchQcStatus.Released
                         && (s.Batch.ExpiryDate == null || s.Batch.ExpiryDate >= day))
             .Select(s => new FefoLineDto(
                 s.BatchId!.Value,

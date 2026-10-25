@@ -30,6 +30,9 @@ public class InventoryDocType : BaseEntity
     // مثلا هر سال ریست شود؟ یا هر نوع سند سریال جدا داشته باشد؟
     public NumberingScope NumberingScope { get; set; } = NumberingScope.Global;
 
+    // 5. خروج بچ قرنطینه/مردود (مثل مرجوعی به تأمین‌کننده یا ضایعات)
+    public bool AllowsUnreleasedBatches { get; set; } = false;
+
     // لیست رفرنس‌های مجاز (PurchaseOrder, etc.)
     public ICollection<InventoryDocTypeAllowedRef> AllowedReferences { get; set; } = new List<InventoryDocTypeAllowedRef>();
 }

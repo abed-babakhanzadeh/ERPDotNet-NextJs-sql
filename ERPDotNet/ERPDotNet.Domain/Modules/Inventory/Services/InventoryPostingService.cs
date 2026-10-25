@@ -222,7 +222,8 @@ public class InventoryPostingService : IInventoryPostingService
 
         bool checkExpiry = context.Policy.ShouldCheckExpiry(context.DocType);
         bool checkBlock = context.Policy.ShouldCheckBatchBlockStatus(context.DocType);
-        if (!checkExpiry && !checkBlock) return null;
+        bool checkQc = context.DocType.Nature == InventoryNature.Output && !context.DocType.AllowsUnreleasedBatches;
+        if (!checkExpiry && !checkBlock && !checkQc) return null;
 
         var batch = await _repository.GetBatchAsync(detail.BatchId.Value, cancellationToken);
         if (batch == null) return null;
@@ -230,6 +231,14 @@ public class InventoryPostingService : IInventoryPostingService
         if (checkBlock && batch.IsBlocked)
         {
             return $"بچ {batch.BatchNumber} مسدود است. دلیل: {batch.BlockReason}";
+        }
+
+        // کنترل کیفیت فقط جلوی خروج (مصرف/فروش) را می‌گیرد؛ رسید و انتقال به قرنطینه آزاد است
+        if (checkQc && batch.QcStatus != BatchQcStatus.Released)
+        {
+            return batch.QcStatus == BatchQcStatus.Rejected
+                ? $"بچ {batch.BatchNumber} در کنترل کیفیت مردود شده و فقط با سند مرجوعی/ضایعات خارج می‌شود."
+                : $"بچ {batch.BatchNumber} در قرنطینه است و تا تأیید کنترل کیفیت خارج نمی‌شود.";
         }
 
         // انقضا فقط موقع "خروج" مهم است

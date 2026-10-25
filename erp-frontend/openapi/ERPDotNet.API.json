@@ -3210,6 +3210,53 @@
         }
       }
     },
+    "/api/Inventory/Inventory/batches/{id}/qc": {
+      "put": {
+        "tags": [
+          "Inventory"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetBatchQcStatusCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetBatchQcStatusCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetBatchQcStatusCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Inventory/Inventory/batches/fefo": {
       "post": {
         "tags": [
@@ -5119,6 +5166,9 @@
           }
         }
       },
+      "BatchQcStatus": {
+        "type": "integer"
+      },
       "BOMDetailDto": {
         "required": [
           "id",
@@ -6086,6 +6136,7 @@
           "productId",
           "isBatchManaged",
           "isSerialManaged",
+          "requiresQc",
           "mainInventoryUnitId"
         ],
         "type": "object",
@@ -6112,6 +6163,9 @@
               "string"
             ],
             "format": "int32"
+          },
+          "requiresQc": {
+            "type": "boolean"
           },
           "mainInventoryUnitId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -7001,6 +7055,7 @@
           "nature",
           "affectsCost",
           "numberingScope",
+          "allowsUnreleasedBatches",
           "isReferenceRequired",
           "allowedReferenceEntityNames"
         ],
@@ -7032,6 +7087,9 @@
           },
           "numberingScope": {
             "$ref": "#/components/schemas/NumberingScope"
+          },
+          "allowsUnreleasedBatches": {
+            "type": "boolean"
           },
           "isReferenceRequired": {
             "type": "boolean"
@@ -8389,6 +8447,8 @@
           "productId",
           "batchNumber",
           "isBlocked",
+          "qcStatus",
+          "qcStatusTitle",
           "isExpired",
           "rowVersion"
         ],
@@ -8447,6 +8507,30 @@
               "null",
               "string"
             ]
+          },
+          "qcStatus": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "qcStatusTitle": {
+            "type": "string"
+          },
+          "qcNote": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "qcCheckedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           },
           "isExpired": {
             "type": "boolean"
@@ -8699,6 +8783,7 @@
           "natureValue",
           "affectsCost",
           "numberingScope",
+          "allowsUnreleasedBatches",
           "isReferenceRequired",
           "allowedReferenceEntityNames",
           "rowVersion"
@@ -8749,6 +8834,9 @@
           "numberingScope": {
             "$ref": "#/components/schemas/NumberingScope"
           },
+          "allowsUnreleasedBatches": {
+            "type": "boolean"
+          },
           "isReferenceRequired": {
             "type": "boolean"
           },
@@ -8769,6 +8857,7 @@
           "productId",
           "isBatchManaged",
           "isSerialManaged",
+          "requiresQc",
           "mainInventoryUnitId",
           "mainInventoryUnitTitle",
           "warehouseSettings"
@@ -8805,6 +8894,9 @@
               "string"
             ],
             "format": "int32"
+          },
+          "requiresQc": {
+            "type": "boolean"
           },
           "mainInventoryUnitId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -10498,6 +10590,32 @@
           }
         }
       },
+      "SetBatchQcStatusCommand": {
+        "required": [
+          "id",
+          "qcStatus"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "qcStatus": {
+            "$ref": "#/components/schemas/BatchQcStatus"
+          },
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "SetItemWarehouseSettingCommand": {
         "required": [
           "warehouseId",
@@ -11729,6 +11847,7 @@
           "id",
           "affectsCost",
           "numberingScope",
+          "allowsUnreleasedBatches",
           "isReferenceRequired",
           "allowedReferenceEntityNames",
           "rowVersion"
@@ -11766,6 +11885,9 @@
           },
           "numberingScope": {
             "$ref": "#/components/schemas/NumberingScope"
+          },
+          "allowsUnreleasedBatches": {
+            "type": "boolean"
           },
           "isReferenceRequired": {
             "type": "boolean"

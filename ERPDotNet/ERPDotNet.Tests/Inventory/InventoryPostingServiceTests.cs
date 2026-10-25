@@ -165,6 +165,34 @@ public class InventoryPostingServiceTests
         Assert.False(result.IsSuccess);
     }
 
+    [Theory]
+    [InlineData(BatchQcStatus.Quarantine, "قرنطینه")]
+    [InlineData(BatchQcStatus.Rejected, "مردود")]
+    public async Task Unreleased_batch_cannot_be_issued(BatchQcStatus status, string message)
+    {
+        _repo.Batches.Add(new InventoryBatch { Id = 7, ProductId = ProductId, BatchNumber = "B7", QcStatus = status });
+        _repo.Stocks.Add(Stock(100, batchId: 7));
+
+        var result = await _sut.ProcessDocumentAsync(Context(InventoryNature.Output, Line(1, 10, batchId: 7)), default);
+
+        Assert.False(result.IsSuccess);
+        Assert.Contains(result.Errors, e => e.Contains(message));
+    }
+
+    [Fact]
+    public async Task Quarantined_batch_can_be_received_transferred_and_returned_with_allowed_doc_type()
+    {
+        _repo.Batches.Add(new InventoryBatch { Id = 7, ProductId = ProductId, BatchNumber = "B7", QcStatus = BatchQcStatus.Rejected });
+        _repo.Stocks.Add(Stock(100, batchId: 7));
+
+        Assert.True((await _sut.ProcessDocumentAsync(Context(InventoryNature.Input, Line(1, 5, batchId: 7)), default)).IsSuccess);
+        Assert.True((await _sut.ProcessDocumentAsync(Context(InventoryNature.Transfer, Line(2, 5, batchId: 7)), default)).IsSuccess);
+
+        var returnDoc = Context(InventoryNature.Output, Line(3, 5, batchId: 7));
+        returnDoc.DocType.AllowsUnreleasedBatches = true;
+        Assert.True((await _sut.ProcessDocumentAsync(returnDoc, default)).IsSuccess);
+    }
+
     [Fact]
     public async Task Reversal_of_receipt_decreases_stock_and_links_original_transaction()
     {

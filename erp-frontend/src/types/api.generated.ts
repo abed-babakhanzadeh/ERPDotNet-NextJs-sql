@@ -2783,6 +2783,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Inventory/Inventory/batches/{id}/qc": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["SetBatchQcStatusCommand"];
+                    "text/json": components["schemas"]["SetBatchQcStatusCommand"];
+                    "application/*+json": components["schemas"]["SetBatchQcStatusCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Inventory/Inventory/batches/fefo": {
         parameters: {
             query?: never;
@@ -4430,6 +4471,7 @@ export interface components {
             /** Format: byte */
             rowVersion: string;
         };
+        BatchQcStatus: number;
         BOMDetailDto: {
             /** Format: int32 */
             id: number;
@@ -4656,6 +4698,7 @@ export interface components {
             isSerialManaged: boolean;
             /** Format: int32 */
             shelfLifeDays?: null | number;
+            requiresQc: boolean;
             /** Format: int32 */
             mainInventoryUnitId: number;
         };
@@ -4868,6 +4911,7 @@ export interface components {
             requiredPermissionName?: null | string;
             affectsCost: boolean;
             numberingScope: components["schemas"]["NumberingScope"];
+            allowsUnreleasedBatches: boolean;
             isReferenceRequired: boolean;
             allowedReferenceEntityNames: string[];
         };
@@ -5172,6 +5216,12 @@ export interface components {
             description?: null | string;
             isBlocked: boolean;
             blockReason?: null | string;
+            /** Format: int32 */
+            qcStatus: number;
+            qcStatusTitle: string;
+            qcNote?: null | string;
+            /** Format: date-time */
+            qcCheckedAt?: null | string;
             isExpired: boolean;
             rowVersion: string;
         };
@@ -5239,6 +5289,7 @@ export interface components {
             requiredPermissionName?: null | string;
             affectsCost: boolean;
             numberingScope: components["schemas"]["NumberingScope"];
+            allowsUnreleasedBatches: boolean;
             isReferenceRequired: boolean;
             allowedReferenceEntityNames: string[];
             rowVersion: string;
@@ -5252,6 +5303,7 @@ export interface components {
             isSerialManaged: boolean;
             /** Format: int32 */
             shelfLifeDays?: null | number;
+            requiresQc: boolean;
             /** Format: int32 */
             mainInventoryUnitId: number;
             mainInventoryUnitTitle: string;
@@ -5637,6 +5689,12 @@ export interface components {
             id: string;
             name: string;
         };
+        SetBatchQcStatusCommand: {
+            /** Format: int32 */
+            id: number;
+            qcStatus: components["schemas"]["BatchQcStatus"];
+            note?: null | string;
+        };
         SetItemWarehouseSettingCommand: {
             /** Format: int32 */
             warehouseId: number;
@@ -5930,6 +5988,7 @@ export interface components {
             requiredPermissionName?: null | string;
             affectsCost: boolean;
             numberingScope: components["schemas"]["NumberingScope"];
+            allowsUnreleasedBatches: boolean;
             isReferenceRequired: boolean;
             allowedReferenceEntityNames: string[];
             rowVersion: string;

@@ -9,6 +9,7 @@ import {
   ProductCardexDto,
   InventoryStockDto,
   WarehouseDto,
+  SetBatchQcStatusCommand,
   SetItemWarehouseSettingCommand,
   StockRebuildResultDto,
   StockRebuildRowDto,
@@ -249,6 +250,11 @@ const inventoryService = {
 
   updateBatch: async (id: number, data: UpdateBatchCommand) => {
     const response = await apiClient.put(`${BASE_URL}/batches/${id}`, data);
+    return response.data;
+  },
+
+  setBatchQc: async (id: number, data: SetBatchQcStatusCommand) => {
+    const response = await apiClient.put(`${BASE_URL}/batches/${id}/qc`, data);
     return response.data;
   },
 

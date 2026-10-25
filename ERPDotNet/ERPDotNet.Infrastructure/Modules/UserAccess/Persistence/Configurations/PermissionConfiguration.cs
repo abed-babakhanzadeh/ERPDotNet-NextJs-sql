@@ -116,6 +116,7 @@ public class PermissionConfiguration : IEntityTypeConfiguration<Permission>
             new Permission { Id = 3120, Name = "Inventory.ProductProfiles", Title = "تنظیمات کالا و بچ", IsMenu = false, ParentId = 3100 },
             new Permission { Id = 3121, Name = "Inventory.ProductProfiles.View", Title = "مشاهده تنظیمات انبار کالا", IsMenu = false, ParentId = 3120 },
             new Permission { Id = 3122, Name = "Inventory.ProductProfiles.Edit", Title = "ویرایش تنظیمات و بچ‌ها", IsMenu = false, ParentId = 3120 },
+            new Permission { Id = 3123, Name = "Inventory.Batches.Qc", Title = "ثبت نتیجه کنترل کیفیت بچ", IsMenu = false, ParentId = 3120 },
 
             // --- ب) عملیات انبار (Operations) ---
             new Permission { Id = 3200, Name = "Inventory.Operations", Title = "عملیات انبار", IsMenu = true, ParentId = 3000 },

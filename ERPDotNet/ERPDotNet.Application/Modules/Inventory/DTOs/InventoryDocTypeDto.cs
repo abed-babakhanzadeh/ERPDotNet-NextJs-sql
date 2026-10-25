@@ -15,6 +15,7 @@ public class InventoryDocTypeDto
     public string? RequiredPermissionName { get; set; }
     public bool AffectsCost { get; set; }
     public NumberingScope NumberingScope { get; set; }
+    public bool AllowsUnreleasedBatches { get; set; }
     public bool IsReferenceRequired { get; set; }
     
     // لیست نام رفرنس‌های مجاز

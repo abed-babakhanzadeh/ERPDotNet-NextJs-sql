@@ -10,6 +10,7 @@ public class InventoryItemProfileDto
     public bool IsBatchManaged { get; set; }
     public bool IsSerialManaged { get; set; }
     public int? ShelfLifeDays { get; set; }
+    public bool RequiresQc { get; set; }
 
     public int MainInventoryUnitId { get; set; }
     public string MainInventoryUnitTitle { get; set; } = string.Empty;

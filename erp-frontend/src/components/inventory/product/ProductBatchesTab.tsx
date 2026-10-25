@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { Loader2, Plus, Ban, CheckCircle, Pencil, Save } from "lucide-react";
+import { Loader2, Plus, Ban, CheckCircle, Pencil, Save, ShieldCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,9 +34,12 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import PersianDatePicker from "@/components/ui/PersianDatePicker";
+import PermissionGuard from "@/components/ui/PermissionGuard";
+import { StatusBadge } from "@/components/common/StatusBadge";
+import BatchQcDialog from "./BatchQcDialog";
 
 import inventoryService from "@/services/inventoryService";
-import { InventoryBatchDto } from "@/types/inventory";
+import { BatchQcStatusMap, InventoryBatchDto } from "@/types/inventory";
 import { handleApiError } from "@/lib/error-handling";
 
 const createBatchSchema = z.object({
@@ -60,6 +63,7 @@ export default function ProductBatchesTab({ productId, isViewMode }: Props) {
   const [editingBatch, setEditingBatch] = useState<InventoryBatchDto | null>(
     null,
   );
+  const [qcBatch, setQcBatch] = useState<InventoryBatchDto | null>(null);
 
   const form = useForm<z.infer<typeof createBatchSchema>>({
     resolver: zodResolver(createBatchSchema),
@@ -325,20 +329,21 @@ export default function ProductBatchesTab({ productId, isViewMode }: Props) {
               {/* ستون جدید توضیحات */}
               <TableHead className="text-right">توضیحات</TableHead>
               <TableHead className="text-center">وضعیت</TableHead>
+              <TableHead className="text-center">کنترل کیفیت</TableHead>
               <TableHead></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center h-24">
+                <TableCell colSpan={7} className="text-center h-24">
                   <Loader2 className="animate-spin inline text-primary" />
                 </TableCell>
               </TableRow>
             ) : batches.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={7}
                   className="text-center text-muted-foreground py-8"
                 >
                   هیچ بچی برای این کالا تعریف نشده است.
@@ -416,9 +421,30 @@ export default function ProductBatchesTab({ productId, isViewMode }: Props) {
                     )}
                   </TableCell>
 
+                  <TableCell className="text-center">
+                    <span title={batch.qcNote || undefined}>
+                      <StatusBadge
+                        tone={BatchQcStatusMap[batch.qcStatus]?.tone ?? "neutral"}
+                        label={batch.qcStatusTitle}
+                      />
+                    </span>
+                  </TableCell>
+
                   <TableCell>
                     {!isViewMode && (
                       <div className="flex justify-end gap-1">
+                        <PermissionGuard permission="Inventory.Batches.Qc">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 text-primary hover:bg-primary/10"
+                            title="کنترل کیفیت"
+                            aria-label={`کنترل کیفیت بچ ${batch.batchNumber}`}
+                            onClick={() => setQcBatch(batch)}
+                          >
+                            <ShieldCheck size={14} />
+                          </Button>
+                        </PermissionGuard>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -445,6 +471,15 @@ export default function ProductBatchesTab({ productId, isViewMode }: Props) {
           </TableBody>
         </Table>
       </div>
+
+      <BatchQcDialog
+        batch={qcBatch}
+        onClose={() => setQcBatch(null)}
+        onSaved={() => {
+          setQcBatch(null);
+          loadBatches();
+        }}
+      />
     </div>
   );
 }

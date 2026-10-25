@@ -72,6 +72,7 @@ export default function InventorySettingsTab({
     defaultValues: {
       isBatchManaged: false,
       isSerialManaged: false,
+      requiresQc: false,
       shelfLifeDays: 0,
       mainInventoryUnitId: 0,
     },
@@ -106,6 +107,7 @@ export default function InventorySettingsTab({
           profileForm.reset({
             isBatchManaged: profileData.isBatchManaged,
             isSerialManaged: profileData.isSerialManaged,
+            requiresQc: profileData.requiresQc ?? false,
             shelfLifeDays: profileData.shelfLifeDays || 0,
             mainInventoryUnitId: profileData.mainInventoryUnitId,
           });
@@ -274,6 +276,32 @@ export default function InventorySettingsTab({
                 </FormItem>
               )}
             />
+
+            {profileForm.watch("isBatchManaged") && (
+              <FormField
+                control={profileForm.control}
+                name="requiresQc"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center space-x-3 space-x-reverse rounded-md border p-3 h-10 shadow-sm transition-colors hover:bg-muted/50">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={isViewMode}
+                      />
+                    </FormControl>
+                    <div className="leading-none mr-2">
+                      <FormLabel
+                        className="cursor-pointer font-medium"
+                        title="بچ جدید تا ثبت نتیجه کنترل کیفیت در قرنطینه می‌ماند و خارج نمی‌شود"
+                      >
+                        نیازمند کنترل کیفیت (QC)
+                      </FormLabel>
+                    </div>
+                  </FormItem>
+                )}
+              />
+            )}
 
             <FormField
               control={profileForm.control}

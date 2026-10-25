@@ -27,6 +27,7 @@ const formSchema = z.object({
   requiredPermissionName: z.string().optional(),
   affectsCost: z.boolean().default(false),
   isReferenceRequired: z.boolean().default(false),
+  allowsUnreleasedBatches: z.boolean().default(false),
   allowedReferenceEntityNames: z.array(z.string()).default([]),
 });
 
@@ -63,6 +64,7 @@ export default function DocTypeFormPage() {
       requiredPermissionName: "",
       affectsCost: true,
       isReferenceRequired: false,
+      allowsUnreleasedBatches: false,
       allowedReferenceEntityNames: [],
     },
   });
@@ -91,6 +93,7 @@ export default function DocTypeFormPage() {
             requiredPermissionName: data.requiredPermissionName || "",
             affectsCost: data.affectsCost,
             isReferenceRequired: data.isReferenceRequired,
+            allowsUnreleasedBatches: data.allowsUnreleasedBatches ?? false,
             allowedReferenceEntityNames: data.allowedReferenceEntityNames || [],
           });
         }
@@ -190,6 +193,12 @@ export default function DocTypeFormPage() {
             name="isReferenceRequired"
             label="عطف (رفرنس) اجباری است"
             description="کاربر باید مبنای سند (مثلاً پروژه یا مرکز هزینه) را مشخص کند."
+          />
+          <SwitchField
+            control={form.control}
+            name="allowsUnreleasedBatches"
+            label="مجاز به خروج بچ قرنطینه/مردود"
+            description="فقط برای اسنادی مثل برگشت به تأمین‌کننده یا ضایعات؛ حواله‌های عادی فقط بچ تأییدشده QC را می‌پذیرند."
           />
         </FormSection>
 

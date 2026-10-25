@@ -52,6 +52,8 @@ import {
   InventoryDocDto,
   InventoryDocStatus,
   InventoryNature,
+  BatchQcStatus,
+  BatchQcStatusMap,
 } from "@/types/inventory";
 import { useConfirm } from "@/providers/ConfirmProvider";
 import {
@@ -547,7 +549,11 @@ export default function DocForm({
         width: "150px",
         getOptions: (row: DocRow) =>
           (batchesByProduct[Number(row.productId)] ?? []).map((b) => ({
-            label: b.isBlocked ? `${b.batchNumber} (مسدود)` : b.batchNumber,
+            label: b.isBlocked
+              ? `${b.batchNumber} (مسدود)`
+              : b.qcStatus && b.qcStatus !== BatchQcStatus.Released
+                ? `${b.batchNumber} (${BatchQcStatusMap[b.qcStatus]?.label ?? b.qcStatusTitle})`
+                : b.batchNumber,
             value: b.id,
           })),
         disabled: isReadOnly,
