@@ -80,7 +80,7 @@ export function StockRebuildDialog({ onRebuilt }: StockRebuildDialogProps) {
         className="h-8 shrink-0 gap-1.5 text-xs"
       >
         <Wrench size={14} />
-        <span className="hidden sm:inline">بازسازی موجودی</span>
+        <span className="sr-only sm:not-sr-only">بازسازی موجودی</span>
       </Button>
 
       <Dialog open={open} onOpenChange={(o) => !applying && setOpen(o)}>

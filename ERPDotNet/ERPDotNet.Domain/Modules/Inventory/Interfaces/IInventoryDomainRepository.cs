@@ -13,6 +13,9 @@ public interface IInventoryDomainRepository
     // گرفتن اطلاعات بچ
     Task<InventoryBatch?> GetBatchAsync(int batchId, CancellationToken cancellationToken);
 
+    // کالا در پروفایل انبار «مدیریت بچ» دارد
+    Task<bool> IsBatchManagedAsync(int productId, CancellationToken cancellationToken);
+
     // آخرین تراکنش یک سطر سند در یک انبار (سطر انتقال در دو انبار تراکنش دارد)
     Task<PostedTransactionRef?> GetLastTransactionAsync(long docDetailId, int warehouseId, CancellationToken cancellationToken);
 }

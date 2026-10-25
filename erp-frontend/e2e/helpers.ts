@@ -256,3 +256,28 @@ export async function stockOf(
     0,
   );
 }
+
+/** کالا را بچ‌دار می‌کند و یک بچ برایش می‌سازد */
+export async function createBatch(
+  api: APIRequestContext,
+  p: { productId: number; unitId: number; batchNumber: string },
+): Promise<number> {
+  const profile = await api.post("/api/Inventory/Inventory/products/profile", {
+    data: {
+      productId: p.productId,
+      isBatchManaged: true,
+      isSerialManaged: false,
+      mainInventoryUnitId: p.unitId,
+    },
+  });
+  if (!profile.ok())
+    throw new Error(
+      `تنظیم بچ کالا: ${profile.status()} ${await profile.text()}`,
+    );
+  const res = await api.post("/api/Inventory/Inventory/batches", {
+    data: { productId: p.productId, batchNumber: p.batchNumber },
+  });
+  if (!res.ok())
+    throw new Error(`ساخت بچ: ${res.status()} ${await res.text()}`);
+  return Number(await res.text());
+}

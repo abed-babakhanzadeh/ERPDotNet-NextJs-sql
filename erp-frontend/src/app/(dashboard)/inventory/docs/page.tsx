@@ -167,7 +167,7 @@ export default function InventoryDocsListPage() {
               className="h-8 gap-1.5 bg-primary text-primary-foreground"
             >
               <Plus size={16} />
-              <span className="hidden sm:inline text-xs">سند جدید</span>
+              <span className="sr-only sm:not-sr-only text-xs">سند جدید</span>
             </Button>
           </TooltipTrigger>
           <TooltipContent>ثبت سند جدید</TooltipContent>

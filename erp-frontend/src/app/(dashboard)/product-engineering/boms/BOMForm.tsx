@@ -858,7 +858,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
                       }
                     >
                       <Network size={16} />
-                      <span className="hidden sm:inline">ساختار درختی</span>
+                      <span className="sr-only sm:not-sr-only">ساختار درختی</span>
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>مشاهده ساختار درختی</TooltipContent>
@@ -877,7 +877,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
                       className="h-9 text-primary border-primary/30 hover:bg-primary/10 flex items-center gap-2"
                     >
                       <CopyPlus size={16} />
-                      <span className="hidden sm:inline">فراخوانی از الگو</span>
+                      <span className="sr-only sm:not-sr-only">فراخوانی از الگو</span>
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>کپی اقلام از یک فرمول دیگر</TooltipContent>
@@ -894,7 +894,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
                       className="h-9 bg-success hover:bg-success/90 text-success-foreground flex items-center gap-2"
                     >
                       <Pencil size={16} />
-                      <span className="hidden sm:inline">ویرایش</span>
+                      <span className="sr-only sm:not-sr-only">ویرایش</span>
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>ویرایش اطلاعات</TooltipContent>

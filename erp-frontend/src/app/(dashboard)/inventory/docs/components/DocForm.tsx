@@ -47,6 +47,7 @@ import inventoryService from "@/services/inventoryService";
 import {
   CreateInventoryDocCommand,
   UpdateInventoryDocCommand,
+  InventoryBatchDto,
   InventoryDocDto,
   InventoryDocStatus,
   InventoryNature,
@@ -92,6 +93,9 @@ export default function DocForm({
   const [destinationLocations, setDestinationLocations] = useState<any[]>([]);
   const [productsList, setProductsList] = useState<any[]>([]);
   const [productsLoading, setProductsLoading] = useState(false);
+  // بچ‌های تعریف‌شده هر کالا (از تب «بچ‌ها» در فرم کالا)
+  const [batchesByProduct, setBatchesByProduct] = useState<Record<number, InventoryBatchDto[]>>({});
+  const requestedBatches = useRef(new Set<number>());
 
   const isInitialized = useRef(false);
   // نسخه state همان پرچم؛ تا هشدار «تغییرات ذخیره‌نشده» پیش از پر شدن فرم نیاید
@@ -222,6 +226,22 @@ export default function DocForm({
     const draftKey = getDraftKey();
     if (draftKey) sessionStorage.removeItem(draftKey);
   };
+
+  // بچ مسدود هم آورده می‌شود تا سطری که قبلاً به آن اشاره کرده خالی نماند؛ قطعی کردن سند آن را رد می‌کند
+  useEffect(() => {
+    const missing = Array.from(
+      new Set(gridData.map((r) => Number(r.productId)).filter((id) => id > 0)),
+    ).filter((id) => !requestedBatches.current.has(id));
+    missing.forEach(async (productId) => {
+      requestedBatches.current.add(productId);
+      try {
+        const batches = await inventoryService.getProductBatches(productId, true);
+        setBatchesByProduct((prev) => ({ ...prev, [productId]: batches }));
+      } catch {
+        requestedBatches.current.delete(productId);
+      }
+    });
+  }, [gridData]);
 
   const loadLocations = async (warehouseId: number) => {
     if (!warehouseId) return;
@@ -392,6 +412,9 @@ export default function DocForm({
                   productCode: item.code,
                   productName: item.name,
                   unitTitle: item.unitName,
+                  // بچ به کالا تعلق دارد؛ با عوض شدن کالا پاک می‌شود
+                  batchId: item.id === row.productId ? row.batchId : null,
+                  batchNumber: item.id === row.productId ? row.batchNumber : undefined,
                 });
               else onValueChange(null);
             }}
@@ -441,11 +464,15 @@ export default function DocForm({
           ]
         : []),
       {
-        key: "batchNumber",
-        title: "بچ نامبر",
-        type: "text",
+        key: "batchId",
+        title: "بچ",
+        type: "select",
         width: "150px",
-        placeholder: "-",
+        getOptions: (row: DocRow) =>
+          (batchesByProduct[Number(row.productId)] ?? []).map((b) => ({
+            label: b.isBlocked ? `${b.batchNumber} (مسدود)` : b.batchNumber,
+            value: b.id,
+          })),
         disabled: isReadOnly,
       },
       {
@@ -463,6 +490,7 @@ export default function DocForm({
       productsList,
       productsLoading,
       isReadOnly,
+      batchesByProduct,
     ],
   );
 
@@ -487,7 +515,7 @@ export default function DocForm({
           isTransfer && row.destinationLocationId
             ? Number(row.destinationLocationId)
             : null,
-        batchId: null,
+        batchId: row.batchId ? Number(row.batchId) : null,
         description: row.description || "",
       }));
 
@@ -579,7 +607,7 @@ export default function DocForm({
           className="h-8 gap-1.5 px-3 text-muted-foreground hover:text-foreground border-border"
         >
           <MoreVertical className="w-4 h-4" />
-          <span className="hidden sm:inline text-xs">عملیات</span>
+          <span className="sr-only sm:not-sr-only text-xs">عملیات</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
@@ -656,7 +684,7 @@ export default function DocForm({
             className="h-8 w-8 px-0 sm:w-auto sm:px-3 text-muted-foreground hover:bg-muted"
           >
             <ArrowRight className="w-4 h-4 sm:ml-1.5" />
-            <span className="hidden sm:inline text-xs">بازگشت</span>
+            <span className="sr-only sm:not-sr-only text-xs">بازگشت</span>
           </Button>
 
           <div className="flex items-center gap-2">
@@ -670,7 +698,7 @@ export default function DocForm({
                 className="h-8 gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 <Save className="w-4 h-4" />
-                <span className="hidden sm:inline text-xs">ذخیره تغییرات</span>
+                <span className="sr-only sm:not-sr-only text-xs">ذخیره تغییرات</span>
               </Button>
             )}
 
@@ -684,7 +712,7 @@ export default function DocForm({
                   className="h-8 gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
                   <Send className="w-4 h-4" />
-                  <span className="hidden sm:inline text-xs">
+                  <span className="sr-only sm:not-sr-only text-xs">
                     تایید و ارسال
                   </span>
                 </Button>
@@ -702,7 +730,7 @@ export default function DocForm({
               className="h-8 gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
             >
               <Save className="w-4 h-4" />
-              <span className="hidden sm:inline text-xs">ثبت اولیه</span>
+              <span className="sr-only sm:not-sr-only text-xs">ثبت اولیه</span>
             </Button>
           )}
         </div>

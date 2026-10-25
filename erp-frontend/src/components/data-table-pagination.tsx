@@ -145,7 +145,7 @@ export function DataTablePagination({
 
         {/* نمایش و ویرایش شماره صفحه - فشرده‌تر در موبایل */}
         <div className="flex items-center gap-1 sm:gap-2">
-          <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap hidden sm:inline">
+          <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap sr-only sm:not-sr-only">
             صفحه
           </span>
           <Input

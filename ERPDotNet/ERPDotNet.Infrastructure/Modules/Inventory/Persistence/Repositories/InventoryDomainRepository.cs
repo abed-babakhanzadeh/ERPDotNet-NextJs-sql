@@ -33,6 +33,12 @@ public class InventoryDomainRepository : IInventoryDomainRepository
             .FirstOrDefaultAsync(x => x.Id == batchId, cancellationToken);
     }
 
+    public async Task<bool> IsBatchManagedAsync(int productId, CancellationToken cancellationToken)
+    {
+        return await _context.Set<InventoryItemProfile>()
+            .AnyAsync(x => x.ProductId == productId && x.IsBatchManaged && !x.IsDeleted, cancellationToken);
+    }
+
     public async Task<PostedTransactionRef?> GetLastTransactionAsync(long docDetailId, int warehouseId, CancellationToken cancellationToken)
     {
         // برای پیدا کردن تراکنش اصلی جهت ابطال

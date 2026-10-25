@@ -112,7 +112,7 @@ export default function TabsBar() {
         )}
       >
         <Home size={12} />
-        <span className="hidden sm:inline">پیشخوان</span>
+        <span className="sr-only sm:not-sr-only">پیشخوان</span>
       </button>
 
       {/* Scrollable Tabs - وسط (راست‌چین) */}

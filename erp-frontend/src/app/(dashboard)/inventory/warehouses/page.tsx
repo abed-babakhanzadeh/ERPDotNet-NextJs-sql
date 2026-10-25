@@ -91,7 +91,7 @@ export default function WarehousesPage() {
               className="h-8 gap-1.5 md:gap-2"
             >
               <Plus size={16} />
-              <span className="hidden sm:inline text-xs">انبار جدید</span>
+              <span className="sr-only sm:not-sr-only text-xs">انبار جدید</span>
             </Button>
           </TooltipTrigger>
           <TooltipContent side="bottom" className="text-[10px] sm:hidden">
