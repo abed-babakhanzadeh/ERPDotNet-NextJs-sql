@@ -42,6 +42,8 @@ public class InventoryPostingService : IInventoryPostingService
     {
         var transactions = new List<InventoryTransaction>();
         var stockUpdates = new List<CurrentStock>();
+        // سطرهای تکراری با کالا/لوکیشن/بچ یکسان باید روی یک رکورد موجودی جمع شوند
+        var stocksByKey = new Dictionary<(int ProductId, int? LocationId, int? BatchId), CurrentStock>();
         var errors = new List<string>();
         var events = new List<BaseEvent>();
 
@@ -84,12 +86,16 @@ public class InventoryPostingService : IInventoryPostingService
             transactions.Add(transaction);
 
             // === 3. دریافت موجودی ===
-            var currentStock = await _repository.GetCurrentStockAsync(
-                context.Header.WarehouseId, 
-                detail.ProductId, 
-                detail.LocationId, 
-                detail.BatchId, 
-                cancellationToken);
+            var stockKey = (detail.ProductId, detail.LocationId, detail.BatchId);
+            if (!stocksByKey.TryGetValue(stockKey, out var currentStock))
+            {
+                currentStock = await _repository.GetCurrentStockAsync(
+                    context.Header.WarehouseId,
+                    detail.ProductId,
+                    detail.LocationId,
+                    detail.BatchId,
+                    cancellationToken);
+            }
 
             // هندل کردن نبود رکورد موجودی
             if (currentStock == null)
@@ -155,9 +161,10 @@ public class InventoryPostingService : IInventoryPostingService
             }
 
             // === 5. محاسبه موجودی (Mutation) ===
+            // QuantityOnHand پس از این خط مقدار نهایی است، نه مقدار تغییر
             currentStock.QuantityOnHand += (quantity * multiplier);
-            
-            if (!stockUpdates.Contains(currentStock))
+
+            if (stocksByKey.TryAdd(stockKey, currentStock))
             {
                 stockUpdates.Add(currentStock);
             }

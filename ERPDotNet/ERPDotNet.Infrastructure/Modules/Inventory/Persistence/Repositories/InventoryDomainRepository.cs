@@ -40,7 +40,7 @@ public class InventoryDomainRepository : IInventoryDomainRepository
         return await _context.Set<InventoryTransaction>()
             .Where(x => x.DocDetailId == docDetailId)
             .OrderByDescending(x => x.Id) // آخرین رکورد
-            .Select(x => x.Id)
+            .Select(x => (long?)x.Id) // بدون nullable، نبود تراکنش به‌جای null مقدار 0 برمی‌گرداند
             .FirstOrDefaultAsync(cancellationToken);
     }
 }

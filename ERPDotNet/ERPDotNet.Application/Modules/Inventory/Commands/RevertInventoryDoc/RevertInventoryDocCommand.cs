@@ -1,7 +1,9 @@
 using ERPDotNet.Application.Common.Attributes;
 using ERPDotNet.Application.Common.Exceptions;
 using ERPDotNet.Application.Common.Interfaces;
+using ERPDotNet.Application.Modules.Inventory.Extensions;
 using ERPDotNet.Domain.Modules.Inventory.Enums;
+using ERPDotNet.Domain.Modules.Inventory.Interfaces;
 using ERPDotNet.Domain.Modules.Inventory.Models;
 using ERPDotNet.Domain.Modules.Inventory.Services; // ✅ اضافه شد
 using MediatR;
@@ -16,11 +18,16 @@ public class RevertInventoryDocHandler : IRequestHandler<RevertInventoryDocComma
 {
     private readonly IApplicationDbContext _context;
     private readonly IInventoryPostingService _postingService; // ✅ تزریق سرویس دامین
+    private readonly IInventoryPostingPolicy _policy;
 
-    public RevertInventoryDocHandler(IApplicationDbContext context, IInventoryPostingService postingService)
+    public RevertInventoryDocHandler(
+        IApplicationDbContext context,
+        IInventoryPostingService postingService,
+        IInventoryPostingPolicy policy)
     {
         _context = context;
         _postingService = postingService;
+        _policy = policy;
     }
 
     public async Task<bool> Handle(RevertInventoryDocCommand request, CancellationToken cancellationToken)
@@ -60,7 +67,8 @@ public class RevertInventoryDocHandler : IRequestHandler<RevertInventoryDocComma
             {
                 Header = doc,
                 DocType = doc.DocType!,
-                Policy = null!, // در ابطال معمولاً سیاست "موجودی منفی" چک نمی‌شود چون داریم بار را برمی‌گردانیم/کسر می‌کنیم
+                // ابطال رسید موجودی را کم می‌کند و باید مثل حواله از منفی شدن موجودی جلوگیری کند
+                Policy = _policy,
                 UserId = 1 // TODO: آی‌دی کاربر جاری را از ICurrentUserService بگیرید
             };
 
@@ -81,28 +89,7 @@ public class RevertInventoryDocHandler : IRequestHandler<RevertInventoryDocComma
             }
 
             // 2. اعمال تغییرات روی موجودی کالا (Current Stocks)
-            foreach (var stockUpdate in result.UpdatedStocks)
-            {
-                var existingStock = await _context.CurrentStocks
-                    .FirstOrDefaultAsync(x => 
-                        x.WarehouseId == stockUpdate.WarehouseId && 
-                        x.ProductId == stockUpdate.ProductId &&
-                        x.BatchId == stockUpdate.BatchId && 
-                        x.LocationId == stockUpdate.LocationId, 
-                        cancellationToken);
-
-                if (existingStock != null)
-                {
-                    // stockUpdate.QuantityOnHand در اینجا مقدار معکوس دارد (مثلاً -10 یا +5)
-                    // پس با جمع کردن، اثر سند قبلی خنثی می‌شود.
-                    existingStock.QuantityOnHand += stockUpdate.QuantityOnHand;
-                }
-                else
-                {
-                    // اگر به هر دلیلی رکورد موجودی نبود (که بعید است)، ایجاد می‌کنیم
-                    await _context.CurrentStocks.AddAsync(stockUpdate, cancellationToken);
-                }
-            }
+            await _context.AddNewStocksAsync(result.UpdatedStocks, cancellationToken);
 
             // 3. تغییر وضعیت سند به "ابطال شده" (Cancelled)
             // توجه: به Draft برنمی‌گردد چون سند دارای اثر مالی بوده و باید تاریخچه آن حفظ شود.

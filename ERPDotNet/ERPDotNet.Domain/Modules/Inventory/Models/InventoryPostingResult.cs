@@ -12,7 +12,8 @@ public class InventoryPostingResult
     public List<InventoryTransaction> GeneratedTransactions { get; private set; } = new();
     
     // لیست موجودی‌هایی که تغییر کرده‌اند (Dirty Objects)
-    // لایه اپلیکیشن مسئول SaveChanges این‌هاست
+    // QuantityOnHand هر آیتم مقدار نهایی موجودی است (نه مقدار تغییر).
+    // رکوردهای موجود قبلاً ویرایش شده‌اند؛ لایه اپلیکیشن فقط رکوردهای جدید را Add و سپس SaveChanges می‌کند
     public List<CurrentStock> UpdatedStocks { get; private set; } = new();
 
     // هوک برای ایونت‌های دامنه (مثل: موجودی به زیر نقطه سفارش رسید)

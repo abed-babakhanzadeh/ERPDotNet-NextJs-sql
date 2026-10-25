@@ -3,4 +3,5 @@
   <Project Path="ERPDotNet.Application/ERPDotNet.Application.csproj" />
   <Project Path="ERPDotNet.Domain/ERPDotNet.Domain.csproj" />
   <Project Path="ERPDotNet.Infrastructure/ERPDotNet.Infrastructure.csproj" />
+  <Project Path="ERPDotNet.Tests/ERPDotNet.Tests.csproj" />
 </Solution>
