@@ -7,11 +7,14 @@ using ERPDotNet.Domain.Modules.Inventory.Enums;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using ERPDotNet.Application.Modules.Inventory.Services;
+using ERPDotNet.Application.Modules.Inventory.Services;
 
 namespace ERPDotNet.Application.Modules.Inventory.Queries.GetProductCardex;
 
-public record GetProductCardexQuery : IRequest<PaginatedResult<ProductCardexDto>>
+public record GetProductCardexQuery : IRequest<PaginatedResult<ProductCardexDto>>, IWarehouseScopedRequest
 {
+    IEnumerable<int> IWarehouseScopedRequest.ScopedWarehouseIds => WarehouseId is int id ? [id] : [];
     public int? WarehouseId { get; set; }
     public int? ProductId { get; set; }
     
@@ -47,10 +50,12 @@ public class CardexJoinedRow
 public class GetProductCardexHandler : IRequestHandler<GetProductCardexQuery, PaginatedResult<ProductCardexDto>>
 {
     private readonly IApplicationDbContext _context;
+    private readonly IWarehouseAccessService _warehouseAccess;
 
-    public GetProductCardexHandler(IApplicationDbContext context)
+    public GetProductCardexHandler(IApplicationDbContext context, IWarehouseAccessService warehouseAccess)
     {
         _context = context;
+        _warehouseAccess = warehouseAccess;
     }
 
     public async Task<PaginatedResult<ProductCardexDto>> Handle(GetProductCardexQuery request, CancellationToken cancellationToken)
@@ -63,6 +68,8 @@ public class GetProductCardexHandler : IRequestHandler<GetProductCardexQuery, Pa
         var baseLedger = _context.InventoryTransactions
             .AsNoTracking()
             .Where(x => x.ProductId == request.ProductId);
+        var allowedWarehouses = await _warehouseAccess.GetAllowedWarehouseIdsAsync(cancellationToken);
+        if (allowedWarehouses != null) baseLedger = baseLedger.Where(x => allowedWarehouses.Contains(x.WarehouseId));
 
         // اعمال فیلتر انبار فقط اگر ارسال شده باشد
         if (request.WarehouseId.HasValue && request.WarehouseId.Value > 0)

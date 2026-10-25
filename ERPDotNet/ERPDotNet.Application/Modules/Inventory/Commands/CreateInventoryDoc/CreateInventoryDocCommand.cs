@@ -7,12 +7,14 @@ using ERPDotNet.Domain.Modules.Inventory.Enums;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using ERPDotNet.Application.Modules.Inventory.Services;
 
 namespace ERPDotNet.Application.Modules.Inventory.Commands.CreateInventoryDoc;
 
 [CacheInvalidation("InventoryDocs")]
-public record CreateInventoryDocCommand : IRequest<long>
+public record CreateInventoryDocCommand : IRequest<long>, IWarehouseScopedRequest
 {
+    IEnumerable<int> IWarehouseScopedRequest.ScopedWarehouseIds => [WarehouseId];
     // ... (فیلدها مثل قبل) ...
     public required int DocTypeId { get; set; }
     public required int WarehouseId { get; set; }

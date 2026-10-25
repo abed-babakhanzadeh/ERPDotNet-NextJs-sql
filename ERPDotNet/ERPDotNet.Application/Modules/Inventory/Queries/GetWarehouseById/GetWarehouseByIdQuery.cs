@@ -1,10 +1,14 @@
 using ERPDotNet.Application.Common.Interfaces;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using ERPDotNet.Application.Modules.Inventory.Services;
 
 namespace ERPDotNet.Application.Modules.Inventory.Queries.GetWarehouseById;
 
-public record GetWarehouseByIdQuery(int Id) : IRequest<WarehouseDetailsDto>;
+public record GetWarehouseByIdQuery(int Id) : IRequest<WarehouseDetailsDto>, IWarehouseScopedRequest
+{
+    IEnumerable<int> IWarehouseScopedRequest.ScopedWarehouseIds => [Id];
+}
 
 public record WarehouseDetailsDto(
     int Id,

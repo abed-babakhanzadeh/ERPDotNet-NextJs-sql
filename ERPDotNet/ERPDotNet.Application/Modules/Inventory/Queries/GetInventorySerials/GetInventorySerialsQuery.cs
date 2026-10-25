@@ -4,6 +4,7 @@ using ERPDotNet.Application.Common.Models;
 using ERPDotNet.Domain.Modules.Inventory.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using ERPDotNet.Application.Modules.Inventory.Services;
 
 namespace ERPDotNet.Application.Modules.Inventory.Queries.GetInventorySerials;
 
@@ -33,15 +34,20 @@ public record GetInventorySerialsQuery : PaginatedRequest, IRequest<PaginatedRes
 public class GetInventorySerialsHandler : IRequestHandler<GetInventorySerialsQuery, PaginatedResult<InventorySerialDto>>
 {
     private readonly IApplicationDbContext _context;
+    private readonly IWarehouseAccessService _warehouseAccess;
 
-    public GetInventorySerialsHandler(IApplicationDbContext context)
+    public GetInventorySerialsHandler(IApplicationDbContext context, IWarehouseAccessService warehouseAccess)
     {
         _context = context;
+        _warehouseAccess = warehouseAccess;
     }
 
     public async Task<PaginatedResult<InventorySerialDto>> Handle(GetInventorySerialsQuery request, CancellationToken cancellationToken)
     {
         var query = _context.InventorySerials.AsNoTracking();
+        var allowedWarehouses = await _warehouseAccess.GetAllowedWarehouseIdsAsync(cancellationToken);
+        // سریال خارج‌شده (بدون انبار) فقط برای کاربر بدون محدودیت دیده می‌شود
+        if (allowedWarehouses != null) query = query.Where(s => s.WarehouseId != null && allowedWarehouses.Contains(s.WarehouseId.Value));
 
         if (request.ProductId.HasValue) query = query.Where(s => s.ProductId == request.ProductId);
         if (request.WarehouseId.HasValue) query = query.Where(s => s.WarehouseId == request.WarehouseId);

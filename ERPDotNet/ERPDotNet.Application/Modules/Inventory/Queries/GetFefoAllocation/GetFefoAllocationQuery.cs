@@ -3,6 +3,7 @@ using ERPDotNet.Domain.Modules.Inventory.Entities;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using ERPDotNet.Application.Modules.Inventory.Services;
 
 namespace ERPDotNet.Application.Modules.Inventory.Queries.GetFefoAllocation;
 
@@ -15,7 +16,10 @@ public record FefoAllocationDto(List<FefoLineDto> Lines, decimal Shortage);
 /// بچ مسدود، تأییدنشده در QC و منقضی‌شده (تا تاریخ سند) پیشنهاد نمی‌شود؛ بچ بدون تاریخ انقضا آخر می‌آید.
 /// </summary>
 public record GetFefoAllocationQuery(int ProductId, int WarehouseId, decimal Quantity, DateTime? AsOfDate = null)
-    : IRequest<FefoAllocationDto>;
+    : IRequest<FefoAllocationDto>, IWarehouseScopedRequest
+{
+    IEnumerable<int> IWarehouseScopedRequest.ScopedWarehouseIds => [WarehouseId];
+}
 
 public class GetFefoAllocationValidator : AbstractValidator<GetFefoAllocationQuery>
 {

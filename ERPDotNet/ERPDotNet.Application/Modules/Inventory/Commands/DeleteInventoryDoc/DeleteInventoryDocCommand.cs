@@ -5,11 +5,15 @@ using ERPDotNet.Application.Common.Interfaces;
 using ERPDotNet.Domain.Modules.Inventory.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using ERPDotNet.Application.Modules.Inventory.Services;
 
 namespace ERPDotNet.Application.Modules.Inventory.Commands.DeleteInventoryDoc;
 
 [CacheInvalidation("InventoryDocs")] 
-public record DeleteInventoryDocCommand(long Id, string RowVersion) : IRequest<bool>;
+public record DeleteInventoryDocCommand(long Id, string RowVersion) : IRequest<bool>, IInventoryDocScopedRequest
+{
+    long IInventoryDocScopedRequest.ScopedDocId => Id;
+}
 
 public class DeleteInventoryDocHandler : IRequestHandler<DeleteInventoryDocCommand, bool>
 {

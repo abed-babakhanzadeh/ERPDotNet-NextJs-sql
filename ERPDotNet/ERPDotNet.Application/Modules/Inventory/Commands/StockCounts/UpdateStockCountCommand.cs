@@ -4,12 +4,14 @@ using ERPDotNet.Domain.Modules.Inventory.Entities;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using ERPDotNet.Application.Modules.Inventory.Services;
 
 namespace ERPDotNet.Application.Modules.Inventory.Commands.StockCounts;
 
 /// <summary>ثبت مقدار شمارش‌شده؛ سطر بدون شناسه، کالایی است که در سیستم نبود ولی در انبار پیدا شد</summary>
-public record UpdateStockCountCommand : IRequest
+public record UpdateStockCountCommand : IRequest, IStockCountScopedRequest
 {
+    int IStockCountScopedRequest.ScopedStockCountId => Id;
     public int Id { get; set; }
     public string? Description { get; set; }
     public List<StockCountLineInput> Lines { get; set; } = new();

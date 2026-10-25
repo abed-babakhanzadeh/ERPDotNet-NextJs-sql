@@ -14,7 +14,10 @@ using Microsoft.EntityFrameworkCore;
 namespace ERPDotNet.Application.Modules.Inventory.Commands.RevertInventoryDoc;
 
 [CacheInvalidation("InventoryDocs")]
-public record RevertInventoryDocCommand(long Id) : IRequest<bool>;
+public record RevertInventoryDocCommand(long Id) : IRequest<bool>, IInventoryDocScopedRequest
+{
+    long IInventoryDocScopedRequest.ScopedDocId => Id;
+}
 
 public class RevertInventoryDocHandler : IRequestHandler<RevertInventoryDocCommand, bool>
 {

@@ -38,6 +38,7 @@ public interface IApplicationDbContext
 
     // === ماژول Inventory (جدید) ===
     DbSet<Warehouse> Warehouses { get; }
+    DbSet<WarehouseUserAccess> WarehouseUserAccesses { get; }
     DbSet<Location> Locations { get; }
     
     DbSet<InventoryItemProfile> InventoryItemProfiles { get; }

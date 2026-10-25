@@ -207,6 +207,22 @@ public class InventoryController : ControllerBase
         return Ok(await _mediator.Send(new GetWarehouseByIdQuery(id)));
     }
 
+    // دسترسی سطح داده: کاربران مجاز انبار
+    [HttpGet("warehouses/{id}/users")]
+    [HasPermission("Inventory.Warehouses.Access")]
+    public async Task<ActionResult<List<ERPDotNet.Application.Modules.Inventory.Queries.GetWarehouseUsers.WarehouseUserDto>>> GetWarehouseUsers(int id)
+    {
+        return Ok(await _mediator.Send(new ERPDotNet.Application.Modules.Inventory.Queries.GetWarehouseUsers.GetWarehouseUsersQuery(id)));
+    }
+
+    [HttpPut("warehouses/{id}/users")]
+    [HasPermission("Inventory.Warehouses.Access")]
+    public async Task<IActionResult> SetWarehouseUsers(int id, [FromBody] List<string> userIds)
+    {
+        await _mediator.Send(new ERPDotNet.Application.Modules.Inventory.Commands.SetWarehouseUsers.SetWarehouseUsersCommand { WarehouseId = id, UserIds = userIds });
+        return NoContent();
+    }
+
     [HttpDelete("warehouses/{id}")]
     [HasPermission("Inventory.Warehouses.Delete")]
     public async Task<IActionResult> DeleteWarehouse(int id, [FromQuery] string rowVersion)

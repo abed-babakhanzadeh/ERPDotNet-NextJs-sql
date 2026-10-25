@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { WarehouseDto } from "@/types/inventory";
 import { ColumnConfig } from "@/types";
-import { Warehouse, Plus } from "lucide-react";
+import { Warehouse, Plus, Users } from "lucide-react";
 import ProtectedPage from "@/components/ui/ProtectedPage";
 import PermissionGuard from "@/components/ui/PermissionGuard";
 import { toast } from "sonner";
@@ -20,10 +20,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useConfirm } from "@/providers/ConfirmProvider";
+import WarehouseUsersDialog from "@/components/inventory/WarehouseUsersDialog";
 
 export default function WarehousesPage() {
   const confirm = useConfirm();
   const { addTab } = useTabs();
+  const [accessFor, setAccessFor] = useState<WarehouseDto | null>(null);
 
   // استفاده از هوک با نام صحیح متد refresh و اندپوینت درست بک‌اند
   const { tableProps, refresh, totalCount } = useServerDataTable<WarehouseDto>({
@@ -48,6 +50,29 @@ export default function WarehousesPage() {
         ),
       },
       { key: "isActive", label: "وضعیت", type: "boolean" },
+      {
+        key: "access",
+        label: "کاربران مجاز",
+        type: "custom",
+        width: 90,
+        render: (_: unknown, row: WarehouseDto) => (
+          <PermissionGuard permission="Inventory.Warehouses.Access">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-primary"
+              aria-label={`کاربران مجاز ${row.title}`}
+              title="کاربران مجاز"
+              onClick={(e) => {
+                e.stopPropagation();
+                setAccessFor(row);
+              }}
+            >
+              <Users size={15} />
+            </Button>
+          </PermissionGuard>
+        ),
+      },
     ],
     [],
   );
@@ -119,6 +144,7 @@ export default function WarehousesPage() {
           {...tableProps}
         />
       </BaseListLayout>
+      <WarehouseUsersDialog warehouse={accessFor} onClose={() => setAccessFor(null)} />
     </ProtectedPage>
   );
 }

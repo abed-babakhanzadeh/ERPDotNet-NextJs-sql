@@ -156,6 +156,7 @@ public static class DependencyInjection
     private static void AddInventoryServices(IServiceCollection services)
     {
         services.AddScoped<IInventoryDomainRepository, InventoryDomainRepository>();
+        services.AddScoped<ERPDotNet.Application.Modules.Inventory.Services.IWarehouseAccessService, ERPDotNet.Application.Modules.Inventory.Services.WarehouseAccessService>();
         services.AddScoped<IInventoryPostingPolicy, DefaultInventoryPostingPolicy>();
         services.AddScoped<IInventoryPostingService, InventoryPostingService>();
         services.AddScoped<IDocumentNumberingService, DocumentNumberingService>();

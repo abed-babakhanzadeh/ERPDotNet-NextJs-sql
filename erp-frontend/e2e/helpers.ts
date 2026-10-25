@@ -1,4 +1,8 @@
-import { request, type APIRequestContext } from "@playwright/test";
+import {
+  request,
+  type APIRequestContext,
+  type APIResponse,
+} from "@playwright/test";
 import fs from "node:fs";
 
 export const API_URL = process.env.E2E_API_URL ?? "http://localhost:5000";
@@ -329,4 +333,71 @@ export async function serialsOf(api: APIRequestContext, productId: number) {
     statusId: number;
     warehouseId: number | null;
   }[];
+}
+
+/** پاسخ ناموفق را با متن خطای سرور پرتاب می‌کند */
+export async function ok(res: APIResponse, what: string): Promise<APIResponse> {
+  if (!res.ok())
+    throw new Error(`${what}: ${res.status()} ${await res.text()}`);
+  return res;
+}
+
+/** نقش با مجوزهای داده‌شده و کاربری با همان نقش؛ کلاینت API با توکن خود کاربر برمی‌گردد */
+export async function createUserWithRole(
+  api: APIRequestContext,
+  tag: string,
+  name: string,
+  permissionIds: number[],
+) {
+  const roleName = `${name}-${tag}`;
+  const role = await (
+    await ok(
+      await api.post("/api/Roles", { data: { name: roleName } }),
+      "ساخت نقش",
+    )
+  ).json();
+  await ok(
+    await api.post("/api/Permissions/assign-role", {
+      data: { roleId: role.id, permissionIds },
+    }),
+    "دسترسی نقش",
+  );
+  const username = `${name.toLowerCase()}${tag}`;
+  const password = "Passw0rd!x";
+  const user = await (
+    await ok(
+      await api.post("/api/Users", {
+        data: {
+          firstName: name,
+          lastName: tag,
+          username,
+          email: `${username}@e2e.local`,
+          password,
+          roles: [roleName],
+        },
+      }),
+      "ساخت کاربر",
+    )
+  ).json();
+  const login = await (
+    await ok(
+      await (
+        await request.newContext({ baseURL: API_URL })
+      ).post("/api/Auth/login", {
+        data: { username, password },
+      }),
+      "ورود کاربر",
+    )
+  ).json();
+  const client = await request.newContext({
+    baseURL: API_URL,
+    extraHTTPHeaders: { Authorization: `Bearer ${login.token}` },
+  });
+  return {
+    id: user.id as string,
+    roleId: role.id as string,
+    fullName: `${name} ${tag}`,
+    token: login.token as string,
+    api: client,
+  };
 }

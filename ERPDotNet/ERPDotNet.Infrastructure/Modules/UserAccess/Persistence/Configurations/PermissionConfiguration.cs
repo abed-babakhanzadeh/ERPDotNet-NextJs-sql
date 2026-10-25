@@ -103,6 +103,7 @@ public class PermissionConfiguration : IEntityTypeConfiguration<Permission>
             new Permission { Id = 3104, Name = "Inventory.Warehouses.Edit", Title = "ویرایش انبار", IsMenu = false, ParentId = 3101 },
             new Permission { Id = 3105, Name = "Inventory.Warehouses.Delete", Title = "حذف انبار", IsMenu = false, ParentId = 3101 },
             new Permission { Id = 3106, Name = "Inventory.Warehouses.Locations", Title = "مدیریت قفسه‌بندی (Locations)", IsMenu = false, ParentId = 3101 },
+            new Permission { Id = 3107, Name = "Inventory.Warehouses.Access", Title = "تعیین کاربران مجاز انبار", IsMenu = false, ParentId = 3101 },
             
             // 2. مدیریت انواع سند (DocTypes)
             new Permission { Id = 3110, Name = "Inventory.DocTypes", Title = "انواع سند", IsMenu = true, ParentId = 3100, Url = "/inventory/doc-types" },

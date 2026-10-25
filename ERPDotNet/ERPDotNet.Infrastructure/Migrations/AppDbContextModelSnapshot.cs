@@ -1597,6 +1597,32 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.ToTable("Warehouses", "inventory");
                 });
 
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.WarehouseUserAccess", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("WarehouseId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WarehouseId");
+
+                    b.HasIndex("UserId", "WarehouseId")
+                        .IsUnique();
+
+                    b.ToTable("WarehouseUserAccesses", "inventory");
+                });
+
             modelBuilder.Entity("ERPDotNet.Domain.Modules.ProductEngineering.Entities.BOMDetail", b =>
                 {
                     b.Property<int>("Id")
@@ -2321,6 +2347,14 @@ namespace ERPDotNet.Infrastructure.Migrations
                             Name = "Inventory.Warehouses.Locations",
                             ParentId = 3101,
                             Title = "مدیریت قفسه‌بندی (Locations)"
+                        },
+                        new
+                        {
+                            Id = 3107,
+                            IsMenu = false,
+                            Name = "Inventory.Warehouses.Access",
+                            ParentId = 3101,
+                            Title = "تعیین کاربران مجاز انبار"
                         },
                         new
                         {
@@ -4095,6 +4129,17 @@ namespace ERPDotNet.Infrastructure.Migrations
                         .WithMany()
                         .HasForeignKey("CompanyId")
                         .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.WarehouseUserAccess", b =>
+                {
+                    b.HasOne("ERPDotNet.Domain.Modules.Inventory.Entities.Warehouse", "Warehouse")
+                        .WithMany()
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Warehouse");
                 });
 
             modelBuilder.Entity("ERPDotNet.Domain.Modules.ProductEngineering.Entities.BOMDetail", b =>

@@ -2,6 +2,7 @@ using ERPDotNet.Application.Common.Extensions;
 using ERPDotNet.Application.Common.Interfaces;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using ERPDotNet.Application.Modules.Inventory.Services;
 
 namespace ERPDotNet.Application.Modules.Inventory.Queries.StockCounts;
 
@@ -36,7 +37,10 @@ public record StockCountDto(
     List<StockCountLineDto> Lines
 );
 
-public record GetStockCountByIdQuery(int Id) : IRequest<StockCountDto?>;
+public record GetStockCountByIdQuery(int Id) : IRequest<StockCountDto?>, IStockCountScopedRequest
+{
+    int IStockCountScopedRequest.ScopedStockCountId => Id;
+}
 
 public class GetStockCountByIdHandler : IRequestHandler<GetStockCountByIdQuery, StockCountDto?>
 {
