@@ -44,6 +44,8 @@ public interface IApplicationDbContext
     DbSet<ItemWarehouseSetting> ItemWarehouseSettings { get; }
     DbSet<InventoryBatch> InventoryBatches { get; }
     DbSet<InventorySerial> InventorySerials { get; }
+    DbSet<StockCount> StockCounts { get; }
+    DbSet<StockCountLine> StockCountLines { get; }
     DbSet<InventoryDocDetailSerial> InventoryDocDetailSerials { get; }
     
     // کانفیگ و اسناد

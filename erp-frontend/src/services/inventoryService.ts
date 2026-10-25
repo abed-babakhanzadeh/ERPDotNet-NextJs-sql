@@ -25,9 +25,16 @@ import type {
   UpdateWarehouseCommand,
   InventorySerialDto,
   FefoAllocationDto,
+  StockCountListItemDto,
+  StockCountDto,
+  CreateStockCountCommand,
+  UpdateStockCountCommand,
+  FinalizeStockCountCommand,
+  FinalizeStockCountResult,
 } from "@/types/api";
 
 const BASE_URL = "/Inventory/Inventory";
+const STOCK_COUNTS_URL = "/Inventory/StockCounts";
 const BASE_INFO_URL = "/BaseInfo"; // آدرس ماژول اطلاعات پایه
 
 const inventoryService = {
@@ -327,6 +334,34 @@ const inventoryService = {
     const response = await apiClient.post<FefoAllocationDto>(
       `${BASE_URL}/batches/fefo`,
       payload,
+    );
+    return response.data;
+  },
+
+  // انبارگردانی
+  searchStockCounts: async (payload: PagedQuery, signal?: AbortSignal) => {
+    const response = await apiClient.post<Paged<StockCountListItemDto>>(
+      `${STOCK_COUNTS_URL}/search`,
+      payload,
+      { signal },
+    );
+    return response.data;
+  },
+  getStockCount: async (id: number) => {
+    const response = await apiClient.get<StockCountDto>(`${STOCK_COUNTS_URL}/${id}`);
+    return response.data;
+  },
+  createStockCount: async (command: CreateStockCountCommand) => {
+    const response = await apiClient.post<{ id: number }>(STOCK_COUNTS_URL, command);
+    return response.data.id;
+  },
+  updateStockCount: async (id: number, command: UpdateStockCountCommand) => {
+    await apiClient.put(`${STOCK_COUNTS_URL}/${id}`, command);
+  },
+  finalizeStockCount: async (id: number, command: FinalizeStockCountCommand) => {
+    const response = await apiClient.post<FinalizeStockCountResult>(
+      `${STOCK_COUNTS_URL}/${id}/finalize`,
+      command,
     );
     return response.data;
   },
