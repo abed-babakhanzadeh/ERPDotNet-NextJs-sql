@@ -1,4 +1,5 @@
 using ERPDotNet.Application.Modules.Inventory.Queries.GetInventorySerials;
+using ERPDotNet.Application.Modules.Inventory.Queries.GetFefoAllocation;
 using ERPDotNet.API.Attributes;
 using ERPDotNet.Application.Common.Models;
 using ERPDotNet.Application.Modules.Inventory.Commands.ApproveInventoryDoc;
@@ -390,6 +391,14 @@ public class InventoryController : ControllerBase
     public async Task<ActionResult<List<InventoryBatchDto>>> GetProductBatches(int productId, [FromQuery] bool includeBlocked = false)
     {
         return Ok(await _mediator.Send(new GetInventoryBatchesQuery(productId, includeBlocked)));
+    }
+
+    // پیشنهاد بچ و قفسه برای سطر خروجی سند
+    [HttpPost("batches/fefo")]
+    [HasPermission("Inventory.Docs.Create")]
+    public async Task<ActionResult<FefoAllocationDto>> SuggestFefo([FromBody] GetFefoAllocationQuery query)
+    {
+        return Ok(await _mediator.Send(query));
     }
 
     [HttpPut("batches/{id}")]

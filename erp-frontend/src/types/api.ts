@@ -90,3 +90,5 @@ export type UserProfileDto = UserDto;
 
 // --- شماره سریال انبار ---
 export type InventorySerialDto = S["InventorySerialDto"];
+export type FefoAllocationDto = S["FefoAllocationDto"];
+export type FefoLineDto = S["FefoLineDto"];

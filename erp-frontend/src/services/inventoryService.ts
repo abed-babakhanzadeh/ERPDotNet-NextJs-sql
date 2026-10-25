@@ -24,6 +24,7 @@ import type {
   UpdateInventoryDocTypeCommand,
   UpdateWarehouseCommand,
   InventorySerialDto,
+  FefoAllocationDto,
 } from "@/types/api";
 
 const BASE_URL = "/Inventory/Inventory";
@@ -316,6 +317,20 @@ const inventoryService = {
   },
 
   // گزارش شماره سریال‌ها (کالای سریال‌دار)
+  // پیشنهاد بچ و قفسه به روش FEFO برای سطر خروجی
+  suggestFefo: async (payload: {
+    productId: number;
+    warehouseId: number;
+    quantity: number;
+    asOfDate?: string;
+  }) => {
+    const response = await apiClient.post<FefoAllocationDto>(
+      `${BASE_URL}/batches/fefo`,
+      payload,
+    );
+    return response.data;
+  },
+
   searchSerials: async (payload: PagedQuery, signal?: AbortSignal) => {
     const response = await apiClient.post<Paged<InventorySerialDto>>(
       `${BASE_URL}/serials/search`,
