@@ -69,6 +69,7 @@ public interface IApplicationDbContext
     DbSet<BpmsInstance> BpmsInstances { get; }
     DbSet<BpmsTask> BpmsTasks { get; }
     DbSet<BpmsHistory> BpmsHistories { get; }
+    DbSet<BpmsDelegation> BpmsDelegations { get; }
 
 
 

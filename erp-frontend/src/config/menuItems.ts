@@ -23,6 +23,7 @@ import {
   Activity,
   ScrollText,
   Inbox,
+  UserCheck,
   Briefcase,
   Network,
   Settings2,
@@ -59,6 +60,12 @@ export const MENU_ITEMS: MenuItem[] = [
         href: "/workflow/inbox",
         icon: Inbox,
         permission: "Workflow.Tasks.Inbox",
+      },
+      {
+        title: "تفویض اختیار",
+        href: "/workflow/delegations",
+        icon: UserCheck,
+        permission: "Workflow.Tasks.Delegate",
       },
       {
         title: "طراح گردش کار",

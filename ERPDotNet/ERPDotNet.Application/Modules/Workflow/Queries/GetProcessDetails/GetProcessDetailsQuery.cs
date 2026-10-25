@@ -56,19 +56,24 @@ public class GetProcessDetailsQueryHandler : IRequestHandler<GetProcessDetailsQu
 
         if (activeVersion != null)
         {
+            var roleIds = activeVersion.Transitions.SelectMany(t => t.AllowedRoles).Select(r => r.RoleId)
+                .Concat(activeVersion.States.Where(st => st.EscalationRoleId != null).Select(st => st.EscalationRoleId!))
+                .Distinct().ToList();
+            var roleNames = await _context.Roles
+                .AsNoTracking()
+                .Where(r => roleIds.Contains(r.Id))
+                .ToDictionaryAsync(r => r.Id, r => r.Name ?? r.Id, cancellationToken);
+
             dto.States = activeVersion.States.Select(s => new StateDto
             {
                 Id = s.Id,
                 Title = s.Title,
                 StateCode = s.StateCode,
-                Type = (int)s.Type
+                Type = (int)s.Type,
+                SlaHours = s.SlaHours,
+                EscalationRoleId = s.EscalationRoleId,
+                EscalationRoleName = s.EscalationRoleId == null ? null : roleNames.GetValueOrDefault(s.EscalationRoleId, s.EscalationRoleId)
             }).ToList();
-
-            var roleIds = activeVersion.Transitions.SelectMany(t => t.AllowedRoles).Select(r => r.RoleId).Distinct().ToList();
-            var roleNames = await _context.Roles
-                .AsNoTracking()
-                .Where(r => roleIds.Contains(r.Id))
-                .ToDictionaryAsync(r => r.Id, r => r.Name ?? r.Id, cancellationToken);
 
             dto.Transitions = activeVersion.Transitions.Select(t => new TransitionDto
             {

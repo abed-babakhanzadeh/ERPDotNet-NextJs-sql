@@ -10,4 +10,8 @@ public class InboxTaskDto
     public string StateTitle { get; set; } = string.Empty;
     public long TargetRecordId { get; set; }
     public DateTime CreatedAt { get; set; }
+
+    // سررسید طبق SLA مرحله؛ IsOverdue برای برجسته کردن کارهای عقب‌افتاده
+    public DateTime? DueDate { get; set; }
+    public bool IsOverdue { get; set; }
 }

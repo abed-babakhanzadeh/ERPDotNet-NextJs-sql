@@ -2595,6 +2595,14 @@ namespace ERPDotNet.Infrastructure.Migrations
                         },
                         new
                         {
+                            Id = 4104,
+                            IsMenu = false,
+                            Name = "Workflow.Tasks.Delegate",
+                            ParentId = 4100,
+                            Title = "تفویض اختیار کارتابل"
+                        },
+                        new
+                        {
                             Id = 4200,
                             IsMenu = true,
                             Name = "Workflow.Processes",
@@ -2977,6 +2985,67 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.ToTable("user_permissions", "security");
                 });
 
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.Workflow.Entities.BpmsDelegation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FromUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsRevoked")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ToUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ToUserId", "EndDate");
+
+                    b.ToTable("BpmsDelegations", "workflow");
+                });
+
             modelBuilder.Entity("ERPDotNet.Domain.Modules.Workflow.Entities.BpmsHistory", b =>
                 {
                     b.Property<long>("Id")
@@ -3014,6 +3083,10 @@ namespace ERPDotNet.Infrastructure.Migrations
 
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OnBehalfOfUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("PerformedByUserId")
                         .IsRequired()
@@ -3226,6 +3299,10 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("EscalationRoleId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
@@ -3242,6 +3319,9 @@ namespace ERPDotNet.Infrastructure.Migrations
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
+
+                    b.Property<int?>("SlaHours")
+                        .HasColumnType("int");
 
                     b.Property<string>("StateCode")
                         .IsRequired()

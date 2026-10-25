@@ -6,6 +6,10 @@ import { DataTable } from "@/components/data-table";
 import { ColumnConfig } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { workflowService } from "@/services/workflowService";
+import DueDateBadge from "@/components/modules/workflow/DueDateBadge";
+import { Button } from "@/components/ui/button";
+import PermissionGuard from "@/components/ui/PermissionGuard";
+import { UserCheck } from "lucide-react";
 
 export default function InboxPage() {
   const router = useRouter();
@@ -49,6 +53,15 @@ export default function InboxPage() {
       type: "date",
       sortable: true,
     },
+    {
+      key: "dueDate",
+      label: "سررسید",
+      type: "custom",
+      sortable: true,
+      render: (val: string | null, row: any) => (
+        <DueDateBadge dueDate={val} isOverdue={row.isOverdue} />
+      ),
+    },
   ];
 
   return (
@@ -57,6 +70,16 @@ export default function InboxPage() {
         <h1 className="text-2xl font-bold text-foreground">
           کارتابل وظایف (Inbox)
         </h1>
+        <PermissionGuard permission="Workflow.Tasks.Delegate">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={() => router.push("/workflow/delegations")}
+          >
+            <UserCheck className="h-4 w-4" /> تفویض اختیار
+          </Button>
+        </PermissionGuard>
       </div>
 
       <div className="bg-card rounded-xl shadow-sm border overflow-hidden">

@@ -79,6 +79,12 @@ export type InboxTaskDto = S["InboxTaskDto"];
 export type CreateProcessCommand = S["CreateProcessCommand"];
 export type CreateStateCommand = S["CreateStateCommand"];
 export type CreateTransitionCommand = S["CreateTransitionCommand"];
+export type TaskDetailsDto = S["TaskDetailsDto"];
+export type TaskHistoryDto = S["TaskHistoryDto"];
+export type UpdateStateSlaCommand = S["UpdateStateSlaCommand"];
+export type DelegationDto = S["DelegationDto"];
+export type DelegateUserDto = S["DelegateUserDto"];
+export type CreateDelegationCommand = S["CreateDelegationCommand"];
 
 // --- انبار (دستورهایی که تایپ دستی ندارند) ---
 export type UpdateWarehouseCommand = S["UpdateWarehouseCommand"];

@@ -457,6 +457,218 @@
         }
       }
     },
+    "/api/Workflow/Tasks/states/{id}/sla": {
+      "put": {
+        "tags": [
+          "Tasks"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStateSlaCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStateSlaCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStateSlaCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Workflow/Tasks/delegations": {
+      "get": {
+        "tags": [
+          "Tasks"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DelegationDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DelegationDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DelegationDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Tasks"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDelegationCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDelegationCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDelegationCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "pattern": "^-?(?:0|[1-9]\\d*)$",
+                  "type": [
+                    "integer",
+                    "string"
+                  ],
+                  "format": "int32"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "pattern": "^-?(?:0|[1-9]\\d*)$",
+                  "type": [
+                    "integer",
+                    "string"
+                  ],
+                  "format": "int32"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "pattern": "^-?(?:0|[1-9]\\d*)$",
+                  "type": [
+                    "integer",
+                    "string"
+                  ],
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Workflow/Tasks/delegations/users": {
+      "get": {
+        "tags": [
+          "Tasks"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DelegateUserDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DelegateUserDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DelegateUserDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Workflow/Tasks/delegations/{id}/revoke": {
+      "post": {
+        "tags": [
+          "Tasks"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Workflow/Tasks/transitions/{id}/roles": {
       "put": {
         "tags": [
@@ -6437,6 +6649,33 @@
           }
         }
       },
+      "CreateDelegationCommand": {
+        "required": [
+          "toUserId",
+          "startDate",
+          "endDate"
+        ],
+        "type": "object",
+        "properties": {
+          "toUserId": {
+            "type": "string"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "CreateFiscalYearCommand": {
         "required": [
           "title",
@@ -6864,6 +7103,21 @@
           },
           "type": {
             "$ref": "#/components/schemas/BpmsStateType"
+          },
+          "slaHours": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "escalationRoleId": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -7136,6 +7390,86 @@
             "format": "int32"
           },
           "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "DelegateUserDto": {
+        "required": [
+          "id",
+          "fullName",
+          "userName"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "userName": {
+            "type": "string"
+          }
+        }
+      },
+      "DelegationDto": {
+        "required": [
+          "id",
+          "fromUserId",
+          "fromUserName",
+          "toUserId",
+          "toUserName",
+          "startDate",
+          "endDate",
+          "reason",
+          "isRevoked",
+          "isActive",
+          "isMine"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "fromUserId": {
+            "type": "string"
+          },
+          "fromUserName": {
+            "type": "string"
+          },
+          "toUserId": {
+            "type": "string"
+          },
+          "toUserName": {
+            "type": "string"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isRevoked": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "isMine": {
             "type": "boolean"
           }
         }
@@ -8395,7 +8729,8 @@
           "taskTitle",
           "stateTitle",
           "targetRecordId",
-          "createdAt"
+          "createdAt",
+          "isOverdue"
         ],
         "type": "object",
         "properties": {
@@ -8438,6 +8773,16 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "dueDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "isOverdue": {
+            "type": "boolean"
           }
         }
       },
@@ -10707,6 +11052,27 @@
               "string"
             ],
             "format": "int32"
+          },
+          "slaHours": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "escalationRoleId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "escalationRoleName": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -11173,7 +11539,10 @@
           "stateTitle",
           "targetRecordId",
           "createdAt",
-          "availableTransitions"
+          "isOverdue",
+          "viaEscalation",
+          "availableTransitions",
+          "history"
         ],
         "type": "object",
         "properties": {
@@ -11217,11 +11586,62 @@
             "type": "string",
             "format": "date-time"
           },
+          "dueDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "isOverdue": {
+            "type": "boolean"
+          },
+          "viaEscalation": {
+            "type": "boolean"
+          },
           "availableTransitions": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/TaskTransitionDto"
             }
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaskHistoryDto"
+            }
+          }
+        }
+      },
+      "TaskHistoryDto": {
+        "required": [
+          "actionTitle",
+          "performedBy",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "actionTitle": {
+            "type": "string"
+          },
+          "performedBy": {
+            "type": "string"
+          },
+          "onBehalfOf": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "comment": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -12102,6 +12522,37 @@
               ],
               "format": "int32"
             }
+          }
+        }
+      },
+      "UpdateStateSlaCommand": {
+        "required": [
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "slaHours": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "escalationRoleId": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },

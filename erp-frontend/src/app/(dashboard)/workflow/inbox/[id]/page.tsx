@@ -12,7 +12,11 @@ import {
   FileText,
   CheckCircle2,
   XCircle,
+  History,
+  ShieldAlert,
 } from "lucide-react";
+import DueDateBadge from "@/components/modules/workflow/DueDateBadge";
+import type { TaskDetailsDto } from "@/types/api";
 
 import { workflowService } from "@/services/workflowService";
 import inventoryService from "@/services/inventoryService";
@@ -31,7 +35,7 @@ export default function TaskDetailsPage({
   const resolvedParams = use(params);
   const id = resolvedParams.id;
   // State های مربوط به گردش کار
-  const [task, setTask] = useState<any>(null);
+  const [task, setTask] = useState<TaskDetailsDto | null>(null);
   const [taskLoading, setTaskLoading] = useState(true);
   const [processingId, setProcessingId] = useState<number | null>(null);
   const [comment, setComment] = useState("");
@@ -78,6 +82,7 @@ export default function TaskDetailsPage({
 
   // 3. هندلر کلیک روی دکمه‌های تایید/رد
   const handleTransition = async (transitionId: number) => {
+    if (!task) return;
     try {
       setProcessingId(transitionId);
       await workflowService.completeTask(task.taskId, {
@@ -152,7 +157,20 @@ export default function TaskDetailsPage({
                   <p className="text-muted-foreground mb-1">شماره مرجع (دیتابیس)</p>
                   <p className="font-semibold">{task.targetRecordId}</p>
                 </div>
+                <div>
+                  <p className="text-muted-foreground mb-1">سررسید</p>
+                  <DueDateBadge
+                    dueDate={task.dueDate}
+                    isOverdue={task.isOverdue}
+                  />
+                </div>
               </div>
+              {task.viaEscalation && (
+                <p className="flex items-center gap-1.5 text-sm text-warning">
+                  <ShieldAlert className="h-4 w-4" />
+                  این پرونده از سررسید گذشته و به نقش شما ارجاع شده است.
+                </p>
+              )}
             </div>
 
             {/* قسمت دکمه‌های تایید و کامنت */}
@@ -169,13 +187,13 @@ export default function TaskDetailsPage({
               />
 
               <div className="flex flex-wrap gap-2 mt-auto">
-                {task.availableTransitions.map((t: any) => (
+                {task.availableTransitions.map((t) => (
                   <Button
                     key={t.transitionId}
                     onClick={() => handleTransition(t.transitionId)}
                     disabled={processingId !== null}
                     // 🌟 جادوی معماری داینامیک: رنگ دقیقاً از دیتابیس خوانده می‌شود
-                    variant={t.buttonVariant || "default"}
+                    variant={(t.buttonVariant as any) || "default"}
                     className="flex-1 font-bold shadow-sm"
                   >
                     {processingId === t.transitionId ? (
@@ -198,6 +216,38 @@ export default function TaskDetailsPage({
           </div>
         </CardContent>
       </Card>
+
+      {task.history.length > 0 && (
+        <Card>
+          <CardContent className="p-4">
+            <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+              <History className="h-4 w-4 text-primary" /> تاریخچه پرونده
+            </h2>
+            <ol className="space-y-2 text-sm" aria-label="تاریخچه پرونده">
+              {task.history.map((h, i) => (
+                <li
+                  key={i}
+                  className="flex flex-wrap items-baseline gap-x-2 border-r-2 border-primary/30 pr-3"
+                >
+                  <span className="font-medium">{h.actionTitle}</span>
+                  <span className="text-muted-foreground">
+                    {h.performedBy}
+                    {h.onBehalfOf && ` (از طرف ${h.onBehalfOf})`}
+                  </span>
+                  <span className="text-xs text-muted-foreground" dir="ltr">
+                    {new Date(h.createdAt).toLocaleString("fa-IR")}
+                  </span>
+                  {h.comment && (
+                    <span className="basis-full text-muted-foreground">
+                      {h.comment}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </CardContent>
+        </Card>
+      )}
 
       {/* 🌟 بخش رندر هوشمند فرم‌های سیستم بر اساس ProcessCode */}
       <div className="w-full relative">

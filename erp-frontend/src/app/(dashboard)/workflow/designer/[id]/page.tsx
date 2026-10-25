@@ -12,6 +12,7 @@ import {
   CircleDot,
   ShieldCheck,
   Users,
+  Timer,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,7 @@ import {
 } from "@/components/ui/dialog";
 
 import { RolePicker } from "@/components/modules/workflow/RolePicker";
+import StateSlaDialog from "@/components/modules/workflow/StateSlaDialog";
 import { workflowService } from "@/services/workflowService";
 import {
   ProcessDetailsDto,
@@ -83,6 +85,7 @@ export default function ProcessDesignerPage({
     null,
   );
   const [editingRoleIds, setEditingRoleIds] = useState<string[]>([]);
+  const [editingSlaFor, setEditingSlaFor] = useState<StateDto | null>(null);
 
   useEffect(() => {
     workflowService
@@ -204,7 +207,9 @@ export default function ProcessDesignerPage({
       </div>
     );
   if (!process)
-    return <div className="p-8 text-center text-destructive">فرآیند یافت نشد.</div>;
+    return (
+      <div className="p-8 text-center text-destructive">فرآیند یافت نشد.</div>
+    );
 
   return (
     <div className="flex flex-col gap-6 p-4 max-w-[1400px] mx-auto">
@@ -269,22 +274,43 @@ export default function ProcessDesignerPage({
                       <span className="text-xs text-muted-foreground font-mono">
                         Code: {state.stateCode}
                       </span>
+                      {state.slaHours && (
+                        <span className="text-xs text-muted-foreground">
+                          مهلت {state.slaHours} ساعت
+                          {state.escalationRoleName &&
+                            ` · ارجاع به ${state.escalationRoleName}`}
+                        </span>
+                      )}
                     </div>
-                    <Badge
-                      variant={
-                        state.type === 1
-                          ? "default"
+                    <div className="flex items-center gap-1.5">
+                      {state.type !== 3 && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-primary"
+                          title="سررسید و ارجاع"
+                          aria-label={`سررسید مرحله ${state.title}`}
+                          onClick={() => setEditingSlaFor(state)}
+                        >
+                          <Timer className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <Badge
+                        variant={
+                          state.type === 1
+                            ? "default"
+                            : state.type === 3
+                              ? "destructive"
+                              : "secondary"
+                        }
+                      >
+                        {state.type === 1
+                          ? "شروع"
                           : state.type === 3
-                            ? "destructive"
-                            : "secondary"
-                      }
-                    >
-                      {state.type === 1
-                        ? "شروع"
-                        : state.type === 3
-                          ? "پایانی"
-                          : "میانی"}
-                    </Badge>
+                            ? "پایانی"
+                            : "میانی"}
+                      </Badge>
+                    </div>
                   </div>
                 ))
               )}
@@ -582,6 +608,16 @@ export default function ProcessDesignerPage({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <StateSlaDialog
+        state={editingSlaFor}
+        roles={roles}
+        onClose={() => setEditingSlaFor(null)}
+        onSaved={() => {
+          setEditingSlaFor(null);
+          loadProcessDetails();
+        }}
+      />
 
       {/* مودال ویرایش دسترسی دکمه */}
       <Dialog

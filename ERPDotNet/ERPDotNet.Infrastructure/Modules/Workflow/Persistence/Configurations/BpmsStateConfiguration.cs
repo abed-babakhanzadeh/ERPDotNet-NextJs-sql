@@ -13,6 +13,7 @@ public class BpmsStateConfiguration : IEntityTypeConfiguration<BpmsState>
 
         builder.Property(x => x.Title).HasMaxLength(200).IsRequired();
         builder.Property(x => x.StateCode).HasMaxLength(100).IsRequired();
+        builder.Property(x => x.EscalationRoleId).HasMaxLength(450);
 
         builder.HasOne(x => x.ProcessVersion)
                .WithMany(x => x.States)

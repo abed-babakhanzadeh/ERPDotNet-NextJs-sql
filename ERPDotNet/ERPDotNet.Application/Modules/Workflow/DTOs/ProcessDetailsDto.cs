@@ -6,6 +6,11 @@ public class StateDto
     public string Title { get; set; } = string.Empty;
     public string StateCode { get; set; } = string.Empty;
     public int Type { get; set; } // 1: Start, 2: Intermediate, 3: End
+
+    // مهلت انجام کار (ساعت) و نقشی که پس از سررسید ارجاع می‌گیرد
+    public int? SlaHours { get; set; }
+    public string? EscalationRoleId { get; set; }
+    public string? EscalationRoleName { get; set; }
 }
 
 public class TransitionDto

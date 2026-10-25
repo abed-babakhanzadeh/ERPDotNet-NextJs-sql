@@ -13,6 +13,10 @@ export interface StateDto {
   title: string;
   stateCode: string;
   type: number; // 1: Start, 2: Intermediate, 3: End
+  /** مهلت انجام (ساعت) و نقش ارجاع پس از سررسید */
+  slaHours?: number | null;
+  escalationRoleId?: string | null;
+  escalationRoleName?: string | null;
 }
 
 export interface TransitionDto {

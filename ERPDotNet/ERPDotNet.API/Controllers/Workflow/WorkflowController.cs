@@ -1,7 +1,9 @@
 using ERPDotNet.API.Attributes;
 using ERPDotNet.Application.Common.Models;
 using ERPDotNet.Application.Modules.Workflow.Commands.CompleteTask;
+using ERPDotNet.Application.Modules.Workflow.Commands.Delegations;
 using ERPDotNet.Application.Modules.Workflow.DTOs;
+using ERPDotNet.Application.Modules.Workflow.Queries.GetDelegations;
 using ERPDotNet.Application.Modules.Workflow.Queries.GetInboxTasks;
 using ERPDotNet.Application.Modules.Workflow.Queries.GetTaskDetails;
 using MediatR;
@@ -95,6 +97,49 @@ public class TasksController : ControllerBase
     {
         var id = await _mediator.Send(command);
         return Ok(id);
+    }
+
+    // مهلت انجام و نقش ارجاع مرحله
+    [HttpPut("states/{id}/sla")]
+    [HasPermission("Workflow.Processes.Edit")]
+    public async Task<IActionResult> UpdateStateSla(int id, [FromBody] ERPDotNet.Application.Modules.Workflow.Commands.UpdateStateSla.UpdateStateSlaCommand command)
+    {
+        if (id != command.Id) throw new FluentValidation.ValidationException("شناسه مغایرت دارد.");
+        await _mediator.Send(command);
+        return NoContent();
+    }
+
+    // ==========================================
+    // تفویض اختیار کارتابل
+    // ==========================================
+
+    [HttpGet("delegations")]
+    [HasPermission("Workflow.Tasks.Delegate")]
+    public async Task<ActionResult<List<DelegationDto>>> GetDelegations()
+    {
+        return Ok(await _mediator.Send(new GetDelegationsQuery()));
+    }
+
+    [HttpGet("delegations/users")]
+    [HasPermission("Workflow.Tasks.Delegate")]
+    public async Task<ActionResult<List<DelegateUserDto>>> GetDelegateUsers()
+    {
+        return Ok(await _mediator.Send(new GetDelegateUsersQuery()));
+    }
+
+    [HttpPost("delegations")]
+    [HasPermission("Workflow.Tasks.Delegate")]
+    public async Task<ActionResult<int>> CreateDelegation([FromBody] CreateDelegationCommand command)
+    {
+        return Ok(await _mediator.Send(command));
+    }
+
+    [HttpPost("delegations/{id}/revoke")]
+    [HasPermission("Workflow.Tasks.Delegate")]
+    public async Task<IActionResult> RevokeDelegation(int id)
+    {
+        await _mediator.Send(new RevokeDelegationCommand(id));
+        return NoContent();
     }
 
     // جایگزینی نقش‌های مجاز یک دکمه؛ لیست خالی = آزاد برای همه

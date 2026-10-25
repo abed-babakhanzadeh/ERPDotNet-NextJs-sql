@@ -3,9 +3,14 @@ import type {
   CreateProcessCommand,
   CreateStateCommand,
   CreateTransitionCommand,
+  CreateDelegationCommand,
+  DelegateUserDto,
+  DelegationDto,
   InboxTaskDto,
   PagedQuery,
   Paged,
+  TaskDetailsDto,
+  UpdateStateSlaCommand,
 } from "@/types/api";
 import type { ProcessDto, WorkflowRoleDto } from "@/types/workflow";
 
@@ -22,7 +27,7 @@ export const workflowService = {
   },
 
   getTaskDetails: async (id: number | string) => {
-    const response = await apiClient.get(`${BASE_URL}/${id}`);
+    const response = await apiClient.get<TaskDetailsDto>(`${BASE_URL}/${id}`);
     return response.data;
   },
 
@@ -58,6 +63,32 @@ export const workflowService = {
   createState: async (data: CreateStateCommand) => {
     const response = await apiClient.post(`${BASE_URL}/states`, data);
     return response.data;
+  },
+
+  updateStateSla: async (id: number, data: UpdateStateSlaCommand) => {
+    await apiClient.put(`${BASE_URL}/states/${id}/sla`, data);
+  },
+
+  // ==========================================
+  // تفویض اختیار
+  // ==========================================
+  getDelegations: async (): Promise<DelegationDto[]> => {
+    const response = await apiClient.get<DelegationDto[]>(`${BASE_URL}/delegations`);
+    return response.data;
+  },
+
+  getDelegateUsers: async (): Promise<DelegateUserDto[]> => {
+    const response = await apiClient.get<DelegateUserDto[]>(`${BASE_URL}/delegations/users`);
+    return response.data;
+  },
+
+  createDelegation: async (data: CreateDelegationCommand) => {
+    const response = await apiClient.post<number>(`${BASE_URL}/delegations`, data);
+    return response.data;
+  },
+
+  revokeDelegation: async (id: number) => {
+    await apiClient.post(`${BASE_URL}/delegations/${id}/revoke`);
   },
 
   createTransition: async (data: CreateTransitionCommand) => {
