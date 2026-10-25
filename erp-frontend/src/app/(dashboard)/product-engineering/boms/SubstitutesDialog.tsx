@@ -108,6 +108,7 @@ export default function SubstitutesDialog({
             searchableFields={["code", "name"]}
             displayFields={["code", "name"]}
             placeholder="انتخاب کالا/قلم..."
+            ariaLabel={`کالای جایگزین ردیف ${index + 1}`}
             onSearch={handleProductSearch}
             onOpenChange={(isOpen) => {
               // فقط اگر لیست خالی بود سرچ کن، وگرنه ممکنه مقادیر اولیه رو بپرونه
@@ -149,6 +150,7 @@ export default function SubstitutesDialog({
         render: (row, index) => (
           <div className="flex justify-center">
             <Checkbox
+              aria-label={`میکس مجاز ردیف ${index + 1}`}
               checked={row.isMixAllowed}
               onCheckedChange={(checked) => {
                 const newRows = [...rows];
@@ -169,6 +171,7 @@ export default function SubstitutesDialog({
         render: (row, index) => (
           <input
             type="number"
+            aria-label={`حداکثر درصد میکس ردیف ${index + 1}`}
             className="w-full h-8 border rounded px-2 text-center disabled:bg-muted disabled:text-muted-foreground"
             value={row.maxMixPercentage}
             disabled={!row.isMixAllowed}

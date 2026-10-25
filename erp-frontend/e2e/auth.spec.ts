@@ -4,7 +4,9 @@ import { ADMIN } from "./helpers";
 test.use({ storageState: { cookies: [], origins: [] } });
 
 test.describe("ورود", () => {
-  test("رمز اشتباه پیام خطا می‌دهد و در صفحه ورود می‌ماند", async ({ page }) => {
+  test("رمز اشتباه پیام خطا می‌دهد و در صفحه ورود می‌ماند", async ({
+    page,
+  }) => {
     await page.goto("/login");
     await page.getByLabel("نام کاربری").fill(ADMIN.username);
     await page.getByLabel("رمز عبور").fill("wrong-password");
