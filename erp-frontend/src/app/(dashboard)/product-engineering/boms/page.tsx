@@ -80,7 +80,6 @@ export default function BOMsListPage() {
         key: "id",
         label: "شماره",
         type: "number",
-        width: "5%",
         render: (val) => (
           <span className="font-mono font-medium text-muted-foreground">
             {val}
@@ -91,7 +90,6 @@ export default function BOMsListPage() {
         key: "title",
         label: "عنوان فرمول",
         type: "string",
-        width: "20%",
         render: (val) => (
           <span className="text-sm font-medium">{val || "-"}</span>
         ),
@@ -100,7 +98,6 @@ export default function BOMsListPage() {
         key: "productName",
         label: "نام کالا/قلم",
         type: "string",
-        width: "20%",
         render: (val, row: BOMListDto) => (
           <div className="flex flex-col">
             <span className="text-sm font-medium">{val}</span>
@@ -114,7 +111,6 @@ export default function BOMsListPage() {
         key: "usage", // ستون جدید
         label: "کاربرد",
         type: "string",
-        width: "10%",
         render: (val) => {
           // تشخیص اصلی یا فرعی بودن بر اساس متن بازگشتی از سرور
           // (ممکن است فارسی "اصلی" یا انگلیسی "Main" باشد، اینجا هر دو را هندل می‌کنیم)
@@ -143,7 +139,6 @@ export default function BOMsListPage() {
         key: "version",
         label: "نسخه",
         type: "number",
-        width: "8%",
         render: (val) => (
           <div className="flex justify-center">
             <Badge
@@ -159,7 +154,6 @@ export default function BOMsListPage() {
         key: "status",
         label: "وضعیت",
         type: "string",
-        width: "10%",
         render: (val, row: BOMListDto) => {
           if (!row.isActive) {
             return (
@@ -197,7 +191,6 @@ export default function BOMsListPage() {
         key: "fromDate",
         label: "تاریخ شروع",
         type: "string",
-        width: "10%",
         render: (val) => (
           <span className="text-xs dir-ltr font-mono text-muted-foreground">
             {val ? new Date(val).toLocaleDateString("fa-IR") : "-"}

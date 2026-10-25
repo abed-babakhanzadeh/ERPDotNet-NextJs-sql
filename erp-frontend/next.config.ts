@@ -2,12 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true, // در پروداکشن برای جلوگیری از توقف بیلد
-  },
+  // بیلد با خطای TypeScript یا ESLint متوقف می‌شود تا خطاها پنهان نمانند
   reactStrictMode: false,
   
   // تنظیم Rewrites برای مواقعی که از داخل کانتینر SSR انجام می‌شود

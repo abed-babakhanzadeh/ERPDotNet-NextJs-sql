@@ -146,7 +146,7 @@ export function ColumnFilter({
       ) : (
         <div className="relative w-full">
           <Input
-            placeholder={`جستجو در ${column.title}...`}
+            placeholder={`جستجو در ${column.label}...`}
             value={filterValue}
             onChange={(e) => setFilterValue(e.target.value)}
             // چون RTL است، پدینگ چپ (pl-7) می‌دهیم

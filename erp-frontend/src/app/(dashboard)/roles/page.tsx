@@ -120,7 +120,7 @@ export default function RolesPage() {
     const idsToUpdate = [targetId, ...childrenIds];
 
     setSelectedPermIds(prev => {
-      let newSet = new Set(prev);
+      const newSet = new Set(prev);
 
       // 1. اعمال تغییر روی خود نود و فرزندانش (Downstream)
       if (checked) {
