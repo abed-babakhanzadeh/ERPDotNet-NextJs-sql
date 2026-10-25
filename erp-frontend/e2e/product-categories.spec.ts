@@ -1,5 +1,5 @@
-import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
-import { adminApi, createProduct, createUnit, uid } from "./helpers";
+import { expect, test, type APIRequestContext } from "@playwright/test";
+import { adminApi, createProduct, createUnit, uid, waitForSave } from "./helpers";
 
 async function createCategory(
   api: APIRequestContext,
@@ -8,10 +8,6 @@ async function createCategory(
   const res = await api.post("/api/BaseInfo/ProductCategories", { data: { parentId: null, ...c } });
   if (!res.ok()) throw new Error(`ساخت گروه کالا: ${res.status()} ${await res.text()}`);
   return (await res.json()).id;
-}
-
-function waitForSave(page: Page, method: "POST" | "PUT", path: RegExp) {
-  return page.waitForResponse((r) => r.request().method() === method && path.test(r.url()));
 }
 
 test.describe("گروه کالا، بارکد و شناسه مالیاتی", () => {

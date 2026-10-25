@@ -2,6 +2,7 @@ import {
   request,
   type APIRequestContext,
   type APIResponse,
+  type Page,
 } from "@playwright/test";
 import fs from "node:fs";
 
@@ -336,6 +337,11 @@ export async function serialsOf(api: APIRequestContext, productId: number) {
 }
 
 /** پاسخ ناموفق را با متن خطای سرور پرتاب می‌کند */
+/** منتظر پاسخ ذخیره فرم (برای خواندن شناسه رکورد ساخته‌شده) */
+export function waitForSave(page: Page, method: "POST" | "PUT", path: RegExp) {
+  return page.waitForResponse((r) => r.request().method() === method && path.test(r.url()));
+}
+
 export async function ok(res: APIResponse, what: string): Promise<APIResponse> {
   if (!res.ok())
     throw new Error(`${what}: ${res.status()} ${await res.text()}`);

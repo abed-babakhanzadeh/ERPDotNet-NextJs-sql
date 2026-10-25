@@ -2,9 +2,11 @@ using ERPDotNet.API.Attributes;
 using ERPDotNet.Application.Common.Models;
 using ERPDotNet.Application.Modules.BaseInfo.Commands.CreateProduct;
 using ERPDotNet.Application.Modules.BaseInfo.Commands.DeleteProduct;
+using ERPDotNet.Application.Modules.BaseInfo.Commands.GenerateProductVariants;
 using ERPDotNet.Application.Modules.BaseInfo.Commands.UpdateProduct;
 using ERPDotNet.Application.Modules.BaseInfo.Queries.GetAllProducts;
 using ERPDotNet.Application.Modules.BaseInfo.Queries.GetProductById;
+using ERPDotNet.Application.Modules.BaseInfo.Queries.GetProductVariants;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -62,5 +64,20 @@ public class ProductsController : ControllerBase
     {
         await _mediator.Send(new DeleteProductCommand(id));
         return NoContent();
+    }
+
+    [HttpGet("{id}/variants")]
+    public async Task<ActionResult<List<ProductVariantDto>>> GetVariants(int id)
+    {
+        return Ok(await _mediator.Send(new GetProductVariantsQuery(id)));
+    }
+
+    [HttpPost("{id}/variants")]
+    [HasPermission("BaseInfo.Products.Create")]
+    public async Task<IActionResult> GenerateVariants(int id, [FromBody] GenerateProductVariantsCommand command)
+    {
+        command.ProductId = id;
+        var created = await _mediator.Send(command);
+        return Ok(new { created });
     }
 }

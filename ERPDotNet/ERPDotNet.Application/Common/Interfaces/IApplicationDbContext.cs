@@ -29,6 +29,9 @@ public interface IApplicationDbContext
     DbSet<FiscalYear> FiscalYears { get; }
     DbSet<CostCenter> CostCenters { get; }
     DbSet<ProductCategory> ProductCategories { get; }
+    DbSet<ProductAttribute> ProductAttributes { get; }
+    DbSet<ProductAttributeValue> ProductAttributeValues { get; }
+    DbSet<ProductVariantValue> ProductVariantValues { get; }
 
     // === ماژول ProductEngineering ===
     DbSet<BOMHeader> BOMHeaders { get; }

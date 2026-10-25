@@ -15,6 +15,7 @@ import {
   Tag,
   Pencil,
   ImageIcon,
+  Shapes,
 } from "lucide-react";
 
 import inventoryService from "@/services/inventoryService";
@@ -42,6 +43,7 @@ import InventorySettingsTab from "@/components/inventory/product/InventorySettin
 import ProductBatchesTab from "@/components/inventory/product/ProductBatchesTab";
 import ProductUnitsTab from "./ProductUnitsTab";
 import ProductImageTab from "./ProductImageTab";
+import ProductVariantsTab from "./ProductVariantsTab";
 import { applyFieldErrors, handleApiError } from "@/lib/error-handling";
 import {
   fileService,
@@ -94,6 +96,7 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
   const [conversionsTouched, setConversionsTouched] = useState(false);
 
   const [isBatchManaged, setIsBatchManaged] = useState(false);
+  const [variantParent, setVariantParent] = useState<{ id: number; name: string } | null>(null);
 
   // مدیریت تصویر
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -154,6 +157,12 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
             taxCode: prod.taxCode ?? "",
             isActive: prod.isActive ?? true,
           });
+
+          setVariantParent(
+            prod.variantParentId
+              ? { id: prod.variantParentId, name: prod.variantParentName ?? "" }
+              : null,
+          );
 
           if (prod.conversions) {
             setConversions(prod.conversions);
@@ -353,6 +362,14 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
                   className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-warning data-[state=active]:text-warning px-4 text-sm"
                 >
                   <Warehouse className="w-4 h-4 ml-2" /> تنظیمات انبار
+                </TabsTrigger>
+
+                <TabsTrigger
+                  value="variants"
+                  disabled={isCreate}
+                  className="h-full rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary px-4 text-sm"
+                >
+                  <Shapes className="w-4 h-4 ml-2" /> تنوع‌ها
                 </TabsTrigger>
 
                 {isBatchManaged && !isCreate && (
@@ -600,6 +617,18 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
                       units={units}
                       isViewMode={isView}
                       onProfileUpdate={handleProfileUpdate}
+                    />
+                  )}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="variants" className="mt-0 h-full w-full">
+                <div className="w-full bg-card border rounded-lg p-6 shadow-sm">
+                  {productId && (
+                    <ProductVariantsTab
+                      productId={productId}
+                      isViewMode={isView}
+                      variantParent={variantParent}
                     />
                   )}
                 </div>

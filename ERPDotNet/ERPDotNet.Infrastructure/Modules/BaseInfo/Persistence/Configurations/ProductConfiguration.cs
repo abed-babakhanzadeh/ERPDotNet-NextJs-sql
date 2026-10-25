@@ -23,6 +23,11 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
                .HasForeignKey(p => p.CategoryId)
                .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne(p => p.VariantParent)
+               .WithMany()
+               .HasForeignKey(p => p.VariantParentId)
+               .OnDelete(DeleteBehavior.Restrict);
+
         // رابطه با واحد اصلی
         builder.HasOne(p => p.Unit)      // تغییر از BaseUnit به Unit
                .WithMany()

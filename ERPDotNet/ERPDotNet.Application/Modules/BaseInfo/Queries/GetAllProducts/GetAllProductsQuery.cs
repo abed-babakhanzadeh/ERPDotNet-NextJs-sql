@@ -26,7 +26,9 @@ public record ProductDto(
     int? CategoryId,
     string? CategoryTitle,
     string? Barcode,
-    string? TaxCode
+    string? TaxCode,
+    int? VariantParentId,
+    string? VariantParentName
 );
 
 public record ProductConversionDto(
@@ -134,7 +136,9 @@ public class GetAllProductsHandler : IRequestHandler<GetAllProductsQuery, Pagina
             p.CategoryId,
             p.Category != null ? p.Category.Title : null,
             p.Barcode,
-            p.TaxCode
+            p.TaxCode,
+            p.VariantParentId,
+            p.VariantParent != null ? p.VariantParent.Name : null
         ));
 
         return await dtoQuery.ToPaginatedListAsync(request.PageNumber, request.PageSize, cancellationToken);
