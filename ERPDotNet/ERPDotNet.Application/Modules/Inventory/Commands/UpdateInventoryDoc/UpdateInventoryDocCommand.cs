@@ -1,6 +1,7 @@
 using ERPDotNet.Application.Common.Attributes;
 using ERPDotNet.Application.Common.Exceptions;
 using ERPDotNet.Application.Common.Interfaces;
+using ERPDotNet.Application.Modules.BaseInfo.Contracts;
 using ERPDotNet.Domain.Modules.Inventory.Entities;
 using ERPDotNet.Domain.Modules.Inventory.Enums;
 using FluentValidation;
@@ -58,10 +59,12 @@ public class UpdateInventoryDocValidator : AbstractValidator<UpdateInventoryDocC
 public class UpdateInventoryDocHandler : IRequestHandler<UpdateInventoryDocCommand, bool>
 {
     private readonly IApplicationDbContext _context;
+    private readonly IFiscalYearService _fiscalYears;
 
-    public UpdateInventoryDocHandler(IApplicationDbContext context)
+    public UpdateInventoryDocHandler(IApplicationDbContext context, IFiscalYearService fiscalYears)
     {
         _context = context;
+        _fiscalYears = fiscalYears;
     }
 
     public async Task<bool> Handle(UpdateInventoryDocCommand request, CancellationToken cancellationToken)
@@ -116,6 +119,13 @@ public class UpdateInventoryDocHandler : IRequestHandler<UpdateInventoryDocComma
             throw new BusinessRuleException(string.Join("\n", ruleErrors));
         }
         var isTransfer = await InventoryDocRules.IsTransferAsync(_context, doc.DocTypeId, cancellationToken);
+
+        // شماره سند در سال مالی خودش گرفته شده؛ جابجایی سند به سال دیگر شماره را نامعتبر می‌کند
+        var fiscalYearId = await InventoryDocRules.ResolveFiscalYearAsync(
+            _context, _fiscalYears, doc.WarehouseId, request.DocDate, cancellationToken);
+        if (doc.FiscalYearId.HasValue && fiscalYearId != doc.FiscalYearId)
+            throw new BusinessRuleException("تاریخ سند باید در همان سال مالی‌ای باشد که سند در آن ثبت شده است.");
+        doc.FiscalYearId = fiscalYearId;
 
         // 4. آپدیت هدر
         doc.DocDate = request.DocDate;

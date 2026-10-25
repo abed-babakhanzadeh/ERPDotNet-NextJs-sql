@@ -27,6 +27,15 @@ export type ProductDto = S["ProductDto"];
 export type ProductConversionDto = S["ProductConversionDto"];
 export type CreateProductCommand = S["CreateProductCommand"];
 export type UpdateProductCommand = S["UpdateProductCommand"];
+export type CompanyDto = S["CompanyDto"];
+export type CreateCompanyCommand = S["CreateCompanyCommand"];
+export type UpdateCompanyCommand = S["UpdateCompanyCommand"];
+export type FiscalYearDto = S["FiscalYearDto"];
+export type CreateFiscalYearCommand = S["CreateFiscalYearCommand"];
+export type UpdateFiscalYearCommand = S["UpdateFiscalYearCommand"];
+export type CostCenterDto = S["CostCenterDto"];
+export type CreateCostCenterCommand = S["CreateCostCenterCommand"];
+export type UpdateCostCenterCommand = S["UpdateCostCenterCommand"];
 
 // --- مهندسی محصول ---
 export type BOMListDto = S["BOMListDto"];

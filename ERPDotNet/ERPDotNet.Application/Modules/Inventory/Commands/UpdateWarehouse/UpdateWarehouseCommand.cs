@@ -16,6 +16,7 @@ public record UpdateWarehouseCommand : IRequest<bool>
     public required string Code { get; set; }
     public WarehouseType Type { get; set; }
     public string? Address { get; set; }
+    public int? CompanyId { get; set; }
     public bool IsActive { get; set; }
     public string RowVersion { get; set; } = string.Empty;
 }
@@ -39,6 +40,16 @@ public class UpdateWarehouseHandler : IRequestHandler<UpdateWarehouseCommand, bo
         // چک کردن تکراری نبودن کد (بجز خودش)
         if (await _context.Warehouses.AnyAsync(x => x.Code == request.Code && x.Id != request.Id, cancellationToken))
             throw new BusinessRuleException("کد انبار تکراری است."); 
+
+        if (entity.CompanyId != request.CompanyId)
+        {
+            // سال مالی سندها از شرکت انبار تعیین شده؛ تغییر شرکت آن‌ها را به سال دیگری می‌برد
+            if (await _context.InventoryDocHeaders.AnyAsync(x => x.WarehouseId == entity.Id || x.DestinationWarehouseId == entity.Id, cancellationToken))
+                throw new BusinessRuleException("برای این انبار سند ثبت شده و شرکت آن قابل تغییر نیست.");
+            if (request.CompanyId.HasValue && !await _context.Companies.AnyAsync(x => x.Id == request.CompanyId, cancellationToken))
+                throw new BusinessRuleException("شرکت انتخاب‌شده یافت نشد.");
+            entity.CompanyId = request.CompanyId;
+        }
 
         entity.Title = request.Title;
         entity.Code = request.Code;

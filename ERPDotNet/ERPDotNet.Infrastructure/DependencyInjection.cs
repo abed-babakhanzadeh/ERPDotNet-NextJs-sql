@@ -24,6 +24,9 @@ using ERPDotNet.Application.Modules.Workflow.Interfaces;
 using ERPDotNet.Application.Modules.Workflow.Contracts;
 using ERPDotNet.Application.Modules.Workflow.Services;
 using ERPDotNet.Application.Modules.Inventory.ActionHandlers;
+using ERPDotNet.Application.Modules.BaseInfo.Contracts;
+using ERPDotNet.Application.Modules.BaseInfo.Services;
+using ERPDotNet.Application.Modules.Inventory.Services;
 
 namespace ERPDotNet.Infrastructure;
 
@@ -146,6 +149,7 @@ public static class DependencyInjection
     private static void AddApplicationServices(IServiceCollection services)
     {
         services.AddScoped<IPermissionService, PermissionService>();
+        services.AddScoped<IFiscalYearService, FiscalYearService>();
         
     }
 
@@ -155,6 +159,7 @@ public static class DependencyInjection
         services.AddScoped<IInventoryPostingPolicy, DefaultInventoryPostingPolicy>();
         services.AddScoped<IInventoryPostingService, InventoryPostingService>();
         services.AddScoped<IDocumentNumberingService, DocumentNumberingService>();
+        services.AddScoped<IBaseInfoUsageChecker, InventoryBaseInfoUsageChecker>();
 
         // 🌟 اتصال استراتژیک به گردش کار (بدون Coupling)
         // using ERPDotNet.Application.Modules.Workflow.Contracts;

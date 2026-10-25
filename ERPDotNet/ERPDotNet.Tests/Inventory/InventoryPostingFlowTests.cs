@@ -1,9 +1,12 @@
 using ERPDotNet.Application.Common.Exceptions;
 using ERPDotNet.Application.Common.Interfaces;
+using ERPDotNet.Application.Modules.BaseInfo.Services;
 using ERPDotNet.Application.Modules.Inventory.ActionHandlers;
+using ERPDotNet.Application.Modules.Inventory.Contracts;
 using ERPDotNet.Application.Modules.Inventory.Commands.PostInventoryDoc;
 using ERPDotNet.Application.Modules.Inventory.Commands.RevertInventoryDoc;
 using ERPDotNet.Application.Modules.Workflow.Contracts;
+using ERPDotNet.Domain.Modules.BaseInfo.Entities;
 using ERPDotNet.Domain.Modules.Inventory.Entities;
 using ERPDotNet.Domain.Modules.Inventory.Enums;
 using ERPDotNet.Domain.Modules.Inventory.Services;
@@ -42,6 +45,31 @@ public class InventoryPostingFlowTests : IDisposable
         await PostHandler(_db).Handle(new PostInventoryDocCommand { Id = docId, RowVersion = Convert.ToBase64String(RowVersion) }, default);
 
         Assert.Equal(90, await OnHand());
+    }
+
+    [Fact]
+    public async Task Posting_publishes_a_plain_data_notification()
+    {
+        await SeedStock(100);
+        var docId = await SeedDoc(InventoryNature.Output, InventoryDocStatus.Approved, 10);
+
+        await PostHandler(_db).Handle(new PostInventoryDocCommand { Id = docId, RowVersion = Convert.ToBase64String(RowVersion) }, default);
+
+        var notification = Assert.IsType<InventoryDocPostedNotification>(Assert.Single(_publisher.Published));
+        Assert.Equal(docId, notification.DocId);
+        Assert.Equal(10, Assert.Single(notification.Lines).Quantity);
+    }
+
+    [Fact]
+    public async Task Posting_into_a_closed_fiscal_year_is_rejected()
+    {
+        await SeedStock(100);
+        var yearId = await SeedFiscalYear(FiscalYearStatus.Closed);
+        var docId = await SeedDoc(InventoryNature.Output, InventoryDocStatus.Approved, 10, fiscalYearId: yearId);
+
+        await Assert.ThrowsAsync<BusinessRuleException>(() =>
+            PostHandler(_db).Handle(new PostInventoryDocCommand { Id = docId, RowVersion = Convert.ToBase64String(RowVersion) }, default));
+        Assert.Equal(100, await OnHand());
     }
 
     [Fact]
@@ -153,11 +181,13 @@ public class InventoryPostingFlowTests : IDisposable
 
     private static InventoryPostingService PostingService(AppDbContext db) => new(new InventoryDomainRepository(db));
 
-    private static PostInventoryDocHandler PostHandler(AppDbContext db) =>
-        new(db, PostingService(db), new DefaultInventoryPostingPolicy(), new FakeCurrentUser(), new NoopCache(), new NoopPublisher());
+    private readonly RecordingPublisher _publisher = new();
+
+    private PostInventoryDocHandler PostHandler(AppDbContext db) =>
+        new(db, PostingService(db), new DefaultInventoryPostingPolicy(), new FakeCurrentUser(), new NoopCache(), _publisher, new FiscalYearService(db));
 
     private static RevertInventoryDocHandler RevertHandler(AppDbContext db) =>
-        new(db, PostingService(db), new DefaultInventoryPostingPolicy());
+        new(db, PostingService(db), new DefaultInventoryPostingPolicy(), new FiscalYearService(db));
 
     private async Task SeedStock(decimal onHand)
     {
@@ -166,7 +196,7 @@ public class InventoryPostingFlowTests : IDisposable
         await seed.SaveChangesAsync();
     }
 
-    private async Task<long> SeedDoc(InventoryNature nature, InventoryDocStatus status, decimal qty, int? destinationWarehouseId = null)
+    private async Task<long> SeedDoc(InventoryNature nature, InventoryDocStatus status, decimal qty, int? destinationWarehouseId = null, int? fiscalYearId = null)
     {
         using var seed = NewContext();
         var docType = new InventoryDocType { Title = nature.ToString(), Nature = nature, RowVersion = RowVersion };
@@ -178,6 +208,7 @@ public class InventoryPostingFlowTests : IDisposable
             DocTypeId = docType.Id,
             WarehouseId = WarehouseId,
             DestinationWarehouseId = destinationWarehouseId,
+            FiscalYearId = fiscalYearId,
             Status = status,
             RowVersion = RowVersion,
             Details =
@@ -192,6 +223,19 @@ public class InventoryPostingFlowTests : IDisposable
         seed.InventoryDocHeaders.Add(doc);
         await seed.SaveChangesAsync();
         return doc.Id;
+    }
+
+    private async Task<int> SeedFiscalYear(FiscalYearStatus status)
+    {
+        using var seed = NewContext();
+        var year = new FiscalYear
+        {
+            CompanyId = 1, Title = "1405", StartDate = new DateTime(2026, 3, 21), EndDate = new DateTime(2027, 3, 20),
+            Status = status, RowVersion = RowVersion
+        };
+        seed.FiscalYears.Add(year);
+        await seed.SaveChangesAsync();
+        return year.Id;
     }
 
     private async Task<decimal> OnHand()
@@ -214,10 +258,20 @@ public class InventoryPostingFlowTests : IDisposable
         public Task RemoveByTagAsync(string tag, CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 
-    private sealed class NoopPublisher : IPublisher
+    // مثل MediatR واقعی، انتشار شیئی که INotification نیست را رد می‌کند
+    private sealed class RecordingPublisher : IPublisher
     {
-        public Task Publish(object notification, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public List<object> Published { get; } = new();
+
+        public Task Publish(object notification, CancellationToken cancellationToken = default)
+        {
+            if (notification is not INotification)
+                throw new ArgumentException("notification must implement INotification");
+            Published.Add(notification);
+            return Task.CompletedTask;
+        }
+
         public Task Publish<TNotification>(TNotification notification, CancellationToken cancellationToken = default)
-            where TNotification : INotification => Task.CompletedTask;
+            where TNotification : INotification => Publish((object)notification!, cancellationToken);
     }
 }

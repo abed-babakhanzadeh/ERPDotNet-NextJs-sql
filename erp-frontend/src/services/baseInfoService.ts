@@ -1,14 +1,29 @@
 import apiClient from "@/lib/api/client";
 import type {
+  CompanyDto,
+  CostCenterDto,
+  CreateCompanyCommand,
+  CreateCostCenterCommand,
+  CreateFiscalYearCommand,
   CreateProductCommand,
   CreateUnitCommand,
   PagedQuery,
   Paged,
   ProductDto,
+  FiscalYearDto,
   UnitDto,
+  UpdateCompanyCommand,
+  UpdateCostCenterCommand,
+  UpdateFiscalYearCommand,
   UpdateProductCommand,
   UpdateUnitCommand,
 } from "@/types/api";
+
+/** گزینه enum از بک‌اند (EnumExtensions.ToList) */
+export interface EnumOption {
+  value: number;
+  label: string;
+}
 
 const UNITS = "/BaseInfo/Units";
 const PRODUCTS = "/BaseInfo/Products";
@@ -51,6 +66,49 @@ export const productService = {
   remove: async (id: number) => {
     await apiClient.delete(`${PRODUCTS}/${id}`);
   },
+};
+
+/** عملیات مشترک اطلاعات پایه‌ای که search/lookup/CRUD یکسان دارند */
+function baseInfoCrud<TDto, TCreate, TUpdate>(base: string) {
+  return {
+    search: async (query: PagedQuery, signal?: AbortSignal) =>
+      (await apiClient.post<Paged<TDto>>(`${base}/search`, query, { signal })).data,
+
+    lookup: async () => (await apiClient.get<TDto[]>(`${base}/lookup`)).data,
+
+    getById: async (id: number) => (await apiClient.get<TDto>(`${base}/${id}`)).data,
+
+    /** شناسه رکورد جدید */
+    create: async (command: TCreate) =>
+      (await apiClient.post<{ id: number }>(base, command)).data.id,
+
+    update: async (id: number, command: TUpdate) => {
+      await apiClient.put(`${base}/${id}`, command);
+    },
+
+    remove: async (id: number) => {
+      await apiClient.delete(`${base}/${id}`);
+    },
+  };
+}
+
+export const companyService = baseInfoCrud<CompanyDto, CreateCompanyCommand, UpdateCompanyCommand>(
+  "/BaseInfo/Companies",
+);
+
+export const fiscalYearService = {
+  ...baseInfoCrud<FiscalYearDto, CreateFiscalYearCommand, UpdateFiscalYearCommand>(
+    "/BaseInfo/FiscalYears",
+  ),
+  statuses: async () =>
+    (await apiClient.get<EnumOption[]>("/BaseInfo/FiscalYears/statuses")).data,
+};
+
+export const costCenterService = {
+  ...baseInfoCrud<CostCenterDto, CreateCostCenterCommand, UpdateCostCenterCommand>(
+    "/BaseInfo/CostCenters",
+  ),
+  types: async () => (await apiClient.get<EnumOption[]>("/BaseInfo/CostCenters/types")).data,
 };
 
 export const fileService = {

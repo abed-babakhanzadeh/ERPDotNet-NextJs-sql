@@ -45,6 +45,10 @@ public class GetInventoryDocByIdHandler : IRequestHandler<GetInventoryDocByIdQue
             Id = doc.Id,
             DocNumber = doc.DocNumber,
             DocDate = doc.DocDate,
+            FiscalYearId = doc.FiscalYearId,
+            FiscalYearTitle = doc.FiscalYearId.HasValue
+                ? await _context.FiscalYears.Where(y => y.Id == doc.FiscalYearId).Select(y => y.Title).FirstOrDefaultAsync(cancellationToken)
+                : null,
             DocTypeId = doc.DocTypeId,
             DocTypeTitle = doc.DocType?.Title ?? string.Empty,
             Nature = doc.DocType?.Nature ?? InventoryNature.Input, // مقدار پیش‌فرض اگر تایپ نال بود

@@ -2896,6 +2896,680 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/BaseInfo/Companies/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CompanyDto"][];
+                        "application/json": components["schemas"]["CompanyDto"][];
+                        "text/json": components["schemas"]["CompanyDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/BaseInfo/Companies/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["GetCompaniesQuery"];
+                    "text/json": components["schemas"]["GetCompaniesQuery"];
+                    "application/*+json": components["schemas"]["GetCompaniesQuery"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PaginatedResultOfCompanyDto"];
+                        "application/json": components["schemas"]["PaginatedResultOfCompanyDto"];
+                        "text/json": components["schemas"]["PaginatedResultOfCompanyDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/BaseInfo/Companies/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CompanyDto"];
+                        "application/json": components["schemas"]["CompanyDto"];
+                        "text/json": components["schemas"]["CompanyDto"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateCompanyCommand"];
+                    "text/json": components["schemas"]["UpdateCompanyCommand"];
+                    "application/*+json": components["schemas"]["UpdateCompanyCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/BaseInfo/Companies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateCompanyCommand"];
+                    "text/json": components["schemas"]["CreateCompanyCommand"];
+                    "application/*+json": components["schemas"]["CreateCompanyCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/BaseInfo/CostCenters/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CostCenterDto"][];
+                        "application/json": components["schemas"]["CostCenterDto"][];
+                        "text/json": components["schemas"]["CostCenterDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/BaseInfo/CostCenters/types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/BaseInfo/CostCenters/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["GetCostCentersQuery"];
+                    "text/json": components["schemas"]["GetCostCentersQuery"];
+                    "application/*+json": components["schemas"]["GetCostCentersQuery"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PaginatedResultOfCostCenterDto"];
+                        "application/json": components["schemas"]["PaginatedResultOfCostCenterDto"];
+                        "text/json": components["schemas"]["PaginatedResultOfCostCenterDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/BaseInfo/CostCenters/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["CostCenterDto"];
+                        "application/json": components["schemas"]["CostCenterDto"];
+                        "text/json": components["schemas"]["CostCenterDto"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateCostCenterCommand"];
+                    "text/json": components["schemas"]["UpdateCostCenterCommand"];
+                    "application/*+json": components["schemas"]["UpdateCostCenterCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/BaseInfo/CostCenters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateCostCenterCommand"];
+                    "text/json": components["schemas"]["CreateCostCenterCommand"];
+                    "application/*+json": components["schemas"]["CreateCostCenterCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/BaseInfo/FiscalYears/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    companyId?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["FiscalYearDto"][];
+                        "application/json": components["schemas"]["FiscalYearDto"][];
+                        "text/json": components["schemas"]["FiscalYearDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/BaseInfo/FiscalYears/statuses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/BaseInfo/FiscalYears/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["GetFiscalYearsQuery"];
+                    "text/json": components["schemas"]["GetFiscalYearsQuery"];
+                    "application/*+json": components["schemas"]["GetFiscalYearsQuery"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PaginatedResultOfFiscalYearDto"];
+                        "application/json": components["schemas"]["PaginatedResultOfFiscalYearDto"];
+                        "text/json": components["schemas"]["PaginatedResultOfFiscalYearDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/BaseInfo/FiscalYears/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["FiscalYearDto"];
+                        "application/json": components["schemas"]["FiscalYearDto"];
+                        "text/json": components["schemas"]["FiscalYearDto"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateFiscalYearCommand"];
+                    "text/json": components["schemas"]["UpdateFiscalYearCommand"];
+                    "application/*+json": components["schemas"]["UpdateFiscalYearCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/BaseInfo/FiscalYears": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateFiscalYearCommand"];
+                    "text/json": components["schemas"]["CreateFiscalYearCommand"];
+                    "application/*+json": components["schemas"]["CreateFiscalYearCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/BaseInfo/Products/search": {
         parameters: {
             query?: never;
@@ -3441,6 +4115,20 @@ export interface components {
         ChangePasswordDto: {
             newPassword: string;
         };
+        CompanyDto: {
+            /** Format: int32 */
+            id: number;
+            code: string;
+            title: string;
+            nationalId: null | string;
+            economicCode: null | string;
+            registrationNumber: null | string;
+            phone: null | string;
+            address: null | string;
+            isActive: boolean;
+            /** Format: byte */
+            rowVersion: string;
+        };
         CompleteTaskCommand: {
             /** Format: int64 */
             taskId: number;
@@ -3472,6 +4160,20 @@ export interface components {
             sourceUserId: string;
             targetUserId: string;
         };
+        CostCenterDto: {
+            /** Format: int32 */
+            id: number;
+            code: string;
+            title: string;
+            type: components["schemas"]["CostCenterType"];
+            /** Format: int32 */
+            parentId: null | number;
+            parentTitle: null | string;
+            isActive: boolean;
+            /** Format: byte */
+            rowVersion: string;
+        };
+        CostCenterType: number;
         CreateBOMCommand: {
             /** Format: int32 */
             productId: number;
@@ -3486,6 +4188,31 @@ export interface components {
             toDate?: null | string;
             isActive: boolean;
             details: components["schemas"]["BOMDetailInputDto"][];
+        };
+        CreateCompanyCommand: {
+            code: string;
+            title: string;
+            nationalId?: null | string;
+            economicCode?: null | string;
+            registrationNumber?: null | string;
+            phone?: null | string;
+            address?: null | string;
+        };
+        CreateCostCenterCommand: {
+            code: string;
+            title: string;
+            type: components["schemas"]["CostCenterType"];
+            /** Format: int32 */
+            parentId?: null | number;
+        };
+        CreateFiscalYearCommand: {
+            /** Format: int32 */
+            companyId: number;
+            title: string;
+            /** Format: date-time */
+            startDate: string;
+            /** Format: date-time */
+            endDate: string;
         };
         CreateInventoryBatchCommand: {
             /** Format: int32 */
@@ -3507,8 +4234,6 @@ export interface components {
             destinationWarehouseId?: null | number;
             /** Format: date-time */
             docDate: string;
-            /** Format: int32 */
-            fiscalYearId?: null | number;
             referenceEntityName?: null | string;
             /** Format: int64 */
             referenceEntityId?: null | number;
@@ -3616,6 +4341,8 @@ export interface components {
             code: string;
             type: components["schemas"]["WarehouseType"];
             address?: null | string;
+            /** Format: int32 */
+            companyId?: null | number;
             isActive: boolean;
         };
         FilterModel: {
@@ -3625,6 +4352,22 @@ export interface components {
             value2?: null | string;
             logic?: null | string;
         };
+        FiscalYearDto: {
+            /** Format: int32 */
+            id: number;
+            /** Format: int32 */
+            companyId: number;
+            companyTitle: string;
+            title: string;
+            /** Format: date-time */
+            startDate: string;
+            /** Format: date-time */
+            endDate: string;
+            status: components["schemas"]["FiscalYearStatus"];
+            /** Format: byte */
+            rowVersion: string;
+        };
+        FiscalYearStatus: number;
         GetAllProcessesQuery: {
             /** Format: int32 */
             pageNumber: number;
@@ -3675,6 +4418,26 @@ export interface components {
             searchTerm?: null | string;
             filters?: null | components["schemas"]["FilterModel"][];
         };
+        GetCompaniesQuery: {
+            /** Format: int32 */
+            pageNumber: number;
+            /** Format: int32 */
+            pageSize: number;
+            sortColumn?: null | string;
+            sortDescending: boolean;
+            searchTerm?: null | string;
+            filters?: null | components["schemas"]["FilterModel"][];
+        };
+        GetCostCentersQuery: {
+            /** Format: int32 */
+            pageNumber: number;
+            /** Format: int32 */
+            pageSize: number;
+            sortColumn?: null | string;
+            sortDescending: boolean;
+            searchTerm?: null | string;
+            filters?: null | components["schemas"]["FilterModel"][];
+        };
         GetCurrentStockQuery: {
             /** Format: int32 */
             warehouseId?: null | number;
@@ -3689,6 +4452,16 @@ export interface components {
             filters?: null | components["schemas"]["FilterModel"][];
             searchTerm?: null | string;
             excludeZeroBalances: boolean;
+        };
+        GetFiscalYearsQuery: {
+            /** Format: int32 */
+            pageNumber: number;
+            /** Format: int32 */
+            pageSize: number;
+            sortColumn?: null | string;
+            sortDescending: boolean;
+            searchTerm?: null | string;
+            filters?: null | components["schemas"]["FilterModel"][];
         };
         GetInboxTasksQuery: {
             /** Format: int32 */
@@ -3817,6 +4590,9 @@ export interface components {
             /** Format: date-time */
             docDate: string;
             /** Format: int32 */
+            fiscalYearId?: null | number;
+            fiscalYearTitle?: null | string;
+            /** Format: int32 */
             docTypeId: number;
             docTypeTitle: string;
             nature: components["schemas"]["InventoryNature"];
@@ -3923,6 +4699,39 @@ export interface components {
         NumberingScope: number;
         PaginatedResultOfBOMListDto: {
             items: components["schemas"]["BOMListDto"][];
+            /** Format: int32 */
+            pageNumber: number;
+            /** Format: int32 */
+            totalPages: number;
+            /** Format: int32 */
+            totalCount: number;
+            hasPreviousPage: boolean;
+            hasNextPage: boolean;
+        };
+        PaginatedResultOfCompanyDto: {
+            items: components["schemas"]["CompanyDto"][];
+            /** Format: int32 */
+            pageNumber: number;
+            /** Format: int32 */
+            totalPages: number;
+            /** Format: int32 */
+            totalCount: number;
+            hasPreviousPage: boolean;
+            hasNextPage: boolean;
+        };
+        PaginatedResultOfCostCenterDto: {
+            items: components["schemas"]["CostCenterDto"][];
+            /** Format: int32 */
+            pageNumber: number;
+            /** Format: int32 */
+            totalPages: number;
+            /** Format: int32 */
+            totalCount: number;
+            hasPreviousPage: boolean;
+            hasNextPage: boolean;
+        };
+        PaginatedResultOfFiscalYearDto: {
+            items: components["schemas"]["FiscalYearDto"][];
             /** Format: int32 */
             pageNumber: number;
             /** Format: int32 */
@@ -4265,6 +5074,44 @@ export interface components {
             rowVersion?: null | string;
             details: components["schemas"]["BOMDetailUpdateDto"][];
         };
+        UpdateCompanyCommand: {
+            /** Format: int32 */
+            id: number;
+            code: string;
+            title: string;
+            nationalId?: null | string;
+            economicCode?: null | string;
+            registrationNumber?: null | string;
+            phone?: null | string;
+            address?: null | string;
+            isActive: boolean;
+            /** Format: byte */
+            rowVersion?: null | string;
+        };
+        UpdateCostCenterCommand: {
+            /** Format: int32 */
+            id: number;
+            code: string;
+            title: string;
+            type: components["schemas"]["CostCenterType"];
+            /** Format: int32 */
+            parentId?: null | number;
+            isActive: boolean;
+            /** Format: byte */
+            rowVersion?: null | string;
+        };
+        UpdateFiscalYearCommand: {
+            /** Format: int32 */
+            id: number;
+            title: string;
+            /** Format: date-time */
+            startDate: string;
+            /** Format: date-time */
+            endDate: string;
+            status: components["schemas"]["FiscalYearStatus"];
+            /** Format: byte */
+            rowVersion?: null | string;
+        };
         UpdateInventoryBatchCommand: {
             /** Format: int32 */
             id: number;
@@ -4389,6 +5236,8 @@ export interface components {
             code: string;
             type: components["schemas"]["WarehouseType"];
             address?: null | string;
+            /** Format: int32 */
+            companyId?: null | number;
             isActive: boolean;
             rowVersion: string;
         };
@@ -4428,6 +5277,8 @@ export interface components {
             /** Format: int32 */
             type: number;
             address: null | string;
+            /** Format: int32 */
+            companyId: null | number;
             isActive: boolean;
             rowVersion: string;
         };

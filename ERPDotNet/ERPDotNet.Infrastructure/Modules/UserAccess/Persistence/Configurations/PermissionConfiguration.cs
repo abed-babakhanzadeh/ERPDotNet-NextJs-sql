@@ -59,6 +59,20 @@ public class PermissionConfiguration : IEntityTypeConfiguration<Permission>
             new Permission { Id = 37, Name = "BaseInfo.Products.Edit", Title = "ویرایش کالا", IsMenu = false, ParentId = 35 },
             new Permission { Id = 38, Name = "BaseInfo.Products.Delete", Title = "حذف کالا", IsMenu = false, ParentId = 35 },
 
+            // شرکت، سال مالی و مرکز هزینه
+            new Permission { Id = 39, Name = "BaseInfo.Companies", Title = "شرکت‌ها", IsMenu = true, ParentId = 30, Url = "/base-info/companies" },
+            new Permission { Id = 40, Name = "BaseInfo.Companies.Create", Title = "تعریف شرکت", IsMenu = false, ParentId = 39 },
+            new Permission { Id = 41, Name = "BaseInfo.Companies.Edit", Title = "ویرایش شرکت", IsMenu = false, ParentId = 39 },
+            new Permission { Id = 42, Name = "BaseInfo.Companies.Delete", Title = "حذف شرکت", IsMenu = false, ParentId = 39 },
+            new Permission { Id = 43, Name = "BaseInfo.FiscalYears", Title = "سال‌های مالی", IsMenu = true, ParentId = 30, Url = "/base-info/fiscal-years" },
+            new Permission { Id = 44, Name = "BaseInfo.FiscalYears.Create", Title = "تعریف سال مالی", IsMenu = false, ParentId = 43 },
+            new Permission { Id = 45, Name = "BaseInfo.FiscalYears.Edit", Title = "ویرایش و بستن سال مالی", IsMenu = false, ParentId = 43 },
+            new Permission { Id = 46, Name = "BaseInfo.FiscalYears.Delete", Title = "حذف سال مالی", IsMenu = false, ParentId = 43 },
+            new Permission { Id = 47, Name = "BaseInfo.CostCenters", Title = "مراکز هزینه", IsMenu = true, ParentId = 30, Url = "/base-info/cost-centers" },
+            new Permission { Id = 48, Name = "BaseInfo.CostCenters.Create", Title = "تعریف مرکز هزینه", IsMenu = false, ParentId = 47 },
+            new Permission { Id = 49, Name = "BaseInfo.CostCenters.Edit", Title = "ویرایش مرکز هزینه", IsMenu = false, ParentId = 47 },
+            new Permission { Id = 50, Name = "BaseInfo.CostCenters.Delete", Title = "حذف مرکز هزینه", IsMenu = false, ParentId = 47 },
+
             // === ماژول مهندسی محصول ===
             new Permission { Id = 2000, Name = "ProductEngineering", Title = "مهندسی محصول", IsMenu = true, ParentId = 1 },
             new Permission { Id = 200, Name = "ProductEngineering.BOM", Title = "مدیریت BOM", IsMenu = true, ParentId = 2000 },

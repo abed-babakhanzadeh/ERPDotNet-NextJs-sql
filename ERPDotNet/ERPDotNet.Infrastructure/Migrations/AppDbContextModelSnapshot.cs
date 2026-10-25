@@ -119,6 +119,190 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.ToTable("audit_trails", "audit");
                 });
 
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.BaseInfo.Entities.Company", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EconomicCode")
+                        .HasMaxLength(14)
+                        .HasColumnType("nvarchar(14)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NationalId")
+                        .HasMaxLength(11)
+                        .HasColumnType("nvarchar(11)");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("RegistrationNumber")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("companies", "base");
+                });
+
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.BaseInfo.Entities.CostCenter", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("ParentId")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.HasIndex("ParentId");
+
+                    b.ToTable("cost_centers", "base");
+                });
+
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.BaseInfo.Entities.FiscalYear", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId", "StartDate");
+
+                    b.HasIndex("CompanyId", "Title")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("fiscal_years", "base");
+                });
+
             modelBuilder.Entity("ERPDotNet.Domain.Modules.BaseInfo.Entities.Product", b =>
                 {
                     b.Property<int>("Id")
@@ -630,6 +814,8 @@ namespace ERPDotNet.Infrastructure.Migrations
 
                     b.HasIndex("DocTypeId");
 
+                    b.HasIndex("FiscalYearId");
+
                     b.HasIndex("WarehouseId");
 
                     b.HasIndex("DocNumber", "FiscalYearId");
@@ -1092,6 +1278,8 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.HasIndex("Code")
                         .IsUnique();
 
+                    b.HasIndex("CompanyId");
+
                     b.ToTable("Warehouses", "inventory");
                 });
 
@@ -1505,6 +1693,105 @@ namespace ERPDotNet.Infrastructure.Migrations
                             Name = "BaseInfo.Products.Delete",
                             ParentId = 35,
                             Title = "حذف کالا"
+                        },
+                        new
+                        {
+                            Id = 39,
+                            IsMenu = true,
+                            Name = "BaseInfo.Companies",
+                            ParentId = 30,
+                            Title = "شرکت‌ها",
+                            Url = "/base-info/companies"
+                        },
+                        new
+                        {
+                            Id = 40,
+                            IsMenu = false,
+                            Name = "BaseInfo.Companies.Create",
+                            ParentId = 39,
+                            Title = "تعریف شرکت"
+                        },
+                        new
+                        {
+                            Id = 41,
+                            IsMenu = false,
+                            Name = "BaseInfo.Companies.Edit",
+                            ParentId = 39,
+                            Title = "ویرایش شرکت"
+                        },
+                        new
+                        {
+                            Id = 42,
+                            IsMenu = false,
+                            Name = "BaseInfo.Companies.Delete",
+                            ParentId = 39,
+                            Title = "حذف شرکت"
+                        },
+                        new
+                        {
+                            Id = 43,
+                            IsMenu = true,
+                            Name = "BaseInfo.FiscalYears",
+                            ParentId = 30,
+                            Title = "سال‌های مالی",
+                            Url = "/base-info/fiscal-years"
+                        },
+                        new
+                        {
+                            Id = 44,
+                            IsMenu = false,
+                            Name = "BaseInfo.FiscalYears.Create",
+                            ParentId = 43,
+                            Title = "تعریف سال مالی"
+                        },
+                        new
+                        {
+                            Id = 45,
+                            IsMenu = false,
+                            Name = "BaseInfo.FiscalYears.Edit",
+                            ParentId = 43,
+                            Title = "ویرایش و بستن سال مالی"
+                        },
+                        new
+                        {
+                            Id = 46,
+                            IsMenu = false,
+                            Name = "BaseInfo.FiscalYears.Delete",
+                            ParentId = 43,
+                            Title = "حذف سال مالی"
+                        },
+                        new
+                        {
+                            Id = 47,
+                            IsMenu = true,
+                            Name = "BaseInfo.CostCenters",
+                            ParentId = 30,
+                            Title = "مراکز هزینه",
+                            Url = "/base-info/cost-centers"
+                        },
+                        new
+                        {
+                            Id = 48,
+                            IsMenu = false,
+                            Name = "BaseInfo.CostCenters.Create",
+                            ParentId = 47,
+                            Title = "تعریف مرکز هزینه"
+                        },
+                        new
+                        {
+                            Id = 49,
+                            IsMenu = false,
+                            Name = "BaseInfo.CostCenters.Edit",
+                            ParentId = 47,
+                            Title = "ویرایش مرکز هزینه"
+                        },
+                        new
+                        {
+                            Id = 50,
+                            IsMenu = false,
+                            Name = "BaseInfo.CostCenters.Delete",
+                            ParentId = 47,
+                            Title = "حذف مرکز هزینه"
                         },
                         new
                         {
@@ -2909,6 +3196,27 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.ToTable("user_tokens", "security");
                 });
 
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.BaseInfo.Entities.CostCenter", b =>
+                {
+                    b.HasOne("ERPDotNet.Domain.Modules.BaseInfo.Entities.CostCenter", "Parent")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Parent");
+                });
+
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.BaseInfo.Entities.FiscalYear", b =>
+                {
+                    b.HasOne("ERPDotNet.Domain.Modules.BaseInfo.Entities.Company", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Company");
+                });
+
             modelBuilder.Entity("ERPDotNet.Domain.Modules.BaseInfo.Entities.Product", b =>
                 {
                     b.HasOne("ERPDotNet.Domain.Modules.BaseInfo.Entities.Unit", "Unit")
@@ -3033,6 +3341,11 @@ namespace ERPDotNet.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("ERPDotNet.Domain.Modules.BaseInfo.Entities.FiscalYear", null)
+                        .WithMany()
+                        .HasForeignKey("FiscalYearId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("ERPDotNet.Domain.Modules.Inventory.Entities.Warehouse", "Warehouse")
                         .WithMany()
                         .HasForeignKey("WarehouseId")
@@ -3135,6 +3448,14 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.Navigation("Parent");
 
                     b.Navigation("Warehouse");
+                });
+
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.Warehouse", b =>
+                {
+                    b.HasOne("ERPDotNet.Domain.Modules.BaseInfo.Entities.Company", null)
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("ERPDotNet.Domain.Modules.ProductEngineering.Entities.BOMDetail", b =>
@@ -3431,6 +3752,11 @@ namespace ERPDotNet.Infrastructure.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.BaseInfo.Entities.CostCenter", b =>
+                {
+                    b.Navigation("Children");
                 });
 
             modelBuilder.Entity("ERPDotNet.Domain.Modules.BaseInfo.Entities.Product", b =>

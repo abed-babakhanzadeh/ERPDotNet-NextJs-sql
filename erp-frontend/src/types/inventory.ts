@@ -40,6 +40,7 @@ export interface DefineWarehouseCommand {
   code: string;
   type: WarehouseType;
   address?: string;
+  companyId?: number | null;
   isActive: boolean;
 }
 
@@ -48,6 +49,7 @@ export interface WarehouseDto {
   title: string;
   code: string;
   address?: string;
+  companyId?: number | null;
   type: string; // این رشته عنوان فارسی Enum است که بک‌ند می‌فرستد
   isActive: boolean;
   createdBy?: string;
@@ -315,7 +317,6 @@ export interface CreateInventoryDocCommand {
   warehouseId: number;
   destinationWarehouseId?: number | null;
   docDate: Date; // در ارسال تبدیل به ISO می‌شود
-  fiscalYearId?: number | null;
 
   referenceEntityName?: string;
   referenceEntityId?: number | null;
