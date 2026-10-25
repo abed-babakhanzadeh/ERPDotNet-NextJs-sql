@@ -486,6 +486,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
                 searchableFields={["code", "name"]}
                 displayFields={["code", "name"]}
                 placeholder={row.childProductName || "جستجو..."}
+                ariaLabel={`ماده اولیه ردیف ${index + 1}`}
                 disabled={isReadOnly}
                 onSearch={onSearchGrid}
                 onOpenChange={(isOpen) => {
@@ -549,6 +550,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
         render: (row, index) => (
           <input
             type="number"
+            aria-label={`مقدار مصرفی ردیف ${index + 1}`}
             className="w-full h-8 border rounded px-2 text-center focus:ring-2 focus:ring-primary/20 outline-none"
             value={row.inputQuantity}
             disabled={isReadOnly}
@@ -575,6 +577,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
         disabled: isReadOnly,
         render: (row, index) => (
           <select
+            aria-label={`واحد مصرفی ردیف ${index + 1}`}
             className="w-full h-8 border rounded px-1 text-xs bg-background focus:ring-2 focus:ring-primary/20 outline-none"
             value={row.inputUnitId}
             disabled={isReadOnly}
@@ -789,6 +792,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
             displayFields={["code", "name"]}
             disabled={isReadOnly || mode === "edit"}
             placeholder={headerData.productName || "جستجو..."}
+            ariaLabel="کالا/قلم (محصول یا نیمه ساخته)"
             onValueChange={(val, item) => {
               setHeaderData((prev) => ({
                 ...prev,
@@ -989,6 +993,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
                 { key: "title", label: "عنوان", width: "40%" },
               ]}
               searchableFields={["productName", "productCode", "title"]}
+              ariaLabel="انتخاب BOM منبع"
               displayFields={["productName", "version"]}
               onSearch={onSearchTemplate}
               onOpenChange={(isOpen) => {

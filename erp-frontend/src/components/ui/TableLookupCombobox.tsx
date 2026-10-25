@@ -33,6 +33,10 @@ interface TableLookupComboboxProps<T extends LookupOption> {
   placeholder?: string;
   /** نام دسترس‌پذیر؛ role=combobox نامش را از متن داخل دکمه نمی‌گیرد */
   ariaLabel?: string;
+  /** این سه را FormControl می‌فرستد تا FormLabel و پیام خطا به دکمه وصل شوند */
+  id?: string;
+  "aria-describedby"?: string;
+  "aria-invalid"?: boolean;
   disabled?: boolean;
   searchableFields?: string[];
   displayFields?: string[];
@@ -49,6 +53,9 @@ export function TableLookupCombobox<T extends LookupOption>({
   loading = false,
   placeholder = "جستجو...",
   ariaLabel,
+  id,
+  "aria-describedby": ariaDescribedBy,
+  "aria-invalid": ariaInvalid,
   disabled = false,
   searchableFields,
   displayFields,
@@ -126,7 +133,11 @@ export function TableLookupCombobox<T extends LookupOption>({
         <Button
           variant="outline"
           role="combobox"
-          aria-label={ariaLabel ?? placeholder}
+          id={id}
+          // داخل فرم، نام از FormLabel (با id) می‌آید؛ بیرون از فرم، placeholder نام پیش‌فرض است
+          aria-label={ariaLabel ?? (id ? undefined : placeholder)}
+          aria-describedby={ariaDescribedBy}
+          aria-invalid={ariaInvalid}
           aria-expanded={open}
           disabled={disabled}
           className="w-full justify-between text-right h-8 text-xs" // سایز دکمه اصلی هم کوچک شد
