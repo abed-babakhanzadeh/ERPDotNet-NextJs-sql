@@ -78,7 +78,7 @@ export default function BOMTreePage() {
               className="h-8 w-8 p-0 sm:w-auto sm:px-3 bg-background border-dashed text-muted-foreground hover:text-foreground"
             >
               <Download className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline text-xs">دانلود</span>
+              <span className="sr-only sm:not-sr-only text-xs">دانلود</span>
             </Button>
           </TooltipTrigger>
           <TooltipContent>دانلود اکسل</TooltipContent>
@@ -95,7 +95,7 @@ export default function BOMTreePage() {
               className="h-8 w-8 p-0 sm:w-auto sm:px-3 bg-background border-dashed text-muted-foreground hover:text-foreground"
             >
               <Printer className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline text-xs">چاپ</span>
+              <span className="sr-only sm:not-sr-only text-xs">چاپ</span>
             </Button>
           </TooltipTrigger>
           <TooltipContent>چاپ ساختار</TooltipContent>

@@ -336,7 +336,7 @@ export default function VisualTreeDialog({
           </div>
           <div className="flex items-center gap-2">
             <Move className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">
+            <span className="sr-only sm:not-sr-only">
               درگ برای جابجایی • اسکرول برای زوم
             </span>
             <span className="sm:hidden">لمس برای حرکت • دو انگشت برای زوم</span>

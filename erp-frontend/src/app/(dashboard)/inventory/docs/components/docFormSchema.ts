@@ -12,6 +12,7 @@ export interface DocRow {
   mainUnitQuantity: number | string;
   locationId?: number | string | null;
   destinationLocationId?: number | string | null;
+  batchId?: number | string | null;
   batchNumber?: string;
   description?: string;
 }

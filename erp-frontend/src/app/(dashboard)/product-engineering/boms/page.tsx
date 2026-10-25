@@ -233,7 +233,7 @@ export default function BOMsListPage() {
               className="h-8 gap-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
             >
               <Plus size={16} />
-              <span className="hidden sm:inline text-xs font-medium">
+              <span className="sr-only sm:not-sr-only text-xs font-medium">
                 فرمول جدید
               </span>
             </Button>

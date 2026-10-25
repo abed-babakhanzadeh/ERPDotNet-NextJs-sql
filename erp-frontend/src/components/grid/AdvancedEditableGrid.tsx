@@ -21,6 +21,8 @@ export interface GridColumn<T> {
   type: GridColumnType;
   width?: string;
   options?: { label: string; value: any }[];
+  /** گزینه‌هایی که به مقدار همان سطر بستگی دارند (مثلاً بچ‌های کالای ردیف)؛ بر options مقدم است */
+  getOptions?: (row: T) => { label: string; value: any }[];
   required?: boolean;
   placeholder?: string;
   disabled?: boolean;
@@ -196,7 +198,7 @@ export default function AdvancedEditableGrid<
                           )}
                         >
                           <option value="">انتخاب...</option>
-                          {col.options?.map((opt) => (
+                          {(col.getOptions?.(row) ?? col.options)?.map((opt) => (
                             <option key={opt.value} value={opt.value}>
                               {opt.label}
                             </option>

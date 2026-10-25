@@ -144,7 +144,7 @@ export default function BaseFormLayout({
               role="status"
             >
               <span className="size-1.5 rounded-full bg-warning" aria-hidden />
-              <span className="hidden sm:inline">ذخیره نشده</span>
+              <span className="sr-only sm:not-sr-only">ذخیره نشده</span>
             </span>
           )}
         </div>
@@ -170,7 +170,7 @@ export default function BaseFormLayout({
                         className="h-8 gap-2"
                       >
                         <X size={15} className="text-muted-foreground" />
-                        <span className="hidden sm:inline text-xs">انصراف</span>
+                        <span className="sr-only sm:not-sr-only text-xs">انصراف</span>
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent
@@ -195,14 +195,14 @@ export default function BaseFormLayout({
                         {isSubmitting ? (
                           <>
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            <span className="hidden sm:inline text-xs">
+                            <span className="sr-only sm:not-sr-only text-xs">
                               در حال ثبت...
                             </span>
                           </>
                         ) : (
                           <>
                             <Save size={15} />
-                            <span className="hidden sm:inline text-xs">
+                            <span className="sr-only sm:not-sr-only text-xs">
                               {submitText}
                             </span>
                           </>

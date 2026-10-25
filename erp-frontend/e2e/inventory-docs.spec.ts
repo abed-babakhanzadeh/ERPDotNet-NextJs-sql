@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import {
   adminApi,
   approveAndPostDoc,
+  createBatch,
   createDoc,
   createDocType,
   createProduct,
@@ -249,7 +250,9 @@ test.describe("سند انبار", () => {
     await api.dispose();
   });
 
-  test("اعتبارسنجی سند جدید: خطای فیلدهای سربرگ و قفسه ردیف", async ({ page }) => {
+  test("اعتبارسنجی سند جدید: خطای فیلدهای سربرگ و قفسه ردیف", async ({
+    page,
+  }) => {
     const api = await adminApi();
     const tag = uid();
     const unitId = await createUnit(api, `عدد ${tag}`);
@@ -269,7 +272,9 @@ test.describe("سند انبار", () => {
     // خطا زیر خود فیلد هم دیده می‌شود و به آن وصل است
     const docType = page.getByRole("combobox", { name: "نوع سند" });
     await expect(docType).toHaveAttribute("aria-invalid", "true");
-    await expect(docType).toHaveAccessibleDescription("نوع سند را انتخاب کنید.");
+    await expect(docType).toHaveAccessibleDescription(
+      "نوع سند را انتخاب کنید.",
+    );
     await expect(page.getByText("انبار را انتخاب کنید.")).toBeVisible();
 
     await docType.click();
@@ -279,7 +284,9 @@ test.describe("سند انبار", () => {
     await page.getByRole("option", { name: wh.title }).click();
 
     await page.getByRole("button", { name: "ثبت اولیه" }).click();
-    await expect(page.getByText("لطفا حداقل یک قلم کالا وارد کنید.")).toBeVisible();
+    await expect(
+      page.getByText("لطفا حداقل یک قلم کالا وارد کنید."),
+    ).toBeVisible();
 
     await page.getByRole("button", { name: "افزودن سطر جدید" }).click();
     await pickRowProduct(page, 1, code);
@@ -287,6 +294,76 @@ test.describe("سند انبار", () => {
     // بک‌اند سند بدون قفسه را رد می‌کند؛ فرم پیش از ارسال همین را می‌گوید
     await expect(page.getByText("ردیف 1: قفسه را انتخاب کنید.")).toBeVisible();
     expect(posted).toBe(false);
+    await api.dispose();
+  });
+  test("بچ انتخاب‌شده در ردیف سند ذخیره و پس از قطعی شدن در موجودی دیده می‌شود", async ({
+    page,
+  }) => {
+    const api = await adminApi();
+    const tag = uid();
+    const unitId = await createUnit(api, `عدد ${tag}`);
+    const code = `BT-${tag}`;
+    const productId = await createProduct(api, {
+      code,
+      name: `رنگ ${tag}`,
+      unitId,
+    });
+    const batchId = await createBatch(api, {
+      productId,
+      unitId,
+      batchNumber: `LOT-${tag}`,
+    });
+    const warehouse = await createWarehouse(api, tag);
+    const docTypeTitle = `رسید بچ ${tag}`;
+    await createDocType(api, docTypeTitle, 1);
+
+    await page.goto("/inventory/docs/create");
+    await page.getByRole("combobox", { name: "نوع سند" }).click();
+    await page.getByRole("option", { name: docTypeTitle }).click();
+    await page.getByRole("combobox", { name: "انبار", exact: true }).click();
+    await page.getByRole("option", { name: warehouse.title }).click();
+    await page.getByRole("button", { name: "افزودن سطر جدید" }).click();
+    await pickRowProduct(page, 1, code);
+    await page.getByLabel("تعداد ردیف 1").fill("5");
+    await page
+      .getByLabel("شلف/قفسه ردیف 1")
+      .selectOption({ label: warehouse.locationTitle });
+    await page.getByLabel("بچ ردیف 1").selectOption({ label: `LOT-${tag}` });
+
+    const created = page.waitForResponse(
+      (r) => r.request().method() === "POST" && docUrl.test(r.url()),
+    );
+    await page.getByRole("button", { name: "ثبت اولیه" }).click();
+    expect((await created).status()).toBeLessThan(300);
+    await expect(page).toHaveURL(/\/inventory\/docs\/edit\/\d+$/);
+    const docId = Number(page.url().split("/").pop());
+
+    const doc = await (
+      await api.get(`/api/Inventory/Inventory/docs/${docId}`)
+    ).json();
+    expect(doc.details[0]).toMatchObject({
+      batchId,
+      batchNumber: `LOT-${tag}`,
+    });
+    // صفحه ویرایش همان بچ را نشان می‌دهد
+    await expect(page.getByLabel("بچ ردیف 1")).toHaveValue(String(batchId));
+
+    await approveAndPostDoc(api, docId);
+    const res = await api.post("/api/Inventory/Inventory/stock/current", {
+      data: {
+        productId,
+        warehouseId: warehouse.warehouseId,
+        pageNumber: 1,
+        pageSize: 50,
+        sortColumn: "",
+        sortDescending: false,
+        excludeZeroBalances: true,
+      },
+    });
+    const { items } = await res.json();
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({ quantityOnHand: 5 });
+    expect(JSON.stringify(items[0])).toContain(`LOT-${tag}`);
     await api.dispose();
   });
 });
