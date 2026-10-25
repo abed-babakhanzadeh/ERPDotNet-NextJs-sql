@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: بک‌اند (build و تست)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ERPDotNet
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet restore
+      - run: dotnet build --no-restore
+      - run: dotnet test --no-build
+      - name: بسته آسیب‌پذیر نباشد
+        run: |
+          dotnet list package --vulnerable --include-transitive | tee vulnerable.txt
+          if grep -q "has the following vulnerable packages" vulnerable.txt; then
+            echo "::error::بسته NuGet آسیب‌پذیر پیدا شد."
+            exit 1
+          fi
+
+  frontend:
+    name: فرانت (type-check، lint، build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: erp-frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: erp-frontend/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run build
+
+  api-contract:
+    name: هم‌خوانی قرارداد API با تایپ‌های فرانت
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: erp-frontend/package-lock.json
+      - run: npm ci --no-audit --no-fund
+        working-directory: erp-frontend
+      - run: npm run api:types
+        working-directory: erp-frontend
+      - name: سند OpenAPI و تایپ‌های تولیدشده باید commit شده باشند
+        run: |
+          if ! git diff --exit-code -- erp-frontend/openapi erp-frontend/src/types/api.generated.ts; then
+            echo "::error::قرارداد API تغییر کرده است. در erp-frontend دستور npm run api:types را اجرا و نتیجه را commit کنید."
+            exit 1
+          fi
