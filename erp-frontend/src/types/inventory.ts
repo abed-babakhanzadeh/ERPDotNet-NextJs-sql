@@ -371,6 +371,7 @@ export interface UpdateInventoryDocCommand {
   docDate: Date;
   description?: string;
   warehouseId: number; // معمولاً انبار در ویرایش عوض نمی‌شود اما در DTO هست
+  destinationWarehouseId?: number | null; // فقط برای سند انتقال
   rowVersion: string;
 
   details: UpdateInventoryDocDetailDto[];

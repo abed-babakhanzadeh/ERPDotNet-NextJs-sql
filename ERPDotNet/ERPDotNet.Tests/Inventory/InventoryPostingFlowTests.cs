@@ -117,8 +117,46 @@ public class InventoryPostingFlowTests : IDisposable
     {
         var repo = new InventoryDomainRepository(_db);
 
-        Assert.Null(await repo.GetLastTransactionIdAsync(12345, default));
+        Assert.Null(await repo.GetLastTransactionIdAsync(12345, WarehouseId, default));
     }
+
+    [Fact]
+    public async Task Posting_and_reverting_a_transfer_moves_stock_between_warehouses()
+    {
+        await SeedStock(100);
+        using (var seed = NewContext())
+        {
+            var profile = new InventoryItemProfile { ProductId = ProductId, MainInventoryUnitId = 1, RowVersion = RowVersion };
+            profile.WarehouseSettings.Add(new ItemWarehouseSetting
+            {
+                InventoryItemProfileId = 0, WarehouseId = DestinationId, DefaultLocationId = 77, RowVersion = RowVersion
+            });
+            seed.InventoryItemProfiles.Add(profile);
+            await seed.SaveChangesAsync();
+        }
+        var docId = await SeedDoc(InventoryNature.Transfer, InventoryDocStatus.Approved, 30, DestinationId);
+
+        await PostHandler(_db).Handle(new PostInventoryDocCommand { Id = docId, RowVersion = Convert.ToBase64String(RowVersion) }, default);
+
+        using (var verify = NewContext())
+        {
+            var stocks = await verify.CurrentStocks.ToListAsync();
+            Assert.Equal(70, stocks.Single(s => s.WarehouseId == WarehouseId).QuantityOnHand);
+            var destination = stocks.Single(s => s.WarehouseId == DestinationId);
+            Assert.Equal(30, destination.QuantityOnHand);
+            Assert.Equal(77, destination.LocationId);
+        }
+
+        using var revertScope = NewContext();
+        await RevertHandler(revertScope).Handle(new RevertInventoryDocCommand(docId), default);
+
+        using var afterRevert = NewContext();
+        var reverted = await afterRevert.CurrentStocks.ToListAsync();
+        Assert.Equal(100, reverted.Single(s => s.WarehouseId == WarehouseId).QuantityOnHand);
+        Assert.Equal(0, reverted.Single(s => s.WarehouseId == DestinationId).QuantityOnHand);
+    }
+
+    private const int DestinationId = 2;
 
     private AppDbContext NewContext() =>
         new(new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase(_dbName).Options);
@@ -138,7 +176,7 @@ public class InventoryPostingFlowTests : IDisposable
         await seed.SaveChangesAsync();
     }
 
-    private async Task<long> SeedDoc(InventoryNature nature, InventoryDocStatus status, decimal qty)
+    private async Task<long> SeedDoc(InventoryNature nature, InventoryDocStatus status, decimal qty, int? destinationWarehouseId = null)
     {
         using var seed = NewContext();
         var docType = new InventoryDocType { Title = nature.ToString(), Nature = nature, RowVersion = RowVersion };
@@ -149,6 +187,7 @@ public class InventoryPostingFlowTests : IDisposable
         {
             DocTypeId = docType.Id,
             WarehouseId = WarehouseId,
+            DestinationWarehouseId = destinationWarehouseId,
             Status = status,
             RowVersion = RowVersion,
             Details = { new InventoryDocDetail { ProductId = ProductId, MainUnitQuantity = qty, RowVersion = RowVersion } }

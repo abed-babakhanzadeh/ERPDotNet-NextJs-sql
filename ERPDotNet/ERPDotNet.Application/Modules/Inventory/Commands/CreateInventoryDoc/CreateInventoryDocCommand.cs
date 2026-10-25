@@ -40,10 +40,13 @@ public record CreateInventoryDocDetailDto
 
 public class CreateInventoryDocValidator : AbstractValidator<CreateInventoryDocCommand>
 {
-    public CreateInventoryDocValidator()
+    public CreateInventoryDocValidator(IApplicationDbContext context)
     {
         RuleFor(x => x.DocTypeId).GreaterThan(0);
         RuleFor(x => x.WarehouseId).GreaterThan(0);
+        RuleFor(x => x)
+            .MustAsync((cmd, ct) => TransferDestinationRule.IsValidAsync(context, cmd.DocTypeId, cmd.WarehouseId, cmd.DestinationWarehouseId, ct))
+            .WithMessage(TransferDestinationRule.Message);
         RuleFor(x => x.DocDate).NotEmpty();
         RuleForEach(x => x.Details).ChildRules(detail =>
         {

@@ -17,156 +17,138 @@ public class InventoryPostingService : IInventoryPostingService
 
     public async Task<InventoryPostingResult> ProcessDocumentAsync(InventoryPostingContext context, CancellationToken cancellationToken)
     {
-        var sign = context.DocType.Nature == InventoryNature.Input 
-            ? InventoryTransactionSign.Increase 
-            : InventoryTransactionSign.Decrease;
-
-        return await ExecutePostingLogicAsync(context, sign, isReversal: false, cancellationToken);
+        return await ExecutePostingLogicAsync(context, isReversal: false, cancellationToken);
     }
 
     public async Task<InventoryPostingResult> ReverseDocumentAsync(InventoryPostingContext originalContext, CancellationToken cancellationToken)
     {
-        // در ابطال، جهت برعکس می‌شود
-        var reverseSign = originalContext.DocType.Nature == InventoryNature.Input 
-            ? InventoryTransactionSign.Decrease 
-            : InventoryTransactionSign.Increase;
-
-        return await ExecutePostingLogicAsync(originalContext, reverseSign, isReversal: true, cancellationToken);
+        // در ابطال، جهت هر حرکت برعکس می‌شود
+        return await ExecutePostingLogicAsync(originalContext, isReversal: true, cancellationToken);
     }
 
+    // هر سطر سند به یک یا دو «حرکت» تبدیل می‌شود:
+    // رسید: افزایش در انبار سند | حواله: کاهش از انبار سند | انتقال: کاهش از مبدأ + افزایش در مقصد
+    private sealed record StockMovement(int WarehouseId, int? LocationId, InventoryTransactionSign Sign);
+
     private async Task<InventoryPostingResult> ExecutePostingLogicAsync(
-        InventoryPostingContext context, 
-        InventoryTransactionSign operationSign, 
-        bool isReversal, 
+        InventoryPostingContext context,
+        bool isReversal,
         CancellationToken cancellationToken)
     {
         var transactions = new List<InventoryTransaction>();
         var stockUpdates = new List<CurrentStock>();
-        // سطرهای تکراری با کالا/لوکیشن/بچ یکسان باید روی یک رکورد موجودی جمع شوند
-        var stocksByKey = new Dictionary<(int ProductId, int? LocationId, int? BatchId), CurrentStock>();
         var errors = new List<string>();
         var events = new List<BaseEvent>();
+        // سطرهای تکراری با انبار/کالا/لوکیشن/بچ یکسان باید روی یک رکورد موجودی جمع شوند
+        var stocksByKey = new Dictionary<(int WarehouseId, int ProductId, int? LocationId, int? BatchId), CurrentStock>();
 
-        int multiplier = operationSign == InventoryTransactionSign.Increase ? 1 : -1;
+        var header = context.Header;
+        var nature = context.DocType.Nature;
 
-        foreach (var detail in context.Header.Details)
+        if (nature == InventoryNature.Transfer &&
+            (!header.DestinationWarehouseId.HasValue || header.DestinationWarehouseId == header.WarehouseId))
+        {
+            return InventoryPostingResult.Failure("سند انتقال باید انبار مقصدی متفاوت از انبار مبدأ داشته باشد.");
+        }
+
+        foreach (var detail in header.Details)
         {
             var quantity = detail.MainUnitQuantity;
+            var movements = await GetMovementsAsync(context, detail, isReversal, cancellationToken);
 
-            // === 1. مدیریت Reversal (لینک به سند اصلی) ===
-            long? relatedTransactionId = null;
-            if (isReversal)
+            foreach (var movement in movements)
             {
-                // باید تراکنش اصلی را پیدا کنیم
-                relatedTransactionId = await _repository.GetLastTransactionIdAsync(detail.Id, cancellationToken);
-                
-                if (relatedTransactionId == null)
+                // === 1. مدیریت Reversal (لینک به تراکنش اصلی همان انبار) ===
+                long? relatedTransactionId = null;
+                if (isReversal)
                 {
-                    errors.Add($"تراکنش اصلی برای سطر {detail.Id} جهت ابطال یافت نشد. (شاید سند قبلاً ثبت نشده است)");
-                    continue; 
-                }
-            }
+                    relatedTransactionId = await _repository.GetLastTransactionIdAsync(detail.Id, movement.WarehouseId, cancellationToken);
 
-            // === 2. ساخت تراکنش ===
-            var transaction = new InventoryTransaction
-            {
-                FiscalYearId = context.Header.FiscalYearId,
-                TransactionDate = DateTime.UtcNow,
-                DocHeaderId = context.Header.Id,
-                DocDetailId = detail.Id,
-                DocTypeId = context.Header.DocTypeId,
-                ProductId = detail.ProductId,
-                WarehouseId = context.Header.WarehouseId,
-                LocationId = detail.LocationId,
-                BatchId = detail.BatchId,
-                Sign = operationSign,
-                Quantity = quantity,
-                RelatedTransactionId = relatedTransactionId // لینک واقعی به تراکنش اصلی
-            };
-            transactions.Add(transaction);
-
-            // === 3. دریافت موجودی ===
-            var stockKey = (detail.ProductId, detail.LocationId, detail.BatchId);
-            if (!stocksByKey.TryGetValue(stockKey, out var currentStock))
-            {
-                currentStock = await _repository.GetCurrentStockAsync(
-                    context.Header.WarehouseId,
-                    detail.ProductId,
-                    detail.LocationId,
-                    detail.BatchId,
-                    cancellationToken);
-            }
-
-            // هندل کردن نبود رکورد موجودی
-            if (currentStock == null)
-            {
-                // اگر خروج است و موجودی صفر است -> خطا (مگر اینکه پالیسی اجازه دهد)
-                if (operationSign == InventoryTransactionSign.Decrease && !context.Policy.CanGoNegative(context.DocType, context.Header.WarehouseId))
-                {
-                    errors.Add($"موجودی کافی برای کالای {detail.ProductId} وجود ندارد (موجودی صفر).");
-                    continue;
+                    if (relatedTransactionId == null)
+                    {
+                        errors.Add($"تراکنش اصلی برای سطر {detail.Id} جهت ابطال یافت نشد. (شاید سند قبلاً ثبت نشده است)");
+                        continue;
+                    }
                 }
 
-                currentStock = new CurrentStock
-                {
-                    WarehouseId = context.Header.WarehouseId,
-                    ProductId = detail.ProductId,
-                    LocationId = detail.LocationId,
-                    BatchId = detail.BatchId,
-                    QuantityOnHand = 0,
-                    QuantityReserved = 0
-                };
-            }
+                var isDecrease = movement.Sign == InventoryTransactionSign.Decrease;
 
-            // === 4. چک کردن قوانین (Policies) ===
-            
-            // الف) چک کردن موجودی منفی
-            if (operationSign == InventoryTransactionSign.Decrease)
-            {
-                if ((currentStock.QuantityOnHand - quantity) < 0 && !context.Policy.CanGoNegative(context.DocType, context.Header.WarehouseId))
+                // === 2. دریافت موجودی ===
+                var stockKey = (movement.WarehouseId, detail.ProductId, movement.LocationId, detail.BatchId);
+                if (!stocksByKey.TryGetValue(stockKey, out var currentStock))
+                {
+                    currentStock = await _repository.GetCurrentStockAsync(
+                        movement.WarehouseId,
+                        detail.ProductId,
+                        movement.LocationId,
+                        detail.BatchId,
+                        cancellationToken);
+                }
+
+                var canGoNegative = context.Policy.CanGoNegative(context.DocType, movement.WarehouseId);
+
+                if (currentStock == null)
+                {
+                    // اگر خروج است و موجودی صفر است -> خطا (مگر اینکه پالیسی اجازه دهد)
+                    if (isDecrease && !canGoNegative)
+                    {
+                        errors.Add($"موجودی کافی برای کالای {detail.ProductId} وجود ندارد (موجودی صفر).");
+                        continue;
+                    }
+
+                    currentStock = new CurrentStock
+                    {
+                        WarehouseId = movement.WarehouseId,
+                        ProductId = detail.ProductId,
+                        LocationId = movement.LocationId,
+                        BatchId = detail.BatchId,
+                        QuantityOnHand = 0,
+                        QuantityReserved = 0
+                    };
+                }
+
+                // === 3. چک کردن قوانین (Policies) ===
+
+                // الف) چک کردن موجودی منفی
+                if (isDecrease && (currentStock.QuantityOnHand - quantity) < 0 && !canGoNegative)
                 {
                     errors.Add($"موجودی ناکافی: کالای {detail.ProductId}، موجود: {currentStock.QuantityOnHand}، درخواست: {quantity}");
                     continue;
                 }
-            }
 
-            // ب) مدیریت بچ (انقضا و مسدودی)
-            if (detail.BatchId.HasValue)
-            {
-                // آیا نیاز به چک کردن بچ هست؟
-                bool checkExpiry = context.Policy.ShouldCheckExpiry(context.DocType);
-                bool checkBlock = context.Policy.ShouldCheckBatchBlockStatus(context.DocType);
-
-                if (checkExpiry || checkBlock)
+                // ب) مدیریت بچ (انقضا و مسدودی)
+                var batchError = await ValidateBatchAsync(context, detail, isDecrease, cancellationToken);
+                if (batchError != null)
                 {
-                    var batch = await _repository.GetBatchAsync(detail.BatchId.Value, cancellationToken);
-                    if (batch != null)
-                    {
-                        // 1. چک مسدودی (Block Status) - اصلاح شده
-                        if (checkBlock && batch.IsBlocked)
-                        {
-                             errors.Add($"بچ {batch.BatchNumber} مسدود است. دلیل: {batch.BlockReason}");
-                             continue;
-                        }
-
-                        // 2. چک انقضا
-                        // معمولاً انقضا فقط موقع "خروج" مهم است، اما طبق پالیسی عمل می‌کنیم
-                        if (checkExpiry && operationSign == InventoryTransactionSign.Decrease && batch.ExpiryDate < context.Header.DocDate)
-                        {
-                            errors.Add($"بچ {batch.BatchNumber} منقضی شده است.");
-                            continue;
-                        }
-                    }
+                    errors.Add(batchError);
+                    continue;
                 }
-            }
 
-            // === 5. محاسبه موجودی (Mutation) ===
-            // QuantityOnHand پس از این خط مقدار نهایی است، نه مقدار تغییر
-            currentStock.QuantityOnHand += (quantity * multiplier);
+                // === 4. ساخت تراکنش ===
+                transactions.Add(new InventoryTransaction
+                {
+                    FiscalYearId = header.FiscalYearId,
+                    TransactionDate = DateTime.UtcNow,
+                    DocHeaderId = header.Id,
+                    DocDetailId = detail.Id,
+                    DocTypeId = header.DocTypeId,
+                    ProductId = detail.ProductId,
+                    WarehouseId = movement.WarehouseId,
+                    LocationId = movement.LocationId,
+                    BatchId = detail.BatchId,
+                    Sign = movement.Sign,
+                    Quantity = quantity,
+                    RelatedTransactionId = relatedTransactionId // لینک واقعی به تراکنش اصلی
+                });
 
-            if (stocksByKey.TryAdd(stockKey, currentStock))
-            {
-                stockUpdates.Add(currentStock);
+                // === 5. محاسبه موجودی (Mutation) ===
+                // QuantityOnHand پس از این خط مقدار نهایی است، نه مقدار تغییر
+                currentStock.QuantityOnHand += quantity * (int)movement.Sign;
+
+                if (stocksByKey.TryAdd(stockKey, currentStock))
+                {
+                    stockUpdates.Add(currentStock);
+                }
             }
         }
 
@@ -176,5 +158,63 @@ public class InventoryPostingService : IInventoryPostingService
         }
 
         return InventoryPostingResult.Success(transactions, stockUpdates, events);
+    }
+
+    private async Task<List<StockMovement>> GetMovementsAsync(
+        InventoryPostingContext context,
+        InventoryDocDetail detail,
+        bool isReversal,
+        CancellationToken cancellationToken)
+    {
+        var header = context.Header;
+        var increase = isReversal ? InventoryTransactionSign.Decrease : InventoryTransactionSign.Increase;
+        var decrease = isReversal ? InventoryTransactionSign.Increase : InventoryTransactionSign.Decrease;
+
+        switch (context.DocType.Nature)
+        {
+            case InventoryNature.Input:
+                return [new StockMovement(header.WarehouseId, detail.LocationId, increase)];
+
+            case InventoryNature.Transfer:
+                var destinationWarehouseId = header.DestinationWarehouseId!.Value;
+                // سطر سند فقط لوکیشن مبدأ را دارد؛ در مقصد لوکیشن پیش‌فرض کالا (در صورت تعریف) استفاده می‌شود
+                var destinationLocationId = await _repository.GetDefaultLocationIdAsync(detail.ProductId, destinationWarehouseId, cancellationToken);
+                // در ابطال ابتدا اثر مقصد برداشته می‌شود تا کنترل موجودی منفی مقصد قبل از برگشت به مبدأ انجام شود
+                var outOfSource = new StockMovement(header.WarehouseId, detail.LocationId, decrease);
+                var intoDestination = new StockMovement(destinationWarehouseId, destinationLocationId, increase);
+                return isReversal ? [intoDestination, outOfSource] : [outOfSource, intoDestination];
+
+            default:
+                return [new StockMovement(header.WarehouseId, detail.LocationId, decrease)];
+        }
+    }
+
+    private async Task<string?> ValidateBatchAsync(
+        InventoryPostingContext context,
+        InventoryDocDetail detail,
+        bool isDecrease,
+        CancellationToken cancellationToken)
+    {
+        if (!detail.BatchId.HasValue) return null;
+
+        bool checkExpiry = context.Policy.ShouldCheckExpiry(context.DocType);
+        bool checkBlock = context.Policy.ShouldCheckBatchBlockStatus(context.DocType);
+        if (!checkExpiry && !checkBlock) return null;
+
+        var batch = await _repository.GetBatchAsync(detail.BatchId.Value, cancellationToken);
+        if (batch == null) return null;
+
+        if (checkBlock && batch.IsBlocked)
+        {
+            return $"بچ {batch.BatchNumber} مسدود است. دلیل: {batch.BlockReason}";
+        }
+
+        // انقضا فقط موقع "خروج" مهم است
+        if (checkExpiry && isDecrease && batch.ExpiryDate < context.Header.DocDate)
+        {
+            return $"بچ {batch.BatchNumber} منقضی شده است.";
+        }
+
+        return null;
     }
 }

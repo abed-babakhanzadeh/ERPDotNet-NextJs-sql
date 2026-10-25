@@ -133,7 +133,7 @@ public class InventoryPostingServiceTests
     public async Task Reversal_of_receipt_decreases_stock_and_links_original_transaction()
     {
         _repo.Stocks.Add(Stock(25));
-        _repo.LastTransactionIds[1] = 555;
+        _repo.LastTransactionIds[(1, WarehouseId)] = 555;
         var context = Context(InventoryNature.Input, Line(1, 25));
 
         var result = await _sut.ReverseDocumentAsync(context, default);
@@ -156,6 +156,84 @@ public class InventoryPostingServiceTests
         Assert.False(result.IsSuccess);
     }
 
+    [Fact]
+    public async Task Transfer_moves_stock_from_source_to_destination_default_location()
+    {
+        _repo.Stocks.Add(Stock(100));
+        _repo.DefaultLocations[(ProductId, DestinationId)] = 77;
+        var context = Context(InventoryNature.Transfer, Line(1, 30));
+
+        var result = await _sut.ProcessDocumentAsync(context, default);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(70, result.UpdatedStocks.Single(s => s.WarehouseId == WarehouseId).QuantityOnHand);
+        var destination = result.UpdatedStocks.Single(s => s.WarehouseId == DestinationId);
+        Assert.Equal(30, destination.QuantityOnHand);
+        Assert.Equal(77, destination.LocationId);
+        Assert.Equal(2, result.GeneratedTransactions.Count);
+        Assert.Contains(result.GeneratedTransactions, t => t.WarehouseId == WarehouseId && t.Sign == InventoryTransactionSign.Decrease);
+        Assert.Contains(result.GeneratedTransactions, t => t.WarehouseId == DestinationId && t.Sign == InventoryTransactionSign.Increase);
+    }
+
+    [Fact]
+    public async Task Transfer_more_than_source_on_hand_fails()
+    {
+        _repo.Stocks.Add(Stock(10));
+        var context = Context(InventoryNature.Transfer, Line(1, 30));
+
+        var result = await _sut.ProcessDocumentAsync(context, default);
+
+        Assert.False(result.IsSuccess);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData(WarehouseId)]
+    public async Task Transfer_without_distinct_destination_fails(int? destinationId)
+    {
+        _repo.Stocks.Add(Stock(100));
+        var context = Context(InventoryNature.Transfer, Line(1, 30));
+        context.Header.DestinationWarehouseId = destinationId;
+
+        var result = await _sut.ProcessDocumentAsync(context, default);
+
+        Assert.False(result.IsSuccess);
+    }
+
+    [Fact]
+    public async Task Transfer_reversal_returns_stock_to_source()
+    {
+        _repo.Stocks.Add(Stock(70));
+        _repo.Stocks.Add(new CurrentStock { WarehouseId = DestinationId, ProductId = ProductId, QuantityOnHand = 30 });
+        _repo.LastTransactionIds[(1, WarehouseId)] = 10;
+        _repo.LastTransactionIds[(1, DestinationId)] = 11;
+        var context = Context(InventoryNature.Transfer, Line(1, 30));
+
+        var result = await _sut.ReverseDocumentAsync(context, default);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(100, result.UpdatedStocks.Single(s => s.WarehouseId == WarehouseId).QuantityOnHand);
+        Assert.Equal(0, result.UpdatedStocks.Single(s => s.WarehouseId == DestinationId).QuantityOnHand);
+        Assert.Contains(result.GeneratedTransactions, t => t.WarehouseId == WarehouseId && t.RelatedTransactionId == 10);
+        Assert.Contains(result.GeneratedTransactions, t => t.WarehouseId == DestinationId && t.RelatedTransactionId == 11);
+    }
+
+    [Fact]
+    public async Task Transfer_reversal_fails_when_destination_stock_was_consumed()
+    {
+        _repo.Stocks.Add(Stock(70));
+        _repo.Stocks.Add(new CurrentStock { WarehouseId = DestinationId, ProductId = ProductId, QuantityOnHand = 5 });
+        _repo.LastTransactionIds[(1, WarehouseId)] = 10;
+        _repo.LastTransactionIds[(1, DestinationId)] = 11;
+        var context = Context(InventoryNature.Transfer, Line(1, 30));
+
+        var result = await _sut.ReverseDocumentAsync(context, default);
+
+        Assert.False(result.IsSuccess);
+    }
+
+    private const int DestinationId = 2;
+
     private InventoryPostingContext Context(InventoryNature nature, params InventoryDocDetail[] lines)
     {
         var docType = new InventoryDocType { Id = 1, Title = "test", Nature = nature };
@@ -164,6 +242,7 @@ public class InventoryPostingServiceTests
             Id = 1,
             DocTypeId = docType.Id,
             WarehouseId = WarehouseId,
+            DestinationWarehouseId = nature == InventoryNature.Transfer ? DestinationId : null,
             DocDate = new DateTime(2026, 1, 1),
             Details = lines.ToList()
         };
@@ -190,7 +269,8 @@ public class InventoryPostingServiceTests
     {
         public List<CurrentStock> Stocks { get; } = new();
         public List<InventoryBatch> Batches { get; } = new();
-        public Dictionary<long, long> LastTransactionIds { get; } = new();
+        public Dictionary<(long DetailId, int WarehouseId), long> LastTransactionIds { get; } = new();
+        public Dictionary<(int ProductId, int WarehouseId), int> DefaultLocations { get; } = new();
 
         public Task<CurrentStock?> GetCurrentStockAsync(int warehouseId, int productId, int? locationId, int? batchId, CancellationToken cancellationToken) =>
             Task.FromResult(Stocks.FirstOrDefault(s =>
@@ -199,7 +279,10 @@ public class InventoryPostingServiceTests
         public Task<InventoryBatch?> GetBatchAsync(int batchId, CancellationToken cancellationToken) =>
             Task.FromResult(Batches.FirstOrDefault(b => b.Id == batchId));
 
-        public Task<long?> GetLastTransactionIdAsync(long docDetailId, CancellationToken cancellationToken) =>
-            Task.FromResult(LastTransactionIds.TryGetValue(docDetailId, out var id) ? id : (long?)null);
+        public Task<long?> GetLastTransactionIdAsync(long docDetailId, int warehouseId, CancellationToken cancellationToken) =>
+            Task.FromResult(LastTransactionIds.TryGetValue((docDetailId, warehouseId), out var id) ? id : (long?)null);
+
+        public Task<int?> GetDefaultLocationIdAsync(int productId, int warehouseId, CancellationToken cancellationToken) =>
+            Task.FromResult(DefaultLocations.TryGetValue((productId, warehouseId), out var id) ? id : (int?)null);
     }
 }
