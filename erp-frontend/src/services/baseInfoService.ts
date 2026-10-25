@@ -5,18 +5,22 @@ import type {
   CreateCompanyCommand,
   CreateCostCenterCommand,
   CreateFiscalYearCommand,
+  CreateProductAttributeCommand,
   CreateProductCategoryCommand,
   CreateProductCommand,
   CreateUnitCommand,
   PagedQuery,
   Paged,
+  ProductAttributeDto,
   ProductCategoryDto,
   ProductDto,
+  ProductVariantDto,
   FiscalYearDto,
   UnitDto,
   UpdateCompanyCommand,
   UpdateCostCenterCommand,
   UpdateFiscalYearCommand,
+  UpdateProductAttributeCommand,
   UpdateProductCategoryCommand,
   UpdateProductCommand,
   UpdateUnitCommand,
@@ -69,6 +73,18 @@ export const productService = {
   remove: async (id: number) => {
     await apiClient.delete(`${PRODUCTS}/${id}`);
   },
+
+  getVariants: async (id: number) =>
+    (await apiClient.get<ProductVariantDto[]>(`${PRODUCTS}/${id}/variants`)).data,
+
+  /** تعداد تنوع‌های تازه ساخته‌شده */
+  generateVariants: async (id: number, attributeValueIds: number[]) =>
+    (
+      await apiClient.post<{ created: number }>(`${PRODUCTS}/${id}/variants`, {
+        productId: id,
+        attributeValueIds,
+      })
+    ).data.created,
 };
 
 /** عملیات مشترک اطلاعات پایه‌ای که search/lookup/CRUD یکسان دارند */
@@ -119,6 +135,12 @@ export const productCategoryService = baseInfoCrud<
   CreateProductCategoryCommand,
   UpdateProductCategoryCommand
 >("/BaseInfo/ProductCategories");
+
+export const productAttributeService = baseInfoCrud<
+  ProductAttributeDto,
+  CreateProductAttributeCommand,
+  UpdateProductAttributeCommand
+>("/BaseInfo/ProductAttributes");
 
 export const fileService = {
   /** آپلود فایل عمومی؛ مسیر نسبی فایل ذخیره‌شده را برمی‌گرداند */

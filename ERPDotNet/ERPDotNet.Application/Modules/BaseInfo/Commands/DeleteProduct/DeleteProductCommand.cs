@@ -1,4 +1,5 @@
 using ERPDotNet.Application.Common.Attributes;
+using ERPDotNet.Application.Common.Exceptions;
 using ERPDotNet.Application.Common.Interfaces;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +24,9 @@ public class DeleteProductHandler : IRequestHandler<DeleteProductCommand, bool>
             .FirstOrDefaultAsync(p => p.Id == request.Id, cancellationToken);
 
         if (entity == null) return false;
+
+        if (await _context.Products.AnyAsync(p => p.VariantParentId == request.Id, cancellationToken))
+            throw new BusinessRuleException("این کالا تنوع دارد؛ ابتدا تنوع‌های آن را حذف کنید.");
 
         // Soft Delete
         entity.IsDeleted = true;

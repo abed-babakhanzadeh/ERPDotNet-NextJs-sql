@@ -39,6 +39,11 @@ public class Product : BaseEntity
     public string? ImagePath { get; set; }
 
     public bool IsActive { get; set; } = true;
+
+    // کالای مادر برای تنوع‌ها؛ تنوع خودش یک کالای کامل است
+    public int? VariantParentId { get; set; }
+    public Product? VariantParent { get; set; }
+    public ICollection<ProductVariantValue> VariantValues { get; set; } = new List<ProductVariantValue>();
 }
 
 // اینام (Enum) برای نوع تامین

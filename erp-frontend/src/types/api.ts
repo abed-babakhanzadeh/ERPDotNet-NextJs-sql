@@ -39,6 +39,12 @@ export type UpdateCostCenterCommand = S["UpdateCostCenterCommand"];
 export type ProductCategoryDto = S["ProductCategoryDto"];
 export type CreateProductCategoryCommand = S["CreateProductCategoryCommand"];
 export type UpdateProductCategoryCommand = S["UpdateProductCategoryCommand"];
+export type ProductAttributeDto = S["ProductAttributeDto"];
+export type ProductAttributeValueDto = S["ProductAttributeValueDto"];
+export type ProductAttributeValueInput = S["ProductAttributeValueInput"];
+export type CreateProductAttributeCommand = S["CreateProductAttributeCommand"];
+export type UpdateProductAttributeCommand = S["UpdateProductAttributeCommand"];
+export type ProductVariantDto = S["ProductVariantDto"];
 
 // --- مهندسی محصول ---
 export type BOMListDto = S["BOMListDto"];

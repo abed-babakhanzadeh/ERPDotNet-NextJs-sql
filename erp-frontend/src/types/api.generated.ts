@@ -4133,6 +4133,208 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/BaseInfo/ProductAttributes/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProductAttributeDto"][];
+                        "application/json": components["schemas"]["ProductAttributeDto"][];
+                        "text/json": components["schemas"]["ProductAttributeDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/BaseInfo/ProductAttributes/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["GetProductAttributesQuery"];
+                    "text/json": components["schemas"]["GetProductAttributesQuery"];
+                    "application/*+json": components["schemas"]["GetProductAttributesQuery"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PaginatedResultOfProductAttributeDto"];
+                        "application/json": components["schemas"]["PaginatedResultOfProductAttributeDto"];
+                        "text/json": components["schemas"]["PaginatedResultOfProductAttributeDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/BaseInfo/ProductAttributes/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProductAttributeDto"];
+                        "application/json": components["schemas"]["ProductAttributeDto"];
+                        "text/json": components["schemas"]["ProductAttributeDto"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateProductAttributeCommand"];
+                    "text/json": components["schemas"]["UpdateProductAttributeCommand"];
+                    "application/*+json": components["schemas"]["UpdateProductAttributeCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/BaseInfo/ProductAttributes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateProductAttributeCommand"];
+                    "text/json": components["schemas"]["CreateProductAttributeCommand"];
+                    "application/*+json": components["schemas"]["CreateProductAttributeCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/BaseInfo/ProductCategories/lookup": {
         parameters: {
             query?: never;
@@ -4482,6 +4684,70 @@ export interface paths {
                     "application/json": components["schemas"]["CreateProductCommand"];
                     "text/json": components["schemas"]["CreateProductCommand"];
                     "application/*+json": components["schemas"]["CreateProductCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/BaseInfo/Products/{id}/variants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProductVariantDto"][];
+                        "application/json": components["schemas"]["ProductVariantDto"][];
+                        "text/json": components["schemas"]["ProductVariantDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["GenerateProductVariantsCommand"];
+                    "text/json": components["schemas"]["GenerateProductVariantsCommand"];
+                    "application/*+json": components["schemas"]["GenerateProductVariantsCommand"];
                 };
             };
             responses: {
@@ -5080,6 +5346,11 @@ export interface components {
             title: string;
             targetEntityName: string;
         };
+        CreateProductAttributeCommand: {
+            code: string;
+            title: string;
+            values: components["schemas"]["ProductAttributeValueInput"][];
+        };
         CreateProductCategoryCommand: {
             code: string;
             title: string;
@@ -5253,6 +5524,11 @@ export interface components {
             rowVersion: string;
         };
         FiscalYearStatus: number;
+        GenerateProductVariantsCommand: {
+            /** Format: int32 */
+            productId: number;
+            attributeValueIds: (number)[];
+        };
         GetAllProcessesQuery: {
             /** Format: int32 */
             pageNumber: number;
@@ -5385,6 +5661,16 @@ export interface components {
             /** Format: int32 */
             warehouseId?: null | number;
             status: null | components["schemas"]["InventorySerialStatus"];
+            /** Format: int32 */
+            pageNumber: number;
+            /** Format: int32 */
+            pageSize: number;
+            sortColumn?: null | string;
+            sortDescending: boolean;
+            searchTerm?: null | string;
+            filters?: null | components["schemas"]["FilterModel"][];
+        };
+        GetProductAttributesQuery: {
             /** Format: int32 */
             pageNumber: number;
             /** Format: int32 */
@@ -5762,6 +6048,17 @@ export interface components {
             hasPreviousPage: boolean;
             hasNextPage: boolean;
         };
+        PaginatedResultOfProductAttributeDto: {
+            items: components["schemas"]["ProductAttributeDto"][];
+            /** Format: int32 */
+            pageNumber: number;
+            /** Format: int32 */
+            totalPages: number;
+            /** Format: int32 */
+            totalCount: number;
+            hasPreviousPage: boolean;
+            hasNextPage: boolean;
+        };
         PaginatedResultOfProductCardexDto: {
             items: components["schemas"]["ProductCardexDto"][];
             /** Format: int32 */
@@ -5881,6 +6178,28 @@ export interface components {
             /** Format: int32 */
             activeVersionNumber: number;
         };
+        ProductAttributeDto: {
+            /** Format: int32 */
+            id: number;
+            code: string;
+            title: string;
+            isActive: boolean;
+            values: components["schemas"]["ProductAttributeValueDto"][];
+            /** Format: byte */
+            rowVersion: string;
+        };
+        ProductAttributeValueDto: {
+            /** Format: int32 */
+            id: number;
+            code: string;
+            title: string;
+        };
+        ProductAttributeValueInput: {
+            /** Format: int32 */
+            id?: null | number;
+            code: string;
+            title: string;
+        };
         ProductCardexDto: {
             /** Format: int64 */
             transactionId: number;
@@ -5959,8 +6278,19 @@ export interface components {
             categoryTitle: null | string;
             barcode: null | string;
             taxCode: null | string;
+            /** Format: int32 */
+            variantParentId: null | number;
+            variantParentName: null | string;
         };
         ProductSupplyType: number;
+        ProductVariantDto: {
+            /** Format: int32 */
+            id: number;
+            code: string;
+            name: string;
+            isActive: boolean;
+            values: string[];
+        };
         RoleDto: {
             id: string;
             name: string;
@@ -6295,6 +6625,16 @@ export interface components {
             parentId?: null | number;
             isBlocked: boolean;
             rowVersion: string;
+        };
+        UpdateProductAttributeCommand: {
+            /** Format: int32 */
+            id: number;
+            code: string;
+            title: string;
+            isActive: boolean;
+            values: components["schemas"]["ProductAttributeValueInput"][];
+            /** Format: byte */
+            rowVersion?: null | string;
         };
         UpdateProductCategoryCommand: {
             /** Format: int32 */

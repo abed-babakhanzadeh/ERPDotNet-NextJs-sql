@@ -3,6 +3,7 @@ import {
   Barcode,
   ClipboardCheck,
   FolderTree,
+  Palette,
   Users,
   Settings,
   Shield,
@@ -138,6 +139,12 @@ export const MENU_ITEMS: MenuItem[] = [
         href: "/base-info/product-categories",
         icon: FolderTree,
         permission: "BaseInfo.ProductCategories",
+      },
+      {
+        title: "ویژگی‌های کالا",
+        href: "/base-info/product-attributes",
+        icon: Palette,
+        permission: "BaseInfo.ProductAttributes",
       },
       {
         title: "مراکز هزینه",

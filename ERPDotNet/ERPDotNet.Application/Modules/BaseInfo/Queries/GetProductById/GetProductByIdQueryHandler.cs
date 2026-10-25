@@ -42,7 +42,9 @@ public class GetProductByIdQueryHandler : IRequestHandler<GetProductByIdQuery, P
                 p.CategoryId,
                 p.Category != null ? p.Category.Title : null,
                 p.Barcode,
-                p.TaxCode
+                p.TaxCode,
+                p.VariantParentId,
+                p.VariantParent != null ? p.VariantParent.Name : null
             ))
             .FirstOrDefaultAsync(cancellationToken);
     }

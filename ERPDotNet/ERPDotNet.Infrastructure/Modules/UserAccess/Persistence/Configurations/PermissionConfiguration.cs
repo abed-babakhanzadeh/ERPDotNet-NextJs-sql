@@ -76,6 +76,10 @@ public class PermissionConfiguration : IEntityTypeConfiguration<Permission>
             new Permission { Id = 52, Name = "BaseInfo.ProductCategories.Create", Title = "تعریف گروه کالا", IsMenu = false, ParentId = 51 },
             new Permission { Id = 53, Name = "BaseInfo.ProductCategories.Edit", Title = "ویرایش گروه کالا", IsMenu = false, ParentId = 51 },
             new Permission { Id = 54, Name = "BaseInfo.ProductCategories.Delete", Title = "حذف گروه کالا", IsMenu = false, ParentId = 51 },
+            new Permission { Id = 55, Name = "BaseInfo.ProductAttributes", Title = "ویژگی‌های کالا", IsMenu = true, ParentId = 30, Url = "/base-info/product-attributes" },
+            new Permission { Id = 56, Name = "BaseInfo.ProductAttributes.Create", Title = "تعریف ویژگی کالا", IsMenu = false, ParentId = 55 },
+            new Permission { Id = 57, Name = "BaseInfo.ProductAttributes.Edit", Title = "ویرایش ویژگی کالا", IsMenu = false, ParentId = 55 },
+            new Permission { Id = 58, Name = "BaseInfo.ProductAttributes.Delete", Title = "حذف ویژگی کالا", IsMenu = false, ParentId = 55 },
 
             // === ماژول مهندسی محصول ===
             new Permission { Id = 2000, Name = "ProductEngineering", Title = "مهندسی محصول", IsMenu = true, ParentId = 1 },
