@@ -1,4 +1,6 @@
+using ERPDotNet.Application.Common.Extensions;
 using ERPDotNet.Application.Common.Interfaces;
+using ERPDotNet.Domain.Modules.Inventory.Entities;
 using ERPDotNet.Application.Modules.Inventory.DTOs;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -30,7 +32,7 @@ public class GetInventoryBatchesHandler : IRequestHandler<GetInventoryBatchesQue
         // مرتب‌سازی: اول تاریخ انقضا نزدیک‌تر، بعد شماره بچ
         query = query.OrderBy(x => x.ExpiryDate).ThenBy(x => x.BatchNumber);
 
-        return await query.Select(x => new InventoryBatchDto
+        var batches = await query.Select(x => new InventoryBatchDto
         {
             Id = x.Id,
             ProductId = x.ProductId,
@@ -41,7 +43,13 @@ public class GetInventoryBatchesHandler : IRequestHandler<GetInventoryBatchesQue
             Description = x.Description,
             IsBlocked = x.IsBlocked,
             BlockReason = x.BlockReason,
+            QcStatus = (int)x.QcStatus,
+            QcNote = x.QcNote,
+            QcCheckedAt = x.QcCheckedAt,
             RowVersion = Convert.ToBase64String(x.RowVersion!)
         }).ToListAsync(cancellationToken);
+
+        batches.ForEach(b => b.QcStatusTitle = ((BatchQcStatus)b.QcStatus).ToDisplay());
+        return batches;
     }
 }

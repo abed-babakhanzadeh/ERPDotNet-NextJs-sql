@@ -13,6 +13,8 @@ public class InventoryItemProfile : BaseEntity
     public bool IsBatchManaged { get; set; } = false;
     public bool IsSerialManaged { get; set; } = false;
     public int? ShelfLifeDays { get; set; }
+    // بچ جدید این کالا تا تأیید کنترل کیفیت در قرنطینه می‌ماند
+    public bool RequiresQc { get; set; } = false;
 
     // واحد اصلی شمارش در انبار
     public required int MainInventoryUnitId { get; set; }

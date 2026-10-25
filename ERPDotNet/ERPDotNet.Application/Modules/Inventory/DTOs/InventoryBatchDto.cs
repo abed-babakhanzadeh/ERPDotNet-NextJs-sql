@@ -12,6 +12,11 @@ public class InventoryBatchDto
     public string? Description { get; set; }
     public bool IsBlocked { get; set; }
     public string? BlockReason { get; set; }
+
+    public int QcStatus { get; set; }
+    public string QcStatusTitle { get; set; } = string.Empty;
+    public string? QcNote { get; set; }
+    public DateTime? QcCheckedAt { get; set; }
     
     // فیلد محاسباتی برای فرانت
     public bool IsExpired => ExpiryDate.HasValue && ExpiryDate.Value.Date < DateTime.Now.Date;

@@ -88,6 +88,8 @@ public class CreateInventoryBatchHandler : IRequestHandler<CreateInventoryBatchC
             ExpiryDate = request.ExpiryDate,
             SupplierBatchCode = request.SupplierBatchCode,
             Description = request.Description,
+            // کالای نیازمند QC تا تأیید در قرنطینه می‌ماند
+            QcStatus = profile.RequiresQc ? BatchQcStatus.Quarantine : BatchQcStatus.Released,
             IsBlocked = false // وضعیت پیش‌فرض: آزاد
         };
 

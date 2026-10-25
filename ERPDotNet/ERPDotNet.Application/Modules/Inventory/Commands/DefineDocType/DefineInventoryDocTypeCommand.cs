@@ -21,6 +21,7 @@ public record DefineInventoryDocTypeCommand : IRequest<int>
     
     // تنظیمات شماره‌گذاری
     public NumberingScope NumberingScope { get; set; } = NumberingScope.Global;
+    public bool AllowsUnreleasedBatches { get; set; }
 
     // تنظیمات رفرنس (مبنا)
     public bool IsReferenceRequired { get; set; }
@@ -99,6 +100,7 @@ public class DefineInventoryDocTypeHandler : IRequestHandler<DefineInventoryDocT
             
             // تنظیمات سیستمی
             NumberingScope = request.NumberingScope,
+            AllowsUnreleasedBatches = request.AllowsUnreleasedBatches,
             IsReferenceRequired = request.IsReferenceRequired
             
             // IsActive در انتیتی شما نبود (با IsDeleted مدیریت می‌شود)، اگر اضافه کردید اینجا ست کنید

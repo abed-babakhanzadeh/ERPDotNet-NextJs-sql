@@ -20,6 +20,7 @@ public record UpdateInventoryDocTypeCommand : IRequest<bool>
     public string? RequiredPermissionName { get; set; }
     public bool AffectsCost { get; set; }
     public NumberingScope NumberingScope { get; set; }
+    public bool AllowsUnreleasedBatches { get; set; }
     public bool IsReferenceRequired { get; set; }
     
     // لیست جدید رفرنس‌ها (جایگزین لیست قبلی می‌شود)
@@ -65,6 +66,7 @@ public class UpdateInventoryDocTypeHandler : IRequestHandler<UpdateInventoryDocT
         entity.RequiredPermissionName = request.RequiredPermissionName;
         entity.AffectsCost = request.AffectsCost;
         entity.NumberingScope = request.NumberingScope;
+        entity.AllowsUnreleasedBatches = request.AllowsUnreleasedBatches;
         entity.IsReferenceRequired = request.IsReferenceRequired;
 
         // === مدیریت رفرنس‌های مجاز (Child Collection Update) ===

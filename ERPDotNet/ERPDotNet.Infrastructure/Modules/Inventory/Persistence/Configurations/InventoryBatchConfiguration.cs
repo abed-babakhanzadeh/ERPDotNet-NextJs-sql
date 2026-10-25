@@ -14,6 +14,8 @@ public class InventoryBatchConfiguration : IEntityTypeConfiguration<InventoryBat
 
         builder.Property(x => x.BatchNumber).HasMaxLength(50).IsRequired();
         builder.Property(x => x.BlockReason).HasMaxLength(200);
+        builder.Property(x => x.QcNote).HasMaxLength(500);
+        builder.Property(x => x.QcCheckedBy).HasMaxLength(450);
 
         // شماره بچ برای هر محصول باید یکتا باشد
         builder.HasIndex(x => new { x.ProductId, x.BatchNumber }).IsUnique();

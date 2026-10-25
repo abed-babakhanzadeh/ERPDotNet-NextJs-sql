@@ -707,6 +707,20 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("QcCheckedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("QcCheckedBy")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("QcNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("QcStatus")
+                        .HasColumnType("int");
+
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
@@ -952,6 +966,9 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.Property<bool>("AffectsCost")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("AllowsUnreleasedBatches")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -1087,6 +1104,9 @@ namespace ERPDotNet.Infrastructure.Migrations
 
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
+
+                    b.Property<bool>("RequiresQc")
+                        .HasColumnType("bit");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
@@ -2366,6 +2386,14 @@ namespace ERPDotNet.Infrastructure.Migrations
                             Name = "Inventory.ProductProfiles.Edit",
                             ParentId = 3120,
                             Title = "ویرایش تنظیمات و بچ‌ها"
+                        },
+                        new
+                        {
+                            Id = 3123,
+                            IsMenu = false,
+                            Name = "Inventory.Batches.Qc",
+                            ParentId = 3120,
+                            Title = "ثبت نتیجه کنترل کیفیت بچ"
                         },
                         new
                         {

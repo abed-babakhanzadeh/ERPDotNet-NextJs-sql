@@ -1,5 +1,6 @@
 using ERPDotNet.Application.Modules.Inventory.Queries.GetInventorySerials;
 using ERPDotNet.Application.Modules.Inventory.Queries.GetFefoAllocation;
+using ERPDotNet.Application.Modules.Inventory.Commands.SetBatchQcStatus;
 using ERPDotNet.API.Attributes;
 using ERPDotNet.Application.Common.Models;
 using ERPDotNet.Application.Modules.Inventory.Commands.ApproveInventoryDoc;
@@ -391,6 +392,16 @@ public class InventoryController : ControllerBase
     public async Task<ActionResult<List<InventoryBatchDto>>> GetProductBatches(int productId, [FromQuery] bool includeBlocked = false)
     {
         return Ok(await _mediator.Send(new GetInventoryBatchesQuery(productId, includeBlocked)));
+    }
+
+    // نتیجه کنترل کیفیت بچ
+    [HttpPut("batches/{id}/qc")]
+    [HasPermission("Inventory.Batches.Qc")]
+    public async Task<IActionResult> SetBatchQc(int id, [FromBody] SetBatchQcStatusCommand command)
+    {
+        if (id != command.Id) throw new FluentValidation.ValidationException("شناسه در آدرس و بدنه درخواست مغایرت دارد.");
+        await _mediator.Send(command);
+        return Ok(new { message = "وضعیت کنترل کیفیت بچ ثبت شد." });
     }
 
     // پیشنهاد بچ و قفسه برای سطر خروجی سند

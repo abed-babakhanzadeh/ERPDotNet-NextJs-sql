@@ -36,6 +36,7 @@ public class GetInventoryItemProfileHandler : IRequestHandler<GetInventoryItemPr
             IsBatchManaged = entity.IsBatchManaged,
             IsSerialManaged = entity.IsSerialManaged,
             ShelfLifeDays = entity.ShelfLifeDays,
+            RequiresQc = entity.RequiresQc,
             MainInventoryUnitId = entity.MainInventoryUnitId,
             MainInventoryUnitTitle = entity.MainInventoryUnit?.Title ?? "",
             WarehouseSettings = entity.WarehouseSettings

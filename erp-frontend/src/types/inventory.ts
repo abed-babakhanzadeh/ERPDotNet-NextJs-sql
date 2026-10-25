@@ -136,6 +136,8 @@ export interface InventoryDocTypeDto {
 
   // لیست نام موجودیت‌های مجاز (مثلاً: Project, CostCenter)
   allowedReferenceEntityNames: string[];
+  /** اجازهٔ خروج بچ قرنطینه/مردود (برگشت به تأمین‌کننده، ضایعات) */
+  allowsUnreleasedBatches: boolean;
 
   rowVersion: string;
 }
@@ -149,6 +151,7 @@ export interface DefineDocTypeCommand {
   numberingScope: NumberingScope;
   isReferenceRequired: boolean;
   allowedReferenceEntityNames: string[];
+  allowsUnreleasedBatches?: boolean;
 }
 
 export interface UpdateDocTypeCommand extends DefineDocTypeCommand {
@@ -184,6 +187,7 @@ export interface InventoryItemProfileDto {
 
   isBatchManaged: boolean;
   isSerialManaged: boolean;
+  requiresQc: boolean;
   shelfLifeDays?: number | null;
 
   mainInventoryUnitId: number;
@@ -196,6 +200,7 @@ export interface ConfigureItemProfileCommand {
   productId: number;
   isBatchManaged: boolean;
   isSerialManaged: boolean;
+  requiresQc?: boolean;
   shelfLifeDays?: number | null;
   mainInventoryUnitId: number;
 }
@@ -224,7 +229,33 @@ export interface InventoryBatchDto {
   blockReason?: string | null;
   isExpired: boolean; // فیلد محاسباتی
 
+  qcStatus: BatchQcStatus;
+  qcStatusTitle: string;
+  qcNote?: string | null;
+  qcCheckedAt?: string | null;
+
   rowVersion: string;
+}
+
+export enum BatchQcStatus {
+  Released = 1,
+  Quarantine = 2,
+  Rejected = 3,
+}
+
+export const BatchQcStatusMap: Record<
+  BatchQcStatus,
+  { label: string; tone: "neutral" | "info" | "warning" | "success" | "danger" }
+> = {
+  [BatchQcStatus.Released]: { label: "تأیید شده", tone: "success" },
+  [BatchQcStatus.Quarantine]: { label: "قرنطینه", tone: "warning" },
+  [BatchQcStatus.Rejected]: { label: "مردود", tone: "danger" },
+};
+
+export interface SetBatchQcStatusCommand {
+  id: number;
+  qcStatus: BatchQcStatus;
+  note?: string | null;
 }
 
 export interface CreateBatchCommand {

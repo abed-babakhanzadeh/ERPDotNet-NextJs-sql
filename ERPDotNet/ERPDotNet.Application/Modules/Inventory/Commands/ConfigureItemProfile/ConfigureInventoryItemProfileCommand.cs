@@ -15,6 +15,7 @@ public record ConfigureInventoryItemProfileCommand : IRequest<int>
     public bool IsBatchManaged { get; set; }
     public bool IsSerialManaged { get; set; }
     public int? ShelfLifeDays { get; set; }
+    public bool RequiresQc { get; set; }
     public int MainInventoryUnitId { get; set; }
 
     // تنظیمات پیش‌فرض برای انبارها (اختیاری - فعلاً لیست خالی می‌گیریم تا ساده باشد)
@@ -62,7 +63,8 @@ public class ConfigureInventoryItemProfileHandler : IRequestHandler<ConfigureInv
                 MainInventoryUnitId = request.MainInventoryUnitId,
                 IsBatchManaged = request.IsBatchManaged,
                 IsSerialManaged = request.IsSerialManaged,
-                ShelfLifeDays = request.ShelfLifeDays
+                ShelfLifeDays = request.ShelfLifeDays,
+                RequiresQc = request.RequiresQc
             };
             _context.InventoryItemProfiles.Add(profile);
         }
@@ -73,6 +75,7 @@ public class ConfigureInventoryItemProfileHandler : IRequestHandler<ConfigureInv
             profile.IsBatchManaged = request.IsBatchManaged;
             profile.IsSerialManaged = request.IsSerialManaged;
             profile.ShelfLifeDays = request.ShelfLifeDays;
+            profile.RequiresQc = request.RequiresQc;
         }
 
         await _context.SaveChangesAsync(cancellationToken);

@@ -36,6 +36,7 @@ public class GetInventoryDocTypeByIdHandler : IRequestHandler<GetInventoryDocTyp
             RequiredPermissionName = entity.RequiredPermissionName,
             AffectsCost = entity.AffectsCost,
             NumberingScope = entity.NumberingScope,
+            AllowsUnreleasedBatches = entity.AllowsUnreleasedBatches,
             IsReferenceRequired = entity.IsReferenceRequired,
             AllowedReferenceEntityNames = entity.AllowedReferences.Select(r => r.ReferenceEntityName).ToList(),
             RowVersion = Convert.ToBase64String(entity.RowVersion!)

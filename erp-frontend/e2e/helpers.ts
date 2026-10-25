@@ -271,6 +271,8 @@ export async function createBatch(
     unitId: number;
     batchNumber: string;
     expiryDate?: Date;
+    /** بچ‌های کالای نیازمند QC در وضعیت قرنطینه ساخته می‌شوند */
+    requiresQc?: boolean;
   },
 ): Promise<number> {
   const profile = await api.post("/api/Inventory/Inventory/products/profile", {
@@ -278,6 +280,7 @@ export async function createBatch(
       productId: p.productId,
       isBatchManaged: true,
       isSerialManaged: false,
+      requiresQc: p.requiresQc ?? false,
       mainInventoryUnitId: p.unitId,
     },
   });

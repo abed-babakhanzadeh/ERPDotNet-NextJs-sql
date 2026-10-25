@@ -31,10 +31,11 @@ public class FefoAllocationTests : IDisposable
     }
 
     [Fact]
-    public async Task Blocked_and_expired_batches_are_skipped_and_shortage_reported()
+    public async Task Blocked_unreleased_and_expired_batches_are_skipped_and_shortage_reported()
     {
         await SeedBatch("B-EXPIRED", Today.AddDays(-1), onHand: 100);
         await SeedBatch("B-BLOCKED", Today.AddDays(5), onHand: 100, blocked: true);
+        await SeedBatch("B-QUARANTINE", Today.AddDays(6), onHand: 100, qc: BatchQcStatus.Quarantine);
         var ok = await SeedBatch("B-OK", Today.AddDays(30), onHand: 5);
 
         var result = await Handle(9);
@@ -58,9 +59,9 @@ public class FefoAllocationTests : IDisposable
     private Task<FefoAllocationDto> Handle(decimal qty) =>
         new GetFefoAllocationHandler(_db).Handle(new GetFefoAllocationQuery(ProductId, WarehouseId, qty, Today), default);
 
-    private async Task<int> SeedBatch(string number, DateTime? expiry, decimal onHand, bool blocked = false, decimal reserved = 0)
+    private async Task<int> SeedBatch(string number, DateTime? expiry, decimal onHand, bool blocked = false, decimal reserved = 0, BatchQcStatus qc = BatchQcStatus.Released)
     {
-        var batch = new InventoryBatch { ProductId = ProductId, BatchNumber = number, ExpiryDate = expiry, IsBlocked = blocked, RowVersion = RowVersion };
+        var batch = new InventoryBatch { ProductId = ProductId, BatchNumber = number, ExpiryDate = expiry, IsBlocked = blocked, QcStatus = qc, RowVersion = RowVersion };
         _db.InventoryBatches.Add(batch);
         await _db.SaveChangesAsync();
         _db.CurrentStocks.Add(new CurrentStock
