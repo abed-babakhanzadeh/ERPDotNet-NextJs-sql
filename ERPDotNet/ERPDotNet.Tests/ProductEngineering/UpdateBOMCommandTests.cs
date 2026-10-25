@@ -119,6 +119,48 @@ public class UpdateBOMCommandTests : IDisposable
     }
 
     [Fact]
+    public async Task Validator_rejects_indirect_cycle_through_another_bom()
+    {
+        // 10 → 11 → 1 : افزودن 10 به فرمول 1 حلقه 1 → 10 → 11 → 1 می‌سازد
+        await SeedBomFor(10, Line(11, 1m));
+        await SeedBomFor(11, Line(ParentProductId, 1m));
+        var bom = await SeedBom(Line(30, 1m));
+
+        var result = await Validator().ValidateAsync(Command(bom,
+            new BOMDetailUpdateDto { ChildProductId = 10, Quantity = 1m }));
+
+        Assert.False(result.IsValid);
+    }
+
+    [Fact]
+    public async Task Validator_rejects_cycle_through_a_substitute()
+    {
+        await SeedBomFor(20, Line(ParentProductId, 1m));
+        var bom = await SeedBom(Line(10, 1m));
+
+        var result = await Validator().ValidateAsync(Command(bom, new BOMDetailUpdateDto
+        {
+            ChildProductId = 10, Quantity = 1m,
+            Substitutes = { new BOMSubstituteUpdateDto { SubstituteProductId = 20, Factor = 1m } }
+        }));
+
+        Assert.False(result.IsValid);
+    }
+
+    [Fact]
+    public async Task Validator_accepts_deep_tree_without_cycle()
+    {
+        await SeedBomFor(10, Line(11, 1m));
+        await SeedBomFor(11, Line(12, 1m));
+        var bom = await SeedBom(Line(30, 1m));
+
+        var result = await Validator().ValidateAsync(Command(bom,
+            new BOMDetailUpdateDto { ChildProductId = 10, Quantity = 1m }));
+
+        Assert.True(result.IsValid, string.Join(" | ", result.Errors.Select(e => e.ErrorMessage)));
+    }
+
+    [Fact]
     public async Task Validator_rejects_second_active_main_bom_for_same_product()
     {
         await SeedBom(Line(10, 1m));
@@ -153,12 +195,16 @@ public class UpdateBOMCommandTests : IDisposable
 
     private Task<BOMHeader> SeedBom(params BOMDetail[] lines) => SeedBom(BOMUsage.Main, lines);
 
-    private async Task<BOMHeader> SeedBom(BOMUsage usage, params BOMDetail[] lines)
+    private Task<BOMHeader> SeedBom(BOMUsage usage, params BOMDetail[] lines) => SeedBomFor(ParentProductId, usage, lines);
+
+    private Task<BOMHeader> SeedBomFor(int productId, params BOMDetail[] lines) => SeedBomFor(productId, BOMUsage.Main, lines);
+
+    private async Task<BOMHeader> SeedBomFor(int productId, BOMUsage usage, params BOMDetail[] lines)
     {
         using var seed = NewContext();
         var bom = new BOMHeader
         {
-            ProductId = ParentProductId, Title = "فرمول", Version = 1, Usage = usage, IsActive = true,
+            ProductId = productId, Title = "فرمول", Version = 1, Usage = usage, IsActive = true,
             FromDate = new DateTime(2026, 1, 1), RowVersion = RowVersion, Details = lines.ToList()
         };
         seed.BOMHeaders.Add(bom);

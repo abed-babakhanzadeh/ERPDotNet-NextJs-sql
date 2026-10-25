@@ -1,5 +1,6 @@
 using ERPDotNet.Application.Common.Attributes;
 using ERPDotNet.Application.Common.Interfaces;
+using ERPDotNet.Application.Modules.ProductEngineering.Services;
 using ERPDotNet.Domain.Modules.ProductEngineering.Entities;
 using FluentValidation;
 using MediatR;
@@ -69,9 +70,9 @@ public class CreateBOMValidator : AbstractValidator<CreateBOMCommand>
             .MustAsync(NotHaveDuplicateActiveMain)
             .WithMessage("برای این محصول قبلاً یک فرمول 'اصلی' فعال ثبت شده است. لطفاً فرمول جدید را 'فرعی' ثبت کنید یا قبلی را غیرفعال نمایید.");
         
-        // 3. جلوگیری از لوپ (پدر فرزند خودش نباشد) - منتقل شده از هندلر به اینجا
+        // 3. جلوگیری از لوپ در همه سطوح (A→B→A)
         RuleFor(x => x)
-            .Must(NotBeCircularDependency)
+            .MustAsync(NotBeCircularDependency)
             .WithMessage("خطای مهندسی: محصول نهایی نمی‌تواند به عنوان زیرمجموعه خودش استفاده شود (لوپ تولید).");
 
         // 4. جلوگیری از تکرار کالا در لیست مواد (اضافه شد)
@@ -100,10 +101,12 @@ public class CreateBOMValidator : AbstractValidator<CreateBOMCommand>
                            && x.IsDeleted == false, token);
     }
 
-    private bool NotBeCircularDependency(CreateBOMCommand command)
+    private async Task<bool> NotBeCircularDependency(CreateBOMCommand command, CancellationToken token)
     {
-        // هیچکدام از فرزندان نباید برابر با ProductId باشند
-        return !command.Details.Any(d => d.ChildProductId == command.ProductId);
+        var components = command.Details
+            .SelectMany(d => d.Substitutes.Select(s => s.SubstituteProductId).Prepend(d.ChildProductId));
+
+        return !await BomCycleCheck.CreatesCycleAsync(_context, command.ProductId, components, null, token);
     }
 }
 
