@@ -29,6 +29,7 @@ public class AppDbContext : IdentityDbContext<User>, IApplicationDbContext
     public DbSet<Company> Companies { get; set; }
     public DbSet<FiscalYear> FiscalYears { get; set; }
     public DbSet<CostCenter> CostCenters { get; set; }
+    public DbSet<ProductCategory> ProductCategories { get; set; }
 
     // ماژول مهندسی محصول
     public DbSet<BOMHeader> BOMHeaders { get; set; }

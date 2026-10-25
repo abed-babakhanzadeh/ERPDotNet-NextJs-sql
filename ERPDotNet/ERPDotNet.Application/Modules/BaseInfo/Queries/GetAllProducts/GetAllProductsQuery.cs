@@ -22,7 +22,11 @@ public record ProductDto(
     string? ImagePath,
     byte[] RowVersion,
     bool IsActive,
-    List<ProductConversionDto> Conversions
+    List<ProductConversionDto> Conversions,
+    int? CategoryId,
+    string? CategoryTitle,
+    string? Barcode,
+    string? TaxCode
 );
 
 public record ProductConversionDto(
@@ -54,6 +58,12 @@ public class GetAllProductsHandler : IRequestHandler<GetAllProductsQuery, Pagina
         if (request.Filters != null)
         {
             // 1. نگاشت نام واحد (مپ کردن از DTO به Entity)
+            var categoryFilter = request.Filters.FirstOrDefault(f => f.PropertyName.Equals("categoryTitle", StringComparison.OrdinalIgnoreCase));
+            if (categoryFilter != null)
+            {
+                categoryFilter.PropertyName = "Category.Title";
+            }
+
             var unitNameFilter = request.Filters.FirstOrDefault(f => f.PropertyName.Equals("unitName", StringComparison.OrdinalIgnoreCase));
             if (unitNameFilter != null)
             {
@@ -72,7 +82,8 @@ public class GetAllProductsHandler : IRequestHandler<GetAllProductsQuery, Pagina
             query = query.Where(p =>
                 p.Name.ToLower().Contains(searchLower) ||
                 p.Code.ToLower().Contains(searchLower) ||
-                (p.LatinName != null && p.LatinName.ToLower().Contains(searchLower)));
+                (p.LatinName != null && p.LatinName.ToLower().Contains(searchLower)) ||
+                (p.Barcode != null && p.Barcode.ToLower().Contains(searchLower)));
                 // (p.Descriptions != null && p.Descriptions.ToLower().Contains(searchLower))); // جستجو در توضیحات
         }
 
@@ -81,6 +92,10 @@ public class GetAllProductsHandler : IRequestHandler<GetAllProductsQuery, Pagina
         if (string.Equals(sortColumn, "UnitName", StringComparison.OrdinalIgnoreCase))
         {
             sortColumn = "Unit.Title";
+        }
+        else if (string.Equals(sortColumn, "CategoryTitle", StringComparison.OrdinalIgnoreCase))
+        {
+            sortColumn = "Category.Title";
         }
         else if (string.Equals(sortColumn, "SupplyType", StringComparison.OrdinalIgnoreCase))
         {
@@ -115,7 +130,11 @@ public class GetAllProductsHandler : IRequestHandler<GetAllProductsQuery, Pagina
                 c.AlternativeUnitId,
                 c.AlternativeUnit != null ? c.AlternativeUnit.Title : "",
                 c.Factor
-            )).ToList()
+            )).ToList(),
+            p.CategoryId,
+            p.Category != null ? p.Category.Title : null,
+            p.Barcode,
+            p.TaxCode
         ));
 
         return await dtoQuery.ToPaginatedListAsync(request.PageNumber, request.PageSize, cancellationToken);

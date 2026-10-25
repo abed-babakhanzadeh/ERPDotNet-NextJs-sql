@@ -22,6 +22,9 @@ public record UpdateProductCommand : IRequest<bool>
     public required int UnitId { get; set; }
     public ProductSupplyType SupplyType { get; set; }
     public string? ImagePath { get; set; }
+    public int? CategoryId { get; set; }
+    public string? Barcode { get; set; }
+    public string? TaxCode { get; set; }
     public bool IsActive { get; set; }
 
     // فیلد ضروری برای کنترل همروندی (از فرانت ارسال می‌شود)
@@ -56,6 +59,17 @@ public class UpdateProductValidator : AbstractValidator<UpdateProductCommand>
         RuleFor(v => v.Name).NotEmpty().MaximumLength(200);
         RuleFor(v => v.UnitId).GreaterThan(0);
 
+        RuleFor(v => v.Barcode).MaximumLength(50)
+            .MustAsync(BeUniqueBarcode).WithMessage("این بارکد قبلاً برای کالای دیگری ثبت شده است.");
+
+        RuleFor(v => v.TaxCode)
+            .Matches("^[0-9]{13}$").When(v => !string.IsNullOrWhiteSpace(v.TaxCode))
+            .WithMessage("شناسه مالیاتی کالا باید ۱۳ رقم باشد.");
+
+        RuleFor(v => v.CategoryId)
+            .MustAsync(CategoryExists).When(v => v.CategoryId.HasValue)
+            .WithMessage("گروه کالا یافت نشد.");
+
         // ولیدیشن برای لیست فرزندان
         RuleForEach(v => v.Conversions).ChildRules(c => {
             c.RuleFor(x => x.AlternativeUnitId).GreaterThan(0);
@@ -68,6 +82,16 @@ public class UpdateProductValidator : AbstractValidator<UpdateProductCommand>
     {
         return !await _context.Products
             .AnyAsync(p => p.Code == code && p.Id != model.Id, cancellationToken);
+    }
+    private async Task<bool> BeUniqueBarcode(UpdateProductCommand model, string? barcode, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(barcode)) return true;
+        return !await _context.Products.AnyAsync(p => p.Barcode == barcode && p.Id != model.Id, cancellationToken);
+    }
+
+    private async Task<bool> CategoryExists(int? categoryId, CancellationToken cancellationToken)
+    {
+        return await _context.ProductCategories.AnyAsync(c => c.Id == categoryId, cancellationToken);
     }
 }
 
@@ -116,6 +140,9 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductCommand, bool>
         entity.UnitId = request.UnitId;
         entity.SupplyType = request.SupplyType;
         entity.IsActive = request.IsActive;
+        entity.CategoryId = request.CategoryId;
+        entity.Barcode = string.IsNullOrWhiteSpace(request.Barcode) ? null : request.Barcode.Trim();
+        entity.TaxCode = string.IsNullOrWhiteSpace(request.TaxCode) ? null : request.TaxCode.Trim();
 
         // === 5. مدیریت هوشمند لیست فرزندان (Smart Sync) ===
         

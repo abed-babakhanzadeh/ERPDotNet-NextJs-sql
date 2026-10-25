@@ -1,5 +1,6 @@
 import {
   LayoutDashboard,
+  FolderTree,
   Users,
   Settings,
   Shield,
@@ -122,6 +123,12 @@ export const MENU_ITEMS: MenuItem[] = [
         href: "/base-info/fiscal-years",
         icon: CalendarRange,
         permission: "BaseInfo.FiscalYears",
+      },
+      {
+        title: "گروه‌های کالا",
+        href: "/base-info/product-categories",
+        icon: FolderTree,
+        permission: "BaseInfo.ProductCategories",
       },
       {
         title: "مراکز هزینه",

@@ -28,6 +28,7 @@ public interface IApplicationDbContext
     DbSet<Company> Companies { get; }
     DbSet<FiscalYear> FiscalYears { get; }
     DbSet<CostCenter> CostCenters { get; }
+    DbSet<ProductCategory> ProductCategories { get; }
 
     // === ماژول ProductEngineering ===
     DbSet<BOMHeader> BOMHeaders { get; }

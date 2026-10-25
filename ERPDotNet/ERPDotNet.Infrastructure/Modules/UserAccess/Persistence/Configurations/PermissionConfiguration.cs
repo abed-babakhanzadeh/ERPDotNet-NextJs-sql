@@ -72,6 +72,10 @@ public class PermissionConfiguration : IEntityTypeConfiguration<Permission>
             new Permission { Id = 48, Name = "BaseInfo.CostCenters.Create", Title = "تعریف مرکز هزینه", IsMenu = false, ParentId = 47 },
             new Permission { Id = 49, Name = "BaseInfo.CostCenters.Edit", Title = "ویرایش مرکز هزینه", IsMenu = false, ParentId = 47 },
             new Permission { Id = 50, Name = "BaseInfo.CostCenters.Delete", Title = "حذف مرکز هزینه", IsMenu = false, ParentId = 47 },
+            new Permission { Id = 51, Name = "BaseInfo.ProductCategories", Title = "گروه‌های کالا", IsMenu = true, ParentId = 30, Url = "/base-info/product-categories" },
+            new Permission { Id = 52, Name = "BaseInfo.ProductCategories.Create", Title = "تعریف گروه کالا", IsMenu = false, ParentId = 51 },
+            new Permission { Id = 53, Name = "BaseInfo.ProductCategories.Edit", Title = "ویرایش گروه کالا", IsMenu = false, ParentId = 51 },
+            new Permission { Id = 54, Name = "BaseInfo.ProductCategories.Delete", Title = "حذف گروه کالا", IsMenu = false, ParentId = 51 },
 
             // === ماژول مهندسی محصول ===
             new Permission { Id = 2000, Name = "ProductEngineering", Title = "مهندسی محصول", IsMenu = true, ParentId = 1 },
