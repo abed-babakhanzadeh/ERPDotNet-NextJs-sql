@@ -18,6 +18,12 @@ const columns: ColumnConfig[] = [
     render: (v: number) => <span className="tabular-nums">{v.toLocaleString("fa-IR")}</span>,
   },
   {
+    key: "hourlyRate",
+    label: "نرخ ساعتی (ریال)",
+    type: "number",
+    render: (v: number) => <span className="tabular-nums">{v.toLocaleString("fa-IR")}</span>,
+  },
+  {
     key: "isActive",
     label: "وضعیت",
     type: "boolean",

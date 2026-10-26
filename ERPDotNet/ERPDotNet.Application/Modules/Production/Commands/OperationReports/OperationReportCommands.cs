@@ -59,8 +59,14 @@ public class OperationReportCommandsHandler :
                 ? "سفارش تولید هنوز تأیید نشده است؛ کارکرد فقط برای سفارش تأییدشده ثبت می‌شود."
                 : "برای سفارش تکمیل‌شده یا ابطال‌شده کارکرد ثبت نمی‌شود.");
 
-        if (!await _context.ProductionOrderOperations.AnyAsync(o => o.Id == request.OperationId && o.ProductionOrderId == order.Id, cancellationToken))
-            throw new BusinessRuleException("عملیات انتخاب‌شده متعلق به این سفارش تولید نیست.");
+        var operation = await _context.ProductionOrderOperations.AsNoTracking()
+            .Where(o => o.Id == request.OperationId && o.ProductionOrderId == order.Id)
+            .Select(o => new { o.WorkCenterId })
+            .FirstOrDefaultAsync(cancellationToken)
+            ?? throw new BusinessRuleException("عملیات انتخاب‌شده متعلق به این سفارش تولید نیست.");
+        // مرکز کاری حذف نرم‌شده هم نرخش را نگه می‌دارد
+        var hourlyRate = await _context.WorkCenters.IgnoreQueryFilters().AsNoTracking()
+            .Where(w => w.Id == operation.WorkCenterId).Select(w => w.HourlyRate).FirstOrDefaultAsync(cancellationToken);
 
         var report = new ProductionOperationReport
         {
@@ -70,6 +76,7 @@ public class OperationReportCommandsHandler :
             ScrapQuantity = request.ScrapQuantity,
             SetupMinutes = request.SetupMinutes,
             RunMinutes = request.RunMinutes,
+            HourlyRate = hourlyRate,
             Note = string.IsNullOrWhiteSpace(request.Note) ? null : request.Note.Trim()
         };
         _context.ProductionOperationReports.Add(report);

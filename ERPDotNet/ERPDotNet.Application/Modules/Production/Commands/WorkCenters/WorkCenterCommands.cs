@@ -15,6 +15,7 @@ public interface IWorkCenterInput
     string Title { get; }
     int? CostCenterId { get; }
     decimal HoursPerDay { get; }
+    decimal HourlyRate { get; }
     string? Description { get; }
 }
 
@@ -25,6 +26,7 @@ public record CreateWorkCenterCommand : IRequest<int>, IWorkCenterInput
     public required string Title { get; set; }
     public int? CostCenterId { get; set; }
     public decimal HoursPerDay { get; set; } = 8;
+    public decimal HourlyRate { get; set; }
     public bool IsActive { get; set; } = true;
     public string? Description { get; set; }
 }
@@ -36,6 +38,7 @@ public record UpdateWorkCenterCommand : IRequest<bool>, IWorkCenterInput
     public required string Title { get; set; }
     public int? CostCenterId { get; set; }
     public decimal HoursPerDay { get; set; }
+    public decimal HourlyRate { get; set; }
     public bool IsActive { get; set; }
     public string? Description { get; set; }
     public byte[]? RowVersion { get; set; }
@@ -56,6 +59,7 @@ public abstract class WorkCenterInputValidator<T> : AbstractValidator<T> where T
             .MaximumLength(100).WithMessage("عنوان مرکز کاری حداکثر ۱۰۰ کاراکتر است.");
         RuleFor(x => x.HoursPerDay).GreaterThan(0).LessThanOrEqualTo(24)
             .WithMessage("ساعت کاری روزانه باید بیشتر از صفر و حداکثر ۲۴ باشد.");
+        RuleFor(x => x.HourlyRate).GreaterThanOrEqualTo(0).WithMessage("نرخ ساعتی نمی‌تواند منفی باشد.");
         RuleFor(x => x.CostCenterId)
             .MustAsync(async (id, ct) => await context.CostCenters.AnyAsync(c => c.Id == id && c.IsActive, ct))
             .When(x => x.CostCenterId.HasValue)
@@ -94,6 +98,7 @@ public class WorkCenterCommandsHandler :
             Title = request.Title.Trim(),
             CostCenterId = request.CostCenterId,
             HoursPerDay = request.HoursPerDay,
+            HourlyRate = request.HourlyRate,
             IsActive = request.IsActive,
             Description = Clean(request.Description)
         };
@@ -112,6 +117,7 @@ public class WorkCenterCommandsHandler :
         entity.Title = request.Title.Trim();
         entity.CostCenterId = request.CostCenterId;
         entity.HoursPerDay = request.HoursPerDay;
+        entity.HourlyRate = request.HourlyRate;
         entity.IsActive = request.IsActive;
         entity.Description = Clean(request.Description);
 
@@ -132,6 +138,9 @@ public class WorkCenterCommandsHandler :
         // مسیر تولید فرمول‌ها به مرکز کاری ارجاع دارد؛ به‌جای حذف می‌شود غیرفعالش کرد
         if (await _context.BOMOperations.AnyAsync(o => o.WorkCenterId == request.Id, cancellationToken))
             throw new BusinessRuleException("این مرکز کاری در مسیر تولید فرمول‌ها استفاده شده و قابل حذف نیست؛ می‌توانید آن را غیرفعال کنید.");
+        // عملیات سفارش‌ها هم به آن ارجاع دارند و کارکرد و بهایشان باید نام مرکز را نگه دارد
+        if (await _context.ProductionOrderOperations.AnyAsync(o => o.WorkCenterId == request.Id, cancellationToken))
+            throw new BusinessRuleException("این مرکز کاری در عملیات سفارش‌های تولید استفاده شده و قابل حذف نیست؛ می‌توانید آن را غیرفعال کنید.");
 
         entity.IsDeleted = true;
         await _context.SaveChangesAsync(cancellationToken);

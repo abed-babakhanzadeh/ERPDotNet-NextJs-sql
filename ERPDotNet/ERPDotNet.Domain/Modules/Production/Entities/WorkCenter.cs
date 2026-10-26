@@ -21,6 +21,9 @@ public class WorkCenter : BaseEntity
     // ساعت کاری در دسترس در روز
     public decimal HoursPerDay { get; set; } = 8;
 
+    // نرخ ریالی هر ساعت کارکرد (دستمزد و سربار)؛ در گزارش کارکرد ثبت و در بهای محصول استفاده می‌شود
+    public decimal HourlyRate { get; set; }
+
     public bool IsActive { get; set; } = true;
     [MaxLength(500)] public string? Description { get; set; }
 }

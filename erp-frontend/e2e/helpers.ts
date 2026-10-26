@@ -158,6 +158,7 @@ export async function createBom(
     title: string;
     components: { productId: number; unitId: number; quantity: number; wastePercentage?: number }[];
     baseQuantity?: number;
+    operations?: { sequence: number; title: string; workCenterId: number; setupMinutes: number; runMinutes: number }[];
   },
 ): Promise<number> {
   return postId(
@@ -181,6 +182,7 @@ export async function createBom(
         wastePercentage: c.wastePercentage ?? 0,
         substitutes: [],
       })),
+      operations: b.operations ?? [],
     },
     "ساخت BOM",
   );

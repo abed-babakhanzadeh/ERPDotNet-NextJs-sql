@@ -26,12 +26,13 @@ const schema = z.object({
     .number({ message: "ساعت کاری روزانه را وارد کنید" })
     .positive("ساعت کاری روزانه باید بیشتر از صفر باشد")
     .max(24, "ساعت کاری روزانه حداکثر ۲۴ است"),
+  hourlyRate: z.number({ message: "نرخ ساعتی را وارد کنید" }).min(0, "نرخ ساعتی نمی‌تواند منفی باشد"),
   isActive: z.boolean(),
   description: z.string().max(500, "حداکثر ۵۰۰ کاراکتر"),
 });
 type Values = z.infer<typeof schema>;
 
-const EMPTY: Values = { code: "", title: "", costCenterId: null, hoursPerDay: 8, isActive: true, description: "" };
+const EMPTY: Values = { code: "", title: "", costCenterId: null, hoursPerDay: 8, hourlyRate: 0, isActive: true, description: "" };
 
 interface Props {
   mode: "create" | "edit";
@@ -66,6 +67,7 @@ export default function WorkCenterForm({ mode, id }: Props) {
             title: existing.title,
             costCenterId: existing.costCenterId ?? null,
             hoursPerDay: existing.hoursPerDay,
+            hourlyRate: existing.hourlyRate,
             isActive: existing.isActive,
             description: existing.description ?? "",
           });
@@ -140,6 +142,15 @@ export default function WorkCenterForm({ mode, id }: Props) {
             min={0}
             step={0.5}
             description="ظرفیت در دسترس در روز، برای گزارش بار مرکز کاری"
+          />
+          <NumberField
+            control={form.control}
+            name="hourlyRate"
+            label="نرخ ساعتی (ریال)"
+            required
+            min={0}
+            step={1000}
+            description="دستمزد و سربار هر ساعت کارکرد؛ روی هر گزارش کارکرد ثبت می‌شود و تغییرش کارکرد گذشته را عوض نمی‌کند"
           />
           <TextareaField control={form.control} name="description" label="توضیحات" />
           {mode === "edit" && (

@@ -6,6 +6,7 @@ using ERPDotNet.Application.Modules.Production.Commands.DeleteProductionOrder;
 using ERPDotNet.Application.Modules.Production.Commands.ExecuteProductionOrder;
 using ERPDotNet.Application.Modules.Production.Commands.OperationReports;
 using ERPDotNet.Application.Modules.Production.Commands.UpdateProductionOrder;
+using ERPDotNet.Application.Modules.Production.Queries.GetProductionOrderCost;
 using ERPDotNet.Application.Modules.Production.Queries.GetProductionOrderOperations;
 using ERPDotNet.Application.Modules.Production.Queries.GetProductionOrderProgress;
 using ERPDotNet.Application.Modules.Production.Queries.GetProductionOrders;
@@ -53,6 +54,14 @@ public class ProductionOrdersController : ControllerBase
     public async Task<ActionResult<ProductionOrderProgressDto>> GetProgress(int id)
     {
         return Ok(await _mediator.Send(new GetProductionOrderProgressQuery(id)));
+    }
+
+    // بهای ریالی سفارش: مواد، کارکرد مراکز کاری و ارزش رسیدها
+    [HttpGet("{id}/cost")]
+    [HasPermission("Production.Orders.Cost")]
+    public async Task<ActionResult<ProductionOrderCostDto>> GetCost(int id)
+    {
+        return Ok(await _mediator.Send(new GetProductionOrderCostQuery(id)));
     }
 
     [HttpGet("{id}/operations")]

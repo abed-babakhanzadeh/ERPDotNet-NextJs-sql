@@ -1,3 +1,5 @@
+using ERPDotNet.Domain.Modules.Inventory.Enums;
+
 namespace ERPDotNet.Application.Modules.Inventory.Contracts;
 
 /// <summary>
@@ -13,7 +15,8 @@ public interface IReceiptCostProvider
     Task<IReadOnlyDictionary<long, decimal>> GetUnitCostsAsync(ReceiptCostRequest request, CancellationToken cancellationToken);
 }
 
-public sealed record ReceiptCostRequest(long DocId, long ReferenceEntityId, IReadOnlyList<ReceiptCostLine> Lines);
+/// <param name="CostBasis">مبنای بهای محصول تولیدی طبق تنظیمات ارزش‌گذاری</param>
+public sealed record ReceiptCostRequest(long DocId, long ReferenceEntityId, ProductionCostBasis CostBasis, IReadOnlyList<ReceiptCostLine> Lines);
 
 /// <param name="LineRole">نقش سطر در سند مرجع (ReferenceEntityName سطر)</param>
 public sealed record ReceiptCostLine(long DetailId, int ProductId, decimal Quantity, string? LineRole);

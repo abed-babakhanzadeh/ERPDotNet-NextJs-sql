@@ -59,6 +59,7 @@ public class ProductionOperationReportConfiguration : IEntityTypeConfiguration<P
         builder.Property(x => x.ScrapQuantity).HasPrecision(18, 6);
         builder.Property(x => x.SetupMinutes).HasPrecision(18, 4);
         builder.Property(x => x.RunMinutes).HasPrecision(18, 4);
+        builder.Property(x => x.HourlyRate).HasPrecision(18, 2);
         builder.Property(x => x.Note).HasMaxLength(500);
     }
 }
@@ -87,6 +88,7 @@ public class WorkCenterConfiguration : IEntityTypeConfiguration<WorkCenter>
         builder.Property(x => x.Title).HasMaxLength(100).IsRequired();
         builder.Property(x => x.Description).HasMaxLength(500);
         builder.Property(x => x.HoursPerDay).HasPrecision(5, 2);
+        builder.Property(x => x.HourlyRate).HasPrecision(18, 2);
 
         builder.HasOne(x => x.CostCenter).WithMany().HasForeignKey(x => x.CostCenterId).OnDelete(DeleteBehavior.Restrict);
     }
