@@ -1477,6 +1477,45 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Production/Orders/{id}/progress": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProductionOrderProgressDto"];
+                        "application/json": components["schemas"]["ProductionOrderProgressDto"];
+                        "text/json": components["schemas"]["ProductionOrderProgressDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Production/Orders/boms": {
         parameters: {
             query?: never;
@@ -1634,6 +1673,131 @@ export interface paths {
         trace?: never;
     };
     "/api/Production/Orders/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Production/Orders/{id}/issue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["IssueProductionMaterialsCommand"];
+                    "text/json": components["schemas"]["IssueProductionMaterialsCommand"];
+                    "application/*+json": components["schemas"]["IssueProductionMaterialsCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": number;
+                        "application/json": number;
+                        "text/json": number;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Production/Orders/{id}/receive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ReceiveProductionOutputCommand"];
+                    "text/json": components["schemas"]["ReceiveProductionOutputCommand"];
+                    "application/*+json": components["schemas"]["ReceiveProductionOutputCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": number;
+                        "application/json": number;
+                        "text/json": number;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Production/Orders/{id}/complete": {
         parameters: {
             query?: never;
             header?: never;
@@ -5649,6 +5813,9 @@ export interface components {
             batchId?: null | number;
             description?: null | string;
             serialNumbers: string[];
+            referenceEntityName?: null | string;
+            /** Format: int64 */
+            referenceEntityLineId?: null | number;
         };
         CreateLocationCommand: {
             /** Format: int32 */
@@ -6182,6 +6349,9 @@ export interface components {
             destinationWarehouseTitle?: null | string;
             status: components["schemas"]["InventoryDocStatus"];
             description: string;
+            referenceEntityName?: null | string;
+            /** Format: int64 */
+            referenceEntityId?: null | number;
             referenceExternalCode?: null | string;
             targetPartyName?: null | string;
             rowVersion: string;
@@ -6262,6 +6432,25 @@ export interface components {
             locationCode: string;
             locationPath: string;
             batchNumber: string;
+        };
+        IssueProductionMaterialLine: {
+            /** Format: int32 */
+            materialId: number;
+            /** Format: double */
+            quantity: number;
+        };
+        IssueProductionMaterialsCommand: {
+            /** Format: int32 */
+            id: number;
+            /** Format: int32 */
+            docTypeId: number;
+            /** Format: int32 */
+            warehouseId: number;
+            /** Format: date-time */
+            docDate: string;
+            /** Format: int32 */
+            locationId: number;
+            lines: components["schemas"]["IssueProductionMaterialLine"][];
         };
         ItemWarehouseSettingDto: {
             /** Format: int32 */
@@ -6653,6 +6842,39 @@ export interface components {
             /** Format: double */
             baseQuantity: number;
         };
+        ProductionLinkedDocDto: {
+            /** Format: int64 */
+            docId: number;
+            /** Format: int64 */
+            docNumber: number;
+            docTypeTitle: string;
+            /** Format: int32 */
+            natureId: number;
+            natureTitle: string;
+            /** Format: int32 */
+            statusId: number;
+            statusTitle: string;
+            /** Format: date-time */
+            docDate: string;
+            warehouseName: string;
+        };
+        ProductionMaterialProgressDto: {
+            /** Format: int32 */
+            materialId: null | number;
+            /** Format: int32 */
+            productId: number;
+            productCode: string;
+            productName: string;
+            unitName: string;
+            /** Format: double */
+            requiredQuantity: number;
+            /** Format: double */
+            issuedQuantity: number;
+            /** Format: double */
+            pendingIssueQuantity: number;
+            /** Format: double */
+            remainingQuantity: number;
+        };
         ProductionOrderDto: {
             /** Format: int32 */
             id: number;
@@ -6723,6 +6945,21 @@ export interface components {
             /** Format: double */
             requiredQuantity: number;
         };
+        ProductionOrderProgressDto: {
+            /** Format: double */
+            orderQuantity: number;
+            /** Format: double */
+            receivedQuantity: number;
+            /** Format: double */
+            pendingReceiptQuantity: number;
+            /** Format: double */
+            scrapQuantity: number;
+            /** Format: double */
+            pendingScrapQuantity: number;
+            hasOpenDocs: boolean;
+            materials: components["schemas"]["ProductionMaterialProgressDto"][];
+            documents: components["schemas"]["ProductionLinkedDocDto"][];
+        };
         ProductionOrderStatus: number;
         ProductionRequirementsDto: {
             /** Format: int32 */
@@ -6742,6 +6979,24 @@ export interface components {
             name: string;
             isActive: boolean;
             values: string[];
+        };
+        ReceiveProductionOutputCommand: {
+            /** Format: int32 */
+            id: number;
+            /** Format: int32 */
+            docTypeId: number;
+            /** Format: int32 */
+            warehouseId: number;
+            /** Format: date-time */
+            docDate: string;
+            /** Format: double */
+            quantity: number;
+            /** Format: int32 */
+            locationId: number;
+            /** Format: double */
+            scrapQuantity: number;
+            /** Format: int32 */
+            scrapLocationId?: null | number;
         };
         RoleDto: {
             id: string;

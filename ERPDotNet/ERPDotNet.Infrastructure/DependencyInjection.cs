@@ -161,6 +161,7 @@ public static class DependencyInjection
         services.AddScoped<IInventoryPostingService, InventoryPostingService>();
         services.AddScoped<IDocumentNumberingService, DocumentNumberingService>();
         services.AddScoped<IBaseInfoUsageChecker, InventoryBaseInfoUsageChecker>();
+        services.AddScoped<ERPDotNet.Application.Modules.Inventory.Contracts.IInventoryReferenceReader, ERPDotNet.Application.Modules.Inventory.Services.InventoryReferenceReader>();
 
         // 🌟 اتصال استراتژیک به گردش کار (بدون Coupling)
         // using ERPDotNet.Application.Modules.Workflow.Contracts;

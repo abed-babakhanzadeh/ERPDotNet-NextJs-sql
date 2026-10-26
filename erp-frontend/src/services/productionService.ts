@@ -1,12 +1,15 @@
 import apiClient from "@/lib/api/client";
 import type {
   CreateProductionOrderCommand,
+  IssueProductionMaterialsCommand,
   Paged,
   PagedQuery,
   ProductionBomOptionDto,
   ProductionOrderDto,
   ProductionOrderListDto,
+  ProductionOrderProgressDto,
   ProductionRequirementsDto,
+  ReceiveProductionOutputCommand,
   UpdateProductionOrderCommand,
 } from "@/types/api";
 
@@ -49,5 +52,20 @@ export const productionService = {
 
   removeOrder: async (id: number) => {
     await apiClient.delete(`${ORDERS}/${id}`);
+  },
+
+  /** مصرف مواد، محصول و ضایعات از روی اسناد انبار مرتبط با سفارش */
+  getProgress: async (id: number) => (await apiClient.get<ProductionOrderProgressDto>(`${ORDERS}/${id}/progress`)).data,
+
+  /** شناسه سند حواله پیش‌نویس */
+  issueMaterials: async (command: IssueProductionMaterialsCommand) =>
+    (await apiClient.post<number>(`${ORDERS}/${command.id}/issue`, command)).data,
+
+  /** شناسه سند رسید پیش‌نویس */
+  receiveOutput: async (command: ReceiveProductionOutputCommand) =>
+    (await apiClient.post<number>(`${ORDERS}/${command.id}/receive`, command)).data,
+
+  completeOrder: async (id: number) => {
+    await apiClient.post(`${ORDERS}/${id}/complete`);
   },
 };
