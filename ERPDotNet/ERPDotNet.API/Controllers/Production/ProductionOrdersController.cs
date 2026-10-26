@@ -3,7 +3,9 @@ using ERPDotNet.Application.Common.Models;
 using ERPDotNet.Application.Modules.Production.Commands.ChangeProductionOrderStatus;
 using ERPDotNet.Application.Modules.Production.Commands.CreateProductionOrder;
 using ERPDotNet.Application.Modules.Production.Commands.DeleteProductionOrder;
+using ERPDotNet.Application.Modules.Production.Commands.ExecuteProductionOrder;
 using ERPDotNet.Application.Modules.Production.Commands.UpdateProductionOrder;
+using ERPDotNet.Application.Modules.Production.Queries.GetProductionOrderProgress;
 using ERPDotNet.Application.Modules.Production.Queries.GetProductionOrders;
 using ERPDotNet.Application.Modules.Production.Queries.GetProductionRequirements;
 using MediatR;
@@ -35,6 +37,12 @@ public class ProductionOrdersController : ControllerBase
         var result = await _mediator.Send(new GetProductionOrderByIdQuery(id));
         if (result == null) return NotFound();
         return Ok(result);
+    }
+
+    [HttpGet("{id}/progress")]
+    public async Task<ActionResult<ProductionOrderProgressDto>> GetProgress(int id)
+    {
+        return Ok(await _mediator.Send(new GetProductionOrderProgressQuery(id)));
     }
 
     [HttpGet("boms")]
@@ -79,6 +87,30 @@ public class ProductionOrdersController : ControllerBase
     public async Task<IActionResult> Cancel(int id)
     {
         await _mediator.Send(new CancelProductionOrderCommand(id));
+        return NoContent();
+    }
+
+    [HttpPost("{id}/issue")]
+    [HasPermission("Production.Orders.Execute")]
+    public async Task<ActionResult<long>> IssueMaterials(int id, [FromBody] IssueProductionMaterialsCommand command)
+    {
+        if (id != command.Id) return BadRequest();
+        return Ok(await _mediator.Send(command));
+    }
+
+    [HttpPost("{id}/receive")]
+    [HasPermission("Production.Orders.Execute")]
+    public async Task<ActionResult<long>> ReceiveOutput(int id, [FromBody] ReceiveProductionOutputCommand command)
+    {
+        if (id != command.Id) return BadRequest();
+        return Ok(await _mediator.Send(command));
+    }
+
+    [HttpPost("{id}/complete")]
+    [HasPermission("Production.Orders.Execute")]
+    public async Task<IActionResult> Complete(int id)
+    {
+        await _mediator.Send(new CompleteProductionOrderCommand(id));
         return NoContent();
     }
 

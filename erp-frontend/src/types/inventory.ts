@@ -321,6 +321,10 @@ export interface InventoryDocDto {
   status: InventoryDocStatus;
   description?: string;
 
+  // سند مرجع در ماژول دیگر (ProductionOrder، StockCount و ...)
+  referenceEntityName?: string | null;
+  referenceEntityId?: number | null;
+
   // Party Info
   referenceExternalCode?: string;
   targetPartyName?: string;

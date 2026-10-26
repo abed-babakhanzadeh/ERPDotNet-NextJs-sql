@@ -2964,6 +2964,14 @@ namespace ERPDotNet.Infrastructure.Migrations
                             Name = "Production.Orders.Release",
                             ParentId = 5100,
                             Title = "تأیید و ابطال سفارش تولید"
+                        },
+                        new
+                        {
+                            Id = 5105,
+                            IsMenu = false,
+                            Name = "Production.Orders.Execute",
+                            ParentId = 5100,
+                            Title = "حواله مواد، رسید محصول و تکمیل سفارش تولید"
                         });
                 });
 

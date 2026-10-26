@@ -69,6 +69,8 @@ public class GetInventoryDocByIdHandler : IRequestHandler<GetInventoryDocByIdQue
             Status = doc.Status,
             Description = doc.Description ?? string.Empty,
 
+            ReferenceEntityName = doc.ReferenceEntityName,
+            ReferenceEntityId = doc.ReferenceEntityId,
             ReferenceExternalCode = doc.ReferenceExternalCode,
             TargetPartyName = doc.TargetPartyName,
 

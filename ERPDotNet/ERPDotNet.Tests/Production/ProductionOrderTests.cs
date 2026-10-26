@@ -72,7 +72,7 @@ public class ProductionOrderTests : IDisposable
         await new UpdateProductionOrderHandler(_db).Handle(new UpdateProductionOrderCommand { Id = id, Quantity = 4 }, default);
         Assert.Equal(8m, (await _db.ProductionOrderMaterials.SingleAsync(m => m.ProductionOrderId == id)).RequiredQuantity);
 
-        var status = new ChangeProductionOrderStatusHandler(_db);
+        var status = new ChangeProductionOrderStatusHandler(_db, new ERPDotNet.Application.Modules.Inventory.Services.InventoryReferenceReader(_db));
         await status.Handle(new ReleaseProductionOrderCommand(id), default);
         await Assert.ThrowsAsync<BusinessRuleException>(() =>
             new UpdateProductionOrderHandler(_db).Handle(new UpdateProductionOrderCommand { Id = id, Quantity = 5 }, default));

@@ -22,6 +22,10 @@ public class InventoryDocDto
     public InventoryDocStatus Status { get; set; }
     public string Description { get; set; } = string.Empty;
 
+    // سند مرجع در ماژول دیگر (مثلاً ProductionOrder یا StockCount) برای ردیابی
+    public string? ReferenceEntityName { get; set; }
+    public long? ReferenceEntityId { get; set; }
+
     // Party Info
     public string? ReferenceExternalCode { get; set; }
     public string? TargetPartyName { get; set; }

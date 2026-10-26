@@ -29,6 +29,7 @@ import AdvancedEditableGrid, {
 } from "@/components/grid/AdvancedEditableGrid";
 import { Button } from "@/components/ui/button";
 import { InventoryDocStatusBadge } from "@/components/inventory/InventoryDocStatusBadge";
+import { DocReferenceBanner } from "@/components/inventory/DocReferenceBanner";
 import {
   TableLookupCombobox,
   ColumnDef,
@@ -842,6 +843,7 @@ export default function DocForm({
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
           )}
+          {docData && <DocReferenceBanner doc={docData} />}
           <AutoForm
             fields={headerFields}
             data={headerData}

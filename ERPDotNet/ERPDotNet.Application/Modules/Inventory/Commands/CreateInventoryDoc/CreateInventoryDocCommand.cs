@@ -42,6 +42,9 @@ public record CreateInventoryDocDetailDto
     public string? Description { get; set; }
     // فقط برای کالای سریال‌دار
     public List<string> SerialNumbers { get; set; } = new();
+    // ردیابی سطر: نقش سطر در سند مرجع و شناسه سطر مرجع (مثلاً ماده اولیه سفارش تولید)
+    public string? ReferenceEntityName { get; set; }
+    public long? ReferenceEntityLineId { get; set; }
 }
 
 public class CreateInventoryDocValidator : AbstractValidator<CreateInventoryDocCommand>
@@ -137,6 +140,8 @@ public class CreateInventoryDocHandler : IRequestHandler<CreateInventoryDocComma
                 DestinationLocationId = isTransfer ? item.DestinationLocationId : null,
                 BatchId = item.BatchId,
                 Description = item.Description,
+                ReferenceEntityName = item.ReferenceEntityName,
+                ReferenceEntityLineId = item.ReferenceEntityLineId,
                 Serials = InventoryDocRules.NormalizeSerials(item.SerialNumbers)
                     .Select(s => new InventoryDocDetailSerial { SerialNumber = s })
                     .ToList()
