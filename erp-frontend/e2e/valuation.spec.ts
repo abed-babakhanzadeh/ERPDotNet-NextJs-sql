@@ -19,9 +19,10 @@ test.describe("ارزش‌گذاری موجودی", () => {
     await expect(page.getByRole("radiogroup", { name: "روش ارزش‌گذاری" })).toContainText("میانگین موزون متحرک");
     await expect(page.getByText("در دست ساخت").first()).toBeVisible();
     const settings = await (await api.get("/api/Settings/InventoryValuation")).json();
-    expect(settings.methods.find((m: { value: number }) => m.value === 3)).toMatchObject({ implemented: false });
-    const fifo = await api.put("/api/Settings/InventoryValuation", { data: { ...settings, method: 3 } });
-    expect(fifo.status()).toBe(422);
+    expect(settings.methods.find((m: { value: number }) => m.value === 2)).toMatchObject({ implemented: false });
+    expect(settings.methods.find((m: { value: number }) => m.value === 3)).toMatchObject({ implemented: true });
+    const periodic = await api.put("/api/Settings/InventoryValuation", { data: { ...settings, method: 2 } });
+    expect(periodic.status()).toBe(422);
 
     // رسید ریالی بدون بها قطعی نمی‌شود
     const noCost = await createDoc(api, { docTypeId: purchase, warehouseId: warehouse.warehouseId, lines: [line(10)] });

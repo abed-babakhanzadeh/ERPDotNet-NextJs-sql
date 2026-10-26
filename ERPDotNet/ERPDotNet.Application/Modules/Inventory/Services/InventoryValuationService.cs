@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace ERPDotNet.Application.Modules.Inventory.Services;
 
 /// <summary>
-/// ارزش‌گذاری حرکت‌های یک سند هنگام قطعی شدن یا ابطال (روش میانگین موزون متحرک).
+/// ارزش‌گذاری حرکت‌های یک سند هنگام قطعی شدن یا ابطال (میانگین موزون متحرک یا FIFO، طبق تنظیمات).
 /// باید روی همان DbContext و پیش از SaveChanges صدا زده شود تا ارزش، مقدار و تراز در یک تراکنش ثبت شوند.
 /// </summary>
 public interface IInventoryValuationService
@@ -24,8 +24,9 @@ public interface IInventoryValuationService
 /// - حواله: با میانگین فعلی؛ اگر موجودی صفر شود کل ارزش باقی‌مانده خارج می‌شود تا گرد کردن ارزش یتیم نگذارد
 /// - انتقال: خروج با میانگین مبدأ و ورود با همان بها؛ در سطح «شرکت» تراز تغییری نمی‌کند
 /// - ابطال: دقیقاً با بهای تراکنش اصلی برمی‌گردد
+/// در FIFO بهای حواله از لایه‌ها می‌آید (فایل InventoryValuationService.Fifo) و بقیه قواعد همین‌هاست.
 /// </summary>
-public class InventoryValuationService : IInventoryValuationService
+public partial class InventoryValuationService : IInventoryValuationService
 {
     private readonly IApplicationDbContext _context;
     private readonly IEnumerable<IReceiptCostProvider> _providers;
@@ -43,8 +44,9 @@ public class InventoryValuationService : IInventoryValuationService
         if (transactions.Count == 0) return;
 
         var settings = await InventoryValuationSettingsReader.GetAsync(_context, cancellationToken);
-        if (settings.Method != ValuationMethod.MovingAverage)
-            throw new BusinessRuleException($"روش ارزش‌گذاری «{settings.Method.ToDisplay()}» هنوز پیاده نشده است؛ در تنظیمات، میانگین موزون متحرک را انتخاب کنید.");
+        if (settings.Method is not (ValuationMethod.MovingAverage or ValuationMethod.Fifo))
+            throw new BusinessRuleException($"روش ارزش‌گذاری «{settings.Method.ToDisplay()}» هنوز پیاده نشده است؛ در تنظیمات، روش دیگری انتخاب کنید.");
+        var fifo = settings.Method == ValuationMethod.Fifo ? new FifoCostLayers(_context) : null;
         var byWarehouse = settings.Level == ValuationLevel.Warehouse;
 
         var warehouseIds = transactions.Select(t => t.WarehouseId).Distinct().ToList();
@@ -61,6 +63,12 @@ public class InventoryValuationService : IInventoryValuationService
 
         var balances = new Dictionary<BalanceKey, InventoryCostBalance>();
         var transferCosts = new Dictionary<long, decimal>();
+        var transferSlices = new Dictionary<long, List<FifoCostLayers.Slice>>();
+        var transferTotals = new Dictionary<long, decimal>();
+        // انتقالی که هر دو سرش در یک دامنه است (مثلاً دو انبار یک شرکت در سطح «شرکت») تراز و لایه را تغییر نمی‌دهد
+        var sameScopeTransfers = docType.Nature == InventoryNature.Transfer
+            ? transactions.GroupBy(t => t.DocDetailId).Where(g => g.Select(KeyOf).Distinct().Count() == 1).Select(g => g.Key).ToHashSet()
+            : [];
 
         foreach (var t in transactions)
         {
@@ -68,17 +76,32 @@ public class InventoryValuationService : IInventoryValuationService
             if (!balances.TryGetValue(key, out var balance))
                 balances[key] = balance = await LoadBalanceAsync(key, companies, cancellationToken);
 
-            decimal unit;
-            if (isReversal)
-                unit = t.RelatedTransactionId is { } original ? originalCosts.GetValueOrDefault(original) : 0;
-            else if (t.Sign == InventoryTransactionSign.Decrease)
-                unit = balance.AverageCost;
-            else if (docType.Nature == InventoryNature.Transfer)
-                unit = transferCosts.GetValueOrDefault(t.DocDetailId);
-            else
-                unit = receiptCosts.TryGetValue(t.DocDetailId, out var cost) ? cost : balance.AverageCost;
+            decimal total;
+            if (fifo == null || sameScopeTransfers.Contains(t.DocDetailId))
+            {
+                decimal unit;
+                if (isReversal)
+                    unit = t.RelatedTransactionId is { } original ? originalCosts.GetValueOrDefault(original) : 0;
+                else if (t.Sign == InventoryTransactionSign.Decrease)
+                    unit = balance.AverageCost;
+                else if (docType.Nature == InventoryNature.Transfer)
+                    unit = transferCosts.GetValueOrDefault(t.DocDetailId);
+                else
+                    unit = receiptCosts.TryGetValue(t.DocDetailId, out var cost) ? cost : balance.AverageCost;
 
-            var total = Math.Round(t.Quantity * unit, 4, MidpointRounding.AwayFromZero);
+                total = Math.Round(t.Quantity * unit, 4, MidpointRounding.AwayFromZero);
+                // در FIFO خروج انتقال درون دامنه بهای قدیمی‌ترین لایه‌ها را می‌گیرد، بی‌آنکه مصرفشان کند
+                if (fifo != null && !isReversal && t.Sign == InventoryTransactionSign.Decrease)
+                    total = FifoCostLayers.Peek(await fifo.ScopeAsync(key, balance, cancellationToken), t.Quantity, balance.AverageCost);
+            }
+            else
+            {
+                total = await ApplyFifoAsync(fifo, t, key, balance, docType, isReversal, receiptCosts, originalCosts, transferSlices, cancellationToken);
+                // ورود انتقال همان ارزشی را می‌برد که از مبدأ خارج شد
+                if (!isReversal && docType.Nature == InventoryNature.Transfer && t.Sign == InventoryTransactionSign.Increase)
+                    total = transferTotals.GetValueOrDefault(t.DocDetailId, total);
+            }
+
             // خروج آخرین موجودی کل ارزش باقی‌مانده را می‌برد
             if (t.Sign == InventoryTransactionSign.Decrease && balance.Quantity - t.Quantity == 0)
                 total = balance.Value;
@@ -87,10 +110,53 @@ public class InventoryValuationService : IInventoryValuationService
             balance.Value += total * (int)t.Sign;
 
             t.TotalCost = total;
-            t.UnitCost = t.Quantity > 0 ? Math.Round(total / t.Quantity, 6, MidpointRounding.AwayFromZero) : unit;
+            t.UnitCost = t.Quantity > 0 ? Math.Round(total / t.Quantity, 6, MidpointRounding.AwayFromZero) : 0;
             if (!isReversal && docType.Nature == InventoryNature.Transfer && t.Sign == InventoryTransactionSign.Decrease)
+            {
                 transferCosts[t.DocDetailId] = t.UnitCost.Value;
+                transferTotals[t.DocDetailId] = total;
+            }
         }
+    }
+
+    private static async Task<decimal> ApplyFifoAsync(
+        FifoCostLayers fifo, InventoryTransaction t, BalanceKey key, InventoryCostBalance balance, InventoryDocType docType, bool isReversal,
+        Dictionary<long, decimal> receiptCosts, Dictionary<long, decimal> originalCosts, Dictionary<long, List<FifoCostLayers.Slice>> transferSlices,
+        CancellationToken ct)
+    {
+        var layers = await fifo.ScopeAsync(key, balance, ct);
+        var originalUnit = t.RelatedTransactionId is { } related ? originalCosts.GetValueOrDefault(related) : 0;
+
+        if (t.Sign == InventoryTransactionSign.Decrease)
+        {
+            // ابطال رسید (یا ورود انتقال) اول لایه‌ای را برمی‌دارد که خودش ساخته بود
+            var preferred = isReversal ? FifoCostLayers.CreatedBy(layers, t.RelatedTransactionId) : [];
+            var taken = new List<FifoCostLayers.Slice>();
+            var total = fifo.Consume(layers, t, preferred, balance.AverageCost, taken);
+            if (!isReversal && docType.Nature == InventoryNature.Transfer) transferSlices[t.DocDetailId] = taken;
+            return total;
+        }
+
+        if (isReversal)
+        {
+            // ابطال حواله (یا خروج انتقال): همان لایه‌های مصرف‌شده برمی‌گردند
+            var restored = t.RelatedTransactionId is { } original ? await fifo.RestoreAsync(layers, t, original, ct) : [];
+            if (restored.Count > 0) return restored.Sum(r => r.Cost);
+            fifo.Receive(layers, key, t, t.Quantity, originalUnit);
+            return Math.Round(t.Quantity * originalUnit, 4, MidpointRounding.AwayFromZero);
+        }
+
+        if (docType.Nature == InventoryNature.Transfer)
+        {
+            // ورود انتقال بین دو دامنه: هر لایه مصرف‌شده مبدأ با همان بها در مقصد
+            var slices = transferSlices.GetValueOrDefault(t.DocDetailId) ?? [];
+            foreach (var slice in slices) fifo.Receive(layers, key, t, slice.Quantity, slice.Layer.UnitCost);
+            return slices.Sum(s => s.Cost);
+        }
+
+        var unit = receiptCosts.TryGetValue(t.DocDetailId, out var cost) ? cost : balance.AverageCost;
+        fifo.Receive(layers, key, t, t.Quantity, unit);
+        return Math.Round(t.Quantity * unit, 4, MidpointRounding.AwayFromZero);
     }
 
     private async Task<Dictionary<long, decimal>> ResolveReceiptCostsAsync(InventoryDocHeader doc, InventoryDocType docType, ProductionCostBasis costBasis, CancellationToken ct)
