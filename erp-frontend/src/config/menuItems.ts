@@ -34,6 +34,7 @@ import {
   Coins,
   Scale,
   Calculator,
+  Cog,
 } from "lucide-react";
 
 export interface MenuItem {
@@ -209,6 +210,12 @@ export const MENU_ITEMS: MenuItem[] = [
         href: "/production/orders",
         icon: ClipboardList,
         permission: "Production.Orders",
+      },
+      {
+        title: "مراکز کاری",
+        href: "/production/work-centers",
+        icon: Cog,
+        permission: "Production.WorkCenters",
       },
       {
         title: "برنامه‌ریزی مواد و کسری",

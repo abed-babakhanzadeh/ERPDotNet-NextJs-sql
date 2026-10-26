@@ -180,7 +180,11 @@ public class PermissionConfiguration : IEntityTypeConfiguration<Permission>
             new Permission { Id = 5103, Name = "Production.Orders.Delete", Title = "حذف سفارش تولید", IsMenu = false, ParentId = 5100 },
             new Permission { Id = 5104, Name = "Production.Orders.Release", Title = "تأیید و ابطال سفارش تولید", IsMenu = false, ParentId = 5100 },
             new Permission { Id = 5105, Name = "Production.Orders.Execute", Title = "حواله مواد، رسید محصول و تکمیل سفارش تولید", IsMenu = false, ParentId = 5100 },
-            new Permission { Id = 5200, Name = "Production.Planning", Title = "برنامه‌ریزی مواد و کسری", IsMenu = true, ParentId = 5000, Url = "/production/planning" }
+            new Permission { Id = 5200, Name = "Production.Planning", Title = "برنامه‌ریزی مواد و کسری", IsMenu = true, ParentId = 5000, Url = "/production/planning" },
+            new Permission { Id = 5300, Name = "Production.WorkCenters", Title = "مراکز کاری", IsMenu = true, ParentId = 5000, Url = "/production/work-centers" },
+            new Permission { Id = 5301, Name = "Production.WorkCenters.Create", Title = "تعریف مرکز کاری", IsMenu = false, ParentId = 5300 },
+            new Permission { Id = 5302, Name = "Production.WorkCenters.Edit", Title = "ویرایش مرکز کاری", IsMenu = false, ParentId = 5300 },
+            new Permission { Id = 5303, Name = "Production.WorkCenters.Delete", Title = "حذف مرکز کاری", IsMenu = false, ParentId = 5300 }
             
         );
     }

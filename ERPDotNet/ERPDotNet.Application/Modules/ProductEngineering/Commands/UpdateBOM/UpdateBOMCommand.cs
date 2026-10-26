@@ -32,6 +32,7 @@ public record UpdateBOMCommand : IRequest<bool>
 
     public List<BOMDetailUpdateDto> Details { get; set; } = new();
     public List<BOMOutputInputDto> Outputs { get; set; } = new();
+    public List<BOMOperationInputDto> Operations { get; set; } = new();
 }
 
 public record BOMDetailUpdateDto
@@ -90,6 +91,10 @@ public class UpdateBOMValidator : AbstractValidator<UpdateBOMCommand>
         RuleForEach(v => v.Outputs).SetValidator(new BOMOutputInputValidator());
         RuleFor(v => v.Outputs).Must(BOMOutputRules.AreDistinct).WithMessage(BOMOutputRules.DuplicateMessage);
         RuleFor(v => v.Outputs).Must(BOMOutputRules.LeavesShareForMainProduct).WithMessage(BOMOutputRules.CostShareMessage);
+        RuleForEach(v => v.Operations).SetValidator(new BOMOperationInputValidator());
+        RuleFor(v => v.Operations).Must(BOMOperationRules.AreDistinct).WithMessage(BOMOperationRules.DuplicateMessage);
+        RuleFor(v => v.Operations).MustAsync((ops, ct) => BOMOperationRules.WorkCentersAreActiveAsync(context, ops, ct))
+            .WithMessage(BOMOperationRules.WorkCenterMessage);
 
         RuleFor(x => x)
             .MustAsync(NotOutputMainProduct)
@@ -214,6 +219,7 @@ public class UpdateBOMHandler : IRequestHandler<UpdateBOMCommand, bool>
             .Include(x => x.Details)
             .ThenInclude(d => d.Substitutes)
             .Include(x => x.Outputs)
+            .Include(x => x.Operations)
             .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
 
         if (entity == null) throw new KeyNotFoundException("فرمول ساخت مورد نظر یافت نشد.");
@@ -235,6 +241,7 @@ public class UpdateBOMHandler : IRequestHandler<UpdateBOMCommand, bool>
         entity.ToDate = request.ToDate;
         entity.BaseQuantity = request.BaseQuantity;
         BOMOutputRules.Sync(entity, request.Outputs);
+        BOMOperationRules.Sync(entity, request.Operations);
 
         // --- آپدیت دیتیل‌ها (منطق قبلی شما حفظ شد) ---
         // 1. حذف شده‌ها

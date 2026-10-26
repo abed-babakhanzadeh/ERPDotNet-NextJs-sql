@@ -1868,6 +1868,70 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.ToTable("bom_headers", "eng");
                 });
 
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.ProductEngineering.Entities.BOMOperation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BOMHeaderId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<decimal>("RunMinutes")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<int>("Sequence")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("SetupMinutes")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("WorkCenterId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WorkCenterId");
+
+                    b.HasIndex("BOMHeaderId", "Sequence")
+                        .IsUnique();
+
+                    b.ToTable("bom_operations", "eng");
+                });
+
             modelBuilder.Entity("ERPDotNet.Domain.Modules.ProductEngineering.Entities.BOMOutput", b =>
                 {
                     b.Property<int>("Id")
@@ -2086,6 +2150,69 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.HasIndex("ProductionOrderId");
 
                     b.ToTable("production_order_materials", "production");
+                });
+
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.Production.Entities.WorkCenter", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int?>("CostCenterId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<decimal>("HoursPerDay")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.HasIndex("CostCenterId");
+
+                    b.ToTable("work_centers", "production");
                 });
 
             modelBuilder.Entity("ERPDotNet.Domain.Modules.UserAccess.Entities.Permission", b =>
@@ -2981,6 +3108,39 @@ namespace ERPDotNet.Infrastructure.Migrations
                             ParentId = 5000,
                             Title = "برنامه‌ریزی مواد و کسری",
                             Url = "/production/planning"
+                        },
+                        new
+                        {
+                            Id = 5300,
+                            IsMenu = true,
+                            Name = "Production.WorkCenters",
+                            ParentId = 5000,
+                            Title = "مراکز کاری",
+                            Url = "/production/work-centers"
+                        },
+                        new
+                        {
+                            Id = 5301,
+                            IsMenu = false,
+                            Name = "Production.WorkCenters.Create",
+                            ParentId = 5300,
+                            Title = "تعریف مرکز کاری"
+                        },
+                        new
+                        {
+                            Id = 5302,
+                            IsMenu = false,
+                            Name = "Production.WorkCenters.Edit",
+                            ParentId = 5300,
+                            Title = "ویرایش مرکز کاری"
+                        },
+                        new
+                        {
+                            Id = 5303,
+                            IsMenu = false,
+                            Name = "Production.WorkCenters.Delete",
+                            ParentId = 5300,
+                            Title = "حذف مرکز کاری"
                         });
                 });
 
@@ -4531,6 +4691,23 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.ProductEngineering.Entities.BOMOperation", b =>
+                {
+                    b.HasOne("ERPDotNet.Domain.Modules.ProductEngineering.Entities.BOMHeader", "BOMHeader")
+                        .WithMany("Operations")
+                        .HasForeignKey("BOMHeaderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ERPDotNet.Domain.Modules.Production.Entities.WorkCenter", null)
+                        .WithMany()
+                        .HasForeignKey("WorkCenterId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("BOMHeader");
+                });
+
             modelBuilder.Entity("ERPDotNet.Domain.Modules.ProductEngineering.Entities.BOMOutput", b =>
                 {
                     b.HasOne("ERPDotNet.Domain.Modules.ProductEngineering.Entities.BOMHeader", "BOMHeader")
@@ -4605,6 +4782,16 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.Navigation("Product");
 
                     b.Navigation("ProductionOrder");
+                });
+
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.Production.Entities.WorkCenter", b =>
+                {
+                    b.HasOne("ERPDotNet.Domain.Modules.BaseInfo.Entities.CostCenter", "CostCenter")
+                        .WithMany()
+                        .HasForeignKey("CostCenterId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("CostCenter");
                 });
 
             modelBuilder.Entity("ERPDotNet.Domain.Modules.UserAccess.Entities.Permission", b =>
@@ -4913,6 +5100,8 @@ namespace ERPDotNet.Infrastructure.Migrations
             modelBuilder.Entity("ERPDotNet.Domain.Modules.ProductEngineering.Entities.BOMHeader", b =>
                 {
                     b.Navigation("Details");
+
+                    b.Navigation("Operations");
 
                     b.Navigation("Outputs");
                 });

@@ -37,3 +37,19 @@ public class ProductionOrderMaterialConfiguration : IEntityTypeConfiguration<Pro
         builder.HasOne(x => x.Product).WithMany().HasForeignKey(x => x.ProductId).OnDelete(DeleteBehavior.Restrict);
     }
 }
+
+public class WorkCenterConfiguration : IEntityTypeConfiguration<WorkCenter>
+{
+    public void Configure(EntityTypeBuilder<WorkCenter> builder)
+    {
+        builder.ToTable("work_centers", "production");
+
+        builder.Property(x => x.Code).HasMaxLength(20).IsRequired();
+        builder.HasIndex(x => x.Code).IsUnique().HasFilter("[IsDeleted] = 0");
+        builder.Property(x => x.Title).HasMaxLength(100).IsRequired();
+        builder.Property(x => x.Description).HasMaxLength(500);
+        builder.Property(x => x.HoursPerDay).HasPrecision(5, 2);
+
+        builder.HasOne(x => x.CostCenter).WithMany().HasForeignKey(x => x.CostCenterId).OnDelete(DeleteBehavior.Restrict);
+    }
+}

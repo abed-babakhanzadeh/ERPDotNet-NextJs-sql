@@ -104,6 +104,7 @@ public class CopyBOMHandler : IRequestHandler<CopyBOMCommand, int>
             .Include(x => x.Details)
                 .ThenInclude(d => d.Substitutes)
             .Include(x => x.Outputs)
+            .Include(x => x.Operations)
             .AsSplitQuery()
             .FirstOrDefaultAsync(x => x.Id == request.SourceBomId, cancellationToken);
 
@@ -134,6 +135,21 @@ public class CopyBOMHandler : IRequestHandler<CopyBOMCommand, int>
                 Type = output.Type,
                 Quantity = output.Quantity,
                 CostSharePercent = output.CostSharePercent
+            });
+        }
+
+        // مسیر تولید هم با فرمول کپی می‌شود
+        foreach (var operation in sourceBom.Operations.Where(o => !o.IsDeleted).OrderBy(o => o.Sequence))
+        {
+            newBom.Operations.Add(new BOMOperation
+            {
+                BOMHeaderId = 0,
+                Sequence = operation.Sequence,
+                Title = operation.Title,
+                WorkCenterId = operation.WorkCenterId,
+                SetupMinutes = operation.SetupMinutes,
+                RunMinutes = operation.RunMinutes,
+                Description = operation.Description
             });
         }
 

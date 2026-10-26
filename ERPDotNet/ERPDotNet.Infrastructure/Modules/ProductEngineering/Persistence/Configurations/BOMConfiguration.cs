@@ -121,3 +121,30 @@ public class BOMOutputConfiguration : IEntityTypeConfiguration<BOMOutput>
                .OnDelete(DeleteBehavior.Restrict);
     }
 }
+
+// 5. تنظیمات عملیات مسیر تولید
+public class BOMOperationConfiguration : IEntityTypeConfiguration<BOMOperation>
+{
+    public void Configure(EntityTypeBuilder<BOMOperation> builder)
+    {
+        builder.ToTable("bom_operations", "eng");
+
+        builder.Property(x => x.Title).HasMaxLength(100).IsRequired();
+        builder.Property(x => x.Description).HasMaxLength(500);
+        builder.Property(x => x.SetupMinutes).HasPrecision(18, 4);
+        builder.Property(x => x.RunMinutes).HasPrecision(18, 4);
+
+        builder.HasIndex(x => new { x.BOMHeaderId, x.Sequence }).IsUnique();
+
+        builder.HasOne(x => x.BOMHeader)
+               .WithMany(x => x.Operations)
+               .HasForeignKey(x => x.BOMHeaderId)
+               .OnDelete(DeleteBehavior.Cascade);
+
+        // کلید خارجی به ماژول تولید بدون navigation
+        builder.HasOne<ERPDotNet.Domain.Modules.Production.Entities.WorkCenter>()
+               .WithMany()
+               .HasForeignKey(x => x.WorkCenterId)
+               .OnDelete(DeleteBehavior.Restrict);
+    }
+}
