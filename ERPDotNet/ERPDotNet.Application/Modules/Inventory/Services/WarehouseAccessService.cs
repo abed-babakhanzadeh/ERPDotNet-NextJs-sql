@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ERPDotNet.Application.Modules.Inventory.Services;
 
-// دسترسی سطح داده به انبار برای کاربر جاری
-// - Admin و کاربری که هیچ انباری به او تخصیص داده نشده همه انبارها را می‌بینند (null)
-// - با اولین تخصیص، فقط انبارهای تخصیص‌یافته در دسترس‌اند
+// دسترسی سطح داده به انبار برای کاربر جاری (سخت‌گیرانه)
+// - Admin همه انبارها را می‌بیند (null)
+// - بقیه فقط انبارهای تخصیص‌یافته؛ کاربر بدون تخصیص به هیچ انباری دسترسی ندارد
 public interface IWarehouseAccessService
 {
     /// <summary>شناسه انبارهای مجاز؛ null یعنی بدون محدودیت</summary>
@@ -19,6 +19,9 @@ public interface IWarehouseAccessService
 public class WarehouseAccessService : IWarehouseAccessService
 {
     private const string AdminRoleName = "Admin";
+
+    public const string NoWarehouseMessage =
+        "هیچ انباری به شما تخصیص داده نشده است. از مدیر سیستم بخواهید شما را در «کاربران مجاز» انبار مورد نیازتان قرار دهد.";
 
     private readonly IApplicationDbContext _context;
     private readonly ICurrentUserService _currentUser;
@@ -51,7 +54,7 @@ public class WarehouseAccessService : IWarehouseAccessService
                     .Where(a => a.UserId == userId)
                     .Select(a => a.WarehouseId)
                     .ToListAsync(cancellationToken);
-                _allowed = ids.Count == 0 ? null : ids;
+                _allowed = ids;
             }
         }
 
@@ -62,7 +65,10 @@ public class WarehouseAccessService : IWarehouseAccessService
     public async Task EnsureAccessAsync(int warehouseId, CancellationToken cancellationToken)
     {
         var allowed = await GetAllowedWarehouseIdsAsync(cancellationToken);
-        if (allowed != null && !allowed.Contains(warehouseId))
-            throw new ForbiddenAccessException("شما به این انبار دسترسی ندارید.");
+        if (allowed == null || allowed.Contains(warehouseId)) return;
+
+        throw new ForbiddenAccessException(allowed.Count == 0
+            ? NoWarehouseMessage
+            : "شما به این انبار دسترسی ندارید.");
     }
 }
