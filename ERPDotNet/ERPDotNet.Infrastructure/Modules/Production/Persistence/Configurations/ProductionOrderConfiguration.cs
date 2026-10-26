@@ -22,6 +22,44 @@ public class ProductionOrderConfiguration : IEntityTypeConfiguration<ProductionO
                .WithOne(m => m.ProductionOrder)
                .HasForeignKey(m => m.ProductionOrderId)
                .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(x => x.Operations)
+               .WithOne(o => o.ProductionOrder)
+               .HasForeignKey(o => o.ProductionOrderId)
+               .OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+public class ProductionOrderOperationConfiguration : IEntityTypeConfiguration<ProductionOrderOperation>
+{
+    public void Configure(EntityTypeBuilder<ProductionOrderOperation> builder)
+    {
+        builder.ToTable("production_order_operations", "production");
+
+        builder.Property(x => x.Title).HasMaxLength(100).IsRequired();
+        builder.Property(x => x.PlannedSetupMinutes).HasPrecision(18, 4);
+        builder.Property(x => x.PlannedRunMinutes).HasPrecision(18, 4);
+        builder.HasIndex(x => new { x.ProductionOrderId, x.Sequence }).IsUnique();
+        builder.HasOne(x => x.WorkCenter).WithMany().HasForeignKey(x => x.WorkCenterId).OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasMany(x => x.Reports)
+               .WithOne(r => r.Operation)
+               .HasForeignKey(r => r.ProductionOrderOperationId)
+               .OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
+public class ProductionOperationReportConfiguration : IEntityTypeConfiguration<ProductionOperationReport>
+{
+    public void Configure(EntityTypeBuilder<ProductionOperationReport> builder)
+    {
+        builder.ToTable("production_operation_reports", "production");
+
+        builder.Property(x => x.GoodQuantity).HasPrecision(18, 6);
+        builder.Property(x => x.ScrapQuantity).HasPrecision(18, 6);
+        builder.Property(x => x.SetupMinutes).HasPrecision(18, 4);
+        builder.Property(x => x.RunMinutes).HasPrecision(18, 4);
+        builder.Property(x => x.Note).HasMaxLength(500);
     }
 }
 

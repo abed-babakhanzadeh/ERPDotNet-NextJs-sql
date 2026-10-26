@@ -1559,6 +1559,45 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Production/Orders/{id}/operations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProductionOperationDto"][];
+                        "application/json": components["schemas"]["ProductionOperationDto"][];
+                        "text/json": components["schemas"]["ProductionOperationDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Production/Orders/boms": {
         parameters: {
             query?: never;
@@ -1840,6 +1879,87 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Production/Orders/{id}/operations/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["ReportOperationCommand"];
+                    "text/json": components["schemas"]["ReportOperationCommand"];
+                    "application/*+json": components["schemas"]["ReportOperationCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": number;
+                        "application/json": number;
+                        "text/json": number;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Production/Orders/{id}/operations/reports/{reportId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                    reportId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Production/Orders/{id}/complete": {
         parameters: {
             query?: never;
@@ -1943,6 +2063,43 @@ export interface paths {
                         "text/plain": components["schemas"]["WorkCenterOptionDto"][];
                         "application/json": components["schemas"]["WorkCenterOptionDto"][];
                         "text/json": components["schemas"]["WorkCenterOptionDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Production/WorkCenters/load": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["WorkCenterLoadDto"][];
+                        "application/json": components["schemas"]["WorkCenterLoadDto"][];
+                        "text/json": components["schemas"]["WorkCenterLoadDto"][];
                     };
                 };
             };
@@ -6909,6 +7066,22 @@ export interface components {
             shortage: number;
         };
         NumberingScope: number;
+        OperationReportDto: {
+            /** Format: int32 */
+            id: number;
+            /** Format: date-time */
+            reportDate: string;
+            /** Format: double */
+            goodQuantity: number;
+            /** Format: double */
+            scrapQuantity: number;
+            /** Format: double */
+            setupMinutes: number;
+            /** Format: double */
+            runMinutes: number;
+            note: null | string;
+            reportedBy: string;
+        };
         PaginatedResultOfBOMListDto: {
             items: components["schemas"]["BOMListDto"][];
             /** Format: int32 */
@@ -7328,6 +7501,38 @@ export interface components {
             variancePercent: null | number;
             overAllowed: boolean;
         };
+        ProductionOperationDto: {
+            /** Format: int32 */
+            id: number;
+            /** Format: int32 */
+            sequence: number;
+            title: string;
+            /** Format: int32 */
+            workCenterId: number;
+            workCenterCode: string;
+            workCenterTitle: string;
+            /** Format: double */
+            plannedSetupMinutes: number;
+            /** Format: double */
+            plannedRunMinutes: number;
+            /** Format: double */
+            goodQuantity: number;
+            /** Format: double */
+            scrapQuantity: number;
+            /** Format: double */
+            actualSetupMinutes: number;
+            /** Format: double */
+            actualRunMinutes: number;
+            /** Format: double */
+            earnedMinutes: number;
+            /** Format: double */
+            efficiencyPercent: null | number;
+            /** Format: double */
+            remainingMinutes: number;
+            /** Format: double */
+            progressPercent: number;
+            reports: components["schemas"]["OperationReportDto"][];
+        };
         ProductionOrderDto: {
             /** Format: int32 */
             id: number;
@@ -7480,6 +7685,23 @@ export interface components {
             scrapQuantity: number;
             /** Format: int32 */
             scrapLocationId?: null | number;
+        };
+        ReportOperationCommand: {
+            /** Format: int32 */
+            orderId: number;
+            /** Format: int32 */
+            operationId: number;
+            /** Format: date-time */
+            reportDate: string;
+            /** Format: double */
+            goodQuantity: number;
+            /** Format: double */
+            scrapQuantity: number;
+            /** Format: double */
+            setupMinutes: number;
+            /** Format: double */
+            runMinutes: number;
+            note?: null | string;
         };
         RoleDto: {
             id: string;
@@ -8048,6 +8270,22 @@ export interface components {
             description: null | string;
             /** Format: byte */
             rowVersion: string;
+        };
+        WorkCenterLoadDto: {
+            /** Format: int32 */
+            id: number;
+            code: string;
+            title: string;
+            /** Format: double */
+            hoursPerDay: number;
+            /** Format: int32 */
+            openOrderCount: number;
+            /** Format: int32 */
+            operationCount: number;
+            /** Format: double */
+            remainingMinutes: number;
+            /** Format: double */
+            loadDays: number;
         };
         WorkCenterOptionDto: {
             /** Format: int32 */

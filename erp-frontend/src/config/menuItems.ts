@@ -35,6 +35,7 @@ import {
   Scale,
   Calculator,
   Cog,
+  Gauge,
 } from "lucide-react";
 
 export interface MenuItem {
@@ -215,6 +216,12 @@ export const MENU_ITEMS: MenuItem[] = [
         title: "مراکز کاری",
         href: "/production/work-centers",
         icon: Cog,
+        permission: "Production.WorkCenters",
+      },
+      {
+        title: "بار مراکز کاری",
+        href: "/production/work-centers/load",
+        icon: Gauge,
         permission: "Production.WorkCenters",
       },
       {

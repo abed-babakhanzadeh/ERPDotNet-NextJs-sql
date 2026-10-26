@@ -32,6 +32,46 @@ public class ProductionOrder : BaseEntity
     [MaxLength(500)] public string? Description { get; set; }
 
     public ICollection<ProductionOrderMaterial> Materials { get; set; } = new List<ProductionOrderMaterial>();
+
+    // عملیات از مسیر تولید فرمول کپی می‌شوند تا تغییر بعدی مسیر روی سفارش جاری اثر نگذارد
+    public ICollection<ProductionOrderOperation> Operations { get; set; } = new List<ProductionOrderOperation>();
+}
+
+/// <summary>عملیات سفارش با زمان برنامه‌ریزی‌شده برای مقدار سفارش</summary>
+public class ProductionOrderOperation
+{
+    public int Id { get; set; }
+
+    public int ProductionOrderId { get; set; }
+    public ProductionOrder? ProductionOrder { get; set; }
+
+    public int Sequence { get; set; }
+    [MaxLength(100)] public string Title { get; set; } = "";
+
+    public required int WorkCenterId { get; set; }
+    public WorkCenter? WorkCenter { get; set; }
+
+    // دقیقه؛ اجرا = زمان اجرای فرمول × مقدار سفارش ÷ مقدار پایه
+    public decimal PlannedSetupMinutes { get; set; }
+    public decimal PlannedRunMinutes { get; set; }
+
+    public ICollection<ProductionOperationReport> Reports { get; set; } = new List<ProductionOperationReport>();
+}
+
+/// <summary>گزارش کارکرد یک عملیات: مقدار انجام‌شده و زمان واقعی (ثبت‌کننده در CreatedBy)</summary>
+public class ProductionOperationReport : BaseEntity
+{
+    public int Id { get; set; }
+
+    public int ProductionOrderOperationId { get; set; }
+    public ProductionOrderOperation? Operation { get; set; }
+
+    public DateTime ReportDate { get; set; }
+    public decimal GoodQuantity { get; set; }
+    public decimal ScrapQuantity { get; set; }
+    public decimal SetupMinutes { get; set; }
+    public decimal RunMinutes { get; set; }
+    [MaxLength(500)] public string? Note { get; set; }
 }
 
 /// <summary>نیاز یک ماده اولیه برای سفارش (به واحد اصلی ماده، با احتساب ضایعات فرمول)</summary>

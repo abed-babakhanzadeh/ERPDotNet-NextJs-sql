@@ -44,6 +44,8 @@ public class AppDbContext : IdentityDbContext<User>, IApplicationDbContext
     public DbSet<BOMOutput> BOMOutputs { get; set; }
     public DbSet<BOMOperation> BOMOperations { get; set; }
     public DbSet<WorkCenter> WorkCenters { get; set; }
+    public DbSet<ProductionOrderOperation> ProductionOrderOperations { get; set; }
+    public DbSet<ProductionOperationReport> ProductionOperationReports { get; set; }
 
     // جداول ماژول انبار (Inventory)
     public DbSet<Warehouse> Warehouses { get; set; }
