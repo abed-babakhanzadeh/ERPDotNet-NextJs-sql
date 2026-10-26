@@ -1,6 +1,8 @@
 import apiClient from "@/lib/api/client";
 import type {
   CreateProductionOrderCommand,
+  GetMaterialPlanQuery,
+  MaterialPlanDto,
   IssueProductionMaterialsCommand,
   Paged,
   PagedQuery,
@@ -69,6 +71,10 @@ export const productionService = {
   /** گزارش انحراف مصرف مواد؛ فقط سفارش‌های در حال تولید و تکمیل‌شده */
   searchVariance: async (query: PagedQuery & { status?: number | null; overAllowedOnly?: boolean }, signal?: AbortSignal) =>
     (await apiClient.post<Paged<ProductionVarianceSummaryDto>>(`${ORDERS}/variance`, query, { signal })).data,
+
+  /** برنامه‌ریزی چندسطحی مواد و کسری سفارش‌های باز */
+  planMaterials: async (query: Partial<GetMaterialPlanQuery>) =>
+    (await apiClient.post<MaterialPlanDto>("/Production/Planning/materials", query)).data,
 
   completeOrder: async (id: number) => {
     await apiClient.post(`${ORDERS}/${id}/complete`);

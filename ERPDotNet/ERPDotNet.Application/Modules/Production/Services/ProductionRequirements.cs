@@ -11,13 +11,20 @@ public static class ProductionRequirements
 {
     /// <summary>فرمول‌های ساخت فعال یا تأییدشده کالا که در تاریخ داده‌شده معتبرند</summary>
     public static IQueryable<BOMHeader> UsableBoms(IApplicationDbContext context, int productId, DateTime at) =>
+        UsableBoms(context, at).Where(b => b.ProductId == productId);
+
+    /// <summary>همه فرمول‌های قابل استفاده در تاریخ داده‌شده (برای برنامه‌ریزی چندسطحی)</summary>
+    public static IQueryable<BOMHeader> UsableBoms(IApplicationDbContext context, DateTime at) =>
         context.BOMHeaders.Where(b =>
-            b.ProductId == productId &&
             b.IsActive &&
             b.Type == BOMType.Manufacturing &&
             (b.Status == BOMStatus.Active || b.Status == BOMStatus.Approved) &&
             b.FromDate <= at &&
             (b.ToDate == null || b.ToDate >= at));
+
+    /// <summary>ترتیب انتخاب فرمول پیش‌فرض: اول فرمول اصلی، بعد بالاترین نسخه</summary>
+    public static IOrderedQueryable<BOMHeader> DefaultFirst(IQueryable<BOMHeader> boms) =>
+        boms.OrderBy(b => b.Usage).ThenByDescending(b => b.Version);
 
     /// <summary>فرمول انتخاب‌شده، یا فرمول اصلی با بالاترین نسخه اگر انتخاب نشده باشد</summary>
     public static async Task<BOMHeader> ResolveBomAsync(
@@ -26,7 +33,7 @@ public static class ProductionRequirements
         var boms = UsableBoms(context, productId, at).Include(b => b.Details);
         var bom = bomId.HasValue
             ? await boms.FirstOrDefaultAsync(b => b.Id == bomId, ct)
-            : await boms.OrderBy(b => b.Usage).ThenByDescending(b => b.Version).FirstOrDefaultAsync(ct);
+            : await DefaultFirst(boms).FirstOrDefaultAsync(ct);
 
         return bom ?? throw new BusinessRuleException(bomId.HasValue
             ? "فرمول انتخاب‌شده برای این کالا فعال یا معتبر نیست."

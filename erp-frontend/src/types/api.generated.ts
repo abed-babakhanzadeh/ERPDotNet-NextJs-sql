@@ -1875,6 +1875,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Production/Planning/materials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["GetMaterialPlanQuery"];
+                    "text/json": components["schemas"]["GetMaterialPlanQuery"];
+                    "application/*+json": components["schemas"]["GetMaterialPlanQuery"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MaterialPlanDto"];
+                        "application/json": components["schemas"]["MaterialPlanDto"];
+                        "text/json": components["schemas"]["MaterialPlanDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ProductEngineering/BOMs/search": {
         parameters: {
             query?: never;
@@ -6210,6 +6253,16 @@ export interface components {
             searchTerm?: null | string;
             filters?: null | components["schemas"]["FilterModel"][];
         };
+        GetMaterialPlanQuery: {
+            /** Format: int32 */
+            productId?: null | number;
+            /** Format: double */
+            quantity?: null | number;
+            /** Format: int32 */
+            bomHeaderId?: null | number;
+            includeOpenOrders: boolean;
+            warehouseIds?: null | (number)[];
+        };
         GetProductAttributesQuery: {
             /** Format: int32 */
             pageNumber: number;
@@ -6540,6 +6593,68 @@ export interface components {
         LoginCommand: {
             username: string;
             password: string;
+        };
+        MaterialPlanDto: {
+            lines: components["schemas"]["MaterialPlanLineDto"][];
+            orders: components["schemas"]["MaterialPlanOrderDto"][];
+            warnings: string[];
+            stockLimitedToAccessibleWarehouses: boolean;
+        };
+        MaterialPlanLineDto: {
+            /** Format: int32 */
+            productId: number;
+            productCode: string;
+            productName: string;
+            unitName: string;
+            supplyTypeTitle: string;
+            /** Format: int32 */
+            level: number;
+            /** Format: double */
+            openOrdersDemand: number;
+            /** Format: double */
+            planDemand: number;
+            /** Format: double */
+            grossRequirement: number;
+            /** Format: double */
+            onHand: number;
+            /** Format: double */
+            scheduledReceipts: number;
+            /** Format: double */
+            netShortage: number;
+            /** Format: int32 */
+            actionId: number;
+            actionTitle: string;
+            bomTitle: null | string;
+            isDemandRoot: boolean;
+        };
+        MaterialPlanOrderDto: {
+            /** Format: int32 */
+            id: number;
+            orderNumber: string;
+            productCode: string;
+            productName: string;
+            /** Format: date-time */
+            plannedStartDate: null | string;
+            /** Format: int32 */
+            statusId: number;
+            statusTitle: string;
+            /** Format: int32 */
+            materialCount: number;
+            /** Format: int32 */
+            shortCount: number;
+            canStart: boolean;
+            shortages: components["schemas"]["MaterialPlanShortageDto"][];
+        };
+        MaterialPlanShortageDto: {
+            /** Format: int32 */
+            productId: number;
+            productCode: string;
+            productName: string;
+            unitName: string;
+            /** Format: double */
+            outstanding: number;
+            /** Format: double */
+            shortage: number;
         };
         NumberingScope: number;
         PaginatedResultOfBOMListDto: {
