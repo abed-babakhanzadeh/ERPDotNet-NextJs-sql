@@ -12,6 +12,8 @@ public class InventoryTransactionConfiguration : IEntityTypeConfiguration<Invent
 
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Quantity).HasPrecision(18, 3);
+        builder.Property(x => x.UnitCost).HasPrecision(18, 6);
+        builder.Property(x => x.TotalCost).HasPrecision(20, 4);
 
         // ایندکس 1: موجودی کالا در انبار (پرتکرارترین کوئری سیستم)
         builder.HasIndex(x => new { x.WarehouseId, x.ProductId });

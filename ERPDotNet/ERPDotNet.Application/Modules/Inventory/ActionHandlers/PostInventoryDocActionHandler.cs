@@ -19,13 +19,16 @@ public class PostInventoryDocActionHandler : IBpmsActionHandler
     private readonly IInventoryPostingService _postingService;
     private readonly IInventoryPostingPolicy _policy;
     private readonly ILogger<PostInventoryDocActionHandler> _logger;
+    private readonly IInventoryValuationService _valuation;
 
     public PostInventoryDocActionHandler(
         IApplicationDbContext context,
         IInventoryPostingService postingService,
         IInventoryPostingPolicy policy,
-        ILogger<PostInventoryDocActionHandler> logger)
+        ILogger<PostInventoryDocActionHandler> logger,
+        IInventoryValuationService valuation)
     {
+        _valuation = valuation;
         _context = context;
         _postingService = postingService;
         _policy = policy;
@@ -67,6 +70,9 @@ public class PostInventoryDocActionHandler : IBpmsActionHandler
             throw new BusinessRuleException(string.Join("\n", result.Errors));
         }
 
+
+        // ارزش ریالی حرکت‌ها و تراز میانگین؛ همان قاعده قطعی‌سازی مستقیم
+        await _valuation.ApplyAsync(doc, doc.DocType!, result.GeneratedTransactions, isReversal: false, cancellationToken);
 
         // 4. ثبت تراکنش‌ها در EF (بدون SaveChanges)
         if (result.GeneratedTransactions.Any())

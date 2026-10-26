@@ -1351,6 +1351,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Settings/InventoryValuation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ValuationSettingsDto"];
+                        "application/json": components["schemas"]["ValuationSettingsDto"];
+                        "text/json": components["schemas"]["ValuationSettingsDto"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateValuationSettingsCommand"];
+                    "text/json": components["schemas"]["UpdateValuationSettingsCommand"];
+                    "application/*+json": components["schemas"]["UpdateValuationSettingsCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Production/Orders/search": {
         parameters: {
             query?: never;
@@ -3142,6 +3202,49 @@ export interface paths {
                         "text/plain": components["schemas"]["PaginatedResultOfProductCardexDto"];
                         "application/json": components["schemas"]["PaginatedResultOfProductCardexDto"];
                         "text/json": components["schemas"]["PaginatedResultOfProductCardexDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Inventory/Inventory/reports/valuation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["GetStockValuationQuery"];
+                    "text/json": components["schemas"]["GetStockValuationQuery"];
+                    "application/*+json": components["schemas"]["GetStockValuationQuery"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PaginatedResultOfStockValuationDto"];
+                        "application/json": components["schemas"]["PaginatedResultOfStockValuationDto"];
+                        "text/json": components["schemas"]["PaginatedResultOfStockValuationDto"];
                     };
                 };
             };
@@ -6291,6 +6394,8 @@ export interface components {
             referenceEntityName?: null | string;
             /** Format: int64 */
             referenceEntityLineId?: null | number;
+            /** Format: double */
+            unitCost?: null | number;
         };
         CreateLocationCommand: {
             /** Format: int32 */
@@ -6744,6 +6849,20 @@ export interface components {
             searchTerm?: null | string;
             filters?: null | components["schemas"]["FilterModel"][];
         };
+        GetStockValuationQuery: {
+            /** Format: int32 */
+            companyId?: null | number;
+            /** Format: int32 */
+            warehouseId?: null | number;
+            /** Format: int32 */
+            pageNumber: number;
+            /** Format: int32 */
+            pageSize: number;
+            sortColumn?: null | string;
+            sortDescending: boolean;
+            searchTerm?: null | string;
+            filters?: null | components["schemas"]["FilterModel"][];
+        };
         GetWarehousesQuery: {
             /** Format: int32 */
             pageNumber: number;
@@ -6842,6 +6961,12 @@ export interface components {
             batchId?: null | number;
             batchNumber?: null | string;
             description?: null | string;
+            /** Format: double */
+            unitCost?: null | number;
+            /** Format: double */
+            postedUnitCost?: null | number;
+            /** Format: double */
+            postedTotalCost?: null | number;
             serialNumbers: string[];
         };
         InventoryDocDto: {
@@ -7258,6 +7383,17 @@ export interface components {
             hasPreviousPage: boolean;
             hasNextPage: boolean;
         };
+        PaginatedResultOfStockValuationDto: {
+            items: components["schemas"]["StockValuationDto"][];
+            /** Format: int32 */
+            pageNumber: number;
+            /** Format: int32 */
+            totalPages: number;
+            /** Format: int32 */
+            totalCount: number;
+            hasPreviousPage: boolean;
+            hasNextPage: boolean;
+        };
         PaginatedResultOfUnitDto: {
             items: components["schemas"]["UnitDto"][];
             /** Format: int32 */
@@ -7385,6 +7521,10 @@ export interface components {
             outQuantity: number;
             /** Format: double */
             runningBalance: number;
+            /** Format: double */
+            unitCost?: null | number;
+            /** Format: double */
+            totalCost?: null | number;
         };
         ProductCategoryDto: {
             /** Format: int32 */
@@ -7459,6 +7599,7 @@ export interface components {
             /** Format: double */
             baseQuantity: number;
         };
+        ProductionCostBasis: number;
         ProductionLinkedDocDto: {
             /** Format: int64 */
             docId: number;
@@ -7841,6 +7982,27 @@ export interface components {
             /** Format: double */
             difference: number;
         };
+        StockValuationDto: {
+            /** Format: int64 */
+            id: number;
+            /** Format: int32 */
+            productId: number;
+            productCode: string;
+            productName: string;
+            unitName: string;
+            /** Format: int32 */
+            companyId: null | number;
+            companyTitle: string;
+            /** Format: int32 */
+            warehouseId: null | number;
+            warehouseTitle: null | string;
+            /** Format: double */
+            quantity: number;
+            /** Format: double */
+            averageCost: number;
+            /** Format: double */
+            value: number;
+        };
         TaskDetailsDto: {
             /** Format: int64 */
             taskId: number;
@@ -8014,6 +8176,8 @@ export interface components {
             batchId?: null | number;
             description?: null | string;
             serialNumbers: string[];
+            /** Format: double */
+            unitCost?: null | number;
         };
         UpdateInventoryDocTypeCommand: {
             /** Format: int32 */
@@ -8142,6 +8306,13 @@ export interface components {
             userId: string;
             permissions: components["schemas"]["UserPermissionOverrideInput"][];
         };
+        UpdateValuationSettingsCommand: {
+            method: components["schemas"]["ValuationMethod"];
+            level: components["schemas"]["ValuationLevel"];
+            productionCostBasis: components["schemas"]["ProductionCostBasis"];
+            /** Format: byte */
+            rowVersion?: null | string;
+        };
         UpdateWarehouseCommand: {
             /** Format: int32 */
             id: number;
@@ -8195,6 +8366,28 @@ export interface components {
             /** Format: int32 */
             permissionId: number;
             isGranted: boolean;
+        };
+        ValuationLevel: number;
+        ValuationMethod: number;
+        ValuationOptionDto: {
+            /** Format: int32 */
+            value: number;
+            title: string;
+            implemented: boolean;
+        };
+        ValuationSettingsDto: {
+            /** Format: int32 */
+            method: number;
+            /** Format: int32 */
+            level: number;
+            /** Format: int32 */
+            productionCostBasis: number;
+            isLocked: boolean;
+            methods: components["schemas"]["ValuationOptionDto"][];
+            levels: components["schemas"]["ValuationOptionDto"][];
+            productionCostBases: components["schemas"]["ValuationOptionDto"][];
+            /** Format: byte */
+            rowVersion: string;
         };
         WarehouseDetailsDto: {
             /** Format: int32 */

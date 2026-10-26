@@ -40,6 +40,7 @@ public class PostInventoryDocHandler : IRequestHandler<PostInventoryDocCommand, 
     private readonly ICacheService _cacheService;
     private readonly IPublisher _publisher;
     private readonly IFiscalYearService _fiscalYears;
+    private readonly IInventoryValuationService _valuation;
 
     public PostInventoryDocHandler(
         IApplicationDbContext context, 
@@ -48,8 +49,10 @@ public class PostInventoryDocHandler : IRequestHandler<PostInventoryDocCommand, 
         ICurrentUserService currentUserService,
         ICacheService cacheService, 
         IPublisher publisher,
-        IFiscalYearService fiscalYears)
+        IFiscalYearService fiscalYears,
+        IInventoryValuationService valuation)
     {
+        _valuation = valuation;
         _fiscalYears = fiscalYears;
         _context = context;
         _postingService = postingService;
@@ -109,6 +112,9 @@ public class PostInventoryDocHandler : IRequestHandler<PostInventoryDocCommand, 
             // تبدیل لیست خطاها به یک رشته واحد برای جلوگیری از خطای احتمالی سریالایزیشن
             throw new BusinessRuleException(string.Join("\n", result.Errors));
         }
+
+        // ارزش ریالی حرکت‌ها و تراز میانگین، در همان تراکنش ذخیره
+        await _valuation.ApplyAsync(doc, doc.DocType!, result.GeneratedTransactions, isReversal: false, cancellationToken);
 
         // 4. ذخیره تراکنش‌ها
         if (result.GeneratedTransactions.Any())

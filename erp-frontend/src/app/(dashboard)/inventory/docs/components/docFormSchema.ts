@@ -17,6 +17,11 @@ export interface DocRow {
   /** فقط کالای سریال‌دار: سریال‌ها با کاما، فاصله یا خط جدید جدا می‌شوند */
   serialNumbers?: string;
   description?: string;
+  /** فقط رسید: بهای واحد به ریال؛ خالی یعنی با مرجع یا میانگین ارزش‌گذاری شود */
+  unitCost?: number | string | null;
+  /** پس از قطعی شدن، فقط نمایش */
+  postedUnitCost?: number | null;
+  postedTotalCost?: number | null;
 }
 
 export interface DocFormValues {
@@ -63,6 +68,8 @@ export function makeDocSchema(opts: {
   isTransfer: (docTypeId: number | null) => boolean;
   requireLocation: boolean;
   isSerialManaged: (productId: number) => boolean;
+  /** رسید با نوع سند ریالی و بدون مرجع: بهای واحد هر سطر اجباری است (هم‌راستا با InventoryValuationService) */
+  requiresUnitCost: (docTypeId: number | null) => boolean;
 }) {
   return z
     .object({
@@ -104,6 +111,10 @@ export function makeDocSchema(opts: {
           issue(["details", index, "locationId"], `ردیف ${n}: قفسه را انتخاب کنید.`);
         } else if (transfer && !row.destinationLocationId) {
           issue(["details", index, "destinationLocationId"], `ردیف ${n}: قفسه مقصد را انتخاب کنید.`);
+        } else if (row.unitCost !== undefined && row.unitCost !== null && row.unitCost !== "" && !(Number(row.unitCost) >= 0)) {
+          issue(["details", index, "unitCost"], `ردیف ${n}: بهای واحد نمی‌تواند منفی باشد.`);
+        } else if (opts.requiresUnitCost(v.docTypeId) && (row.unitCost === undefined || row.unitCost === null || row.unitCost === "")) {
+          issue(["details", index, "unitCost"], `ردیف ${n}: بهای واحد را وارد کنید؛ این نوع سند ریالی است.`);
         } else if (opts.isSerialManaged(Number(row.productId))) {
           const count = parseSerials(row.serialNumbers).length;
           if (count !== Number(row.mainUnitQuantity))

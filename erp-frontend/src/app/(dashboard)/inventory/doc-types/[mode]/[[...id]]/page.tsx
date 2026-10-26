@@ -186,7 +186,7 @@ export default function DocTypeFormPage() {
             control={form.control}
             name="affectsCost"
             label="تأثیر در بهای تمام‌شده (ریالی)"
-            description="این سند بار مالی دارد و در محاسبه نرخ میانگین مؤثر است."
+            description="رسید ریالی بدون مرجع، بهای واحد اجباری دارد و نرخ میانگین را تغییر می‌دهد. رسید غیرریالی با میانگین فعلی ثبت می‌شود و نرخ را تغییر نمی‌دهد."
           />
           <SwitchField
             control={form.control}

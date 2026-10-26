@@ -19,6 +19,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ERPDotNet.Application.Modules.Inventory.Queries.GetProductCardex;
+using ERPDotNet.Application.Modules.Inventory.Queries.GetStockValuation;
 using ERPDotNet.Application.Modules.Inventory.Commands.DeleteInventoryDoc;
 using ERPDotNet.Application.Modules.Inventory.Commands.RevertInventoryDoc;
 using ERPDotNet.Application.Modules.Inventory.Commands.UpdateInventoryDoc;
@@ -167,6 +168,14 @@ public class InventoryController : ControllerBase
     [HttpPost("reports/cardex")] // تغییر از HttpGet به HttpPost
     [HasPermission("Inventory.Reports.Cardex")]
     public async Task<ActionResult<PaginatedResult<ProductCardexDto>>> GetProductCardex([FromBody] GetProductCardexQuery query)
+    {
+        return Ok(await _mediator.Send(query));
+    }
+
+    // ارزش ریالی موجودی (میانگین موزون)
+    [HttpPost("reports/valuation")]
+    [HasPermission("Inventory.Reports.Valuation")]
+    public async Task<ActionResult<PaginatedResult<StockValuationDto>>> GetStockValuation([FromBody] GetStockValuationQuery query)
     {
         return Ok(await _mediator.Send(query));
     }

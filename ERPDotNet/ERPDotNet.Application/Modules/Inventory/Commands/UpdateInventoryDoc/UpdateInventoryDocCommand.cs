@@ -44,6 +44,8 @@ public class UpdateInventoryDocDetailDto
     public string? Description { get; set; }
     // فقط برای کالای سریال‌دار
     public List<string> SerialNumbers { get; set; } = new();
+    // بهای واحد سطر رسید (به واحد اصلی)
+    public decimal? UnitCost { get; set; }
 }
 
 public class UpdateInventoryDocValidator : AbstractValidator<UpdateInventoryDocCommand>
@@ -60,6 +62,7 @@ public class UpdateInventoryDocValidator : AbstractValidator<UpdateInventoryDocC
         {
             d.RuleFor(x => x.ProductId).GreaterThan(0);
             d.RuleFor(x => x.MainUnitQuantity).GreaterThan(0);
+            d.RuleFor(x => x.UnitCost).GreaterThanOrEqualTo(0).WithMessage("بهای واحد نمی‌تواند منفی باشد.");
         });
     }
 }
@@ -179,6 +182,7 @@ public class UpdateInventoryDocHandler : IRequestHandler<UpdateInventoryDocComma
                     existingItem.DestinationLocationId = isTransfer ? reqDetail.DestinationLocationId : null;
                     existingItem.BatchId = reqDetail.BatchId;
                     existingItem.Description = reqDetail.Description;
+                    existingItem.UnitCost = reqDetail.UnitCost;
                     SyncSerials(existingItem, reqDetail.SerialNumbers);
                     // اینجا ModifiedAt خودکار آپدیت می‌شود
                 }
@@ -195,7 +199,8 @@ public class UpdateInventoryDocHandler : IRequestHandler<UpdateInventoryDocComma
                     LocationId = reqDetail.LocationId,
                     DestinationLocationId = isTransfer ? reqDetail.DestinationLocationId : null,
                     BatchId = reqDetail.BatchId,
-                    Description = reqDetail.Description
+                    Description = reqDetail.Description,
+                    UnitCost = reqDetail.UnitCost
                     // CreatedAt, CreatedBy خودکار پر می‌شوند
                 };
                 SyncSerials(newItem, reqDetail.SerialNumbers);

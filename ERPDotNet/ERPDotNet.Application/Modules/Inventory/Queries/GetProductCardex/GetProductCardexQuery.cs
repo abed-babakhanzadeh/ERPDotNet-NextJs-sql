@@ -275,7 +275,9 @@ public class GetProductCardexHandler : IRequestHandler<GetProductCardexQuery, Pa
                 SignTitle = isInc ? "وارده" : "صادره",
                 InQuantity = isInc ? t.Quantity : 0,
                 OutQuantity = !isInc ? t.Quantity : 0,
-                RunningBalance = runningBalances.ContainsKey(t.Id) ? runningBalances[t.Id] : 0
+                RunningBalance = runningBalances.ContainsKey(t.Id) ? runningBalances[t.Id] : 0,
+                UnitCost = t.UnitCost,
+                TotalCost = t.TotalCost
             });
         }
 

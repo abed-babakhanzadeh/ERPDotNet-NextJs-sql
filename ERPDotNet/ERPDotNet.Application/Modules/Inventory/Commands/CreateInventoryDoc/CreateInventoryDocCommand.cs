@@ -45,6 +45,8 @@ public record CreateInventoryDocDetailDto
     // ردیابی سطر: نقش سطر در سند مرجع و شناسه سطر مرجع (مثلاً ماده اولیه سفارش تولید)
     public string? ReferenceEntityName { get; set; }
     public long? ReferenceEntityLineId { get; set; }
+    // بهای واحد سطر رسید (به واحد اصلی)؛ خالی یعنی با مرجع یا میانگین ارزش‌گذاری شود
+    public decimal? UnitCost { get; set; }
 }
 
 public class CreateInventoryDocValidator : AbstractValidator<CreateInventoryDocCommand>
@@ -70,6 +72,7 @@ public class CreateInventoryDocValidator : AbstractValidator<CreateInventoryDocC
             detail.RuleFor(d => d.ProductId).GreaterThan(0);
             detail.RuleFor(d => d.MainUnitQuantity).GreaterThan(0);
             detail.RuleFor(d => d.LocationId).GreaterThan(0);
+            detail.RuleFor(d => d.UnitCost).GreaterThanOrEqualTo(0).WithMessage("بهای واحد نمی‌تواند منفی باشد.");
         });
     }
 }
@@ -142,6 +145,7 @@ public class CreateInventoryDocHandler : IRequestHandler<CreateInventoryDocComma
                 Description = item.Description,
                 ReferenceEntityName = item.ReferenceEntityName,
                 ReferenceEntityLineId = item.ReferenceEntityLineId,
+                UnitCost = item.UnitCost,
                 Serials = InventoryDocRules.NormalizeSerials(item.SerialNumbers)
                     .Select(s => new InventoryDocDetailSerial { SerialNumber = s })
                     .ToList()

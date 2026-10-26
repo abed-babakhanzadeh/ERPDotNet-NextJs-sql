@@ -63,6 +63,8 @@ public class AppDbContext : IdentityDbContext<User>, IApplicationDbContext
     public DbSet<InventoryDocDetail> InventoryDocDetails { get; set; }
     public DbSet<InventoryTransaction> InventoryTransactions { get; set; }
     public DbSet<CurrentStock> CurrentStocks { get; set; }
+    public DbSet<InventoryCostBalance> InventoryCostBalances { get; set; }
+    public DbSet<InventoryValuationSettings> InventoryValuationSettings { get; set; }
     public DbSet<DocumentSequence> DocumentSequences { get; set; }
 
     // === ماژول مدیریت فرآیندها (BPMS) ===

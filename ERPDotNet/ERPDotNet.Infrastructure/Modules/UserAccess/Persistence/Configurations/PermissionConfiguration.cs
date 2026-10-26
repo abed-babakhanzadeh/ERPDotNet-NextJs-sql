@@ -148,6 +148,7 @@ public class PermissionConfiguration : IEntityTypeConfiguration<Permission>
             new Permission { Id = 3301, Name = "Inventory.Reports.CurrentStock", Title = "موجودی لحظه‌ای", IsMenu = true, ParentId = 3300, Url = "/inventory/reports/current-stock" },
             new Permission { Id = 3302, Name = "Inventory.Reports.Cardex", Title = "کاردکس کالا", IsMenu = true, ParentId = 3300, Url = "/inventory/reports/cardex" },
             new Permission { Id = 3304, Name = "Inventory.Reports.Serials", Title = "شماره سریال‌ها", IsMenu = true, ParentId = 3300, Url = "/inventory/reports/serials" },
+            new Permission { Id = 3305, Name = "Inventory.Reports.Valuation", Title = "ارزش ریالی موجودی", IsMenu = true, ParentId = 3300, Url = "/inventory/reports/valuation" },
             new Permission { Id = 3303, Name = "Inventory.Stock.Rebuild", Title = "بازسازی موجودی از روی تراکنش‌ها", IsMenu = false, ParentId = 3301 },
 
             // =========================================================
@@ -184,7 +185,12 @@ public class PermissionConfiguration : IEntityTypeConfiguration<Permission>
             new Permission { Id = 5300, Name = "Production.WorkCenters", Title = "مراکز کاری", IsMenu = true, ParentId = 5000, Url = "/production/work-centers" },
             new Permission { Id = 5301, Name = "Production.WorkCenters.Create", Title = "تعریف مرکز کاری", IsMenu = false, ParentId = 5300 },
             new Permission { Id = 5302, Name = "Production.WorkCenters.Edit", Title = "ویرایش مرکز کاری", IsMenu = false, ParentId = 5300 },
-            new Permission { Id = 5303, Name = "Production.WorkCenters.Delete", Title = "حذف مرکز کاری", IsMenu = false, ParentId = 5300 }
+            new Permission { Id = 5303, Name = "Production.WorkCenters.Delete", Title = "حذف مرکز کاری", IsMenu = false, ParentId = 5300 },
+
+            // === تنظیمات سیستم - سری 6000 ===
+            new Permission { Id = 6000, Name = "Settings", Title = "تنظیمات سیستم", IsMenu = true, ParentId = 1 },
+            new Permission { Id = 6100, Name = "Settings.InventoryValuation", Title = "ارزش‌گذاری موجودی", IsMenu = true, ParentId = 6000, Url = "/settings/inventory-valuation" },
+            new Permission { Id = 6101, Name = "Settings.InventoryValuation.Edit", Title = "تغییر تنظیمات ارزش‌گذاری", IsMenu = false, ParentId = 6100 }
             
         );
     }

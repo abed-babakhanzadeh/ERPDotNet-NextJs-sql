@@ -28,6 +28,10 @@ public class InventoryTransaction : BaseEntity
     // مقدار همیشه مثبت ذخیره می‌شود (جهت با Sign مشخص می‌شود)
     public decimal Quantity { get; set; }
 
+    // ارزش ریالی حرکت (همیشه مثبت، جهت با Sign)؛ خالی یعنی پیش از فعال شدن ارزش‌گذاری ثبت شده است
+    public decimal? UnitCost { get; set; }
+    public decimal? TotalCost { get; set; }
+
     // اصلاح 2: لینک به تراکنش مرجع (برای سناریوی ابطال/برگشت)
     // اگر این رکورد بابت ابطال رکورد دیگری ایجاد شده، آی‌دی آن اینجا می‌آید
     public long? RelatedTransactionId { get; set; }

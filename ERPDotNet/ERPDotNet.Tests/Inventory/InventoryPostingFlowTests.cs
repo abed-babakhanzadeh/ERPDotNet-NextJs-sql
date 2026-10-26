@@ -5,6 +5,7 @@ using ERPDotNet.Application.Modules.Inventory.ActionHandlers;
 using ERPDotNet.Application.Modules.Inventory.Contracts;
 using ERPDotNet.Application.Modules.Inventory.Commands.PostInventoryDoc;
 using ERPDotNet.Application.Modules.Inventory.Commands.RevertInventoryDoc;
+using ERPDotNet.Application.Modules.Inventory.Services;
 using ERPDotNet.Application.Modules.Workflow.Contracts;
 using ERPDotNet.Domain.Modules.BaseInfo.Entities;
 using ERPDotNet.Domain.Modules.Inventory.Entities;
@@ -101,7 +102,7 @@ public class InventoryPostingFlowTests : IDisposable
         await SeedStock(100);
         var docId = await SeedDoc(InventoryNature.Output, InventoryDocStatus.InProcess, 10);
         var handler = new PostInventoryDocActionHandler(_db, PostingService(_db), new DefaultInventoryPostingPolicy(),
-            NullLogger<PostInventoryDocActionHandler>.Instance);
+            NullLogger<PostInventoryDocActionHandler>.Instance, Valuation(_db));
 
         await handler.ExecuteAsync(new BpmsActionContext { TargetRecordId = docId, UserId = "1" }, default);
         await _db.SaveChangesAsync();
@@ -184,10 +185,12 @@ public class InventoryPostingFlowTests : IDisposable
     private readonly RecordingPublisher _publisher = new();
 
     private PostInventoryDocHandler PostHandler(AppDbContext db) =>
-        new(db, PostingService(db), new DefaultInventoryPostingPolicy(), new FakeCurrentUser(), new NoopCache(), _publisher, new FiscalYearService(db));
+        new(db, PostingService(db), new DefaultInventoryPostingPolicy(), new FakeCurrentUser(), new NoopCache(), _publisher, new FiscalYearService(db), Valuation(db));
 
     private static RevertInventoryDocHandler RevertHandler(AppDbContext db) =>
-        new(db, PostingService(db), new DefaultInventoryPostingPolicy(), new FiscalYearService(db));
+        new(db, PostingService(db), new DefaultInventoryPostingPolicy(), new FiscalYearService(db), Valuation(db));
+
+    private static InventoryValuationService Valuation(AppDbContext db) => new(db, []);
 
     private async Task SeedStock(decimal onHand)
     {
@@ -196,6 +199,7 @@ public class InventoryPostingFlowTests : IDisposable
         await seed.SaveChangesAsync();
     }
 
+    // نوع سند پیش‌فرض «ریالی» است؛ رسید بهای واحد می‌گیرد
     private async Task<long> SeedDoc(InventoryNature nature, InventoryDocStatus status, decimal qty, int? destinationWarehouseId = null, int? fiscalYearId = null)
     {
         using var seed = NewContext();
@@ -216,6 +220,7 @@ public class InventoryPostingFlowTests : IDisposable
                 new InventoryDocDetail
                 {
                     ProductId = ProductId, MainUnitQuantity = qty, RowVersion = RowVersion,
+                    UnitCost = nature == InventoryNature.Input ? 5 : null,
                     DestinationLocationId = destinationWarehouseId.HasValue ? 77 : null
                 }
             }

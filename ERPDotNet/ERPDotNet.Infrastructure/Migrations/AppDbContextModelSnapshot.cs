@@ -849,6 +849,63 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.ToTable("InventoryBatches", "inventory");
                 });
 
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.InventoryCostBalance", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int?>("CompanyId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<decimal>("Value")
+                        .HasPrecision(20, 4)
+                        .HasColumnType("decimal(20,4)");
+
+                    b.Property<int?>("WarehouseId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("WarehouseId");
+
+                    b.HasIndex("CompanyId", "ProductId", "WarehouseId")
+                        .IsUnique();
+
+                    b.ToTable("inventory_cost_balances", "inventory");
+                });
+
             modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.InventoryDocDetail", b =>
                 {
                     b.Property<long>("Id")
@@ -912,6 +969,10 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.Property<decimal>("SubUnitQuantity")
                         .HasPrecision(18, 3)
                         .HasColumnType("decimal(18,3)");
+
+                    b.Property<decimal?>("UnitCost")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
 
                     b.HasKey("Id");
 
@@ -1368,8 +1429,16 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.Property<int>("Sign")
                         .HasColumnType("int");
 
+                    b.Property<decimal?>("TotalCost")
+                        .HasPrecision(20, 4)
+                        .HasColumnType("decimal(20,4)");
+
                     b.Property<DateTime>("TransactionDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("UnitCost")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
 
                     b.Property<int>("WarehouseId")
                         .HasColumnType("int");
@@ -1385,6 +1454,56 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.HasIndex("WarehouseId", "ProductId");
 
                     b.ToTable("InventoryTransactions", "inventory");
+                });
+
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.InventoryValuationSettings", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Method")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductionCostBasis")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("valuation_settings", "inventory");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedAt = new DateTime(2026, 10, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsDeleted = false,
+                            Level = 1,
+                            Method = 1,
+                            ProductionCostBasis = 1
+                        });
                 });
 
             modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.ItemWarehouseSetting", b =>
@@ -3056,6 +3175,15 @@ namespace ERPDotNet.Infrastructure.Migrations
                         },
                         new
                         {
+                            Id = 3305,
+                            IsMenu = true,
+                            Name = "Inventory.Reports.Valuation",
+                            ParentId = 3300,
+                            Title = "ارزش ریالی موجودی",
+                            Url = "/inventory/reports/valuation"
+                        },
+                        new
+                        {
                             Id = 3303,
                             IsMenu = false,
                             Name = "Inventory.Stock.Rebuild",
@@ -3242,6 +3370,31 @@ namespace ERPDotNet.Infrastructure.Migrations
                             Name = "Production.WorkCenters.Delete",
                             ParentId = 5300,
                             Title = "حذف مرکز کاری"
+                        },
+                        new
+                        {
+                            Id = 6000,
+                            IsMenu = true,
+                            Name = "Settings",
+                            ParentId = 1,
+                            Title = "تنظیمات سیستم"
+                        },
+                        new
+                        {
+                            Id = 6100,
+                            IsMenu = true,
+                            Name = "Settings.InventoryValuation",
+                            ParentId = 6000,
+                            Title = "ارزش‌گذاری موجودی",
+                            Url = "/settings/inventory-valuation"
+                        },
+                        new
+                        {
+                            Id = 6101,
+                            IsMenu = false,
+                            Name = "Settings.InventoryValuation.Edit",
+                            ParentId = 6100,
+                            Title = "تغییر تنظیمات ارزش‌گذاری"
                         });
                 });
 
@@ -4493,6 +4646,20 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.Navigation("Product");
 
                     b.Navigation("Warehouse");
+                });
+
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.InventoryCostBalance", b =>
+                {
+                    b.HasOne("ERPDotNet.Domain.Modules.BaseInfo.Entities.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ERPDotNet.Domain.Modules.Inventory.Entities.Warehouse", null)
+                        .WithMany()
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("ERPDotNet.Domain.Modules.Inventory.Entities.InventoryDocDetail", b =>

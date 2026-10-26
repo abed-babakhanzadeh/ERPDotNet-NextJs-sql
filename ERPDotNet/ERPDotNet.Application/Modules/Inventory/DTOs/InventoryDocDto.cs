@@ -60,6 +60,12 @@ public class InventoryDocDetailDto
 
     public string? Description { get; set; }
 
+    // بهای واحد واردشده برای رسید
+    public decimal? UnitCost { get; set; }
+    // پس از قطعی شدن: ارزش ریالی اثر اصلی سطر (بدون ابطال)
+    public decimal? PostedUnitCost { get; set; }
+    public decimal? PostedTotalCost { get; set; }
+
     // فقط برای کالای سریال‌دار
     public List<string> SerialNumbers { get; set; } = new();
 }

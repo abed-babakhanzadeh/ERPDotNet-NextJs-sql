@@ -14,6 +14,7 @@ public class InventoryDocDetailConfiguration : IEntityTypeConfiguration<Inventor
 
         builder.Property(x => x.MainUnitQuantity).HasPrecision(18, 3);
         builder.Property(x => x.SubUnitQuantity).HasPrecision(18, 3);
+        builder.Property(x => x.UnitCost).HasPrecision(18, 6);
 
         // اگر هدر حذف شد (Draft)، اقلام هم حذف شوند
         builder.HasOne(x => x.Header)

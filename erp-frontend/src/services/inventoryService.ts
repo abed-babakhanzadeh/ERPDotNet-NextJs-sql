@@ -17,6 +17,7 @@ import {
   UpdateInventoryDocCommand,
   UpdateLocationCommand,
 } from "@/types/inventory";
+import type { StockValuationDto } from "@/types/api";
 import apiClient from "@/lib/api/client";
 import type {
   WarehouseUserDto,
@@ -406,6 +407,10 @@ const inventoryService = {
     );
     return response.data;
   },
+
+  /** ارزش ریالی موجودی از تراز میانگین موزون */
+  getStockValuation: async (payload: PagedQuery, signal?: AbortSignal) =>
+    (await apiClient.post<Paged<StockValuationDto>>(`${BASE_URL}/reports/valuation`, payload, { signal })).data,
 
   getProductCardex: async (payload: PagedQuery, signal?: AbortSignal) => {
     const response = await apiClient.post<Paged<ProductCardexDto>>(
