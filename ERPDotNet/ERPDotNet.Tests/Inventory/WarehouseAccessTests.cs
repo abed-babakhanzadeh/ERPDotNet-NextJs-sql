@@ -37,10 +37,19 @@ public class WarehouseAccessTests : IDisposable
     public void Dispose() => _db.Dispose();
 
     [Fact]
-    public async Task User_without_assignment_and_admin_are_unrestricted()
+    public async Task Admin_is_unrestricted()
     {
-        Assert.Null(await Service(Free).GetAllowedWarehouseIdsAsync(default));
         Assert.Null(await Service(Boss).GetAllowedWarehouseIdsAsync(default));
+    }
+
+    [Fact]
+    public async Task User_without_assignment_has_no_warehouse_access()
+    {
+        var service = Service(Free);
+        Assert.Empty((await service.GetAllowedWarehouseIdsAsync(default))!);
+
+        var error = await Assert.ThrowsAsync<ForbiddenAccessException>(() => service.EnsureAccessAsync(Main, default));
+        Assert.Equal(WarehouseAccessService.NoWarehouseMessage, error.Message);
     }
 
     [Fact]

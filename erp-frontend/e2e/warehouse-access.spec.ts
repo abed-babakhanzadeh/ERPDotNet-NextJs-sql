@@ -42,7 +42,7 @@ test.describe("دسترسی سطح داده به انبار", () => {
     const otherDoc = await receiptIn(other, 7);
     const keeper = await createUserWithRole(api, tag, "Keeper", KEEPER_PERMISSIONS);
 
-    // پیش از تخصیص، کاربر بدون محدودیت است
+    // پیش از تخصیص، کاربر غیرAdmin به هیچ انباری دسترسی ندارد (قاعده سخت‌گیرانه)
     const visibleWarehouses = async () =>
       (
         await (
@@ -51,7 +51,10 @@ test.describe("دسترسی سطح داده به انبار", () => {
           })
         ).json()
       ).items.map((w: { id: number }) => w.id);
-    expect(await visibleWarehouses()).toContain(other.warehouseId);
+    expect(await visibleWarehouses()).toEqual([]);
+    const beforeAssignment = await keeper.api.get(`/api/Inventory/Inventory/docs/${ownDoc}`);
+    expect(beforeAssignment.status()).toBe(403);
+    expect((await beforeAssignment.json()).detail).toContain("هیچ انباری به شما تخصیص داده نشده");
 
     // admin انبار اول را از فهرست انبارها به انباردار می‌دهد
     await page.goto("/inventory/warehouses");
