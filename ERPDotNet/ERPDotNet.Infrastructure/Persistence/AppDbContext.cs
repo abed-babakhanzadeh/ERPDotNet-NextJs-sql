@@ -5,6 +5,7 @@ using System.Reflection;
 using ERPDotNet.Application.Common.Interfaces;
 using ERPDotNet.Domain.Modules.BaseInfo.Entities;
 using ERPDotNet.Domain.Modules.ProductEngineering.Entities;
+using ERPDotNet.Domain.Modules.Production.Entities;
 using ERPDotNet.Domain.Common;
 using System.Linq.Expressions;
 using ERPDotNet.Application.Modules.ProductEngineering.Queries.GetWhereUsed;
@@ -37,6 +38,8 @@ public class AppDbContext : IdentityDbContext<User>, IApplicationDbContext
     // ماژول مهندسی محصول
     public DbSet<BOMHeader> BOMHeaders { get; set; }
     public DbSet<BOMDetail> BOMDetails { get; set; }
+    public DbSet<ProductionOrder> ProductionOrders { get; set; }
+    public DbSet<ProductionOrderMaterial> ProductionOrderMaterials { get; set; }
     public DbSet<BOMSubstitute> BOMSubstitutes { get; set; }
     public DbSet<BOMOutput> BOMOutputs { get; set; }
 

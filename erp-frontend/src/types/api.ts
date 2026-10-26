@@ -113,3 +113,12 @@ export type UpdateStockCountCommand = S["UpdateStockCountCommand"];
 export type StockCountLineInput = S["StockCountLineInput"];
 export type FinalizeStockCountCommand = S["FinalizeStockCountCommand"];
 export type FinalizeStockCountResult = S["FinalizeStockCountResult"];
+
+// تولید
+export type ProductionOrderListDto = S["ProductionOrderListDto"];
+export type ProductionOrderDto = S["ProductionOrderDto"];
+export type ProductionOrderMaterialDto = S["ProductionOrderMaterialDto"];
+export type ProductionBomOptionDto = S["ProductionBomOptionDto"];
+export type ProductionRequirementsDto = S["ProductionRequirementsDto"];
+export type CreateProductionOrderCommand = S["CreateProductionOrderCommand"];
+export type UpdateProductionOrderCommand = S["UpdateProductionOrderCommand"];
