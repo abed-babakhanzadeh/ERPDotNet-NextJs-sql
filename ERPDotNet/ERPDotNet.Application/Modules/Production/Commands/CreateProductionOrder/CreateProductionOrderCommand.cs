@@ -63,7 +63,8 @@ public class CreateProductionOrderHandler : IRequestHandler<CreateProductionOrde
             PlannedStartDate = request.PlannedStartDate,
             PlannedEndDate = request.PlannedEndDate,
             Description = request.Description?.Trim(),
-            Materials = ProductionRequirements.Explode(bom, request.Quantity)
+            Materials = ProductionRequirements.Explode(bom, request.Quantity),
+            Operations = ProductionRequirements.ExplodeOperations(bom, request.Quantity)
         };
 
         _context.ProductionOrders.Add(order);

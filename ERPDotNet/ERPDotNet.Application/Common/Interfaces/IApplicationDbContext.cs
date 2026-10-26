@@ -43,6 +43,8 @@ public interface IApplicationDbContext
     DbSet<BOMOutput> BOMOutputs { get; }
     DbSet<BOMOperation> BOMOperations { get; }
     DbSet<WorkCenter> WorkCenters { get; }
+    DbSet<ProductionOrderOperation> ProductionOrderOperations { get; }
+    DbSet<ProductionOperationReport> ProductionOperationReports { get; }
 
     // === ماژول Inventory (جدید) ===
     DbSet<Warehouse> Warehouses { get; }

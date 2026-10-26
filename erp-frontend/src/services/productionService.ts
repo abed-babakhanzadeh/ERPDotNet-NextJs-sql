@@ -15,7 +15,10 @@ import type {
   ReceiveProductionOutputCommand,
   UpdateProductionOrderCommand,
   WorkCenterDto,
+  WorkCenterLoadDto,
   WorkCenterOptionDto,
+  ProductionOperationDto,
+  ReportOperationCommand,
   CreateWorkCenterCommand,
   UpdateWorkCenterCommand,
 } from "@/types/api";
@@ -80,6 +83,16 @@ export const productionService = {
   planMaterials: async (query: Partial<GetMaterialPlanQuery>) =>
     (await apiClient.post<MaterialPlanDto>("/Production/Planning/materials", query)).data,
 
+  /** عملیات سفارش با زمان برنامه و واقعی و گزارش‌های کارکرد */
+  getOperations: async (id: number) => (await apiClient.get<ProductionOperationDto[]>(`${ORDERS}/${id}/operations`)).data,
+
+  reportOperation: async (command: ReportOperationCommand) =>
+    (await apiClient.post<number>(`${ORDERS}/${command.orderId}/operations/reports`, command)).data,
+
+  deleteOperationReport: async (orderId: number, reportId: number) => {
+    await apiClient.delete(`${ORDERS}/${orderId}/operations/reports/${reportId}`);
+  },
+
   completeOrder: async (id: number) => {
     await apiClient.post(`${ORDERS}/${id}/complete`);
   },
@@ -91,6 +104,9 @@ const WORK_CENTERS = "/Production/WorkCenters";
 export const workCenterService = {
   search: async (query: PagedQuery, signal?: AbortSignal) =>
     (await apiClient.post<Paged<WorkCenterDto>>(`${WORK_CENTERS}/search`, query, { signal })).data,
+
+  /** بار هر مرکز از عملیات سفارش‌های باز */
+  load: async () => (await apiClient.get<WorkCenterLoadDto[]>(`${WORK_CENTERS}/load`)).data,
 
   /** همه مراکز (غیرفعال‌ها آخر) برای فرم مسیر تولید */
   options: async () => (await apiClient.get<WorkCenterOptionDto[]>(`${WORK_CENTERS}/options`)).data,

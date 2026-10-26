@@ -46,6 +46,7 @@ public class UpdateProductionOrderHandler : IRequestHandler<UpdateProductionOrde
     {
         var order = await _context.ProductionOrders
             .Include(o => o.Materials)
+            .Include(o => o.Operations)
             .FirstOrDefaultAsync(o => o.Id == request.Id, cancellationToken)
             ?? throw new KeyNotFoundException("سفارش تولید یافت نشد.");
         if (order.Status != ProductionOrderStatus.Draft)
@@ -65,6 +66,7 @@ public class UpdateProductionOrderHandler : IRequestHandler<UpdateProductionOrde
         order.Materials.Clear();
         foreach (var material in ProductionRequirements.Explode(bom, request.Quantity))
             order.Materials.Add(material);
+        ProductionRequirements.SyncOperations(order, ProductionRequirements.ExplodeOperations(bom, request.Quantity));
 
         try
         {

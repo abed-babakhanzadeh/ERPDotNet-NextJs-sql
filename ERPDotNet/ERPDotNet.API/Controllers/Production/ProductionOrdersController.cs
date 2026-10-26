@@ -4,7 +4,9 @@ using ERPDotNet.Application.Modules.Production.Commands.ChangeProductionOrderSta
 using ERPDotNet.Application.Modules.Production.Commands.CreateProductionOrder;
 using ERPDotNet.Application.Modules.Production.Commands.DeleteProductionOrder;
 using ERPDotNet.Application.Modules.Production.Commands.ExecuteProductionOrder;
+using ERPDotNet.Application.Modules.Production.Commands.OperationReports;
 using ERPDotNet.Application.Modules.Production.Commands.UpdateProductionOrder;
+using ERPDotNet.Application.Modules.Production.Queries.GetProductionOrderOperations;
 using ERPDotNet.Application.Modules.Production.Queries.GetProductionOrderProgress;
 using ERPDotNet.Application.Modules.Production.Queries.GetProductionOrders;
 using ERPDotNet.Application.Modules.Production.Queries.GetProductionRequirements;
@@ -51,6 +53,12 @@ public class ProductionOrdersController : ControllerBase
     public async Task<ActionResult<ProductionOrderProgressDto>> GetProgress(int id)
     {
         return Ok(await _mediator.Send(new GetProductionOrderProgressQuery(id)));
+    }
+
+    [HttpGet("{id}/operations")]
+    public async Task<ActionResult<List<ProductionOperationDto>>> GetOperations(int id)
+    {
+        return Ok(await _mediator.Send(new GetProductionOrderOperationsQuery(id)));
     }
 
     [HttpGet("boms")]
@@ -112,6 +120,22 @@ public class ProductionOrdersController : ControllerBase
     {
         if (id != command.Id) return BadRequest();
         return Ok(await _mediator.Send(command));
+    }
+
+    [HttpPost("{id}/operations/reports")]
+    [HasPermission("Production.Orders.Execute")]
+    public async Task<ActionResult<int>> ReportOperation(int id, [FromBody] ReportOperationCommand command)
+    {
+        if (id != command.OrderId) return BadRequest();
+        return Ok(await _mediator.Send(command));
+    }
+
+    [HttpDelete("{id}/operations/reports/{reportId}")]
+    [HasPermission("Production.Orders.Execute")]
+    public async Task<IActionResult> DeleteOperationReport(int id, int reportId)
+    {
+        await _mediator.Send(new DeleteOperationReportCommand(id, reportId));
+        return NoContent();
     }
 
     [HttpPost("{id}/complete")]

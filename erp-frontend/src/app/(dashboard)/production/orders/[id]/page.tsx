@@ -14,6 +14,7 @@ import {
   PackagePlus,
   Pencil,
   Scale,
+  Workflow,
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -26,12 +27,14 @@ import { useConfirm } from "@/providers/ConfirmProvider";
 import { useTabs } from "@/providers/TabsProvider";
 import { productionService } from "@/services/productionService";
 import { handleApiError } from "@/lib/error-handling";
-import type { ProductionOrderDto, ProductionOrderProgressDto } from "@/types/api";
+import type { ProductionOperationDto, ProductionOrderDto, ProductionOrderProgressDto } from "@/types/api";
 import ProductionOrderStatusBadge, { PRODUCTION_ORDER_STATUS } from "../components/ProductionOrderStatusBadge";
 import ProductionOrderDialog from "../components/ProductionOrderDialog";
 import MaterialRequirementsTable from "../components/MaterialRequirementsTable";
 import IssueMaterialsDialog from "../components/IssueMaterialsDialog";
 import ReceiveOutputDialog from "../components/ReceiveOutputDialog";
+import ReportOperationDialog from "../components/ReportOperationDialog";
+import OperationsSection from "../components/OperationsSection";
 import {
   LinkedDocsTable,
   MaterialProgressTable,
@@ -47,6 +50,8 @@ export default function ProductionOrderPage() {
   const { addTab, closeTab, activeTabId } = useTabs();
   const [order, setOrder] = useState<ProductionOrderDto | null>(null);
   const [progress, setProgress] = useState<ProductionOrderProgressDto | null>(null);
+  const [operations, setOperations] = useState<ProductionOperationDto[]>([]);
+  const [reporting, setReporting] = useState<ProductionOperationDto | null>(null);
   const [editing, setEditing] = useState(false);
   const [issuing, setIssuing] = useState(false);
   const [receiving, setReceiving] = useState(false);
@@ -54,8 +59,9 @@ export default function ProductionOrderPage() {
 
   const load = useCallback(async () => {
     try {
-      const loaded = await productionService.getOrder(id);
+      const [loaded, ops] = await Promise.all([productionService.getOrder(id), productionService.getOperations(id)]);
       setOrder(loaded);
+      setOperations(ops);
       // پیشرفت فقط پس از تأیید معنا دارد؛ پیش‌نویس سند انباری ندارد
       setProgress(loaded.statusId === PRODUCTION_ORDER_STATUS.draft ? null : await productionService.getProgress(id));
     } catch (error) {
@@ -111,6 +117,11 @@ export default function ProductionOrderPage() {
       confirmText: "تکمیل سفارش",
     });
     if (ok) await act(() => productionService.completeOrder(id), "سفارش تولید تکمیل شد");
+  };
+
+  const deleteReport = async (reportId: number, label: string) => {
+    const ok = await confirm({ title: `کارکرد «${label}» حذف شود؟`, confirmText: "حذف", tone: "danger" });
+    if (ok) await act(() => productionService.deleteOperationReport(id, reportId), "گزارش کارکرد حذف شد");
   };
 
   const remove = async () => {
@@ -239,6 +250,17 @@ export default function ProductionOrderPage() {
                 <MaterialProgressTable progress={progress} />
               </div>
             </SectionCard>
+            <SectionCard title="عملیات و کارکرد" icon={Workflow}>
+              <div className="p-4">
+                <OperationsSection
+                  operations={operations}
+                  unitName={order.unitName}
+                  canReport={runnable}
+                  onReport={setReporting}
+                  onDeleteReport={deleteReport}
+                />
+              </div>
+            </SectionCard>
             <SectionCard title="انحراف مصرف مواد" icon={Scale}>
               <div className="p-4">
                 <MaterialVarianceTable progress={progress} />
@@ -251,13 +273,32 @@ export default function ProductionOrderPage() {
             </SectionCard>
           </>
         ) : (
-          <SectionCard title="نیاز مواد" icon={ListChecks}>
-            <div className="p-4">
-              <MaterialRequirementsTable materials={order.materials} />
-            </div>
-          </SectionCard>
+          <>
+            <SectionCard title="نیاز مواد" icon={ListChecks}>
+              <div className="p-4">
+                <MaterialRequirementsTable materials={order.materials} />
+              </div>
+            </SectionCard>
+            <SectionCard title="عملیات (از مسیر تولید فرمول)" icon={Workflow}>
+              <div className="p-4">
+                <OperationsSection operations={operations} unitName={order.unitName} canReport={false} onReport={setReporting} onDeleteReport={deleteReport} />
+              </div>
+            </SectionCard>
+          </>
         )}
       </div>
+
+      <ReportOperationDialog
+        orderId={id}
+        unitName={order.unitName}
+        operation={reporting}
+        onClose={() => setReporting(null)}
+        onSaved={() => {
+          setReporting(null);
+          toast.success("کارکرد ثبت شد");
+          load();
+        }}
+      />
 
       {progress && (
         <>

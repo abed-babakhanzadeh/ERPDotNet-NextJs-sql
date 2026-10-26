@@ -1,6 +1,7 @@
 using ERPDotNet.API.Attributes;
 using ERPDotNet.Application.Common.Models;
 using ERPDotNet.Application.Modules.Production.Commands.WorkCenters;
+using ERPDotNet.Application.Modules.Production.Queries.GetWorkCenterLoad;
 using ERPDotNet.Application.Modules.Production.Queries.GetWorkCenters;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -25,6 +26,14 @@ public class WorkCentersController : ControllerBase
     public async Task<ActionResult<List<WorkCenterOptionDto>>> GetOptions()
     {
         return Ok(await _mediator.Send(new GetWorkCenterOptionsQuery()));
+    }
+
+    // بار مراکز کاری از عملیات سفارش‌های باز
+    [HttpGet("load")]
+    [HasPermission("Production.WorkCenters")]
+    public async Task<ActionResult<List<WorkCenterLoadDto>>> GetLoad()
+    {
+        return Ok(await _mediator.Send(new GetWorkCenterLoadQuery()));
     }
 
     [HttpPost("search")]

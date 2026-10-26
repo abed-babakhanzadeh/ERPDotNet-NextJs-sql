@@ -2048,6 +2048,67 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.ToTable("bom_substitutes", "eng");
                 });
 
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.Production.Entities.ProductionOperationReport", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("GoodQuantity")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("ProductionOrderOperationId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ReportDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<decimal>("RunMinutes")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("ScrapQuantity")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<decimal>("SetupMinutes")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductionOrderOperationId");
+
+                    b.ToTable("production_operation_reports", "production");
+                });
+
             modelBuilder.Entity("ERPDotNet.Domain.Modules.Production.Entities.ProductionOrder", b =>
                 {
                     b.Property<int>("Id")
@@ -2150,6 +2211,46 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.HasIndex("ProductionOrderId");
 
                     b.ToTable("production_order_materials", "production");
+                });
+
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.Production.Entities.ProductionOrderOperation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("PlannedRunMinutes")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("PlannedSetupMinutes")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<int>("ProductionOrderId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Sequence")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("WorkCenterId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WorkCenterId");
+
+                    b.HasIndex("ProductionOrderId", "Sequence")
+                        .IsUnique();
+
+                    b.ToTable("production_order_operations", "production");
                 });
 
             modelBuilder.Entity("ERPDotNet.Domain.Modules.Production.Entities.WorkCenter", b =>
@@ -4746,6 +4847,17 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.Navigation("SubstituteProduct");
                 });
 
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.Production.Entities.ProductionOperationReport", b =>
+                {
+                    b.HasOne("ERPDotNet.Domain.Modules.Production.Entities.ProductionOrderOperation", "Operation")
+                        .WithMany("Reports")
+                        .HasForeignKey("ProductionOrderOperationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Operation");
+                });
+
             modelBuilder.Entity("ERPDotNet.Domain.Modules.Production.Entities.ProductionOrder", b =>
                 {
                     b.HasOne("ERPDotNet.Domain.Modules.ProductEngineering.Entities.BOMHeader", "BOMHeader")
@@ -4782,6 +4894,25 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.Navigation("Product");
 
                     b.Navigation("ProductionOrder");
+                });
+
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.Production.Entities.ProductionOrderOperation", b =>
+                {
+                    b.HasOne("ERPDotNet.Domain.Modules.Production.Entities.ProductionOrder", "ProductionOrder")
+                        .WithMany("Operations")
+                        .HasForeignKey("ProductionOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ERPDotNet.Domain.Modules.Production.Entities.WorkCenter", "WorkCenter")
+                        .WithMany()
+                        .HasForeignKey("WorkCenterId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ProductionOrder");
+
+                    b.Navigation("WorkCenter");
                 });
 
             modelBuilder.Entity("ERPDotNet.Domain.Modules.Production.Entities.WorkCenter", b =>
@@ -5109,6 +5240,13 @@ namespace ERPDotNet.Infrastructure.Migrations
             modelBuilder.Entity("ERPDotNet.Domain.Modules.Production.Entities.ProductionOrder", b =>
                 {
                     b.Navigation("Materials");
+
+                    b.Navigation("Operations");
+                });
+
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.Production.Entities.ProductionOrderOperation", b =>
+                {
+                    b.Navigation("Reports");
                 });
 
             modelBuilder.Entity("ERPDotNet.Domain.Modules.UserAccess.Entities.Permission", b =>

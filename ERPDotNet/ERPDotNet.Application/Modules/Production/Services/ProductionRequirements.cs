@@ -30,7 +30,7 @@ public static class ProductionRequirements
     public static async Task<BOMHeader> ResolveBomAsync(
         IApplicationDbContext context, int productId, int? bomId, DateTime at, CancellationToken ct)
     {
-        var boms = UsableBoms(context, productId, at).Include(b => b.Details);
+        var boms = UsableBoms(context, productId, at).Include(b => b.Details).Include(b => b.Operations);
         var bom = bomId.HasValue
             ? await boms.FirstOrDefaultAsync(b => b.Id == bomId, ct)
             : await DefaultFirst(boms).FirstOrDefaultAsync(ct);
@@ -38,6 +38,44 @@ public static class ProductionRequirements
         return bom ?? throw new BusinessRuleException(bomId.HasValue
             ? "فرمول انتخاب‌شده برای این کالا فعال یا معتبر نیست."
             : "برای این کالا فرمول تولید فعالی تعریف نشده است.");
+    }
+
+    /// <summary>عملیات مسیر تولید برای مقدار سفارش؛ آماده‌سازی ثابت است و اجرا به نسبت مقدار</summary>
+    public static List<ProductionOrderOperation> ExplodeOperations(BOMHeader bom, decimal quantity)
+    {
+        var factor = quantity / (bom.BaseQuantity > 0 ? bom.BaseQuantity : 1);
+        return bom.Operations
+            .Where(o => !o.IsDeleted)
+            .OrderBy(o => o.Sequence)
+            .Select(o => new ProductionOrderOperation
+            {
+                Sequence = o.Sequence,
+                Title = o.Title,
+                WorkCenterId = o.WorkCenterId,
+                PlannedSetupMinutes = o.SetupMinutes,
+                PlannedRunMinutes = Math.Round(o.RunMinutes * factor, 4)
+            })
+            .ToList();
+    }
+
+    /// <summary>جایگزینی عملیات سفارش پیش‌نویس؛ ردیف هم‌ترتیب به‌روز می‌شود تا ایندکس یکتای ترتیب نشکند</summary>
+    public static void SyncOperations(ProductionOrder order, List<ProductionOrderOperation> planned)
+    {
+        foreach (var removed in order.Operations.Where(o => planned.All(p => p.Sequence != o.Sequence)).ToList())
+            order.Operations.Remove(removed);
+        foreach (var p in planned)
+        {
+            var existing = order.Operations.FirstOrDefault(o => o.Sequence == p.Sequence);
+            if (existing == null)
+            {
+                order.Operations.Add(p);
+                continue;
+            }
+            existing.Title = p.Title;
+            existing.WorkCenterId = p.WorkCenterId;
+            existing.PlannedSetupMinutes = p.PlannedSetupMinutes;
+            existing.PlannedRunMinutes = p.PlannedRunMinutes;
+        }
     }
 
     /// <summary>مقادیر فرمول به ازای مقدار پایه است؛ به مقدار سفارش تبدیل و ضایعات اضافه می‌شود</summary>
