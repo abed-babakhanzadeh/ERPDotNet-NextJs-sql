@@ -32,6 +32,7 @@ import {
   Building2,
   CalendarRange,
   Coins,
+  Scale,
 } from "lucide-react";
 
 export interface MenuItem {
@@ -206,6 +207,12 @@ export const MENU_ITEMS: MenuItem[] = [
         title: "سفارش‌های تولید",
         href: "/production/orders",
         icon: ClipboardList,
+        permission: "Production.Orders",
+      },
+      {
+        title: "انحراف مصرف مواد",
+        href: "/production/variance",
+        icon: Scale,
         permission: "Production.Orders",
       },
     ],

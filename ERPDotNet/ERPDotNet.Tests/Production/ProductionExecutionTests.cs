@@ -5,6 +5,7 @@ using ERPDotNet.Application.Modules.Inventory.Services;
 using ERPDotNet.Application.Modules.Production.Commands.ChangeProductionOrderStatus;
 using ERPDotNet.Application.Modules.Production.Commands.ExecuteProductionOrder;
 using ERPDotNet.Application.Modules.Production.Queries.GetProductionOrderProgress;
+using ERPDotNet.Application.Modules.Production.Queries.GetProductionVarianceReport;
 using ERPDotNet.Application.Modules.Production.Services;
 using ERPDotNet.Domain.Modules.BaseInfo.Entities;
 using ERPDotNet.Domain.Modules.Inventory.Entities;
@@ -179,6 +180,59 @@ public class ProductionExecutionTests : IDisposable
         Assert.Equal(ProductionOrderStatus.Cancelled, (await _db.ProductionOrders.FindAsync(order.Id))!.Status);
     }
 
+    [Fact]
+    public void Variance_is_measured_against_the_standard_for_what_was_actually_produced()
+    {
+        // سفارش ۱۰ واحد؛ ۴ سالم و ۱ ضایعات تولید شد، پس مبنا نصف فرمول است
+        var progress = ProductionProgress.Compute(_cake.Id,
+        [
+            Line(InventoryNature.Output, InventoryDocStatus.Posted, _flour.Id, 6),
+            Line(InventoryNature.Output, InventoryDocStatus.Draft, _flour.Id, 100),
+            Line(InventoryNature.Output, InventoryDocStatus.Posted, _sugar.Id, 2.5m),
+            Line(InventoryNature.Output, InventoryDocStatus.Posted, _salt.Id, 1),
+            Line(InventoryNature.Input, InventoryDocStatus.Posted, _cake.Id, 4, ProductionProgress.OutputRole),
+            Line(InventoryNature.Input, InventoryDocStatus.Posted, _cake.Id, 1, ProductionProgress.ScrapRole),
+        ]);
+
+        var rows = ProductionProgress.Materials(
+            [new(1, _flour.Id, 10, 10.5m), new(2, _sugar.Id, 5, 5)], progress, orderQuantity: 10);
+
+        var flour = rows[0];
+        Assert.Equal((5m, 5.25m, 1m, (decimal?)20m, true),
+            (flour.StandardForOutput, flour.AllowedForOutput, flour.VarianceQuantity, flour.VariancePercent, flour.OverAllowed));
+        // اسناد در جریان در انحراف حساب نمی‌شوند
+        Assert.Equal(100m, flour.Issued.Pending);
+        var sugar = rows[1];
+        Assert.Equal((0m, (decimal?)0m, false), (sugar.VarianceQuantity, sugar.VariancePercent, sugar.OverAllowed));
+        // ماده خارج از فرمول: کل مصرفش انحراف است
+        var salt = rows[2];
+        Assert.Equal(((int?)null, 1m, (decimal?)null, true), (salt.MaterialId, salt.VarianceQuantity, salt.VariancePercent, salt.OverAllowed));
+        Assert.Equal((decimal?)80m, ProductionProgress.YieldPercent(progress));
+    }
+
+    [Fact]
+    public async Task Variance_report_covers_running_orders_and_can_show_only_over_consumption()
+    {
+        var over = await AddOrder(ProductionOrderStatus.InProgress);
+        await AddDoc(over.Id, _output, InventoryDocStatus.Posted, (_flour.Id, 12, ProductionProgress.MaterialRole), (_sugar.Id, 5, ProductionProgress.MaterialRole));
+        await AddDoc(over.Id, _input, InventoryDocStatus.Posted, (_cake.Id, 9, ProductionProgress.OutputRole), (_cake.Id, 1, ProductionProgress.ScrapRole));
+        var within = await AddOrder(ProductionOrderStatus.Completed);
+        await AddDoc(within.Id, _output, InventoryDocStatus.Posted, (_flour.Id, 10.5m, ProductionProgress.MaterialRole), (_sugar.Id, 5, ProductionProgress.MaterialRole));
+        await AddDoc(within.Id, _input, InventoryDocStatus.Posted, (_cake.Id, 10, ProductionProgress.OutputRole));
+        await AddOrder(ProductionOrderStatus.Released);
+        var report = new GetProductionVarianceReportHandler(_db, Reader());
+
+        var all = await report.Handle(new GetProductionVarianceReportQuery(), default);
+        Assert.Equal([within.Id, over.Id], all.Items.Select(r => r.Id));
+        var row = all.Items.Single(r => r.Id == over.Id);
+        Assert.Equal((9m, 1m, (decimal?)90m, 2, 1, (decimal?)20m),
+            (row.GoodQuantity, row.ScrapQuantity, row.YieldPercent, row.MaterialCount, row.OverAllowedCount, row.MaxVariancePercent));
+
+        var onlyOver = await report.Handle(new GetProductionVarianceReportQuery { OverAllowedOnly = true }, default);
+        Assert.Equal(1, onlyOver.TotalCount);
+        Assert.Equal(over.Id, onlyOver.Items.Single().Id);
+    }
+
     private Task<long> Issue(int orderId, params (int MaterialId, decimal Quantity)[] lines) => Issue(orderId, _output, lines);
 
     private Task<long> Issue(int orderId, int docTypeId, params (int MaterialId, decimal Quantity)[] lines) =>
@@ -246,7 +300,7 @@ public class ProductionExecutionTests : IDisposable
     }
 
     private static ReferencedDocLine Line(InventoryNature nature, InventoryDocStatus status, int productId, decimal quantity, string? role = null) =>
-        new(1, 1, "", nature, status, DateTime.UtcNow, 1, "", productId, quantity, role, null);
+        new(1, 1, 1, "", nature, status, DateTime.UtcNow, 1, "", productId, quantity, role, null);
 
     private static Product NewProduct(string code) =>
         new() { Code = code, Name = code, UnitId = 1, SupplyType = ProductSupplyType.Manufactured };

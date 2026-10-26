@@ -4,11 +4,22 @@ import { FileText } from "lucide-react";
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { InventoryDocStatusBadge } from "@/components/inventory/InventoryDocStatusBadge";
+import { StatusBadge } from "@/components/common/StatusBadge";
 import { useTabs } from "@/providers/TabsProvider";
 import type { ProductionOrderProgressDto } from "@/types/api";
 import type { InventoryDocStatus } from "@/types/inventory";
 
 const fmt = (n: number) => n.toLocaleString("fa-IR", { maximumFractionDigits: 4 });
+const signed = (n: number) => (n > 0 ? `+${fmt(n)}` : fmt(n));
+
+/**
+ * درصد انحراف یک ماده: قرمز اگر از مصرف مجاز (با ضایعات فرمول) بیشتر شده، سبز اگر در محدوده است.
+ * برای ماده خارج از فرمول درصد معنا ندارد و فقط «خارج از فرمول» نشان داده می‌شود.
+ */
+export function VarianceBadge({ percent, overAllowed }: { percent?: number | null; overAllowed: boolean }) {
+  const label = percent == null ? "خارج از فرمول" : `${percent > 0 ? "+" : ""}${percent.toLocaleString("fa-IR")}٪`;
+  return <StatusBadge tone={overAllowed ? "danger" : "success"} icon={false} label={label} />;
+}
 
 /** جمع «قطعی» و «در جریان» به‌صورت یک خانه */
 function Qty({ done, pending }: { done: number; pending: number }) {
@@ -27,8 +38,9 @@ export function OutputSummary({ progress, unitName }: { progress: ProductionOrde
     ["محصول دریافت‌شده", <Qty key="r" done={progress.receivedQuantity} pending={progress.pendingReceiptQuantity} />],
     ["ضایعات", <Qty key="s" done={progress.scrapQuantity} pending={progress.pendingScrapQuantity} />],
   ];
+  const yieldText = progress.yieldPercent == null ? "-" : `${progress.yieldPercent.toLocaleString("fa-IR")}٪`;
   return (
-    <dl className="grid gap-4 p-4 text-sm sm:grid-cols-3">
+    <dl className="grid gap-4 p-4 text-sm sm:grid-cols-4">
       {tiles.map(([label, value]) => (
         <div key={label}>
           <dt className="mb-1 text-muted-foreground">{label}</dt>
@@ -37,6 +49,10 @@ export function OutputSummary({ progress, unitName }: { progress: ProductionOrde
           </dd>
         </div>
       ))}
+      <div>
+        <dt className="mb-1 text-muted-foreground">بازده (سالم از کل تولید)</dt>
+        <dd className="font-medium tabular-nums">{yieldText}</dd>
+      </div>
     </dl>
   );
 }
@@ -76,6 +92,59 @@ export function MaterialProgressTable({ progress }: { progress: ProductionOrderP
                 <Qty done={m.issuedQuantity} pending={m.pendingIssueQuantity} />
               </TableCell>
               <TableCell className="font-semibold tabular-nums">{fmt(m.remainingQuantity)}</TableCell>
+              <TableCell className="text-muted-foreground">{m.unitName}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
+/**
+ * انحراف مقداری: مصرف قطعی در برابر استاندارد فرمول برای مقدار تولیدشده (سالم + ضایعات).
+ * فقط اسناد قطعی حساب می‌شوند؛ اسناد در جریان پس از قطعی شدن اثر می‌گذارند.
+ */
+export function MaterialVarianceTable({ progress }: { progress: ProductionOrderProgressDto }) {
+  if (progress.producedQuantity <= 0)
+    return (
+      <p className="rounded-md border border-dashed py-6 text-center text-sm text-muted-foreground">
+        انحراف پس از اولین رسید قطعی محصول محاسبه می‌شود.
+      </p>
+    );
+
+  return (
+    <div className="rounded-md border">
+      <Table aria-label="انحراف مصرف مواد">
+        <TableHeader>
+          <TableRow>
+            <TableHead>ماده اولیه</TableHead>
+            <TableHead>استاندارد</TableHead>
+            <TableHead>مجاز (با ضایعات فرمول)</TableHead>
+            <TableHead>مصرف واقعی</TableHead>
+            <TableHead>انحراف</TableHead>
+            <TableHead>درصد</TableHead>
+            <TableHead>واحد</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {progress.materials.map((m) => (
+            <TableRow key={m.materialId ?? `extra-${m.productId}`}>
+              <TableCell>
+                <span dir="ltr" className="me-2 font-mono text-xs text-muted-foreground">
+                  {m.productCode}
+                </span>
+                {m.productName}
+              </TableCell>
+              <TableCell className="tabular-nums">{fmt(m.standardForOutput)}</TableCell>
+              <TableCell className="tabular-nums">{fmt(m.allowedForOutput)}</TableCell>
+              <TableCell className="tabular-nums">{fmt(m.issuedQuantity)}</TableCell>
+              <TableCell dir="ltr" className="text-right font-semibold tabular-nums">
+                {signed(m.varianceQuantity)}
+              </TableCell>
+              <TableCell>
+                <VarianceBadge percent={m.variancePercent} overAllowed={m.overAllowed} />
+              </TableCell>
               <TableCell className="text-muted-foreground">{m.unitName}</TableCell>
             </TableRow>
           ))}

@@ -13,6 +13,7 @@ import {
   PackageMinus,
   PackagePlus,
   Pencil,
+  Scale,
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -31,7 +32,12 @@ import ProductionOrderDialog from "../components/ProductionOrderDialog";
 import MaterialRequirementsTable from "../components/MaterialRequirementsTable";
 import IssueMaterialsDialog from "../components/IssueMaterialsDialog";
 import ReceiveOutputDialog from "../components/ReceiveOutputDialog";
-import { LinkedDocsTable, MaterialProgressTable, OutputSummary } from "../components/ProductionProgressSection";
+import {
+  LinkedDocsTable,
+  MaterialProgressTable,
+  MaterialVarianceTable,
+  OutputSummary,
+} from "../components/ProductionProgressSection";
 
 const faDate = (v?: string | null) => (v ? new Date(v).toLocaleDateString("fa-IR") : "-");
 
@@ -231,6 +237,11 @@ export default function ProductionOrderPage() {
             <SectionCard title="نیاز و مصرف مواد" icon={ListChecks}>
               <div className="p-4">
                 <MaterialProgressTable progress={progress} />
+              </div>
+            </SectionCard>
+            <SectionCard title="انحراف مصرف مواد" icon={Scale}>
+              <div className="p-4">
+                <MaterialVarianceTable progress={progress} />
               </div>
             </SectionCard>
             <SectionCard title="اسناد انبار" icon={FileStack}>

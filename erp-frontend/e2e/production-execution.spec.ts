@@ -142,6 +142,27 @@ test.describe("اجرای سفارش تولید", () => {
     });
     expect(late.status()).toBe(422);
 
+    // انحراف: ۵ واحد تولید شد (۴ سالم + ۱ ضایعات) پس استاندارد آرد ۱۰ است و ۸ مصرف شد
+    p = await progress();
+    expect(p).toMatchObject({ producedQuantity: 5, yieldPercent: 80 });
+    expect(p.materials[0]).toMatchObject({ standardForOutput: 10, varianceQuantity: -2, variancePercent: -20, overAllowed: false });
+    await expect(page.getByRole("table", { name: "انحراف مصرف مواد" })).toContainText(`آرد ${tag}`);
+
+    const report = await (
+      await api.post(`${ORDERS}/variance`, { data: { pageNumber: 1, pageSize: 10, searchTerm: order.orderNumber } })
+    ).json();
+    expect(report.items).toEqual([
+      expect.objectContaining({ id: orderId, goodQuantity: 4, scrapQuantity: 1, overAllowedCount: 0, maxVariancePercent: -20 }),
+    ]);
+    const overOnly = await (
+      await api.post(`${ORDERS}/variance`, { data: { pageNumber: 1, pageSize: 10, searchTerm: order.orderNumber, overAllowedOnly: true } })
+    ).json();
+    expect(overOnly.totalCount).toBe(0);
+
+    await page.goto("/production/variance");
+    await expect(page.getByRole("heading", { name: "انحراف مصرف مواد" })).toBeVisible();
+    await expect(page.getByText(order.orderNumber).first()).toBeVisible();
+
     await api.dispose();
   });
 });
