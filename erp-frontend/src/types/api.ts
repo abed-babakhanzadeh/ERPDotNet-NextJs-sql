@@ -141,3 +141,6 @@ export type ProductionOperationDto = S["ProductionOperationDto"];
 export type OperationReportDto = S["OperationReportDto"];
 export type ReportOperationCommand = S["ReportOperationCommand"];
 export type WorkCenterLoadDto = S["WorkCenterLoadDto"];
+export type ValuationSettingsDto = S["ValuationSettingsDto"];
+export type UpdateValuationSettingsCommand = S["UpdateValuationSettingsCommand"];
+export type StockValuationDto = S["StockValuationDto"];

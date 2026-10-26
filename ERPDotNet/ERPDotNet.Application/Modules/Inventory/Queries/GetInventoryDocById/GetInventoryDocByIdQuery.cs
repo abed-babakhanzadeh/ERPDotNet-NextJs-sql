@@ -47,6 +47,16 @@ public class GetInventoryDocByIdHandler : IRequestHandler<GetInventoryDocByIdQue
 
         if (doc == null) return null;
 
+        // ارزش ریالی اثر اصلی هر سطر (اولین حرکت غیرابطالی؛ در انتقال، خروج از مبدأ)
+        var detailIds = doc.Details.Select(d => d.Id).ToList();
+        var posted = (await _context.InventoryTransactions.AsNoTracking()
+                .Where(t => detailIds.Contains(t.DocDetailId) && t.RelatedTransactionId == null && t.TotalCost != null)
+                .OrderBy(t => t.Id)
+                .Select(t => new { t.DocDetailId, t.UnitCost, t.TotalCost })
+                .ToListAsync(cancellationToken))
+            .GroupBy(t => t.DocDetailId)
+            .ToDictionary(g => g.Key, g => (g.First().UnitCost, g.First().TotalCost));
+
         // 2. نگاشت دستی (Manual Mapping) به جای Mapster
         var dto = new InventoryDocDto
         {
@@ -98,6 +108,9 @@ public class GetInventoryDocByIdHandler : IRequestHandler<GetInventoryDocByIdQue
                 BatchNumber = d.Batch?.BatchNumber, // می‌تواند نال باشد
                 
                 Description = d.Description,
+                UnitCost = d.UnitCost,
+                PostedUnitCost = posted.GetValueOrDefault(d.Id).UnitCost,
+                PostedTotalCost = posted.GetValueOrDefault(d.Id).TotalCost,
                 SerialNumbers = d.Serials.OrderBy(s => s.SerialNumber).Select(s => s.SerialNumber).ToList()
             }).ToList()
         };

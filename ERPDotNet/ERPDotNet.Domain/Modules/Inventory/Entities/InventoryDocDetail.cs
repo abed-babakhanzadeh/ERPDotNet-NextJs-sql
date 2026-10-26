@@ -49,6 +49,9 @@ public class InventoryDocDetail : BaseEntity
 
     public string? Description { get; set; }
 
+    // بهای واحد واردشده کاربر برای سطر رسید (به واحد اصلی)؛ صادره و انتقال با میانگین ارزش‌گذاری می‌شوند
+    public decimal? UnitCost { get; set; }
+
     // فقط برای کالای سریال‌دار: سریال‌های این سطر (تعدادشان باید با مقدار سطر برابر باشد)
     public ICollection<InventoryDocDetailSerial> Serials { get; set; } = new List<InventoryDocDetailSerial>();
 }

@@ -199,6 +199,25 @@ export default function ProductCardexPage() {
         filterable: false,
         type: "number",
       },
+      // ارزش ریالی حرکت؛ خالی برای تراکنش‌های پیش از فعال شدن ارزش‌گذاری
+      {
+        key: "unitCost",
+        title: "بهای واحد",
+        label: "بهای واحد",
+        sortable: false,
+        filterable: false,
+        type: "number",
+        render: (v: number | null) => (v == null ? "-" : <span className="tabular-nums">{v.toLocaleString("fa-IR", { maximumFractionDigits: 2 })}</span>),
+      },
+      {
+        key: "totalCost",
+        title: "ارزش",
+        label: "ارزش",
+        sortable: false,
+        filterable: false,
+        type: "number",
+        render: (v: number | null) => (v == null ? "-" : <span className="tabular-nums">{Math.round(v).toLocaleString("fa-IR")}</span>),
+      },
     ],
     [],
   );

@@ -24,4 +24,8 @@ public class ProductCardexDto
     
     // موجودی خط به خط (مهمترین فیلد)
     public decimal RunningBalance { get; set; }
+
+    // ارزش ریالی حرکت؛ خالی برای تراکنش‌های پیش از فعال شدن ارزش‌گذاری
+    public decimal? UnitCost { get; set; }
+    public decimal? TotalCost { get; set; }
 }

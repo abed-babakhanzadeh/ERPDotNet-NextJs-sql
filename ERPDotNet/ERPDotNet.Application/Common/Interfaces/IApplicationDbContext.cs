@@ -67,6 +67,8 @@ public interface IApplicationDbContext
     // هسته عملیاتی
     DbSet<InventoryTransaction> InventoryTransactions { get; }
     DbSet<CurrentStock> CurrentStocks { get; }
+    DbSet<InventoryCostBalance> InventoryCostBalances { get; }
+    DbSet<InventoryValuationSettings> InventoryValuationSettings { get; }
     // ====================================
 
     DbSet<TEntity> Set<TEntity>() where TEntity : class;

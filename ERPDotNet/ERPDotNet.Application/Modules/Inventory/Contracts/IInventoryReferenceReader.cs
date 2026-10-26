@@ -13,7 +13,21 @@ public interface IInventoryReferenceReader
 
     /// <summary>همان، برای چند سند مرجع در یک پرس‌وجو (گزارش‌ها)</summary>
     Task<List<ReferencedDocLine>> GetLinesAsync(string referenceEntityName, IReadOnlyCollection<long> referenceEntityIds, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// حرکت‌های ریالی ثبت‌شده برای اسناد یک مرجع، جمع‌شده برای هر سطر. مقدار و ارزش علامت‌دار است
+    /// (افزایش مثبت، کاهش منفی)، پس ابطال سند خودبه‌خود اثر آن را صفر می‌کند.
+    /// </summary>
+    Task<List<ReferencedCostLine>> GetPostedCostsAsync(string referenceEntityName, long referenceEntityId, CancellationToken cancellationToken);
 }
+
+public sealed record ReferencedCostLine(
+    long DocId,
+    InventoryNature Nature,
+    int ProductId,
+    string? LineRole,
+    decimal SignedQuantity,
+    decimal SignedCost);
 
 /// <param name="LineRole">نقش سطر در سند مرجع (ReferenceEntityName سطر)، مثلاً Material یا Scrap</param>
 /// <param name="ReferenceLineId">شناسه سطر سند مرجع، اگر سطر از آن ساخته شده باشد</param>

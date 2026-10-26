@@ -40,4 +40,21 @@ public class InventoryReferenceReader : IInventoryReferenceReader
                 d.ReferenceEntityName,
                 d.ReferenceEntityLineId))
             .ToListAsync(cancellationToken);
+
+    public async Task<List<ReferencedCostLine>> GetPostedCostsAsync(string referenceEntityName, long referenceEntityId, CancellationToken cancellationToken)
+    {
+        var rows = await (
+                from t in _context.InventoryTransactions.AsNoTracking()
+                join d in _context.InventoryDocDetails on t.DocDetailId equals d.Id
+                join h in _context.InventoryDocHeaders on d.HeaderId equals h.Id
+                where h.ReferenceEntityName == referenceEntityName && h.ReferenceEntityId == referenceEntityId
+                select new { h.Id, h.DocType!.Nature, d.ProductId, d.ReferenceEntityName, t.Sign, t.Quantity, t.TotalCost })
+            .ToListAsync(cancellationToken);
+
+        return rows
+            .GroupBy(r => (r.Id, r.Nature, r.ProductId, r.ReferenceEntityName))
+            .Select(g => new ReferencedCostLine(g.Key.Id, g.Key.Nature, g.Key.ProductId, g.Key.ReferenceEntityName,
+                g.Sum(r => r.Quantity * (int)r.Sign), g.Sum(r => (r.TotalCost ?? 0) * (int)r.Sign)))
+            .ToList();
+    }
 }

@@ -164,6 +164,8 @@ public static class DependencyInjection
         services.AddScoped<IBaseInfoUsageChecker, ERPDotNet.Application.Modules.Production.Services.ProductionBaseInfoUsageChecker>();
         services.AddScoped<ERPDotNet.Application.Modules.Inventory.Contracts.IInventoryReferenceReader, ERPDotNet.Application.Modules.Inventory.Services.InventoryReferenceReader>();
         services.AddScoped<ERPDotNet.Application.Modules.Inventory.Contracts.IInventoryAvailabilityReader, ERPDotNet.Application.Modules.Inventory.Services.InventoryAvailabilityReader>();
+        services.AddScoped<ERPDotNet.Application.Modules.Inventory.Services.IInventoryValuationService, ERPDotNet.Application.Modules.Inventory.Services.InventoryValuationService>();
+        services.AddScoped<ERPDotNet.Application.Modules.Inventory.Contracts.IReceiptCostProvider, ERPDotNet.Application.Modules.Production.Services.ProductionReceiptCostProvider>();
 
         // 🌟 اتصال استراتژیک به گردش کار (بدون Coupling)
         // using ERPDotNet.Application.Modules.Workflow.Contracts;

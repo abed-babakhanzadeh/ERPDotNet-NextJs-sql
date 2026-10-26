@@ -25,13 +25,16 @@ public class RevertInventoryDocHandler : IRequestHandler<RevertInventoryDocComma
     private readonly IInventoryPostingService _postingService; // ✅ تزریق سرویس دامین
     private readonly IInventoryPostingPolicy _policy;
     private readonly IFiscalYearService _fiscalYears;
+    private readonly IInventoryValuationService _valuation;
 
     public RevertInventoryDocHandler(
         IApplicationDbContext context,
         IInventoryPostingService postingService,
         IInventoryPostingPolicy policy,
-        IFiscalYearService fiscalYears)
+        IFiscalYearService fiscalYears,
+        IInventoryValuationService valuation)
     {
+        _valuation = valuation;
         _fiscalYears = fiscalYears;
         _context = context;
         _postingService = postingService;
@@ -92,6 +95,9 @@ public class RevertInventoryDocHandler : IRequestHandler<RevertInventoryDocComma
                 // نمایش خطای دقیق بیزینسی به کاربر
                 throw new BusinessRuleException(string.Join("\n", result.Errors));
             }
+
+            // ابطال با همان بهای تراکنش اصلی برمی‌گردد
+            await _valuation.ApplyAsync(doc, doc.DocType!, result.GeneratedTransactions, isReversal: true, cancellationToken);
 
             // 1. ثبت تراکنش‌های معکوس در دیتابیس
             if (result.GeneratedTransactions.Any())

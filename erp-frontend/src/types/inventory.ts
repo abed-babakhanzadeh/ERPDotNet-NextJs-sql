@@ -303,6 +303,12 @@ export interface InventoryDocDetailDto {
   description?: string;
   /** فقط کالای سریال‌دار */
   serialNumbers?: string[];
+
+  /** بهای واحد واردشده برای رسید */
+  unitCost?: number | null;
+  /** ارزش ریالی اثر اصلی سطر پس از قطعی شدن */
+  postedUnitCost?: number | null;
+  postedTotalCost?: number | null;
 }
 
 export interface InventoryDocDto {
@@ -460,4 +466,7 @@ export interface ProductCardexDto {
   inQuantity: number;
   outQuantity: number;
   runningBalance: number;
+  /** ارزش ریالی حرکت؛ خالی برای تراکنش‌های پیش از فعال شدن ارزش‌گذاری */
+  unitCost?: number | null;
+  totalCost?: number | null;
 }

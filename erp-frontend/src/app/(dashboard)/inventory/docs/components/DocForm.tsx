@@ -123,8 +123,13 @@ export default function DocForm({
         // بک‌اند قفسه را فقط هنگام ایجاد سند اجباری می‌داند
         requireLocation: initialMode === "create",
         isSerialManaged: (productId) => !!serialManaged[productId],
+        // سند ساخته‌شده از ماژول دیگر (مثل رسید تولید) بهایش را از مرجع می‌گیرد
+        requiresUnitCost: (docTypeId) => {
+          const type = docTypes.find((dt) => dt.id === Number(docTypeId));
+          return !!type && type.natureValue === InventoryNature.Input && !!type.affectsCost && !docData?.referenceEntityName;
+        },
       }),
-    [isTransferType, initialMode, serialManaged],
+    [isTransferType, initialMode, serialManaged, docTypes, docData?.referenceEntityName],
   );
   const form = useForm<DocFormValues>({
     resolver: zodResolver(schema),
@@ -348,6 +353,9 @@ export default function DocForm({
   const isTransfer = isTransferType(headerData.docTypeId ?? null);
   const nature = docTypes.find((dt) => dt.id === Number(headerData.docTypeId))?.natureValue;
   const isOutgoing = nature === InventoryNature.Output || nature === InventoryNature.Transfer;
+  const isInput = nature === InventoryNature.Input;
+  // سند قطعی یا ابطال‌شده ارزش ریالی ثبت‌شده دارد
+  const isValued = currentStatus === InventoryDocStatus.Posted || currentStatus === InventoryDocStatus.Cancelled;
   // سطرهای خروجی کالای بچ‌دار که هنوز بچ ندارند
   const needsBatch = (row: DocRow) =>
     batchManaged[Number(row.productId)] && !row.batchId && Number(row.mainUnitQuantity) > 0;
@@ -518,6 +526,33 @@ export default function DocForm({
         required: true,
         disabled: isReadOnly,
       },
+      // بهای واحد فقط برای رسید وارد می‌شود؛ حواله و انتقال با میانگین ارزش‌گذاری می‌شوند
+      ...(isInput
+        ? [
+            {
+              key: "unitCost",
+              title: "بهای واحد (ریال)",
+              type: "number" as const,
+              width: "130px",
+              disabled: isReadOnly,
+            },
+          ]
+        : []),
+      ...(isValued
+        ? [
+            {
+              key: "postedTotalCost",
+              title: "ارزش ریالی",
+              type: "readonly" as const,
+              width: "130px",
+              render: (row: DocRow) => (
+                <span className="tabular-nums">
+                  {row.postedTotalCost == null ? "-" : Math.round(row.postedTotalCost).toLocaleString("fa-IR")}
+                </span>
+              ),
+            },
+          ]
+        : []),
       {
         key: "locationId",
         title: "شلف/قفسه",
@@ -589,6 +624,8 @@ export default function DocForm({
       isReadOnly,
       batchesByProduct,
       hasSerialRows,
+      isInput,
+      isValued,
     ],
   );
 
@@ -616,6 +653,7 @@ export default function DocForm({
         batchId: row.batchId ? Number(row.batchId) : null,
         serialNumbers: serialManaged[Number(row.productId)] ? parseSerials(row.serialNumbers) : [],
         description: row.description || "",
+        unitCost: isInput && row.unitCost !== undefined && row.unitCost !== null && row.unitCost !== "" ? Number(row.unitCost) : null,
       }));
 
       if (currentMode === "create") {

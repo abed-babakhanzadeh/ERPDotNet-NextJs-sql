@@ -186,10 +186,12 @@ export async function createBom(
   );
 }
 
+/** نوع سند؛ پیش‌فرض غیرریالی تا تست‌ها بهای واحد لازم نداشته باشند */
 export async function createDocType(
   api: APIRequestContext,
   title: string,
   nature: 1 | 2 | 3,
+  affectsCost = false,
 ): Promise<number> {
   return postId(
     api,
@@ -197,7 +199,7 @@ export async function createDocType(
     {
       title,
       nature,
-      affectsCost: false,
+      affectsCost,
       numberingScope: 1,
       isReferenceRequired: false,
       allowedReferenceEntityNames: [],
@@ -219,6 +221,7 @@ export async function createDoc(
       destinationLocationId?: number;
       batchId?: number;
       serialNumbers?: string[];
+      unitCost?: number;
     }[];
   },
 ): Promise<number> {
@@ -238,6 +241,7 @@ export async function createDoc(
         destinationLocationId: l.destinationLocationId ?? null,
         batchId: l.batchId ?? null,
         serialNumbers: l.serialNumbers ?? [],
+        unitCost: l.unitCost ?? null,
       })),
     },
     "ساخت سند",

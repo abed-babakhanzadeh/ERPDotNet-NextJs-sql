@@ -36,6 +36,7 @@ import {
   Calculator,
   Cog,
   Gauge,
+  SlidersHorizontal,
 } from "lucide-react";
 
 export interface MenuItem {
@@ -313,7 +314,28 @@ export const MENU_ITEMS: MenuItem[] = [
             icon: Barcode,
             permission: "Inventory.Reports.Serials",
           },
+          {
+            title: "ارزش ریالی موجودی",
+            href: "/inventory/reports/valuation",
+            icon: Coins,
+            permission: "Inventory.Reports.Valuation",
+          },
         ],
+      },
+    ],
+  },
+
+  // === تنظیمات سیستم ===
+  {
+    title: "تنظیمات سیستم",
+    icon: SlidersHorizontal,
+    permission: "Settings",
+    submenu: [
+      {
+        title: "ارزش‌گذاری موجودی",
+        href: "/settings/inventory-valuation",
+        icon: Calculator,
+        permission: "Settings.InventoryValuation",
       },
     ],
   },
