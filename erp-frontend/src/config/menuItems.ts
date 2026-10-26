@@ -3,6 +3,7 @@ import {
   Barcode,
   ClipboardCheck,
   FolderTree,
+  Factory,
   Palette,
   Users,
   Settings,
@@ -191,6 +192,21 @@ export const MENU_ITEMS: MenuItem[] = [
             permission: "ProductEngineering.BOM.Reports",
           },
         ],
+      },
+    ],
+  },
+
+  // === تولید ===
+  {
+    title: "تولید",
+    icon: Factory,
+    permission: "Production",
+    submenu: [
+      {
+        title: "سفارش‌های تولید",
+        href: "/production/orders",
+        icon: ClipboardList,
+        permission: "Production.Orders",
       },
     ],
   },

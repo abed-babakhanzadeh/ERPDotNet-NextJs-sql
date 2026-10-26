@@ -1984,6 +1984,110 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.ToTable("bom_substitutes", "eng");
                 });
 
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.Production.Entities.ProductionOrder", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BOMHeaderId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OrderNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("PlannedEndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("PlannedStartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BOMHeaderId");
+
+                    b.HasIndex("OrderNumber")
+                        .IsUnique()
+                        .HasFilter("[OrderNumber] <> ''");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("production_orders", "production");
+                });
+
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.Production.Entities.ProductionOrderMaterial", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductionOrderId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("RequiredQuantity")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<decimal>("StandardQuantity")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<decimal>("WastePercentage")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("ProductionOrderId");
+
+                    b.ToTable("production_order_materials", "production");
+                });
+
             modelBuilder.Entity("ERPDotNet.Domain.Modules.UserAccess.Entities.Permission", b =>
                 {
                     b.Property<int>("Id")
@@ -2811,6 +2915,55 @@ namespace ERPDotNet.Infrastructure.Migrations
                             Name = "Workflow.Processes.Edit",
                             ParentId = 4200,
                             Title = "طراحی مراحل و دکمه‌ها"
+                        },
+                        new
+                        {
+                            Id = 5000,
+                            IsMenu = true,
+                            Name = "Production",
+                            ParentId = 1,
+                            Title = "تولید"
+                        },
+                        new
+                        {
+                            Id = 5100,
+                            IsMenu = true,
+                            Name = "Production.Orders",
+                            ParentId = 5000,
+                            Title = "سفارش‌های تولید",
+                            Url = "/production/orders"
+                        },
+                        new
+                        {
+                            Id = 5101,
+                            IsMenu = false,
+                            Name = "Production.Orders.Create",
+                            ParentId = 5100,
+                            Title = "ثبت سفارش تولید"
+                        },
+                        new
+                        {
+                            Id = 5102,
+                            IsMenu = false,
+                            Name = "Production.Orders.Edit",
+                            ParentId = 5100,
+                            Title = "ویرایش سفارش تولید"
+                        },
+                        new
+                        {
+                            Id = 5103,
+                            IsMenu = false,
+                            Name = "Production.Orders.Delete",
+                            ParentId = 5100,
+                            Title = "حذف سفارش تولید"
+                        },
+                        new
+                        {
+                            Id = 5104,
+                            IsMenu = false,
+                            Name = "Production.Orders.Release",
+                            ParentId = 5100,
+                            Title = "تأیید و ابطال سفارش تولید"
                         });
                 });
 
@@ -4399,6 +4552,44 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.Navigation("SubstituteProduct");
                 });
 
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.Production.Entities.ProductionOrder", b =>
+                {
+                    b.HasOne("ERPDotNet.Domain.Modules.ProductEngineering.Entities.BOMHeader", "BOMHeader")
+                        .WithMany()
+                        .HasForeignKey("BOMHeaderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ERPDotNet.Domain.Modules.BaseInfo.Entities.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("BOMHeader");
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.Production.Entities.ProductionOrderMaterial", b =>
+                {
+                    b.HasOne("ERPDotNet.Domain.Modules.BaseInfo.Entities.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ERPDotNet.Domain.Modules.Production.Entities.ProductionOrder", "ProductionOrder")
+                        .WithMany("Materials")
+                        .HasForeignKey("ProductionOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("ProductionOrder");
+                });
+
             modelBuilder.Entity("ERPDotNet.Domain.Modules.UserAccess.Entities.Permission", b =>
                 {
                     b.HasOne("ERPDotNet.Domain.Modules.UserAccess.Entities.Permission", "Parent")
@@ -4707,6 +4898,11 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.Navigation("Details");
 
                     b.Navigation("Outputs");
+                });
+
+            modelBuilder.Entity("ERPDotNet.Domain.Modules.Production.Entities.ProductionOrder", b =>
+                {
+                    b.Navigation("Materials");
                 });
 
             modelBuilder.Entity("ERPDotNet.Domain.Modules.UserAccess.Entities.Permission", b =>

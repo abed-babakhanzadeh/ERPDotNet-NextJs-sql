@@ -1,5 +1,6 @@
 using ERPDotNet.Domain.Modules.BaseInfo.Entities;
 using ERPDotNet.Domain.Modules.ProductEngineering.Entities;
+using ERPDotNet.Domain.Modules.Production.Entities;
 using ERPDotNet.Domain.Modules.UserAccess.Entities;
 // فضای نام انبار
 using ERPDotNet.Domain.Modules.Inventory.Entities; 
@@ -36,6 +37,8 @@ public interface IApplicationDbContext
     // === ماژول ProductEngineering ===
     DbSet<BOMHeader> BOMHeaders { get; }
     DbSet<BOMDetail> BOMDetails { get; }
+    DbSet<ProductionOrder> ProductionOrders { get; }
+    DbSet<ProductionOrderMaterial> ProductionOrderMaterials { get; }
     DbSet<BOMSubstitute> BOMSubstitutes { get; }
     DbSet<BOMOutput> BOMOutputs { get; }
 

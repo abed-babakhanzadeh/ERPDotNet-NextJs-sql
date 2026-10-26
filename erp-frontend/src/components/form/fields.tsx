@@ -212,9 +212,11 @@ export function SelectField<T extends FieldValues>({
             <Select
               disabled={disabled}
               value={current}
-              onValueChange={(v) =>
-                field.onChange(v === NONE ? null : numeric ? Number(v) : v)
-              }
+              onValueChange={(v) => {
+                // select پنهان Radix وقتی مقدار تازه هنوز در گزینه‌هایش نیست "" می‌فرستد؛ نباید مقدار را پاک کند
+                if (v === "") return;
+                field.onChange(v === NONE ? null : numeric ? Number(v) : v);
+              }}
             >
               <FormControl>
                 <SelectTrigger ref={field.ref} onBlur={field.onBlur} aria-required={required}>

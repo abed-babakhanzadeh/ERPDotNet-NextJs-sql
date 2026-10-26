@@ -156,7 +156,7 @@ export async function createBom(
   b: {
     productId: number;
     title: string;
-    components: { productId: number; unitId: number; quantity: number }[];
+    components: { productId: number; unitId: number; quantity: number; wastePercentage?: number }[];
     baseQuantity?: number;
   },
 ): Promise<number> {
@@ -178,7 +178,7 @@ export async function createBom(
         quantity: c.quantity,
         inputQuantity: c.quantity,
         inputUnitId: c.unitId,
-        wastePercentage: 0,
+        wastePercentage: c.wastePercentage ?? 0,
         substitutes: [],
       })),
     },
@@ -337,6 +337,13 @@ export async function serialsOf(api: APIRequestContext, productId: number) {
 }
 
 /** پاسخ ناموفق را با متن خطای سرور پرتاب می‌کند */
+/** انتخاب کالا در جستجوی جدولی؛ پنجره جستجو آخرین dialog صفحه است */
+export async function pickProduct(page: Page, combobox: string, code: string) {
+  await page.getByRole("combobox", { name: combobox }).click();
+  await page.getByRole("dialog").last().getByRole("textbox").fill(code);
+  await page.getByRole("button", { name: new RegExp(code) }).click();
+}
+
 /** منتظر پاسخ ذخیره فرم (برای خواندن شناسه رکورد ساخته‌شده) */
 export function waitForSave(page: Page, method: "POST" | "PUT", path: RegExp) {
   return page.waitForResponse((r) => r.request().method() === method && path.test(r.url()));

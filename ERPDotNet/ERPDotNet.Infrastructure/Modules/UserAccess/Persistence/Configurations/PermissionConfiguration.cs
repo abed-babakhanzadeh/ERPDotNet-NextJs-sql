@@ -168,7 +168,17 @@ public class PermissionConfiguration : IEntityTypeConfiguration<Permission>
             new Permission { Id = 4200, Name = "Workflow.Processes", Title = "طراح گردش کار", IsMenu = true, ParentId = 4000, Url = "/workflow/designer" },
             new Permission { Id = 4201, Name = "Workflow.Processes.View", Title = "مشاهده فرآیندها", IsMenu = false, ParentId = 4200 },
             new Permission { Id = 4202, Name = "Workflow.Processes.Create", Title = "ایجاد فرآیند", IsMenu = false, ParentId = 4200 },
-            new Permission { Id = 4203, Name = "Workflow.Processes.Edit", Title = "طراحی مراحل و دکمه‌ها", IsMenu = false, ParentId = 4200 }
+            new Permission { Id = 4203, Name = "Workflow.Processes.Edit", Title = "طراحی مراحل و دکمه‌ها", IsMenu = false, ParentId = 4200 },
+
+            // =========================================================
+            // === ماژول تولید (Production) - سری 5000 ===
+            // =========================================================
+            new Permission { Id = 5000, Name = "Production", Title = "تولید", IsMenu = true, ParentId = 1 },
+            new Permission { Id = 5100, Name = "Production.Orders", Title = "سفارش‌های تولید", IsMenu = true, ParentId = 5000, Url = "/production/orders" },
+            new Permission { Id = 5101, Name = "Production.Orders.Create", Title = "ثبت سفارش تولید", IsMenu = false, ParentId = 5100 },
+            new Permission { Id = 5102, Name = "Production.Orders.Edit", Title = "ویرایش سفارش تولید", IsMenu = false, ParentId = 5100 },
+            new Permission { Id = 5103, Name = "Production.Orders.Delete", Title = "حذف سفارش تولید", IsMenu = false, ParentId = 5100 },
+            new Permission { Id = 5104, Name = "Production.Orders.Release", Title = "تأیید و ابطال سفارش تولید", IsMenu = false, ParentId = 5100 }
             
         );
     }

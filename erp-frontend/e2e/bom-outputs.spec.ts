@@ -1,11 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
-import { adminApi, createBom, createProduct, createUnit, uid } from "./helpers";
-
-async function pickProduct(page: Page, combobox: string, code: string) {
-  await page.getByRole("combobox", { name: combobox }).click();
-  await page.getByRole("dialog").getByRole("textbox").fill(code);
-  await page.getByRole("button", { name: new RegExp(code) }).click();
-}
+import { expect, test } from "@playwright/test";
+import { adminApi, createBom, createProduct, createUnit, pickProduct, uid } from "./helpers";
 
 test.describe("مقدار پایه BOM و محصولات همزاد/فرعی", () => {
   test("BOM با مقدار پایه، محصول همزاد و فرعی از فرم ثبت و ویرایش می‌شود", async ({ page }) => {

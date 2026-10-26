@@ -1351,6 +1351,323 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Production/Orders/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["GetProductionOrdersQuery"];
+                    "text/json": components["schemas"]["GetProductionOrdersQuery"];
+                    "application/*+json": components["schemas"]["GetProductionOrdersQuery"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PaginatedResultOfProductionOrderListDto"];
+                        "application/json": components["schemas"]["PaginatedResultOfProductionOrderListDto"];
+                        "text/json": components["schemas"]["PaginatedResultOfProductionOrderListDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Production/Orders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProductionOrderDto"];
+                        "application/json": components["schemas"]["ProductionOrderDto"];
+                        "text/json": components["schemas"]["ProductionOrderDto"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateProductionOrderCommand"];
+                    "text/json": components["schemas"]["UpdateProductionOrderCommand"];
+                    "application/*+json": components["schemas"]["UpdateProductionOrderCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Production/Orders/boms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    productId?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProductionBomOptionDto"][];
+                        "application/json": components["schemas"]["ProductionBomOptionDto"][];
+                        "text/json": components["schemas"]["ProductionBomOptionDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Production/Orders/requirements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["GetProductionRequirementsQuery"];
+                    "text/json": components["schemas"]["GetProductionRequirementsQuery"];
+                    "application/*+json": components["schemas"]["GetProductionRequirementsQuery"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProductionRequirementsDto"];
+                        "application/json": components["schemas"]["ProductionRequirementsDto"];
+                        "text/json": components["schemas"]["ProductionRequirementsDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Production/Orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateProductionOrderCommand"];
+                    "text/json": components["schemas"]["CreateProductionOrderCommand"];
+                    "application/*+json": components["schemas"]["CreateProductionOrderCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Production/Orders/{id}/release": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Production/Orders/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ProductEngineering/BOMs/search": {
         parameters: {
             query?: never;
@@ -5372,6 +5689,19 @@ export interface components {
             taxCode?: null | string;
             conversions: components["schemas"]["ProductConversionInput"][];
         };
+        CreateProductionOrderCommand: {
+            /** Format: int32 */
+            productId: number;
+            /** Format: int32 */
+            bomHeaderId?: null | number;
+            /** Format: double */
+            quantity: number;
+            /** Format: date-time */
+            plannedStartDate?: null | string;
+            /** Format: date-time */
+            plannedEndDate?: null | string;
+            description?: null | string;
+        };
         CreateRoleCommand: {
             name: string;
         };
@@ -5707,6 +6037,25 @@ export interface components {
             sortDescending: boolean;
             searchTerm?: null | string;
             filters?: null | components["schemas"]["FilterModel"][];
+        };
+        GetProductionOrdersQuery: {
+            status: null | components["schemas"]["ProductionOrderStatus"];
+            /** Format: int32 */
+            pageNumber: number;
+            /** Format: int32 */
+            pageSize: number;
+            sortColumn?: null | string;
+            sortDescending: boolean;
+            searchTerm?: null | string;
+            filters?: null | components["schemas"]["FilterModel"][];
+        };
+        GetProductionRequirementsQuery: {
+            /** Format: int32 */
+            productId: number;
+            /** Format: int32 */
+            bomHeaderId?: null | number;
+            /** Format: double */
+            quantity: number;
         };
         GetStockCountsQuery: {
             /** Format: int32 */
@@ -6092,6 +6441,17 @@ export interface components {
             hasPreviousPage: boolean;
             hasNextPage: boolean;
         };
+        PaginatedResultOfProductionOrderListDto: {
+            items: components["schemas"]["ProductionOrderListDto"][];
+            /** Format: int32 */
+            pageNumber: number;
+            /** Format: int32 */
+            totalPages: number;
+            /** Format: int32 */
+            totalCount: number;
+            hasPreviousPage: boolean;
+            hasNextPage: boolean;
+        };
         PaginatedResultOfStockCountListItemDto: {
             items: components["schemas"]["StockCountListItemDto"][];
             /** Format: int32 */
@@ -6281,6 +6641,98 @@ export interface components {
             /** Format: int32 */
             variantParentId: null | number;
             variantParentName: null | string;
+        };
+        ProductionBomOptionDto: {
+            /** Format: int32 */
+            id: number;
+            title: string;
+            /** Format: int32 */
+            version: number;
+            usage: string;
+            isMain: boolean;
+            /** Format: double */
+            baseQuantity: number;
+        };
+        ProductionOrderDto: {
+            /** Format: int32 */
+            id: number;
+            orderNumber: string;
+            /** Format: int32 */
+            productId: number;
+            productCode: string;
+            productName: string;
+            unitName: string;
+            /** Format: int32 */
+            bomHeaderId: number;
+            bomTitle: string;
+            /** Format: int32 */
+            bomVersion: number;
+            /** Format: double */
+            bomBaseQuantity: number;
+            /** Format: double */
+            quantity: number;
+            /** Format: date-time */
+            plannedStartDate: null | string;
+            /** Format: date-time */
+            plannedEndDate: null | string;
+            /** Format: int32 */
+            statusId: number;
+            statusTitle: string;
+            description: null | string;
+            materials: components["schemas"]["ProductionOrderMaterialDto"][];
+            /** Format: byte */
+            rowVersion: string;
+        };
+        ProductionOrderListDto: {
+            /** Format: int32 */
+            id: number;
+            orderNumber: string;
+            /** Format: int32 */
+            productId: number;
+            productCode: string;
+            productName: string;
+            unitName: string;
+            /** Format: int32 */
+            bomHeaderId: number;
+            bomTitle: string;
+            /** Format: int32 */
+            bomVersion: number;
+            /** Format: double */
+            quantity: number;
+            /** Format: date-time */
+            plannedStartDate: null | string;
+            /** Format: date-time */
+            plannedEndDate: null | string;
+            /** Format: int32 */
+            statusId: number;
+            statusTitle: string;
+            description: null | string;
+        };
+        ProductionOrderMaterialDto: {
+            /** Format: int32 */
+            id: number;
+            /** Format: int32 */
+            productId: number;
+            productCode: string;
+            productName: string;
+            unitName: string;
+            /** Format: double */
+            standardQuantity: number;
+            /** Format: double */
+            wastePercentage: number;
+            /** Format: double */
+            requiredQuantity: number;
+        };
+        ProductionOrderStatus: number;
+        ProductionRequirementsDto: {
+            /** Format: int32 */
+            bomHeaderId: number;
+            bomTitle: string;
+            /** Format: int32 */
+            bomVersion: number;
+            /** Format: double */
+            bomBaseQuantity: number;
+            materials: components["schemas"]["ProductionOrderMaterialDto"][];
         };
         ProductSupplyType: number;
         ProductVariantDto: {
@@ -6666,6 +7118,21 @@ export interface components {
             /** Format: byte */
             rowVersion?: null | string;
             conversions: components["schemas"]["ProductConversionUpdateDto"][];
+        };
+        UpdateProductionOrderCommand: {
+            /** Format: int32 */
+            id: number;
+            /** Format: int32 */
+            bomHeaderId?: null | number;
+            /** Format: double */
+            quantity: number;
+            /** Format: date-time */
+            plannedStartDate?: null | string;
+            /** Format: date-time */
+            plannedEndDate?: null | string;
+            description?: null | string;
+            /** Format: byte */
+            rowVersion?: null | string;
         };
         UpdateRolePermissionsCommand: {
             roleId: string;
