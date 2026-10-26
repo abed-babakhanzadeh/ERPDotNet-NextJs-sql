@@ -12,6 +12,7 @@ import {
   Network,
   FileSearch,
   Recycle,
+  Route,
 } from "lucide-react";
 
 // Components
@@ -38,6 +39,7 @@ import {
 } from "@/components/ui/tooltip";
 import SubstitutesDialog from "./SubstitutesDialog";
 import BOMOutputsGrid from "./BOMOutputsGrid";
+import BOMOperationsGrid from "./BOMOperationsGrid";
 import {
   bomSchema,
   emptyBOM,
@@ -46,6 +48,7 @@ import {
   type BOMFormValues,
   type BOMHeaderState,
   type BOMOutputRow,
+  type BOMOperationRow,
   type BOMRow,
   type UnitOption,
 } from "./bomFormSchema";
@@ -95,10 +98,11 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
   const watched = useWatch({ control: form.control }) as BOMFormValues;
   const details = watched.details ?? [];
   const outputs = watched.outputs ?? [];
+  const operations = watched.operations ?? [];
   const headerData = useMemo(() => headerOf(watched), [watched]);
   const headerErrors = Object.fromEntries(
     Object.entries(form.formState.errors)
-      .filter(([key]) => key !== "details" && key !== "outputs")
+      .filter(([key]) => key !== "details" && key !== "outputs" && key !== "operations")
       .map(([key, err]) => [key, (err as { message?: string })?.message]),
   ) as Record<string, string | undefined>;
 
@@ -113,6 +117,11 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
     const rows = typeof next === "function" ? next(form.getValues("outputs")) : next;
     form.setValue("outputs", rows, { shouldDirty: true });
     form.clearErrors("outputs");
+  };
+  const setOperations: React.Dispatch<React.SetStateAction<BOMOperationRow[]>> = (next) => {
+    const rows = typeof next === "function" ? next(form.getValues("operations")) : next;
+    form.setValue("operations", rows, { shouldDirty: true });
+    form.clearErrors("operations");
   };
   const setHeaderData: React.Dispatch<React.SetStateAction<BOMHeaderState>> = (next) => {
     const prev = headerOf(form.getValues());
@@ -287,7 +296,17 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
         costSharePercent: o.costSharePercent,
       }));
 
-      form.reset({ ...header, details: mappedDetails, outputs: mappedOutputs });
+      const mappedOperations: BOMOperationRow[] = (data.operations ?? []).map((o) => ({
+        id: Math.random().toString(36).slice(2, 11),
+        sequence: o.sequence,
+        title: o.title,
+        workCenterId: o.workCenterId,
+        setupMinutes: o.setupMinutes,
+        runMinutes: o.runMinutes,
+        description: o.description ?? "",
+      }));
+
+      form.reset({ ...header, details: mappedDetails, outputs: mappedOutputs, operations: mappedOperations });
       setLoaded(true);
     } catch (error) {
       handleApiError(error, "خطا در دریافت اطلاعات BOM");
@@ -714,13 +733,14 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
 
   useFormPersist(`${persistKey}-details`, details, setDetails, mode !== "view");
   useFormPersist(`${persistKey}-outputs`, outputs, setOutputs, mode !== "view");
+  useFormPersist(`${persistKey}-operations`, operations, setOperations, mode !== "view");
 
   const onInvalid = (errors: FieldErrors<BOMFormValues>) => {
     toast.error(firstBOMError(errors) ?? "اطلاعات فرم کامل نیست.");
   };
 
   const onValid = async (values: BOMFormValues) => {
-    const { details, outputs } = values;
+    const { details, outputs, operations } = values;
     const headerData = values;
     setSubmitting(true);
 
@@ -771,6 +791,14 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
           quantity: Number(o.quantity),
           costSharePercent: Number(o.costSharePercent || 0),
         })),
+        operations: operations.map((o) => ({
+          sequence: Number(o.sequence),
+          title: o.title.trim(),
+          workCenterId: Number(o.workCenterId),
+          setupMinutes: Number(o.setupMinutes || 0),
+          runMinutes: Number(o.runMinutes || 0),
+          description: o.description?.trim() || null,
+        })),
       };
 
       if (mode === "edit" && bomId) {
@@ -789,6 +817,7 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
       localStorage.removeItem(`${persistKey}-header`);
       localStorage.removeItem(`${persistKey}-details`);
       localStorage.removeItem(`${persistKey}-outputs`);
+      localStorage.removeItem(`${persistKey}-operations`);
       // مقدار ثبت‌شده مبنای جدید است تا بستن تب هشدار تغییرات ذخیره‌نشده ندهد
       form.reset(values);
 
@@ -990,6 +1019,22 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
                     readOnly={isReadOnly}
                     baseQuantity={headerData.baseQuantity}
                     error={(form.formState.errors.outputs as { message?: string } | undefined)?.message}
+                  />
+                </div>
+              ),
+            },
+            {
+              key: "operations",
+              label: `مسیر تولید${operations.length ? ` (${operations.length})` : ""}`,
+              icon: Route,
+              content: (
+                <div className="h-full overflow-hidden p-1 [&_input:disabled]:cursor-default [&_select:disabled]:cursor-default">
+                  <BOMOperationsGrid
+                    rows={operations}
+                    onChange={setOperations}
+                    readOnly={isReadOnly}
+                    baseQuantity={headerData.baseQuantity}
+                    error={(form.formState.errors.operations as { message?: string } | undefined)?.message}
                   />
                 </div>
               ),

@@ -31,7 +31,21 @@ public record BOMDto(
     List<BOMDetailDto> Details,
 
     decimal BaseQuantity,
-    List<BOMOutputDto> Outputs
+    List<BOMOutputDto> Outputs,
+    List<BOMOperationDto> Operations
+);
+
+// عملیات مسیر تولید؛ زمان اجرا به ازای مقدار پایه فرمول است
+public record BOMOperationDto(
+    int Id,
+    int Sequence,
+    string Title,
+    int WorkCenterId,
+    string WorkCenterCode,
+    string WorkCenterTitle,
+    decimal SetupMinutes,
+    decimal RunMinutes,
+    string? Description
 );
 
 // خروجی جانبی فرمول (محصول همزاد یا فرعی)

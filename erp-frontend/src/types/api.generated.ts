@@ -1918,6 +1918,208 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Production/WorkCenters/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["WorkCenterOptionDto"][];
+                        "application/json": components["schemas"]["WorkCenterOptionDto"][];
+                        "text/json": components["schemas"]["WorkCenterOptionDto"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Production/WorkCenters/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["GetWorkCentersQuery"];
+                    "text/json": components["schemas"]["GetWorkCentersQuery"];
+                    "application/*+json": components["schemas"]["GetWorkCentersQuery"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PaginatedResultOfWorkCenterDto"];
+                        "application/json": components["schemas"]["PaginatedResultOfWorkCenterDto"];
+                        "text/json": components["schemas"]["PaginatedResultOfWorkCenterDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Production/WorkCenters/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["WorkCenterDto"];
+                        "application/json": components["schemas"]["WorkCenterDto"];
+                        "text/json": components["schemas"]["WorkCenterDto"];
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UpdateWorkCenterCommand"];
+                    "text/json": components["schemas"]["UpdateWorkCenterCommand"];
+                    "application/*+json": components["schemas"]["UpdateWorkCenterCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/Production/WorkCenters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CreateWorkCenterCommand"];
+                    "text/json": components["schemas"]["CreateWorkCenterCommand"];
+                    "application/*+json": components["schemas"]["CreateWorkCenterCommand"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ProductEngineering/BOMs/search": {
         parameters: {
             query?: never;
@@ -5624,6 +5826,7 @@ export interface components {
             /** Format: double */
             baseQuantity: number;
             outputs: components["schemas"]["BOMOutputDto"][];
+            operations: components["schemas"]["BOMOperationDto"][];
         };
         BOMListDto: {
             /** Format: int32 */
@@ -5643,6 +5846,34 @@ export interface components {
             fromDate: string;
             /** Format: byte */
             rowVersion: string;
+        };
+        BOMOperationDto: {
+            /** Format: int32 */
+            id: number;
+            /** Format: int32 */
+            sequence: number;
+            title: string;
+            /** Format: int32 */
+            workCenterId: number;
+            workCenterCode: string;
+            workCenterTitle: string;
+            /** Format: double */
+            setupMinutes: number;
+            /** Format: double */
+            runMinutes: number;
+            description: null | string;
+        };
+        BOMOperationInputDto: {
+            /** Format: int32 */
+            sequence: number;
+            title: string;
+            /** Format: int32 */
+            workCenterId: number;
+            /** Format: double */
+            setupMinutes: number;
+            /** Format: double */
+            runMinutes: number;
+            description?: null | string;
         };
         BOMOutputDto: {
             /** Format: int32 */
@@ -5820,6 +6051,7 @@ export interface components {
             baseQuantity: number;
             details: components["schemas"]["BOMDetailInputDto"][];
             outputs: components["schemas"]["BOMOutputInputDto"][];
+            operations: components["schemas"]["BOMOperationInputDto"][];
         };
         CreateCompanyCommand: {
             code: string;
@@ -6008,6 +6240,16 @@ export interface components {
             personnelCode?: null | string;
             nationalCode?: null | string;
             roles: string[];
+        };
+        CreateWorkCenterCommand: {
+            code: string;
+            title: string;
+            /** Format: int32 */
+            costCenterId?: null | number;
+            /** Format: double */
+            hoursPerDay: number;
+            isActive: boolean;
+            description?: null | string;
         };
         DefineInventoryDocTypeCommand: {
             title: string;
@@ -6360,6 +6602,16 @@ export interface components {
             productId: number;
             multiLevel: boolean;
             endItemsOnly: boolean;
+            /** Format: int32 */
+            pageNumber: number;
+            /** Format: int32 */
+            pageSize: number;
+            sortColumn?: null | string;
+            sortDescending: boolean;
+            searchTerm?: null | string;
+            filters?: null | components["schemas"]["FilterModel"][];
+        };
+        GetWorkCentersQuery: {
             /** Format: int32 */
             pageNumber: number;
             /** Format: int32 */
@@ -6868,6 +7120,17 @@ export interface components {
         };
         PaginatedResultOfWhereUsedDto: {
             items: components["schemas"]["WhereUsedDto"][];
+            /** Format: int32 */
+            pageNumber: number;
+            /** Format: int32 */
+            totalPages: number;
+            /** Format: int32 */
+            totalCount: number;
+            hasPreviousPage: boolean;
+            hasNextPage: boolean;
+        };
+        PaginatedResultOfWorkCenterDto: {
+            items: components["schemas"]["WorkCenterDto"][];
             /** Format: int32 */
             pageNumber: number;
             /** Format: int32 */
@@ -7445,6 +7708,7 @@ export interface components {
             baseQuantity: number;
             details: components["schemas"]["BOMDetailUpdateDto"][];
             outputs: components["schemas"]["BOMOutputInputDto"][];
+            operations: components["schemas"]["BOMOperationInputDto"][];
         };
         UpdateCompanyCommand: {
             /** Format: int32 */
@@ -7668,6 +7932,20 @@ export interface components {
             isActive: boolean;
             rowVersion: string;
         };
+        UpdateWorkCenterCommand: {
+            /** Format: int32 */
+            id: number;
+            code: string;
+            title: string;
+            /** Format: int32 */
+            costCenterId?: null | number;
+            /** Format: double */
+            hoursPerDay: number;
+            isActive: boolean;
+            description?: null | string;
+            /** Format: byte */
+            rowVersion?: null | string;
+        };
         UserDto: {
             id: string;
             username: string;
@@ -7755,6 +8033,28 @@ export interface components {
             /** Format: int32 */
             level: number;
             path: string;
+        };
+        WorkCenterDto: {
+            /** Format: int32 */
+            id: number;
+            code: string;
+            title: string;
+            /** Format: int32 */
+            costCenterId: null | number;
+            costCenterTitle: null | string;
+            /** Format: double */
+            hoursPerDay: number;
+            isActive: boolean;
+            description: null | string;
+            /** Format: byte */
+            rowVersion: string;
+        };
+        WorkCenterOptionDto: {
+            /** Format: int32 */
+            id: number;
+            code: string;
+            title: string;
+            isActive: boolean;
         };
     };
     responses: never;

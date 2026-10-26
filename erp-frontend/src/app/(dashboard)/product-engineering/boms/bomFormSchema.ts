@@ -41,6 +41,17 @@ export interface BOMOutputRow {
 
 export const OUTPUT_TYPE = { coProduct: 1, byProduct: 2 } as const;
 
+/** عملیات مسیر تولید؛ زمان اجرا به ازای مقدار پایه فرمول است */
+export interface BOMOperationRow {
+  id: string;
+  sequence: number | string;
+  title: string;
+  workCenterId: number | null;
+  setupMinutes: number | string;
+  runMinutes: number | string;
+  description?: string;
+}
+
 export interface BOMHeaderState {
   productId: number | null;
   productName?: string;
@@ -57,6 +68,7 @@ export interface BOMHeaderState {
 export interface BOMFormValues extends BOMHeaderState {
   details: BOMRow[];
   outputs: BOMOutputRow[];
+  operations: BOMOperationRow[];
 }
 
 export const emptyBOM = (): BOMFormValues => ({
@@ -71,6 +83,7 @@ export const emptyBOM = (): BOMFormValues => ({
   baseQuantity: 1,
   details: [],
   outputs: [],
+  operations: [],
 });
 
 /** سربرگ فرم بدون سطرها */
@@ -78,6 +91,7 @@ export const headerOf = (values: BOMFormValues): BOMHeaderState => {
   const header: Partial<BOMFormValues> = { ...values };
   delete header.details;
   delete header.outputs;
+  delete header.operations;
   return header as BOMHeaderState;
 };
 
@@ -101,6 +115,7 @@ export const bomSchema = z
     baseQuantity: z.union([z.number(), z.string()]),
     details: z.array(z.custom<BOMRow>()),
     outputs: z.array(z.custom<BOMOutputRow>()),
+    operations: z.array(z.custom<BOMOperationRow>()),
   })
   .superRefine((v, ctx) => {
     const issue = (path: (string | number)[], message: string) =>
@@ -116,6 +131,7 @@ export const bomSchema = z
       issue(["toDate"], "تاریخ پایان باید بعد از تاریخ شروع باشد.");
 
     validateOutputs(v.outputs, v.productId, issue);
+    validateOperations(v.operations, issue);
 
     if (v.details.length === 0) {
       issue(["details"], "اقلام فرمول وارد نشده");
@@ -175,6 +191,34 @@ function validateOutputs(
     issue(["outputs"], "جمع سهم بهای محصولات همزاد باید کمتر از ۱۰۰ باشد تا سهمی برای محصول اصلی بماند.");
 }
 
+/** قواعد مسیر تولید، هم‌راستا با BOMOperationInputValidator و BOMOperationRules در بک‌اند */
+function validateOperations(
+  operations: BOMOperationRow[],
+  issue: (path: (string | number)[], message: string) => void,
+) {
+  const seen = new Set<number>();
+  operations.forEach((row, index) => {
+    const n = index + 1;
+    const sequence = Number(row.sequence);
+    const setup = Number(row.setupMinutes || 0);
+    const run = Number(row.runMinutes || 0);
+    if (!(sequence > 0) || !Number.isInteger(sequence)) {
+      issue(["operations", index, "sequence"], `عملیات ${n}: ترتیب باید عدد صحیح بیشتر از صفر باشد.`);
+    } else if (seen.has(sequence)) {
+      issue(["operations", index, "sequence"], "ترتیب عملیات در مسیر تولید تکراری است.");
+    } else if (!row.title?.trim()) {
+      issue(["operations", index, "title"], `عملیات ${n}: عنوان را وارد کنید.`);
+    } else if (!row.workCenterId) {
+      issue(["operations", index, "workCenterId"], `عملیات ${n}: مرکز کاری انتخاب نشده است.`);
+    } else if (setup < 0 || run < 0) {
+      issue(["operations", index, "runMinutes"], `عملیات ${n}: زمان نمی‌تواند منفی باشد.`);
+    } else if (setup + run <= 0) {
+      issue(["operations", index, "runMinutes"], `عملیات ${n}: زمان آماده‌سازی یا اجرا باید بیشتر از صفر باشد.`);
+    }
+    if (sequence > 0) seen.add(sequence);
+  });
+}
+
 /** اولین پیام خطا به ترتیب فیلدهای فرم؛ برای نمایش در toast */
 export const firstBOMError = (errors: Record<string, unknown>) =>
   firstFormError(errors, [
@@ -186,4 +230,5 @@ export const firstBOMError = (errors: Record<string, unknown>) =>
     "toDate",
     "details",
     "outputs",
+    "operations",
   ]);

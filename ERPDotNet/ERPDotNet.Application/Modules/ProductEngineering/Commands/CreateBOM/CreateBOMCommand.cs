@@ -23,6 +23,7 @@ public record CreateBOMCommand : IRequest<int>
 
     public List<BOMDetailInputDto> Details { get; set; } = new();
     public List<BOMOutputInputDto> Outputs { get; set; } = new();
+    public List<BOMOperationInputDto> Operations { get; set; } = new();
 }
 
 public record BOMDetailInputDto
@@ -90,6 +91,10 @@ public class CreateBOMValidator : AbstractValidator<CreateBOMCommand>
         RuleForEach(v => v.Outputs).SetValidator(new BOMOutputInputValidator());
         RuleFor(v => v.Outputs).Must(BOMOutputRules.AreDistinct).WithMessage(BOMOutputRules.DuplicateMessage);
         RuleFor(v => v.Outputs).Must(BOMOutputRules.LeavesShareForMainProduct).WithMessage(BOMOutputRules.CostShareMessage);
+        RuleForEach(v => v.Operations).SetValidator(new BOMOperationInputValidator());
+        RuleFor(v => v.Operations).Must(BOMOperationRules.AreDistinct).WithMessage(BOMOperationRules.DuplicateMessage);
+        RuleFor(v => v.Operations).MustAsync((ops, ct) => BOMOperationRules.WorkCentersAreActiveAsync(context, ops, ct))
+            .WithMessage(BOMOperationRules.WorkCenterMessage);
 
         // ولیدیشن داخلی اقلام
         RuleForEach(v => v.Details).SetValidator(new BOMDetailInputValidator());
@@ -212,6 +217,7 @@ public class CreateBOMHandler : IRequestHandler<CreateBOMCommand, int>
         }
 
         BOMOutputRules.Sync(bom, request.Outputs);
+        BOMOperationRules.Sync(bom, request.Operations);
 
         _context.BOMHeaders.Add(bom);
         await _context.SaveChangesAsync(cancellationToken);

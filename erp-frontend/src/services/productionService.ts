@@ -14,6 +14,10 @@ import type {
   ProductionVarianceSummaryDto,
   ReceiveProductionOutputCommand,
   UpdateProductionOrderCommand,
+  WorkCenterDto,
+  WorkCenterOptionDto,
+  CreateWorkCenterCommand,
+  UpdateWorkCenterCommand,
 } from "@/types/api";
 
 const ORDERS = "/Production/Orders";
@@ -78,5 +82,30 @@ export const productionService = {
 
   completeOrder: async (id: number) => {
     await apiClient.post(`${ORDERS}/${id}/complete`);
+  },
+};
+
+const WORK_CENTERS = "/Production/WorkCenters";
+
+/** مراکز کاری تولید؛ امضای متدها مثل سرویس‌های اطلاعات پایه است تا همان صفحه فهرست استفاده شود */
+export const workCenterService = {
+  search: async (query: PagedQuery, signal?: AbortSignal) =>
+    (await apiClient.post<Paged<WorkCenterDto>>(`${WORK_CENTERS}/search`, query, { signal })).data,
+
+  /** همه مراکز (غیرفعال‌ها آخر) برای فرم مسیر تولید */
+  options: async () => (await apiClient.get<WorkCenterOptionDto[]>(`${WORK_CENTERS}/options`)).data,
+
+  getById: async (id: number) => (await apiClient.get<WorkCenterDto>(`${WORK_CENTERS}/${id}`)).data,
+
+  /** شناسه مرکز جدید */
+  create: async (command: CreateWorkCenterCommand) =>
+    (await apiClient.post<{ id: number }>(WORK_CENTERS, command)).data.id,
+
+  update: async (id: number, command: UpdateWorkCenterCommand) => {
+    await apiClient.put(`${WORK_CENTERS}/${id}`, command);
+  },
+
+  remove: async (id: number) => {
+    await apiClient.delete(`${WORK_CENTERS}/${id}`);
   },
 };

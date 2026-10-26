@@ -35,6 +35,8 @@ public class BOMHeader : BaseEntity
 
     public ICollection<BOMDetail> Details { get; set; } = new List<BOMDetail>();
     public ICollection<BOMOutput> Outputs { get; set; } = new List<BOMOutput>();
+    // مسیر تولید: عملیات به ترتیب اجرا
+    public ICollection<BOMOperation> Operations { get; set; } = new List<BOMOperation>();
 }
 
 // --- Enum جدید ---

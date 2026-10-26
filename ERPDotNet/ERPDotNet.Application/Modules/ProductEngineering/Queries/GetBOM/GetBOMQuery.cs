@@ -33,10 +33,17 @@ public class GetBOMHandler : IRequestHandler<GetBOMQuery, BOMDto?>
             .Include(x => x.Outputs)
                 .ThenInclude(o => o.Product)
                     .ThenInclude(p => p!.Unit)
+            .Include(x => x.Operations)
             .AsSplitQuery()
             .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
 
         if (bom == null) return null;
+
+        // مرکز کاری در ماژول تولید است و navigation ندارد؛ با شناسه خوانده می‌شود
+        var workCenterIds = bom.Operations.Select(o => o.WorkCenterId).Distinct().ToList();
+        var workCenters = await _context.WorkCenters.AsNoTracking().IgnoreQueryFilters()
+            .Where(w => workCenterIds.Contains(w.Id))
+            .ToDictionaryAsync(w => w.Id, w => (w.Code, w.Title), cancellationToken);
 
         return new BOMDto(
             bom.Id,
@@ -103,6 +110,17 @@ public class GetBOMHandler : IRequestHandler<GetBOMQuery, BOMDto?>
                 o.Type.ToDisplay(),
                 o.Quantity,
                 o.CostSharePercent
+            )).ToList(),
+            bom.Operations.OrderBy(o => o.Sequence).Select(o => new BOMOperationDto(
+                o.Id,
+                o.Sequence,
+                o.Title,
+                o.WorkCenterId,
+                workCenters.GetValueOrDefault(o.WorkCenterId).Code ?? "-",
+                workCenters.GetValueOrDefault(o.WorkCenterId).Title ?? "-",
+                o.SetupMinutes,
+                o.RunMinutes,
+                o.Description
             )).ToList()
         );
     }
