@@ -2972,6 +2972,15 @@ namespace ERPDotNet.Infrastructure.Migrations
                             Name = "Production.Orders.Execute",
                             ParentId = 5100,
                             Title = "حواله مواد، رسید محصول و تکمیل سفارش تولید"
+                        },
+                        new
+                        {
+                            Id = 5200,
+                            IsMenu = true,
+                            Name = "Production.Planning",
+                            ParentId = 5000,
+                            Title = "برنامه‌ریزی مواد و کسری",
+                            Url = "/production/planning"
                         });
                 });
 

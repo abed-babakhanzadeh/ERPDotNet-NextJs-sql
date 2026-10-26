@@ -179,7 +179,8 @@ public class PermissionConfiguration : IEntityTypeConfiguration<Permission>
             new Permission { Id = 5102, Name = "Production.Orders.Edit", Title = "ویرایش سفارش تولید", IsMenu = false, ParentId = 5100 },
             new Permission { Id = 5103, Name = "Production.Orders.Delete", Title = "حذف سفارش تولید", IsMenu = false, ParentId = 5100 },
             new Permission { Id = 5104, Name = "Production.Orders.Release", Title = "تأیید و ابطال سفارش تولید", IsMenu = false, ParentId = 5100 },
-            new Permission { Id = 5105, Name = "Production.Orders.Execute", Title = "حواله مواد، رسید محصول و تکمیل سفارش تولید", IsMenu = false, ParentId = 5100 }
+            new Permission { Id = 5105, Name = "Production.Orders.Execute", Title = "حواله مواد، رسید محصول و تکمیل سفارش تولید", IsMenu = false, ParentId = 5100 },
+            new Permission { Id = 5200, Name = "Production.Planning", Title = "برنامه‌ریزی مواد و کسری", IsMenu = true, ParentId = 5000, Url = "/production/planning" }
             
         );
     }

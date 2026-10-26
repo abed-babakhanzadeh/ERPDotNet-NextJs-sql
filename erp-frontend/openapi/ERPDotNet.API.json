@@ -2064,6 +2064,55 @@
         }
       }
     },
+    "/api/Production/Planning/materials": {
+      "post": {
+        "tags": [
+          "ProductionPlanning"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetMaterialPlanQuery"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetMaterialPlanQuery"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetMaterialPlanQuery"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialPlanDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialPlanDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialPlanDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/ProductEngineering/BOMs/search": {
       "post": {
         "tags": [
@@ -9584,6 +9633,58 @@
           }
         }
       },
+      "GetMaterialPlanQuery": {
+        "required": [
+          "includeOpenOrders"
+        ],
+        "type": "object",
+        "properties": {
+          "productId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "bomHeaderId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "includeOpenOrders": {
+            "type": "boolean"
+          },
+          "warehouseIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        }
+      },
       "GetProductAttributesQuery": {
         "required": [
           "pageNumber",
@@ -11084,6 +11185,281 @@
           },
           "password": {
             "type": "string"
+          }
+        }
+      },
+      "MaterialPlanDto": {
+        "required": [
+          "lines",
+          "orders",
+          "warnings",
+          "stockLimitedToAccessibleWarehouses"
+        ],
+        "type": "object",
+        "properties": {
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MaterialPlanLineDto"
+            }
+          },
+          "orders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MaterialPlanOrderDto"
+            }
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "stockLimitedToAccessibleWarehouses": {
+            "type": "boolean"
+          }
+        }
+      },
+      "MaterialPlanLineDto": {
+        "required": [
+          "productId",
+          "productCode",
+          "productName",
+          "unitName",
+          "supplyTypeTitle",
+          "level",
+          "openOrdersDemand",
+          "planDemand",
+          "grossRequirement",
+          "onHand",
+          "scheduledReceipts",
+          "netShortage",
+          "actionId",
+          "actionTitle",
+          "bomTitle",
+          "isDemandRoot"
+        ],
+        "type": "object",
+        "properties": {
+          "productId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "productCode": {
+            "type": "string"
+          },
+          "productName": {
+            "type": "string"
+          },
+          "unitName": {
+            "type": "string"
+          },
+          "supplyTypeTitle": {
+            "type": "string"
+          },
+          "level": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "openOrdersDemand": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "planDemand": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "grossRequirement": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "onHand": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "scheduledReceipts": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "netShortage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "actionId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "actionTitle": {
+            "type": "string"
+          },
+          "bomTitle": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isDemandRoot": {
+            "type": "boolean"
+          }
+        }
+      },
+      "MaterialPlanOrderDto": {
+        "required": [
+          "id",
+          "orderNumber",
+          "productCode",
+          "productName",
+          "plannedStartDate",
+          "statusId",
+          "statusTitle",
+          "materialCount",
+          "shortCount",
+          "canStart",
+          "shortages"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "orderNumber": {
+            "type": "string"
+          },
+          "productCode": {
+            "type": "string"
+          },
+          "productName": {
+            "type": "string"
+          },
+          "plannedStartDate": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "statusId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "statusTitle": {
+            "type": "string"
+          },
+          "materialCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "shortCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "canStart": {
+            "type": "boolean"
+          },
+          "shortages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MaterialPlanShortageDto"
+            }
+          }
+        }
+      },
+      "MaterialPlanShortageDto": {
+        "required": [
+          "productId",
+          "productCode",
+          "productName",
+          "unitName",
+          "outstanding",
+          "shortage"
+        ],
+        "type": "object",
+        "properties": {
+          "productId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "productCode": {
+            "type": "string"
+          },
+          "productName": {
+            "type": "string"
+          },
+          "unitName": {
+            "type": "string"
+          },
+          "outstanding": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "shortage": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
           }
         }
       },
@@ -15910,6 +16286,9 @@
     },
     {
       "name": "ProductionOrders"
+    },
+    {
+      "name": "ProductionPlanning"
     },
     {
       "name": "BOMs"

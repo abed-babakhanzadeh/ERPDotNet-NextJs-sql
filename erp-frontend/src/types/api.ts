@@ -128,3 +128,7 @@ export type ProductionLinkedDocDto = S["ProductionLinkedDocDto"];
 export type IssueProductionMaterialsCommand = S["IssueProductionMaterialsCommand"];
 export type ReceiveProductionOutputCommand = S["ReceiveProductionOutputCommand"];
 export type ProductionVarianceSummaryDto = S["ProductionVarianceSummaryDto"];
+export type GetMaterialPlanQuery = S["GetMaterialPlanQuery"];
+export type MaterialPlanDto = S["MaterialPlanDto"];
+export type MaterialPlanLineDto = S["MaterialPlanLineDto"];
+export type MaterialPlanOrderDto = S["MaterialPlanOrderDto"];

@@ -33,6 +33,7 @@ import {
   CalendarRange,
   Coins,
   Scale,
+  Calculator,
 } from "lucide-react";
 
 export interface MenuItem {
@@ -208,6 +209,12 @@ export const MENU_ITEMS: MenuItem[] = [
         href: "/production/orders",
         icon: ClipboardList,
         permission: "Production.Orders",
+      },
+      {
+        title: "برنامه‌ریزی مواد و کسری",
+        href: "/production/planning",
+        icon: Calculator,
+        permission: "Production.Planning",
       },
       {
         title: "انحراف مصرف مواد",
