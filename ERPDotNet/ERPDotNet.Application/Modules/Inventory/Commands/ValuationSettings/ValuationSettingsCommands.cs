@@ -38,7 +38,7 @@ public record UpdateValuationSettingsCommand : IRequest<bool>
 /// <summary>گزینه‌هایی که موتورشان ساخته شده؛ بقیه در تنظیمات دیده می‌شوند ولی انتخاب نمی‌شوند</summary>
 public static class ValuationCapabilities
 {
-    public static bool IsImplemented(ValuationMethod method) => method == ValuationMethod.MovingAverage;
+    public static bool IsImplemented(ValuationMethod method) => method is ValuationMethod.MovingAverage or ValuationMethod.Fifo;
     public static bool IsImplemented(ValuationLevel level) => level is ValuationLevel.Company or ValuationLevel.Warehouse;
     public static bool IsImplemented(ProductionCostBasis basis) => basis is ProductionCostBasis.MaterialsOnly or ProductionCostBasis.MaterialsAndWorkCenters;
 

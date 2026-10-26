@@ -68,6 +68,8 @@ public interface IApplicationDbContext
     DbSet<InventoryTransaction> InventoryTransactions { get; }
     DbSet<CurrentStock> CurrentStocks { get; }
     DbSet<InventoryCostBalance> InventoryCostBalances { get; }
+    DbSet<InventoryCostLayer> InventoryCostLayers { get; }
+    DbSet<InventoryCostLayerConsumption> InventoryCostLayerConsumptions { get; }
     DbSet<InventoryValuationSettings> InventoryValuationSettings { get; }
     // ====================================
 

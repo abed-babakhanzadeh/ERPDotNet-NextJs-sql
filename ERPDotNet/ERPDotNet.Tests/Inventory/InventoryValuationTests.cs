@@ -124,13 +124,14 @@ public class InventoryValuationTests : IDisposable
         var handler = new ValuationSettingsHandler(_db);
         await handler.Handle(new UpdateValuationSettingsCommand { Method = ValuationMethod.MovingAverage, Level = ValuationLevel.Warehouse, ProductionCostBasis = ProductionCostBasis.MaterialsOnly }, default);
         await Assert.ThrowsAsync<BusinessRuleException>(() =>
-            handler.Handle(new UpdateValuationSettingsCommand { Method = ValuationMethod.Fifo, Level = ValuationLevel.Warehouse, ProductionCostBasis = ProductionCostBasis.MaterialsOnly }, default));
+            handler.Handle(new UpdateValuationSettingsCommand { Method = ValuationMethod.PeriodicAverage, Level = ValuationLevel.Warehouse, ProductionCostBasis = ProductionCostBasis.MaterialsOnly }, default));
 
         await Receive(Main, 1, 1);
 
         var settings = await handler.Handle(new GetValuationSettingsQuery(), default);
         Assert.True(settings.IsLocked);
-        Assert.Contains(settings.Methods, m => m.Value == (int)ValuationMethod.Fifo && !m.Implemented);
+        Assert.Contains(settings.Methods, m => m.Value == (int)ValuationMethod.PeriodicAverage && !m.Implemented);
+        Assert.Contains(settings.Methods, m => m.Value == (int)ValuationMethod.Fifo && m.Implemented);
         await Assert.ThrowsAsync<BusinessRuleException>(() =>
             handler.Handle(new UpdateValuationSettingsCommand { Method = ValuationMethod.MovingAverage, Level = ValuationLevel.Company, ProductionCostBasis = ProductionCostBasis.MaterialsOnly }, default));
     }
@@ -195,6 +196,87 @@ public class InventoryValuationTests : IDisposable
         Assert.Equal((10m, 130m), (cost.Materials.Single().Quantity, cost.Materials.Single().Cost));
     }
 
+    // === FIFO ===
+
+    [Fact]
+    public async Task Fifo_issues_consume_the_oldest_layers_first()
+    {
+        await SetLevel(ValuationLevel.Company, ValuationMethod.Fifo);
+        await Receive(Main, 10, 5);
+        await Receive(Main, 10, 7);
+
+        Assert.Equal(64m, (await Issue(Main, 12)).TotalCost); // ۱۰ × ۵ + ۲ × ۷
+        Assert.Equal(21m, (await Issue(Main, 3)).TotalCost);
+        var balance = await _db.InventoryCostBalances.SingleAsync();
+        Assert.Equal((5m, 35m), (balance.Quantity, balance.Value));
+        Assert.Equal(5m, await _db.InventoryCostLayers.SumAsync(l => l.RemainingQuantity));
+    }
+
+    [Fact]
+    public async Task Fifo_reverting_an_issue_restores_the_same_layers()
+    {
+        await SetLevel(ValuationLevel.Company, ValuationMethod.Fifo);
+        await Receive(Main, 10, 5);
+        await Receive(Main, 10, 7);
+        var issue = await Issue(Main, 12);
+
+        var reversal = await Valuate(_issue, issue.DocDetailId, Main, InventoryTransactionSign.Increase, 12, isReversal: true, relatedId: issue.Id);
+        Assert.Equal(64m, reversal.TotalCost);
+        // لایه ۵ ریالی دوباره قدیمی‌ترین است
+        Assert.Equal(50m, (await Issue(Main, 10)).TotalCost);
+    }
+
+    [Fact]
+    public async Task Fifo_reverting_a_receipt_takes_its_own_layer_first()
+    {
+        await SetLevel(ValuationLevel.Company, ValuationMethod.Fifo);
+        await Receive(Main, 10, 5);
+        var second = await Receive(Main, 10, 7);
+
+        var reversal = await Valuate(_receipt, second.DocDetailId, Main, InventoryTransactionSign.Decrease, 10, isReversal: true, relatedId: second.Id);
+        Assert.Equal(70m, reversal.TotalCost);
+        var balance = await _db.InventoryCostBalances.SingleAsync();
+        Assert.Equal((10m, 50m), (balance.Quantity, balance.Value));
+    }
+
+    [Fact]
+    public async Task Fifo_warehouse_level_transfer_moves_layers_with_their_cost()
+    {
+        await SetLevel(ValuationLevel.Warehouse, ValuationMethod.Fifo);
+        await Receive(Main, 5, 4);
+        await Receive(Main, 5, 6);
+
+        var (outOf, into) = await Transfer(Main, Branch, 7);
+        Assert.Equal((32m, 32m), (outOf.TotalCost!.Value, into.TotalCost!.Value)); // ۵ × ۴ + ۲ × ۶
+        Assert.Equal(26m, (await Issue(Branch, 6)).TotalCost); // ۵ × ۴ + ۱ × ۶
+        Assert.Equal(18m, (await Issue(Main, 3)).TotalCost);
+    }
+
+    [Fact]
+    public async Task Fifo_company_level_transfer_keeps_the_layer_order()
+    {
+        await SetLevel(ValuationLevel.Company, ValuationMethod.Fifo);
+        await Receive(Main, 10, 5);
+        await Receive(Main, 10, 7);
+
+        var (outOf, into) = await Transfer(Main, Branch, 12);
+        Assert.Equal((64m, 64m), (outOf.TotalCost!.Value, into.TotalCost!.Value));
+        Assert.Equal(20m, await _db.InventoryCostLayers.SumAsync(l => l.RemainingQuantity));
+        Assert.Equal(50m, (await Issue(Main, 10)).TotalCost);
+    }
+
+    [Fact]
+    public async Task Fifo_stock_from_before_valuation_becomes_an_opening_layer()
+    {
+        await SetLevel(ValuationLevel.Company, ValuationMethod.Fifo);
+        // ۱۰ واحد پیش از ارزش‌گذاری، بدون بها
+        _db.InventoryTransactions.Add(Tx(Doc(_freeReceipt, Main, _nextDetail, 10, null), _nextDetail++, Main, InventoryTransactionSign.Increase, 10));
+        await _db.SaveChangesAsync();
+        await Receive(Main, 10, 8);
+
+        Assert.Equal(40m, (await Issue(Main, 15)).TotalCost); // ۱۰ × ۰ + ۵ × ۸
+    }
+
     // === کمکی‌ها: هر فراخوانی یک سند یک‌سطری را مثل قطعی‌سازی ارزش‌گذاری و ذخیره می‌کند ===
 
     private Task<InventoryTransaction> Receive(int warehouseId, decimal quantity, decimal? unitCost, InventoryDocType? type = null) =>
@@ -252,9 +334,9 @@ public class InventoryValuationTests : IDisposable
         RowVersion = RowVersion
     };
 
-    private async Task SetLevel(ValuationLevel level)
+    private async Task SetLevel(ValuationLevel level, ValuationMethod method = ValuationMethod.MovingAverage)
     {
-        _db.InventoryValuationSettings.Add(new InventoryValuationSettings { Level = level, RowVersion = RowVersion });
+        _db.InventoryValuationSettings.Add(new InventoryValuationSettings { Method = method, Level = level, RowVersion = RowVersion });
         await _db.SaveChangesAsync();
     }
 
