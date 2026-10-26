@@ -127,3 +127,4 @@ export type ProductionMaterialProgressDto = S["ProductionMaterialProgressDto"];
 export type ProductionLinkedDocDto = S["ProductionLinkedDocDto"];
 export type IssueProductionMaterialsCommand = S["IssueProductionMaterialsCommand"];
 export type ReceiveProductionOutputCommand = S["ReceiveProductionOutputCommand"];
+export type ProductionVarianceSummaryDto = S["ProductionVarianceSummaryDto"];

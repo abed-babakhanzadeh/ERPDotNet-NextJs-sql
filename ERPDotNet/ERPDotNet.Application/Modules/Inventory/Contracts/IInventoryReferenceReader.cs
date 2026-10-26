@@ -10,11 +10,15 @@ namespace ERPDotNet.Application.Modules.Inventory.Contracts;
 public interface IInventoryReferenceReader
 {
     Task<List<ReferencedDocLine>> GetLinesAsync(string referenceEntityName, long referenceEntityId, CancellationToken cancellationToken);
+
+    /// <summary>همان، برای چند سند مرجع در یک پرس‌وجو (گزارش‌ها)</summary>
+    Task<List<ReferencedDocLine>> GetLinesAsync(string referenceEntityName, IReadOnlyCollection<long> referenceEntityIds, CancellationToken cancellationToken);
 }
 
 /// <param name="LineRole">نقش سطر در سند مرجع (ReferenceEntityName سطر)، مثلاً Material یا Scrap</param>
 /// <param name="ReferenceLineId">شناسه سطر سند مرجع، اگر سطر از آن ساخته شده باشد</param>
 public sealed record ReferencedDocLine(
+    long ReferenceEntityId,
     long DocId,
     long DocNumber,
     string DocTypeTitle,

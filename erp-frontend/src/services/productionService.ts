@@ -9,6 +9,7 @@ import type {
   ProductionOrderListDto,
   ProductionOrderProgressDto,
   ProductionRequirementsDto,
+  ProductionVarianceSummaryDto,
   ReceiveProductionOutputCommand,
   UpdateProductionOrderCommand,
 } from "@/types/api";
@@ -64,6 +65,10 @@ export const productionService = {
   /** شناسه سند رسید پیش‌نویس */
   receiveOutput: async (command: ReceiveProductionOutputCommand) =>
     (await apiClient.post<number>(`${ORDERS}/${command.id}/receive`, command)).data,
+
+  /** گزارش انحراف مصرف مواد؛ فقط سفارش‌های در حال تولید و تکمیل‌شده */
+  searchVariance: async (query: PagedQuery & { status?: number | null; overAllowedOnly?: boolean }, signal?: AbortSignal) =>
+    (await apiClient.post<Paged<ProductionVarianceSummaryDto>>(`${ORDERS}/variance`, query, { signal })).data,
 
   completeOrder: async (id: number) => {
     await apiClient.post(`${ORDERS}/${id}/complete`);

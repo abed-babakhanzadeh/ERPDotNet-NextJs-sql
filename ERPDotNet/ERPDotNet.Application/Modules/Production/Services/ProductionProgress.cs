@@ -29,6 +29,62 @@ public static class ProductionProgress
         Quantity Scrap,
         bool HasOpenDocs);
 
+    /// <param name="MaterialId">سطر نیاز مواد سفارش؛ خالی برای ماده خارج از فرمول</param>
+    public sealed record PlannedMaterial(int? MaterialId, int ProductId, decimal StandardQuantity, decimal RequiredQuantity);
+
+    /// <summary>
+    /// یک ماده با مصرف و انحراف آن. مبنای انحراف «مقدار تولیدشده» است (محصول سالم + ضایعات قطعی)،
+    /// چون واحد ضایعات هم مواد مصرف کرده است:
+    /// استاندارد = مصرف استاندارد فرمول × تولیدشده ÷ مقدار سفارش؛ مجاز = همان با ضایعات فرمول.
+    /// </summary>
+    public sealed record MaterialRow(
+        int? MaterialId,
+        int ProductId,
+        decimal RequiredQuantity,
+        Quantity Issued,
+        decimal StandardForOutput,
+        decimal AllowedForOutput)
+    {
+        public decimal RemainingQuantity => Math.Max(0, RequiredQuantity - Issued.Done - Issued.Pending);
+        public decimal VarianceQuantity => Issued.Done - StandardForOutput;
+        public decimal? VariancePercent => StandardForOutput == 0 ? null : Math.Round(VarianceQuantity / StandardForOutput * 100, 2);
+        public bool OverAllowed => Issued.Done > AllowedForOutput;
+    }
+
+    public static decimal Produced(Result progress) => progress.Output.Done + progress.Scrap.Done;
+
+    public static decimal? YieldPercent(Result progress) =>
+        Produced(progress) == 0 ? null : Math.Round(progress.Output.Done / Produced(progress) * 100, 2);
+
+    /// <summary>
+    /// سطرهای مواد: اول سطرهای فرمول به ترتیب، بعد مواد خارج از فرمول.
+    /// اگر یک کالا دو بار در فرمول آمده باشد، صادرشده به ترتیب سطرها بین آن‌ها پخش می‌شود.
+    /// </summary>
+    public static List<MaterialRow> Materials(IReadOnlyList<PlannedMaterial> planned, Result progress, decimal orderQuantity)
+    {
+        var ratio = orderQuantity > 0 ? Produced(progress) / orderQuantity : 0;
+        var left = progress.MaterialsByProduct.ToDictionary(x => x.Key, x => x.Value);
+
+        MaterialRow Row(int? materialId, int productId, decimal standard, decimal required, bool isLastOfProduct)
+        {
+            var available = left.GetValueOrDefault(productId, Quantity.Zero);
+            var done = isLastOfProduct ? available.Done : Math.Min(available.Done, required);
+            var pending = isLastOfProduct ? available.Pending : Math.Min(available.Pending, Math.Max(0, required - done));
+            left[productId] = new Quantity(available.Done - done, available.Pending - pending);
+            return new MaterialRow(materialId, productId, required, new Quantity(done, pending), standard * ratio, required * ratio);
+        }
+
+        var plannedProducts = planned.Select(m => m.ProductId).ToHashSet();
+        return planned
+            .Select((m, i) => Row(m.MaterialId, m.ProductId, m.StandardQuantity, m.RequiredQuantity,
+                isLastOfProduct: !planned.Skip(i + 1).Any(x => x.ProductId == m.ProductId)))
+            .ToList()
+            .Concat(progress.MaterialsByProduct.Keys
+                .Where(p => !plannedProducts.Contains(p))
+                .Select(p => Row(null, p, 0, 0, isLastOfProduct: true)))
+            .ToList();
+    }
+
     public static bool IsDone(InventoryDocStatus status) => status == InventoryDocStatus.Posted;
 
     public static bool IsVoid(InventoryDocStatus status) =>

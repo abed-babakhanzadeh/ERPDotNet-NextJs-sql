@@ -1394,6 +1394,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Production/Orders/variance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["GetProductionVarianceReportQuery"];
+                    "text/json": components["schemas"]["GetProductionVarianceReportQuery"];
+                    "application/*+json": components["schemas"]["GetProductionVarianceReportQuery"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PaginatedResultOfProductionVarianceSummaryDto"];
+                        "application/json": components["schemas"]["PaginatedResultOfProductionVarianceSummaryDto"];
+                        "text/json": components["schemas"]["PaginatedResultOfProductionVarianceSummaryDto"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Production/Orders/{id}": {
         parameters: {
             query?: never;
@@ -6224,6 +6267,18 @@ export interface components {
             /** Format: double */
             quantity: number;
         };
+        GetProductionVarianceReportQuery: {
+            status: null | components["schemas"]["ProductionOrderStatus"];
+            overAllowedOnly: boolean;
+            /** Format: int32 */
+            pageNumber: number;
+            /** Format: int32 */
+            pageSize: number;
+            sortColumn?: null | string;
+            sortDescending: boolean;
+            searchTerm?: null | string;
+            filters?: null | components["schemas"]["FilterModel"][];
+        };
         GetStockCountsQuery: {
             /** Format: int32 */
             warehouseId?: null | number;
@@ -6641,6 +6696,17 @@ export interface components {
             hasPreviousPage: boolean;
             hasNextPage: boolean;
         };
+        PaginatedResultOfProductionVarianceSummaryDto: {
+            items: components["schemas"]["ProductionVarianceSummaryDto"][];
+            /** Format: int32 */
+            pageNumber: number;
+            /** Format: int32 */
+            totalPages: number;
+            /** Format: int32 */
+            totalCount: number;
+            hasPreviousPage: boolean;
+            hasNextPage: boolean;
+        };
         PaginatedResultOfStockCountListItemDto: {
             items: components["schemas"]["StockCountListItemDto"][];
             /** Format: int32 */
@@ -6874,6 +6940,15 @@ export interface components {
             pendingIssueQuantity: number;
             /** Format: double */
             remainingQuantity: number;
+            /** Format: double */
+            standardForOutput: number;
+            /** Format: double */
+            allowedForOutput: number;
+            /** Format: double */
+            varianceQuantity: number;
+            /** Format: double */
+            variancePercent: null | number;
+            overAllowed: boolean;
         };
         ProductionOrderDto: {
             /** Format: int32 */
@@ -6956,6 +7031,10 @@ export interface components {
             scrapQuantity: number;
             /** Format: double */
             pendingScrapQuantity: number;
+            /** Format: double */
+            producedQuantity: number;
+            /** Format: double */
+            yieldPercent: null | number;
             hasOpenDocs: boolean;
             materials: components["schemas"]["ProductionMaterialProgressDto"][];
             documents: components["schemas"]["ProductionLinkedDocDto"][];
@@ -6970,6 +7049,32 @@ export interface components {
             /** Format: double */
             bomBaseQuantity: number;
             materials: components["schemas"]["ProductionOrderMaterialDto"][];
+        };
+        ProductionVarianceSummaryDto: {
+            /** Format: int32 */
+            id: number;
+            orderNumber: string;
+            productCode: string;
+            productName: string;
+            unitName: string;
+            /** Format: int32 */
+            statusId: number;
+            statusTitle: string;
+            /** Format: double */
+            quantity: number;
+            /** Format: double */
+            goodQuantity: number;
+            /** Format: double */
+            scrapQuantity: number;
+            /** Format: double */
+            yieldPercent: null | number;
+            /** Format: int32 */
+            materialCount: number;
+            /** Format: int32 */
+            overAllowedCount: number;
+            /** Format: double */
+            maxVariancePercent: null | number;
+            hasOpenDocs: boolean;
         };
         ProductSupplyType: number;
         ProductVariantDto: {

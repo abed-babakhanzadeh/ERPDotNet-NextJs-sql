@@ -1485,6 +1485,55 @@
         }
       }
     },
+    "/api/Production/Orders/variance": {
+      "post": {
+        "tags": [
+          "ProductionOrders"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetProductionVarianceReportQuery"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetProductionVarianceReportQuery"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetProductionVarianceReportQuery"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResultOfProductionVarianceSummaryDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResultOfProductionVarianceSummaryDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResultOfProductionVarianceSummaryDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Production/Orders/{id}": {
       "get": {
         "tags": [
@@ -9810,6 +9859,71 @@
           }
         }
       },
+      "GetProductionVarianceReportQuery": {
+        "required": [
+          "status",
+          "overAllowedOnly",
+          "pageNumber",
+          "pageSize",
+          "sortDescending"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ProductionOrderStatus"
+              }
+            ]
+          },
+          "overAllowedOnly": {
+            "type": "boolean"
+          },
+          "pageNumber": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "pageSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "sortColumn": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "sortDescending": {
+            "type": "boolean"
+          },
+          "searchTerm": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "filters": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/FilterModel"
+            }
+          }
+        }
+      },
       "GetStockCountsQuery": {
         "required": [
           "status",
@@ -11662,6 +11776,55 @@
           }
         }
       },
+      "PaginatedResultOfProductionVarianceSummaryDto": {
+        "required": [
+          "items",
+          "pageNumber",
+          "totalPages",
+          "totalCount",
+          "hasPreviousPage",
+          "hasNextPage"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductionVarianceSummaryDto"
+            }
+          },
+          "pageNumber": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "totalPages": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "totalCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "hasPreviousPage": {
+            "type": "boolean"
+          },
+          "hasNextPage": {
+            "type": "boolean"
+          }
+        }
+      },
       "PaginatedResultOfStockCountListItemDto": {
         "required": [
           "items",
@@ -12616,7 +12779,12 @@
           "requiredQuantity",
           "issuedQuantity",
           "pendingIssueQuantity",
-          "remainingQuantity"
+          "remainingQuantity",
+          "standardForOutput",
+          "allowedForOutput",
+          "varianceQuantity",
+          "variancePercent",
+          "overAllowed"
         ],
         "type": "object",
         "properties": {
@@ -12677,6 +12845,42 @@
               "string"
             ],
             "format": "double"
+          },
+          "standardForOutput": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "allowedForOutput": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "varianceQuantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "variancePercent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "overAllowed": {
+            "type": "boolean"
           }
         }
       },
@@ -12988,6 +13192,8 @@
           "pendingReceiptQuantity",
           "scrapQuantity",
           "pendingScrapQuantity",
+          "producedQuantity",
+          "yieldPercent",
           "hasOpenDocs",
           "materials",
           "documents"
@@ -13029,6 +13235,23 @@
           "pendingScrapQuantity": {
             "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "producedQuantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "yieldPercent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
               "number",
               "string"
             ],
@@ -13096,6 +13319,120 @@
             "items": {
               "$ref": "#/components/schemas/ProductionOrderMaterialDto"
             }
+          }
+        }
+      },
+      "ProductionVarianceSummaryDto": {
+        "required": [
+          "id",
+          "orderNumber",
+          "productCode",
+          "productName",
+          "unitName",
+          "statusId",
+          "statusTitle",
+          "quantity",
+          "goodQuantity",
+          "scrapQuantity",
+          "yieldPercent",
+          "materialCount",
+          "overAllowedCount",
+          "maxVariancePercent",
+          "hasOpenDocs"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "orderNumber": {
+            "type": "string"
+          },
+          "productCode": {
+            "type": "string"
+          },
+          "productName": {
+            "type": "string"
+          },
+          "unitName": {
+            "type": "string"
+          },
+          "statusId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "statusTitle": {
+            "type": "string"
+          },
+          "quantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "goodQuantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "scrapQuantity": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "yieldPercent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "materialCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "overAllowedCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "maxVariancePercent": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "hasOpenDocs": {
+            "type": "boolean"
           }
         }
       },

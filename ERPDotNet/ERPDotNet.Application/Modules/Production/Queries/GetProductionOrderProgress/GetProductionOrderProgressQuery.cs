@@ -9,6 +9,10 @@ namespace ERPDotNet.Application.Modules.Production.Queries.GetProductionOrderPro
 
 /// <param name="MaterialId">سطر نیاز مواد سفارش؛ برای ماده‌ای که خارج از فرمول صادر شده خالی است</param>
 /// <param name="RemainingQuantity">نیاز منهای صادرشده و در جریان (حداقل صفر)؛ پیش‌فرض حواله بعدی</param>
+/// <param name="StandardForOutput">مصرف استاندارد فرمول برای مقدار تولیدشده (بدون ضایعات فرمول)</param>
+/// <param name="AllowedForOutput">مصرف مجاز برای مقدار تولیدشده (با ضایعات فرمول)</param>
+/// <param name="VarianceQuantity">مصرف قطعی منهای استاندارد؛ مثبت یعنی اضافه‌مصرف</param>
+/// <param name="VariancePercent">انحراف نسبت به استاندارد؛ برای ماده خارج از فرمول یا پیش از تولید خالی است</param>
 public record ProductionMaterialProgressDto(
     int? MaterialId,
     int ProductId,
@@ -18,7 +22,12 @@ public record ProductionMaterialProgressDto(
     decimal RequiredQuantity,
     decimal IssuedQuantity,
     decimal PendingIssueQuantity,
-    decimal RemainingQuantity
+    decimal RemainingQuantity,
+    decimal StandardForOutput,
+    decimal AllowedForOutput,
+    decimal VarianceQuantity,
+    decimal? VariancePercent,
+    bool OverAllowed
 );
 
 public record ProductionLinkedDocDto(
@@ -39,6 +48,9 @@ public record ProductionOrderProgressDto(
     decimal PendingReceiptQuantity,
     decimal ScrapQuantity,
     decimal PendingScrapQuantity,
+    // مبنای انحراف مواد: محصول سالم + ضایعات قطعی
+    decimal ProducedQuantity,
+    decimal? YieldPercent,
     bool HasOpenDocs,
     List<ProductionMaterialProgressDto> Materials,
     List<ProductionLinkedDocDto> Documents
@@ -73,36 +85,24 @@ public class GetProductionOrderProgressHandler : IRequestHandler<GetProductionOr
             .AsNoTracking()
             .Where(m => m.ProductionOrderId == order.Id)
             .OrderBy(m => m.Id)
-            .Select(m => new { m.Id, m.ProductId, m.RequiredQuantity })
+            .Select(m => new ProductionProgress.PlannedMaterial(m.Id, m.ProductId, m.StandardQuantity, m.RequiredQuantity))
             .ToListAsync(cancellationToken);
+        var materials = ProductionProgress.Materials(planned, progress, order.Quantity);
 
-        var plannedProducts = planned.Select(m => m.ProductId).ToHashSet();
-        var extraProducts = progress.MaterialsByProduct.Keys.Where(p => !plannedProducts.Contains(p)).ToList();
-        var productIds = plannedProducts.Concat(extraProducts).ToList();
+        var productIds = materials.Select(m => m.ProductId).Distinct().ToList();
         var products = await _context.Products
             .AsNoTracking()
             .Where(p => productIds.Contains(p.Id))
             .Select(p => new { p.Id, p.Code, p.Name, UnitName = p.Unit != null ? p.Unit.Title : "" })
             .ToDictionaryAsync(p => p.Id, cancellationToken);
 
-        // اگر یک کالا دو بار در فرمول آمده باشد، صادرشده به ترتیب سطرها بین آن‌ها پخش می‌شود
-        var left = progress.MaterialsByProduct.ToDictionary(x => x.Key, x => x.Value);
-        ProductionMaterialProgressDto Row(int? materialId, int productId, decimal required, bool isLastOfProduct)
+        var rows = materials.Select(m =>
         {
-            var available = left.GetValueOrDefault(productId, ProductionProgress.Quantity.Zero);
-            var issued = isLastOfProduct ? available.Done : Math.Min(available.Done, required);
-            var pending = isLastOfProduct ? available.Pending : Math.Min(available.Pending, Math.Max(0, required - issued));
-            left[productId] = new ProductionProgress.Quantity(available.Done - issued, available.Pending - pending);
-            var p = products[productId];
-            return new ProductionMaterialProgressDto(materialId, productId, p.Code, p.Name, p.UnitName,
-                required, issued, pending, Math.Max(0, required - issued - pending));
-        }
-
-        var rows = planned
-            .Select((m, i) => Row(m.Id, m.ProductId, m.RequiredQuantity,
-                isLastOfProduct: !planned.Skip(i + 1).Any(x => x.ProductId == m.ProductId)))
-            .Concat(extraProducts.Select(p => Row(null, p, 0, isLastOfProduct: true)))
-            .ToList();
+            var p = products[m.ProductId];
+            return new ProductionMaterialProgressDto(m.MaterialId, m.ProductId, p.Code, p.Name, p.UnitName,
+                m.RequiredQuantity, m.Issued.Done, m.Issued.Pending, m.RemainingQuantity,
+                m.StandardForOutput, m.AllowedForOutput, m.VarianceQuantity, m.VariancePercent, m.OverAllowed);
+        }).ToList();
 
         var documents = lines
             .GroupBy(l => l.DocId)
@@ -115,6 +115,8 @@ public class GetProductionOrderProgressHandler : IRequestHandler<GetProductionOr
             order.Quantity,
             progress.Output.Done, progress.Output.Pending,
             progress.Scrap.Done, progress.Scrap.Pending,
+            ProductionProgress.Produced(progress),
+            ProductionProgress.YieldPercent(progress),
             progress.HasOpenDocs,
             rows,
             documents);

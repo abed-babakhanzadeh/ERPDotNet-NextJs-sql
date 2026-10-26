@@ -8,6 +8,7 @@ using ERPDotNet.Application.Modules.Production.Commands.UpdateProductionOrder;
 using ERPDotNet.Application.Modules.Production.Queries.GetProductionOrderProgress;
 using ERPDotNet.Application.Modules.Production.Queries.GetProductionOrders;
 using ERPDotNet.Application.Modules.Production.Queries.GetProductionRequirements;
+using ERPDotNet.Application.Modules.Production.Queries.GetProductionVarianceReport;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -27,6 +28,13 @@ public class ProductionOrdersController : ControllerBase
 
     [HttpPost("search")]
     public async Task<ActionResult<PaginatedResult<ProductionOrderListDto>>> Search([FromBody] GetProductionOrdersQuery query)
+    {
+        return Ok(await _mediator.Send(query));
+    }
+
+    // گزارش انحراف مقداری مصرف مواد (استاندارد در برابر واقعی)
+    [HttpPost("variance")]
+    public async Task<ActionResult<PaginatedResult<ProductionVarianceSummaryDto>>> Variance([FromBody] GetProductionVarianceReportQuery query)
     {
         return Ok(await _mediator.Send(query));
     }
