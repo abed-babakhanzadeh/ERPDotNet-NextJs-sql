@@ -6,6 +6,7 @@ import {
   Ban,
   CheckCircle2,
   CircleCheckBig,
+  Coins,
   Factory,
   FileStack,
   ListChecks,
@@ -24,10 +25,11 @@ import PermissionGuard from "@/components/ui/PermissionGuard";
 import { Button } from "@/components/ui/button";
 import { SectionCard } from "@/components/common/SectionCard";
 import { useConfirm } from "@/providers/ConfirmProvider";
+import { usePermissions } from "@/providers/PermissionProvider";
 import { useTabs } from "@/providers/TabsProvider";
 import { productionService } from "@/services/productionService";
 import { handleApiError } from "@/lib/error-handling";
-import type { ProductionOperationDto, ProductionOrderDto, ProductionOrderProgressDto } from "@/types/api";
+import type { ProductionOperationDto, ProductionOrderCostDto, ProductionOrderDto, ProductionOrderProgressDto } from "@/types/api";
 import ProductionOrderStatusBadge, { PRODUCTION_ORDER_STATUS } from "../components/ProductionOrderStatusBadge";
 import ProductionOrderDialog from "../components/ProductionOrderDialog";
 import MaterialRequirementsTable from "../components/MaterialRequirementsTable";
@@ -35,6 +37,7 @@ import IssueMaterialsDialog from "../components/IssueMaterialsDialog";
 import ReceiveOutputDialog from "../components/ReceiveOutputDialog";
 import ReportOperationDialog from "../components/ReportOperationDialog";
 import OperationsSection from "../components/OperationsSection";
+import ProductionCostSection from "../components/ProductionCostSection";
 import {
   LinkedDocsTable,
   MaterialProgressTable,
@@ -48,8 +51,11 @@ export default function ProductionOrderPage() {
   const id = Number(useParams().id);
   const confirm = useConfirm();
   const { addTab, closeTab, activeTabId } = useTabs();
+  const { hasPermission } = usePermissions();
+  const canSeeCost = hasPermission("Production.Orders.Cost");
   const [order, setOrder] = useState<ProductionOrderDto | null>(null);
   const [progress, setProgress] = useState<ProductionOrderProgressDto | null>(null);
+  const [cost, setCost] = useState<ProductionOrderCostDto | null>(null);
   const [operations, setOperations] = useState<ProductionOperationDto[]>([]);
   const [reporting, setReporting] = useState<ProductionOperationDto | null>(null);
   const [editing, setEditing] = useState(false);
@@ -62,12 +68,18 @@ export default function ProductionOrderPage() {
       const [loaded, ops] = await Promise.all([productionService.getOrder(id), productionService.getOperations(id)]);
       setOrder(loaded);
       setOperations(ops);
-      // پیشرفت فقط پس از تأیید معنا دارد؛ پیش‌نویس سند انباری ندارد
-      setProgress(loaded.statusId === PRODUCTION_ORDER_STATUS.draft ? null : await productionService.getProgress(id));
+      // پیشرفت و بها فقط پس از تأیید معنا دارد؛ پیش‌نویس سند انباری ندارد
+      const started = loaded.statusId !== PRODUCTION_ORDER_STATUS.draft;
+      const [loadedProgress, loadedCost] = await Promise.all([
+        started ? productionService.getProgress(id) : Promise.resolve(null),
+        started && canSeeCost ? productionService.getCost(id) : Promise.resolve(null),
+      ]);
+      setProgress(loadedProgress);
+      setCost(loadedCost);
     } catch (error) {
       handleApiError(error, "خطا در دریافت سفارش تولید");
     }
-  }, [id]);
+  }, [id, canSeeCost]);
 
   useEffect(() => {
     load();
@@ -261,6 +273,11 @@ export default function ProductionOrderPage() {
                 />
               </div>
             </SectionCard>
+            {cost && (
+              <SectionCard title="بهای تمام‌شده" icon={Coins}>
+                <ProductionCostSection cost={cost} unitName={order.unitName} />
+              </SectionCard>
+            )}
             <SectionCard title="انحراف مصرف مواد" icon={Scale}>
               <div className="p-4">
                 <MaterialVarianceTable progress={progress} />

@@ -138,6 +138,7 @@ export type CreateWorkCenterCommand = S["CreateWorkCenterCommand"];
 export type UpdateWorkCenterCommand = S["UpdateWorkCenterCommand"];
 export type BOMOperationDto = S["BOMOperationDto"];
 export type ProductionOperationDto = S["ProductionOperationDto"];
+export type ProductionOrderCostDto = S["ProductionOrderCostDto"];
 export type OperationReportDto = S["OperationReportDto"];
 export type ReportOperationCommand = S["ReportOperationCommand"];
 export type WorkCenterLoadDto = S["WorkCenterLoadDto"];

@@ -18,6 +18,7 @@ import type {
   WorkCenterLoadDto,
   WorkCenterOptionDto,
   ProductionOperationDto,
+  ProductionOrderCostDto,
   ReportOperationCommand,
   CreateWorkCenterCommand,
   UpdateWorkCenterCommand,
@@ -84,6 +85,8 @@ export const productionService = {
     (await apiClient.post<MaterialPlanDto>("/Production/Planning/materials", query)).data,
 
   /** عملیات سفارش با زمان برنامه و واقعی و گزارش‌های کارکرد */
+  getCost: async (id: number) => (await apiClient.get<ProductionOrderCostDto>(`${ORDERS}/${id}/cost`)).data,
+
   getOperations: async (id: number) => (await apiClient.get<ProductionOperationDto[]>(`${ORDERS}/${id}/operations`)).data,
 
   reportOperation: async (command: ReportOperationCommand) =>

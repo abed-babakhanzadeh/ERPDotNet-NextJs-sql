@@ -71,6 +71,8 @@ public class ProductionOperationReport : BaseEntity
     public decimal ScrapQuantity { get; set; }
     public decimal SetupMinutes { get; set; }
     public decimal RunMinutes { get; set; }
+    // نرخ ساعتی مرکز کاری در لحظه ثبت؛ تغییر بعدی نرخ، بهای کارکرد گذشته را عوض نمی‌کند
+    public decimal HourlyRate { get; set; }
     [MaxLength(500)] public string? Note { get; set; }
 }
 

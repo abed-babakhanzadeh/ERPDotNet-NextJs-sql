@@ -56,7 +56,7 @@ public class InventoryValuationService : IInventoryValuationService
 
         var receiptCosts = isReversal || docType.Nature != InventoryNature.Input
             ? new Dictionary<long, decimal>()
-            : await ResolveReceiptCostsAsync(doc, docType, cancellationToken);
+            : await ResolveReceiptCostsAsync(doc, docType, settings.ProductionCostBasis, cancellationToken);
         var originalCosts = isReversal ? await LoadOriginalCostsAsync(transactions, cancellationToken) : new Dictionary<long, decimal>();
 
         var balances = new Dictionary<BalanceKey, InventoryCostBalance>();
@@ -93,7 +93,7 @@ public class InventoryValuationService : IInventoryValuationService
         }
     }
 
-    private async Task<Dictionary<long, decimal>> ResolveReceiptCostsAsync(InventoryDocHeader doc, InventoryDocType docType, CancellationToken ct)
+    private async Task<Dictionary<long, decimal>> ResolveReceiptCostsAsync(InventoryDocHeader doc, InventoryDocType docType, ProductionCostBasis costBasis, CancellationToken ct)
     {
         var costs = doc.Details.Where(d => d.UnitCost.HasValue).ToDictionary(d => d.Id, d => d.UnitCost!.Value);
 
@@ -103,7 +103,7 @@ public class InventoryValuationService : IInventoryValuationService
             var provider = _providers.FirstOrDefault(p => p.ReferenceEntityName == reference);
             if (provider != null)
             {
-                var provided = await provider.GetUnitCostsAsync(new ReceiptCostRequest(doc.Id, referenceId,
+                var provided = await provider.GetUnitCostsAsync(new ReceiptCostRequest(doc.Id, referenceId, costBasis,
                     missing.Select(d => new ReceiptCostLine(d.Id, d.ProductId, d.MainUnitQuantity, d.ReferenceEntityName)).ToList()), ct);
                 foreach (var (detailId, cost) in provided) costs[detailId] = cost;
             }

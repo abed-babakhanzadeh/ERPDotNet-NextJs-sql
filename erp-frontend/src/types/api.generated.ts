@@ -1619,6 +1619,45 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/Production/Orders/{id}/cost": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ProductionOrderCostDto"];
+                        "application/json": components["schemas"]["ProductionOrderCostDto"];
+                        "text/json": components["schemas"]["ProductionOrderCostDto"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/Production/Orders/{id}/operations": {
         parameters: {
             query?: never;
@@ -6510,6 +6549,8 @@ export interface components {
             costCenterId?: null | number;
             /** Format: double */
             hoursPerDay: number;
+            /** Format: double */
+            hourlyRate: number;
             isActive: boolean;
             description?: null | string;
         };
@@ -7128,6 +7169,17 @@ export interface components {
             username: string;
             password: string;
         };
+        MaterialCostLineDto: {
+            /** Format: int32 */
+            productId: number;
+            productCode: string;
+            productName: string;
+            unitName: string;
+            /** Format: double */
+            quantity: number;
+            /** Format: double */
+            cost: number;
+        };
         MaterialPlanDto: {
             lines: components["schemas"]["MaterialPlanLineDto"][];
             orders: components["schemas"]["MaterialPlanOrderDto"][];
@@ -7191,6 +7243,18 @@ export interface components {
             shortage: number;
         };
         NumberingScope: number;
+        OperationCostLineDto: {
+            /** Format: int32 */
+            operationId: number;
+            /** Format: int32 */
+            sequence: number;
+            title: string;
+            workCenterTitle: string;
+            /** Format: double */
+            minutes: number;
+            /** Format: double */
+            cost: number;
+        };
         OperationReportDto: {
             /** Format: int32 */
             id: number;
@@ -7673,6 +7737,30 @@ export interface components {
             /** Format: double */
             progressPercent: number;
             reports: components["schemas"]["OperationReportDto"][];
+        };
+        ProductionOrderCostDto: {
+            /** Format: int32 */
+            orderId: number;
+            /** Format: int32 */
+            costBasis: number;
+            /** Format: double */
+            materialCost: number;
+            /** Format: double */
+            conversionCost: number;
+            /** Format: double */
+            orderCost: number;
+            /** Format: double */
+            outputQuantity: number;
+            /** Format: double */
+            scrapQuantity: number;
+            /** Format: double */
+            receivedValue: number;
+            /** Format: double */
+            unabsorbedCost: number;
+            /** Format: double */
+            unitCost: null | number;
+            materials: components["schemas"]["MaterialCostLineDto"][];
+            operations: components["schemas"]["OperationCostLineDto"][];
         };
         ProductionOrderDto: {
             /** Format: int32 */
@@ -8334,6 +8422,8 @@ export interface components {
             costCenterId?: null | number;
             /** Format: double */
             hoursPerDay: number;
+            /** Format: double */
+            hourlyRate: number;
             isActive: boolean;
             description?: null | string;
             /** Format: byte */
@@ -8459,6 +8549,8 @@ export interface components {
             costCenterTitle: null | string;
             /** Format: double */
             hoursPerDay: number;
+            /** Format: double */
+            hourlyRate: number;
             isActive: boolean;
             description: null | string;
             /** Format: byte */

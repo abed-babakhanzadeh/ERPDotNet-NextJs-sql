@@ -2,9 +2,11 @@ using ERPDotNet.Application.Common.Exceptions;
 using ERPDotNet.Application.Modules.Inventory.Commands.ValuationSettings;
 using ERPDotNet.Application.Modules.Inventory.Contracts;
 using ERPDotNet.Application.Modules.Inventory.Services;
+using ERPDotNet.Application.Modules.Production.Queries.GetProductionOrderCost;
 using ERPDotNet.Application.Modules.Production.Services;
 using ERPDotNet.Domain.Modules.Inventory.Entities;
 using ERPDotNet.Domain.Modules.Inventory.Enums;
+using ERPDotNet.Domain.Modules.Production.Entities;
 using ERPDotNet.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -148,9 +150,9 @@ public class InventoryValuationTests : IDisposable
                 new(4, InventoryNature.Input, 9, ProductionProgress.OutputRole, 3, 60),
             }
         };
-        var provider = new ProductionReceiptCostProvider(reader);
+        var provider = new ProductionReceiptCostProvider(reader, _db);
 
-        var costs = await provider.GetUnitCostsAsync(new ReceiptCostRequest(99, 1,
+        var costs = await provider.GetUnitCostsAsync(new ReceiptCostRequest(99, 1, ProductionCostBasis.MaterialsOnly,
         [
             new(11, 9, 4, ProductionProgress.OutputRole),
             new(12, 9, 1, ProductionProgress.ScrapRole),
@@ -162,6 +164,35 @@ public class InventoryValuationTests : IDisposable
         Assert.Equal(26m, costs[12]);
         // برگشت آرد: ۲۰۰ ÷ ۱۵
         Assert.Equal(13.333333m, costs[13]);
+    }
+
+    [Fact]
+    public async Task Work_center_basis_adds_reported_minutes_at_the_rate_recorded_on_each_report()
+    {
+        var order = new ProductionOrder { Id = 1, ProductId = 9, BOMHeaderId = 1, Quantity = 5, RowVersion = RowVersion };
+        var cutting = new ProductionOrderOperation { Sequence = 10, Title = "برش", WorkCenterId = 1 };
+        cutting.Reports.Add(new ProductionOperationReport { SetupMinutes = 30, RunMinutes = 90, HourlyRate = 60, RowVersion = RowVersion }); // ۱۲۰
+        cutting.Reports.Add(new ProductionOperationReport { RunMinutes = 30, HourlyRate = 100, RowVersion = RowVersion }); // ۵۰
+        cutting.Reports.Add(new ProductionOperationReport { RunMinutes = 600, HourlyRate = 100, IsDeleted = true, RowVersion = RowVersion });
+        order.Operations.Add(cutting);
+        _db.ProductionOrders.Add(order);
+        await _db.SaveChangesAsync();
+
+        var reader = new FakeReferenceReader { Lines = { new(1, InventoryNature.Output, 7, ProductionProgress.MaterialRole, -10, -130) } };
+        var provider = new ProductionReceiptCostProvider(reader, _db);
+        ReceiptCostRequest Request(ProductionCostBasis basis) => new(99, order.Id, basis, [new(11, 9, 5, ProductionProgress.OutputRole)]);
+
+        // (۱۳۰ + ۱۲۰ + ۵۰) ÷ ۵
+        Assert.Equal(60m, (await provider.GetUnitCostsAsync(Request(ProductionCostBasis.MaterialsAndWorkCenters), default))[11]);
+        Assert.Equal(26m, (await provider.GetUnitCostsAsync(Request(ProductionCostBasis.MaterialsOnly), default))[11]);
+
+        // گزارش بهای سفارش: رسید ۵ عدد با ارزش ۲۵۰ ← ۵۰ ریال از ۳۰۰ هنوز جذب نشده
+        await SetBasis(ProductionCostBasis.MaterialsAndWorkCenters);
+        reader.Lines.Add(new(2, InventoryNature.Input, 9, ProductionProgress.OutputRole, 5, 250));
+        var cost = await new GetProductionOrderCostHandler(_db, reader).Handle(new GetProductionOrderCostQuery(order.Id), default);
+        Assert.Equal((130m, 170m, 300m, 250m, 50m, 50m), (cost.MaterialCost, cost.ConversionCost, cost.OrderCost, cost.ReceivedValue, cost.UnabsorbedCost, cost.UnitCost));
+        Assert.Equal((150m, 170m), (cost.Operations.Single().Minutes, cost.Operations.Single().Cost));
+        Assert.Equal((10m, 130m), (cost.Materials.Single().Quantity, cost.Materials.Single().Cost));
     }
 
     // === کمکی‌ها: هر فراخوانی یک سند یک‌سطری را مثل قطعی‌سازی ارزش‌گذاری و ذخیره می‌کند ===
@@ -224,6 +255,12 @@ public class InventoryValuationTests : IDisposable
     private async Task SetLevel(ValuationLevel level)
     {
         _db.InventoryValuationSettings.Add(new InventoryValuationSettings { Level = level, RowVersion = RowVersion });
+        await _db.SaveChangesAsync();
+    }
+
+    private async Task SetBasis(ProductionCostBasis basis)
+    {
+        _db.InventoryValuationSettings.Add(new InventoryValuationSettings { ProductionCostBasis = basis, RowVersion = RowVersion });
         await _db.SaveChangesAsync();
     }
 

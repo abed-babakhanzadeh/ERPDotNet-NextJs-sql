@@ -40,7 +40,7 @@ public static class ValuationCapabilities
 {
     public static bool IsImplemented(ValuationMethod method) => method == ValuationMethod.MovingAverage;
     public static bool IsImplemented(ValuationLevel level) => level is ValuationLevel.Company or ValuationLevel.Warehouse;
-    public static bool IsImplemented(ProductionCostBasis basis) => basis == ProductionCostBasis.MaterialsOnly;
+    public static bool IsImplemented(ProductionCostBasis basis) => basis is ProductionCostBasis.MaterialsOnly or ProductionCostBasis.MaterialsAndWorkCenters;
 
     public static Task<bool> IsLockedAsync(IApplicationDbContext context, CancellationToken ct) =>
         context.InventoryTransactions.AnyAsync(t => t.TotalCost != null, ct);

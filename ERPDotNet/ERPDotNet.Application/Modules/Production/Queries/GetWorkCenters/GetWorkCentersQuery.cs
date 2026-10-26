@@ -13,6 +13,7 @@ public record WorkCenterDto(
     int? CostCenterId,
     string? CostCenterTitle,
     decimal HoursPerDay,
+    decimal HourlyRate,
     bool IsActive,
     string? Description,
     byte[] RowVersion
@@ -38,6 +39,7 @@ public class GetWorkCentersHandler :
         ["title"] = "Title",
         ["costCenterTitle"] = "CostCenter.Title",
         ["hoursPerDay"] = "HoursPerDay",
+        ["hourlyRate"] = "HourlyRate",
         ["isActive"] = "IsActive",
         ["description"] = "Description",
     };
@@ -75,7 +77,7 @@ public class GetWorkCentersHandler :
 
     private static IQueryable<WorkCenterDto> Project(IQueryable<ERPDotNet.Domain.Modules.Production.Entities.WorkCenter> query) =>
         query.Select(w => new WorkCenterDto(w.Id, w.Code, w.Title, w.CostCenterId,
-            w.CostCenter != null ? w.CostCenter.Title : null, w.HoursPerDay, w.IsActive, w.Description, w.RowVersion ?? new byte[0]));
+            w.CostCenter != null ? w.CostCenter.Title : null, w.HoursPerDay, w.HourlyRate, w.IsActive, w.Description, w.RowVersion ?? new byte[0]));
 
     // غیرفعال‌ها هم برمی‌گردند تا فرمولی که از قبل به آن‌ها ارجاع دارد درست نمایش داده شود
     public Task<List<WorkCenterOptionDto>> Handle(GetWorkCenterOptionsQuery request, CancellationToken cancellationToken) =>

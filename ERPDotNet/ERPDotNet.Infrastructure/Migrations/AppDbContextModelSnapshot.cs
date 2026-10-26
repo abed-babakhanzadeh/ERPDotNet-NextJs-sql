@@ -2185,6 +2185,10 @@ namespace ERPDotNet.Infrastructure.Migrations
                         .HasPrecision(18, 6)
                         .HasColumnType("decimal(18,6)");
 
+                    b.Property<decimal>("HourlyRate")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
@@ -2397,6 +2401,10 @@ namespace ERPDotNet.Infrastructure.Migrations
                     b.Property<string>("Description")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
+
+                    b.Property<decimal>("HourlyRate")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("HoursPerDay")
                         .HasPrecision(5, 2)
@@ -3328,6 +3336,14 @@ namespace ERPDotNet.Infrastructure.Migrations
                             Name = "Production.Orders.Execute",
                             ParentId = 5100,
                             Title = "حواله مواد، رسید محصول و تکمیل سفارش تولید"
+                        },
+                        new
+                        {
+                            Id = 5106,
+                            IsMenu = false,
+                            Name = "Production.Orders.Cost",
+                            ParentId = 5100,
+                            Title = "مشاهده بهای تمام‌شده سفارش تولید"
                         },
                         new
                         {
