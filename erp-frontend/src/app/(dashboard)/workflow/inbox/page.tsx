@@ -10,6 +10,7 @@ import DueDateBadge from "@/components/modules/workflow/DueDateBadge";
 import { Button } from "@/components/ui/button";
 import PermissionGuard from "@/components/ui/PermissionGuard";
 import { UserCheck } from "lucide-react";
+import { formatDateTime } from "@/lib/format";
 
 export default function InboxPage() {
   const router = useRouter();
@@ -52,6 +53,7 @@ export default function InboxPage() {
       label: "تاریخ ارجاع",
       type: "date",
       sortable: true,
+      render: (val: string | null) => formatDateTime(val),
     },
     {
       key: "dueDate",

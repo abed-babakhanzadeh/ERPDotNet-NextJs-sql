@@ -47,6 +47,11 @@ import {
 } from "@/types/workflow";
 import { handleApiError } from "@/lib/error-handling";
 
+/** نام فارسی موجودیت‌های قابل اتصال به گردش کار */
+const TARGET_ENTITY_TITLES: Record<string, string> = {
+  InventoryDocHeader: "سند انبار",
+};
+
 export default function ProcessDesignerPage({
   params,
 }: {
@@ -232,8 +237,8 @@ export default function ProcessDesignerPage({
                 v{process.activeVersionNumber}
               </Badge>
             </div>
-            <p className="text-sm text-muted-foreground mt-1 font-mono">
-              {process.processCode} • Target: {process.targetEntityName}
+            <p className="text-sm text-muted-foreground mt-1">
+              مربوط به: {TARGET_ENTITY_TITLES[process.targetEntityName] ?? "سند"}
             </p>
           </div>
         </div>
@@ -245,7 +250,6 @@ export default function ProcessDesignerPage({
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg flex items-center gap-2 text-foreground">
               <ListChecks className="w-5 h-5 text-success" /> مراحل گردش کار
-              (States)
             </CardTitle>
             <Button
               size="sm"
@@ -270,9 +274,6 @@ export default function ProcessDesignerPage({
                     <div className="flex flex-col">
                       <span className="font-semibold text-foreground">
                         {state.title}
-                      </span>
-                      <span className="text-xs text-muted-foreground font-mono">
-                        Code: {state.stateCode}
                       </span>
                       {state.slaHours && (
                         <span className="text-xs text-muted-foreground">
@@ -323,7 +324,6 @@ export default function ProcessDesignerPage({
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg flex items-center gap-2 text-foreground">
               <GitMerge className="w-5 h-5 text-primary" /> ارتباطات و دکمه‌ها
-              (Transitions)
             </CardTitle>
             <Button
               size="sm"
@@ -349,14 +349,6 @@ export default function ProcessDesignerPage({
                       <span className="font-bold text-primary text-sm bg-primary/15 px-2 py-1 rounded">
                         دکمه: {t.actionTitle}
                       </span>
-                      {t.actionCode && (
-                        <Badge
-                          variant="outline"
-                          className="text-[10px] font-mono"
-                        >
-                          {t.actionCode}
-                        </Badge>
-                      )}
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <CircleDot className="w-4 h-4 text-warning" />

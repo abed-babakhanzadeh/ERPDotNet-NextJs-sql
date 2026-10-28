@@ -112,8 +112,8 @@ public class GetWhereUsedHandler : IRequestHandler<GetWhereUsedQuery, PaginatedR
                 JOIN [eng].[bom_details] d ON d.ChildProductId = cte.ParentProductId
                 JOIN [eng].[bom_headers] h ON d.BOMHeaderId = h.Id
                 JOIN [base].[products] p ON h.ProductId = p.Id
-                LEFT JOIN [base].[units] u ON p.UnitId = u.Id
-                WHERE @MultiLevel = 1 
+                JOIN [base].[units] u ON p.UnitId = u.Id
+                WHERE @MultiLevel = 1
                   AND h.IsDeleted = 0
                   AND d.IsDeleted = 0
             )

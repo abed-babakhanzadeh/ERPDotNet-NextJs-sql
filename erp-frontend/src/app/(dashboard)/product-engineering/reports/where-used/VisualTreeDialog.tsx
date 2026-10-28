@@ -204,12 +204,12 @@ export default function VisualTreeDialog({
               <Layers className="w-5 h-5 text-primary-foreground" />
             </div>
             <span className="text-foreground font-bold">
-              نمایش گرافیکی ساختار کالا/قلم/قلم
+              نمایش گرافیکی ساختار کالا/قلم
             </span>
           </DialogTitle>
           <DialogDescription className="text-base mt-2 flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-primary" />
-            ساختار درختی کالا/قلم/قلم{" "}
+            ساختار درختی کالا/قلم{" "}
             <span className="font-bold text-primary bg-primary/15 px-2 py-0.5 rounded">
               {rootProductName}
             </span>

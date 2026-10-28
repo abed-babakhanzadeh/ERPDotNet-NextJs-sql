@@ -17,6 +17,15 @@ export function formatLongDate(value: Date) {
   return `${part("weekday")} ${part("day")} ${part("month")} ${part("year")}`;
 }
 
+const faTime = new Intl.DateTimeFormat("fa-IR", { hour: "2-digit", minute: "2-digit", hour12: false });
+
+/** تاریخ و ساعت شمسی (۱۴۰۵/۰۸/۰۶ - ۱۰:۳۰)؛ ورودی نامعتبر «—» */
+export function formatDateTime(value: string | Date | null | undefined) {
+  if (!value) return "—";
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? "—" : `${faDate.format(d)} - ${faTime.format(d)}`;
+}
+
 export function formatNumber(value: number | null | undefined) {
   return value == null ? "—" : faNumber.format(value);
 }
