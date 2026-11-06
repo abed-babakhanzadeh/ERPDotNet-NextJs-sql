@@ -14,7 +14,6 @@ import { toast } from "sonner";
 import {
   Save,
   Printer,
-  ArrowRight,
   MoreVertical,
   Loader2,
   Pencil,
@@ -35,6 +34,7 @@ import {
   ColumnDef,
 } from "@/components/ui/TableLookupCombobox";
 import PermissionGuard from "@/components/ui/PermissionGuard";
+import { ToolbarButton, toolbarButtonStyle } from "@/components/layout/ToolbarButton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -738,13 +738,9 @@ export default function DocForm({
   const ActionMenu = () => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-8 gap-1.5 px-3 text-muted-foreground hover:text-foreground border-border"
-        >
-          <MoreVertical className="w-4 h-4" />
-          <span className="sr-only sm:not-sr-only text-xs">عملیات</span>
+        <Button {...toolbarButtonStyle("secondary")} aria-label="عملیات سند">
+          <MoreVertical className="h-[15px] w-[15px]" aria-hidden />
+          <span className="sr-only sm:not-sr-only">عملیات</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
@@ -807,70 +803,50 @@ export default function DocForm({
           : `سند انبار شماره ${docData?.docNumber || "..."}`
       }
       headerActions={
-        <div className="flex items-center gap-2">
+        <>
           {currentMode !== "create" && (
-            <div className="hidden sm:flex items-center ml-2">
+            <div className="ml-1 hidden items-center sm:flex">
               <InventoryDocStatusBadge status={currentStatus} />
             </div>
           )}
 
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.back()}
-            className="h-8 w-8 px-0 sm:w-auto sm:px-3 text-muted-foreground hover:bg-muted"
-          >
-            <ArrowRight className="w-4 h-4 sm:ml-1.5" />
-            <span className="sr-only sm:not-sr-only text-xs">بازگشت</span>
-          </Button>
-
-          <div className="flex items-center gap-2">
-            {/* دکمه ذخیره تغییرات */}
-            {/* دکمه ذخیره تغییرات */}
-            {isEditableStatus && currentMode === "edit" && (
-              <Button
-                onClick={handleSave}
-                disabled={submitting}
-                size="sm"
-                className="h-8 gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                <Save className="w-4 h-4" />
-                <span className="sr-only sm:not-sr-only text-xs">ذخیره تغییرات</span>
-              </Button>
-            )}
-
-            {/* 🌟 دکمه استارت گردش کار (نمایش مستقیم در هدر برای دسترسی سریع‌تر) */}
-            {isEditableStatus && currentMode === "edit" && docData?.id && (
-              <PermissionGuard permission="Inventory.Docs.Edit">
-                <Button
-                  onClick={handleSubmitToWorkflow}
-                  disabled={submitting}
-                  size="sm"
-                  className="h-8 gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground"
-                >
-                  <Send className="w-4 h-4" />
-                  <span className="sr-only sm:not-sr-only text-xs">
-                    تایید و ارسال
-                  </span>
-                </Button>
-              </PermissionGuard>
-            )}
-          </div>
-
           {currentMode !== "create" && <ActionMenu />}
 
-          {currentMode === "create" && (
-            <Button
-              onClick={handleSave}
-              disabled={submitting}
-              size="sm"
-              className="h-8 gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
-            >
-              <Save className="w-4 h-4" />
-              <span className="sr-only sm:not-sr-only text-xs">ثبت اولیه</span>
-            </Button>
+          {isEditableStatus && currentMode === "edit" && docData?.id && (
+            <PermissionGuard permission="Inventory.Docs.Edit">
+              <ToolbarButton
+                intent="accent"
+                icon={Send}
+                label="تایید و ارسال"
+                tooltip="ذخیره و ارسال سند برای تأیید"
+                onClick={handleSubmitToWorkflow}
+                disabled={submitting}
+              />
+            </PermissionGuard>
           )}
-        </div>
+
+          {isEditableStatus && currentMode === "edit" && (
+            <ToolbarButton
+              intent="submit"
+              icon={Save}
+              label="ذخیره تغییرات"
+              onClick={handleSave}
+              loading={submitting}
+              loadingLabel="در حال ذخیره..."
+            />
+          )}
+
+          {currentMode === "create" && (
+            <ToolbarButton
+              intent="submit"
+              icon={Save}
+              label="ثبت اولیه"
+              onClick={handleSave}
+              loading={submitting}
+              loadingLabel="در حال ثبت..."
+            />
+          )}
+        </>
       }
       submitting={submitting}
       isDirty={isDirty}

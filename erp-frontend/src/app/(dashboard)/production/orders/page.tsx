@@ -1,5 +1,6 @@
 "use client";
 
+import { ToolbarButton } from "@/components/layout/ToolbarButton";
 import { useState } from "react";
 import { Factory, Plus } from "lucide-react";
 
@@ -7,7 +8,6 @@ import BaseListLayout from "@/components/layout/BaseListLayout";
 import { DataTable } from "@/components/data-table";
 import PermissionGuard from "@/components/ui/PermissionGuard";
 import ProtectedPage from "@/components/ui/ProtectedPage";
-import { Button } from "@/components/ui/button";
 import { useTabs } from "@/providers/TabsProvider";
 import { useServerDataTable } from "@/hooks/useServerDataTable";
 import { productionService } from "@/services/productionService";
@@ -65,10 +65,7 @@ export default function ProductionOrdersPage() {
 
   const actions = (
     <PermissionGuard permission="Production.Orders.Create">
-      <Button onClick={() => setCreating(true)} size="sm" className="h-8 gap-1.5">
-        <Plus size={16} />
-        <span className="sr-only text-xs sm:not-sr-only">سفارش تولید جدید</span>
-      </Button>
+      <ToolbarButton intent="primary" icon={Plus} label="سفارش تولید جدید" onClick={() => setCreating(true)} />
     </PermissionGuard>
   );
 

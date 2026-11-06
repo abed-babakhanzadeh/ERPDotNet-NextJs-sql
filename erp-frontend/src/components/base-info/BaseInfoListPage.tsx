@@ -1,5 +1,6 @@
 "use client";
 
+import { ToolbarButton } from "@/components/layout/ToolbarButton";
 import type { LucideIcon } from "lucide-react";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -8,7 +9,6 @@ import ProtectedPage from "@/components/ui/ProtectedPage";
 import PermissionGuard from "@/components/ui/PermissionGuard";
 import BaseListLayout from "@/components/layout/BaseListLayout";
 import { DataTable } from "@/components/data-table";
-import { Button } from "@/components/ui/button";
 import { useServerDataTable, type ServerTableFetcher } from "@/hooks/useServerDataTable";
 import { useTabPrefetch } from "@/hooks/useTabPrefetch";
 import { useTabs } from "@/providers/TabsProvider";
@@ -73,14 +73,12 @@ export default function BaseInfoListPage<TRow extends { id: number }>({
 
   const actions = (
     <PermissionGuard permission={`${permission}.Create`}>
-      <Button
+      <ToolbarButton
+        intent="primary"
+        icon={Plus}
+        label={`${entityName} جدید`}
         onClick={() => addTab(`تعریف ${entityName}`, `${basePath}/create`)}
-        size="sm"
-        className="h-8 gap-1.5"
-      >
-        <Plus size={16} />
-        <span className="sr-only sm:not-sr-only text-xs">{entityName} جدید</span>
-      </Button>
+      />
     </PermissionGuard>
   );
 

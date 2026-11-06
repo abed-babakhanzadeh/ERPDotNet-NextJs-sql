@@ -1,5 +1,6 @@
 "use client";
 
+import { ToolbarButton, ToolbarSeparator } from "@/components/layout/ToolbarButton";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import {
@@ -22,7 +23,6 @@ import { toast } from "sonner";
 
 import ProtectedPage from "@/components/ui/ProtectedPage";
 import PermissionGuard from "@/components/ui/PermissionGuard";
-import { Button } from "@/components/ui/button";
 import { SectionCard } from "@/components/common/SectionCard";
 import { useConfirm } from "@/providers/ConfirmProvider";
 import { usePermissions } from "@/providers/PermissionProvider";
@@ -188,54 +188,41 @@ export default function ProductionOrderPage() {
             سفارش تولید {order.orderNumber}
             <ProductionOrderStatusBadge statusId={order.statusId} title={order.statusTitle} />
           </h1>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {isDraft && (
               <PermissionGuard permission="Production.Orders.Edit">
-                <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setEditing(true)} disabled={busy}>
-                  <Pencil className="h-4 w-4" /> ویرایش
-                </Button>
+                <ToolbarButton intent="accent" icon={Pencil} label="ویرایش" onClick={() => setEditing(true)} disabled={busy} />
               </PermissionGuard>
             )}
             {isDraft && (
               <PermissionGuard permission="Production.Orders.Release">
-                <Button size="sm" className="gap-1.5" onClick={release} disabled={busy}>
-                  <CheckCircle2 className="h-4 w-4" /> تأیید سفارش
-                </Button>
+                <ToolbarButton intent="submit" icon={CheckCircle2} label="تأیید سفارش" onClick={release} loading={busy} />
               </PermissionGuard>
             )}
             {runnable && progress && (
               <PermissionGuard permission="Production.Orders.Execute">
-                <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setIssuing(true)} disabled={busy}>
-                  <PackageMinus className="h-4 w-4" /> حواله مواد
-                </Button>
+                <ToolbarButton intent="secondary" icon={PackageMinus} label="حواله مواد" onClick={() => setIssuing(true)} disabled={busy} />
               </PermissionGuard>
             )}
             {runnable && progress && (
               <PermissionGuard permission="Production.Orders.Execute">
-                <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setReceiving(true)} disabled={busy}>
-                  <PackagePlus className="h-4 w-4" /> رسید محصول
-                </Button>
+                <ToolbarButton intent="secondary" icon={PackagePlus} label="رسید محصول" onClick={() => setReceiving(true)} disabled={busy} />
               </PermissionGuard>
             )}
             {inProgress && (
               <PermissionGuard permission="Production.Orders.Execute">
-                <Button size="sm" className="gap-1.5" onClick={complete} disabled={busy}>
-                  <CircleCheckBig className="h-4 w-4" /> تکمیل سفارش
-                </Button>
+                <ToolbarButton intent="submit" icon={CircleCheckBig} label="تکمیل سفارش" onClick={complete} loading={busy} />
               </PermissionGuard>
             )}
+            {(cancellable || isDraft) && <ToolbarSeparator />}
             {cancellable && (
               <PermissionGuard permission="Production.Orders.Release">
-                <Button variant="outline" size="sm" className="gap-1.5 text-destructive" onClick={cancel} disabled={busy}>
-                  <Ban className="h-4 w-4" /> ابطال
-                </Button>
+                <ToolbarButton intent="danger" icon={Ban} label="ابطال" onClick={cancel} disabled={busy} />
               </PermissionGuard>
             )}
             {isDraft && (
               <PermissionGuard permission="Production.Orders.Delete">
-                <Button variant="ghost" size="sm" className="gap-1.5 text-destructive" onClick={remove} disabled={busy}>
-                  <Trash2 className="h-4 w-4" /> حذف
-                </Button>
+                <ToolbarButton intent="danger" icon={Trash2} label="حذف" onClick={remove} disabled={busy} />
               </PermissionGuard>
             )}
           </div>

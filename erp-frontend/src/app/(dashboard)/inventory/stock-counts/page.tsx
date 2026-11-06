@@ -1,5 +1,6 @@
 "use client";
 
+import { ToolbarButton } from "@/components/layout/ToolbarButton";
 import { useState } from "react";
 import { ClipboardCheck, Plus } from "lucide-react";
 
@@ -7,7 +8,6 @@ import BaseListLayout from "@/components/layout/BaseListLayout";
 import { DataTable } from "@/components/data-table";
 import PermissionGuard from "@/components/ui/PermissionGuard";
 import ProtectedPage from "@/components/ui/ProtectedPage";
-import { Button } from "@/components/ui/button";
 import { useTabs } from "@/providers/TabsProvider";
 import { useServerDataTable } from "@/hooks/useServerDataTable";
 import inventoryService from "@/services/inventoryService";
@@ -85,14 +85,7 @@ export default function StockCountsPage() {
 
   const actions = (
     <PermissionGuard permission="Inventory.StockCounts.Create">
-      <Button
-        onClick={() => setStarting(true)}
-        size="sm"
-        className="h-8 gap-1.5"
-      >
-        <Plus size={16} />
-        <span className="sr-only text-xs sm:not-sr-only">شروع انبارگردانی</span>
-      </Button>
+      <ToolbarButton intent="primary" icon={Plus} label="شروع انبارگردانی" onClick={() => setStarting(true)} />
     </PermissionGuard>
   );
 

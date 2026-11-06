@@ -1,5 +1,6 @@
 "use client";
 
+import { ToolbarButton } from "@/components/layout/ToolbarButton";
 import React, { useMemo } from "react";
 import { ColumnConfig } from "@/types";
 import { Plus, Ruler } from "lucide-react";
@@ -11,13 +12,6 @@ import { useServerDataTable } from "@/hooks/useServerDataTable";
 import { useTabs } from "@/providers/TabsProvider";
 import { Badge } from "@/components/ui/badge";
 import { useTabPrefetch } from "@/hooks/useTabPrefetch";
-import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 // 1. ایمپورت کردن لایوت جدید
 import BaseListLayout from "@/components/layout/BaseListLayout";
 import { handleApiError } from "@/lib/error-handling";
@@ -109,23 +103,7 @@ export default function UnitsPage() {
   // 2. تعریف دکمه‌های اکشن به صورت جداگانه برای پاس دادن به لایوت
   const headerActions = (
     <PermissionGuardPlaceholder permission="BaseInfo.Units.Create">
-      <TooltipProvider delayDuration={200}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              onClick={handleCreate}
-              size="sm"
-              className="h-8 gap-1.5 md:gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
-            >
-              <Plus size={16} />
-              <span className="sr-only sm:not-sr-only text-xs">واحد جدید</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="text-[10px] sm:hidden">
-            واحد جدید
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <ToolbarButton intent="primary" icon={Plus} label="واحد جدید" onClick={handleCreate} />
     </PermissionGuardPlaceholder>
   );
 

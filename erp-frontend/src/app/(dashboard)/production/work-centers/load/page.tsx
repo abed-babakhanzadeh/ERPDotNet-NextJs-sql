@@ -1,12 +1,12 @@
 "use client";
 
+import { ToolbarIconButton } from "@/components/layout/ToolbarButton";
 import { useCallback, useEffect, useState } from "react";
 import { Gauge, RefreshCw } from "lucide-react";
 
 import BaseListLayout from "@/components/layout/BaseListLayout";
 import ProtectedPage from "@/components/ui/ProtectedPage";
 import { DataTable } from "@/components/data-table";
-import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { useLocalDataTable } from "@/hooks/useLocalDataTable";
 import { workCenterService } from "@/services/productionService";
@@ -68,9 +68,7 @@ export default function WorkCenterLoadPage() {
         icon={Gauge}
         count={totalCount}
         actions={
-          <Button onClick={load} variant="outline" size="icon" className="h-8 w-8" aria-label="بروزرسانی" title="بروزرسانی">
-            <RefreshCw size={14} className="text-muted-foreground" />
-          </Button>
+          <ToolbarIconButton icon={RefreshCw} label="بروزرسانی" onClick={load} />
         }
       >
         <div className="h-[calc(100vh-180px)] rounded-md border bg-card">

@@ -1,5 +1,6 @@
 "use client";
 
+import { ToolbarButton } from "@/components/layout/ToolbarButton";
 import React, { useMemo, useState } from "react";
 import { WarehouseDto } from "@/types/inventory";
 import { ColumnConfig } from "@/types";
@@ -13,12 +14,6 @@ import { useTabs } from "@/providers/TabsProvider";
 import { Button } from "@/components/ui/button";
 import BaseListLayout from "@/components/layout/BaseListLayout";
 import inventoryService from "@/services/inventoryService";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { useConfirm } from "@/providers/ConfirmProvider";
 import WarehouseUsersDialog from "@/components/inventory/WarehouseUsersDialog";
 
@@ -105,25 +100,12 @@ export default function WarehousesPage() {
 
   const headerActions = (
     <PermissionGuard permission="Inventory.Warehouses.Create">
-      <TooltipProvider delayDuration={200}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              onClick={() =>
-                addTab("تعریف انبار جدید", "/inventory/warehouses/create")
-              }
-              size="sm"
-              className="h-8 gap-1.5 md:gap-2"
-            >
-              <Plus size={16} />
-              <span className="sr-only sm:not-sr-only text-xs">انبار جدید</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="text-[10px] sm:hidden">
-            انبار جدید
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <ToolbarButton
+        intent="primary"
+        icon={Plus}
+        label="انبار جدید"
+        onClick={() => addTab("تعریف انبار جدید", "/inventory/warehouses/create")}
+      />
     </PermissionGuard>
   );
 

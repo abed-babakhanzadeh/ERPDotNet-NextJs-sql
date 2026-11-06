@@ -1,33 +1,22 @@
 "use client";
 
+import { ToolbarButton } from "@/components/layout/ToolbarButton";
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, FileText, CheckCircle2, XCircle, FileBadge } from "lucide-react";
 import { toast } from "sonner";
 
 import BaseListLayout from "@/components/layout/BaseListLayout";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/data-table";
 import PermissionGuard from "@/components/ui/PermissionGuard";
 import ProtectedPage from "@/components/ui/ProtectedPage";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 // استفاده از هوک مدیریت تب‌ها
 import { useTabs } from "@/providers/TabsProvider";
 
 import inventoryService from "@/services/inventoryService";
-import {
-  InventoryDocTypeDto,
-  InventoryNature,
-  InventoryNatureLabels,
-  NumberingScopeLabels,
-} from "@/types/inventory";
+import { InventoryDocTypeDto, InventoryNature, InventoryNatureLabels, NumberingScopeLabels } from "@/types/inventory";
 import { ColumnConfig, SortConfig, ColumnFilter } from "@/types";
 import { handleApiError } from "@/lib/error-handling";
 import { useConfirm } from "@/providers/ConfirmProvider";
@@ -195,23 +184,7 @@ export default function DocTypesListPage() {
   // 3. تعریف دکمه‌های هدر مطابق استاندارد موبایل/دسکتاپ
   const headerActions = (
     <PermissionGuard permission="Inventory.DocTypes.Create">
-      <TooltipProvider delayDuration={200}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              onClick={handleCreate} // استفاده از هندلر جدید
-              size="sm"
-              className="h-8 gap-1.5 md:gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
-            >
-              <Plus size={16} />
-              <span className="sr-only sm:not-sr-only text-xs">نوع سند جدید</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="text-[10px] sm:hidden">
-            نوع سند جدید
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <ToolbarButton intent="primary" icon={Plus} label="نوع سند جدید" onClick={handleCreate} />
     </PermissionGuard>
   );
 

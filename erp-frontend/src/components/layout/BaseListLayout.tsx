@@ -51,7 +51,7 @@ export default function BaseListLayout({
                   size="icon"
                   onClick={() => closeTab(activeTabId)}
                   className="h-8 w-8 shrink-0 text-muted-foreground"
-                  aria-label="بستن"
+                  aria-label="بازگشت"
                 >
                   <ArrowRight size={18} />
                 </Button>

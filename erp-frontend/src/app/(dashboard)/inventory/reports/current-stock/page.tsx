@@ -1,5 +1,6 @@
 "use client";
 
+import { ToolbarIconButton } from "@/components/layout/ToolbarButton";
 import React, { useState, useEffect, useMemo } from "react";
 import { PackageSearch, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
@@ -7,16 +8,9 @@ import { toast } from "sonner";
 import BaseListLayout from "@/components/layout/BaseListLayout";
 import { DataTable } from "@/components/data-table";
 import ProtectedPage from "@/components/ui/ProtectedPage";
-import { Button } from "@/components/ui/button";
 import { Label as UILabel } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import inventoryService from "@/services/inventoryService";
 import { InventoryStockDto } from "@/types/inventory";
@@ -222,15 +216,7 @@ export default function CurrentStockReportPage() {
       )}
 
       {/* دکمه رفرش آیکونی */}
-      <Button
-        onClick={refresh}
-        variant="outline"
-        size="icon"
-        className="h-8 w-8 shrink-0 hover:bg-accent"
-        title="بروزرسانی"
-      >
-        <RefreshCw size={14} className="text-muted-foreground" />
-      </Button>
+      <ToolbarIconButton icon={RefreshCw} label="بروزرسانی" onClick={refresh} />
     </div>
   );
 
