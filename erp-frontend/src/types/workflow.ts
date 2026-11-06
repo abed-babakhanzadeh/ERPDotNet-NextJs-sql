@@ -35,7 +35,10 @@ export interface TransitionDto {
 
 export interface WorkflowRoleDto {
   id: string;
+  /** نام فنی نقش */
   name: string;
+  /** عنوان فارسی برای نمایش (نقش‌های سیستمی ترجمه شده‌اند) */
+  title: string;
 }
 
 export interface ProcessDetailsDto extends ProcessDto {

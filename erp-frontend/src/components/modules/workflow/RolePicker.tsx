@@ -36,7 +36,7 @@ export function RolePicker({ roles, value, onChange, disabled }: RolePickerProps
                     disabled={disabled}
                   />
                   <Label htmlFor={id} className="cursor-pointer font-normal">
-                    {role.name}
+                    {role.title}
                   </Label>
                 </div>
               );

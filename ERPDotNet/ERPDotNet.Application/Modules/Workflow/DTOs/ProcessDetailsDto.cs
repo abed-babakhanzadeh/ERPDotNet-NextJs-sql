@@ -33,6 +33,8 @@ public class TransitionRoleDto
 {
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
+    /// <summary>عنوان نمایشی فارسی نقش</summary>
+    public string Title { get; set; } = string.Empty;
 }
 
 // این کلاس کل درخت فرآیند را یکجا برای فرانت‌اند می‌فرستد

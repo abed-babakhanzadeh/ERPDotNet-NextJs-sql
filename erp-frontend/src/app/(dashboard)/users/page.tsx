@@ -137,10 +137,11 @@ export default function UsersPage() {
       key: "roles",
       label: "نقش‌ها",
       type: "string",
-      render: (roles: string[]) => (
+      // عنوان فارسی نقش‌ها از API (roleTitles)؛ roles نام فنی است
+      render: (_roles: string[], row: { roleTitles?: string[] | null }) => (
         <div className="flex flex-wrap gap-1">
-          {roles && roles.length > 0 ? (
-            roles.map((role: string) => (
+          {row.roleTitles && row.roleTitles.length > 0 ? (
+            row.roleTitles.map((role: string) => (
               <Badge
                 key={role}
                 variant="secondary"

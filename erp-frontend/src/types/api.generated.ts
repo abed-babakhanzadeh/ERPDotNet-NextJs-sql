@@ -7935,6 +7935,8 @@ export interface components {
         RoleDto: {
             id: string;
             name: string;
+            title: string;
+            isProtected: boolean;
         };
         SetBatchQcStatusCommand: {
             /** Format: int32 */
@@ -8143,6 +8145,7 @@ export interface components {
         TransitionRoleDto: {
             id: string;
             name: string;
+            title: string;
         };
         UnitDto: {
             /** Format: int32 */
@@ -8437,6 +8440,7 @@ export interface components {
             email: string;
             personnelCode?: null | string;
             roles?: null | string[];
+            roleTitles?: null | string[];
             isActive: boolean;
             nationalCode?: null | string;
             concurrencyStamp?: null | string;

@@ -1,3 +1,4 @@
+using ERPDotNet.Domain.Modules.UserAccess;
 using ERPDotNet.Application.Modules.UserAccess.DTOs;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
@@ -18,10 +19,21 @@ public class GetAllRolesHandler : IRequestHandler<GetAllRolesQuery, List<RoleDto
 
     public async Task<List<RoleDto>> Handle(GetAllRolesQuery request, CancellationToken cancellationToken)
     {
-        return await _roleManager.Roles
+        var roles = await _roleManager.Roles
             .AsNoTracking()
-            .OrderBy(r => r.Name)
-            .Select(r => new RoleDto { Id = r.Id, Name = r.Name! })
+            .Select(r => new { r.Id, r.Name })
             .ToListAsync(cancellationToken);
+
+        // عنوان در حافظه ساخته می‌شود (ترجمه نقش‌های سیستمی در SQL قابل اجرا نیست)
+        return roles
+            .Select(r => new RoleDto
+            {
+                Id = r.Id,
+                Name = r.Name!,
+                Title = SystemRoles.TitleOf(r.Name),
+                IsProtected = SystemRoles.IsProtected(r.Name),
+            })
+            .OrderBy(r => r.Title)
+            .ToList();
     }
 }

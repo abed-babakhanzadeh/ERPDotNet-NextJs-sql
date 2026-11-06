@@ -1,3 +1,4 @@
+using ERPDotNet.Domain.Modules.UserAccess;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -18,10 +19,10 @@ public class IdentityConfiguration :
 
         // === انتقال Seed Data به اینجا ===
         builder.HasData(
-            new IdentityRole { Id = "1", Name = "Admin", NormalizedName = "ADMIN", ConcurrencyStamp = "1" },
-            new IdentityRole { Id = "2", Name = "User", NormalizedName = "USER", ConcurrencyStamp = "2" },
-            new IdentityRole { Id = "3", Name = "Accountant", NormalizedName = "ACCOUNTANT", ConcurrencyStamp = "3" },
-            new IdentityRole { Id = "4", Name = "WarehouseKeeper", NormalizedName = "WAREHOUSEKEEPER", ConcurrencyStamp = "4" }
+            new IdentityRole { Id = "1", Name = SystemRoles.Admin, NormalizedName = "ADMIN", ConcurrencyStamp = "1" },
+            new IdentityRole { Id = "2", Name = SystemRoles.User, NormalizedName = "USER", ConcurrencyStamp = "2" },
+            new IdentityRole { Id = "3", Name = SystemRoles.Accountant, NormalizedName = "ACCOUNTANT", ConcurrencyStamp = "3" },
+            new IdentityRole { Id = "4", Name = SystemRoles.WarehouseKeeper, NormalizedName = "WAREHOUSEKEEPER", ConcurrencyStamp = "4" }
         );
     }
 

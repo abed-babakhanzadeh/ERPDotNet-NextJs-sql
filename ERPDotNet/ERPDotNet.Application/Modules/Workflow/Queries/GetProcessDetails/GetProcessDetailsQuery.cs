@@ -1,3 +1,4 @@
+using ERPDotNet.Domain.Modules.UserAccess;
 using ERPDotNet.Application.Common.Exceptions;
 using ERPDotNet.Application.Common.Interfaces;
 using ERPDotNet.Application.Modules.Workflow.DTOs;
@@ -63,6 +64,8 @@ public class GetProcessDetailsQueryHandler : IRequestHandler<GetProcessDetailsQu
                 .AsNoTracking()
                 .Where(r => roleIds.Contains(r.Id))
                 .ToDictionaryAsync(r => r.Id, r => r.Name ?? r.Id, cancellationToken);
+            // عنوان فارسی برای نمایش (نقش ارجاع و نقش‌های مجاز هر دکمه)
+            var roleTitles = roleNames.ToDictionary(kv => kv.Key, kv => SystemRoles.TitleOf(kv.Value));
 
             dto.States = activeVersion.States.Select(s => new StateDto
             {
@@ -72,7 +75,7 @@ public class GetProcessDetailsQueryHandler : IRequestHandler<GetProcessDetailsQu
                 Type = (int)s.Type,
                 SlaHours = s.SlaHours,
                 EscalationRoleId = s.EscalationRoleId,
-                EscalationRoleName = s.EscalationRoleId == null ? null : roleNames.GetValueOrDefault(s.EscalationRoleId, s.EscalationRoleId)
+                EscalationRoleName = s.EscalationRoleId == null ? null : roleTitles.GetValueOrDefault(s.EscalationRoleId, s.EscalationRoleId)
             }).ToList();
 
             dto.Transitions = activeVersion.Transitions.Select(t => new TransitionDto
@@ -87,8 +90,13 @@ public class GetProcessDetailsQueryHandler : IRequestHandler<GetProcessDetailsQu
                 ButtonVariant = t.ButtonVariant.ToString().ToLower(), // 🌟 اختصاص رنگ دکمه
                 IsActive = t.IsActive,
                 Roles = t.AllowedRoles
-                    .Select(r => new TransitionRoleDto { Id = r.RoleId, Name = roleNames.GetValueOrDefault(r.RoleId, r.RoleId) })
-                    .OrderBy(r => r.Name)
+                    .Select(r => new TransitionRoleDto
+                    {
+                        Id = r.RoleId,
+                        Name = roleNames.GetValueOrDefault(r.RoleId, r.RoleId),
+                        Title = roleTitles.GetValueOrDefault(r.RoleId, r.RoleId),
+                    })
+                    .OrderBy(r => r.Title)
                     .ToList()
             }).ToList();
         }

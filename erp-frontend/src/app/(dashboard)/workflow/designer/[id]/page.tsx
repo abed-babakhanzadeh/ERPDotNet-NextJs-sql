@@ -373,7 +373,7 @@ export default function ProcessDesignerPage({
                               variant="outline"
                               className="gap-1 font-normal"
                             >
-                              <ShieldCheck className="h-3 w-3" /> {r.name}
+                              <ShieldCheck className="h-3 w-3" /> {r.title}
                             </Badge>
                           ))
                         )}

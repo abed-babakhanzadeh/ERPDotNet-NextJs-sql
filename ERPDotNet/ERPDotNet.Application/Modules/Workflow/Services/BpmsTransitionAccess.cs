@@ -1,3 +1,4 @@
+using ERPDotNet.Domain.Modules.UserAccess;
 using System.Linq.Expressions;
 using ERPDotNet.Application.Common.Interfaces;
 using ERPDotNet.Domain.Modules.Workflow.Entities;
@@ -23,7 +24,7 @@ public sealed record BpmsUserRoles(bool IsAdmin, IReadOnlyCollection<string> Rol
 // - پس از سررسید کار، نقش ارجاع (Escalation) مرحله هم به همه دکمه‌های آن مرحله دسترسی دارد
 public static class BpmsTransitionAccess
 {
-    public const string AdminRoleName = "Admin";
+    public const string AdminRoleName = SystemRoles.Admin;
 
     public static async Task<BpmsUserRoles> GetUserRolesAsync(
         IApplicationDbContext context,
