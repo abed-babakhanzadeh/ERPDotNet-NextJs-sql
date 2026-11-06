@@ -38,19 +38,25 @@ builder.Services.AddOpenApi("v1", options =>
 });
 
 // CORS اصلی برای APIها
+string[] allowedOrigins =
+[
+    "http://94.182.39.201:3000",
+    "http://localhost:3000",
+    "http://192.168.0.241:3000",
+    "http://192.168.0.190:3000",
+    "http://192.168.1.4:3000",
+    "http://192.168.1.5:3000",
+    "http://10.117.115.32:3000",
+    "http://10.22.159.64:3000",
+];
+// در محیط توسعه فرانت روی هر آدرس شبکه محلی (مثلاً هات‌اسپات گوشی برای تست موبایل) مجاز است
+// تا با عوض شدن IP نیاز به ویرایش کد نباشد؛ در Production فقط فهرست بالا
+var allowLocalNetwork = builder.Environment.IsDevelopment();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowPublicIP",
-        b => b.WithOrigins(
-                "http://94.182.39.201:3000",
-                "http://localhost:3000",
-                "http://192.168.0.241:3000",
-                "http://192.168.0.190:3000",
-                "http://192.168.1.4:3000",
-                "http://192.168.1.5:3000",
-                "http://10.117.115.32:3000",
-                "http://10.22.159.64:3000"
-             )
+        b => b.SetIsOriginAllowed(origin =>
+                allowedOrigins.Contains(origin) || (allowLocalNetwork && IsPrivateNetworkFrontend(origin)))
               .AllowAnyMethod()
               .AllowAnyHeader()
               .WithExposedHeaders("X-Trace-Id")
@@ -112,6 +118,22 @@ app.Run();
 
 // ... (Helper Methods and Classes remain the same) ...
 // متدهای کمکی پایین فایل (MigrateDatabaseAsync و BearerSecuritySchemeTransformer) را مانند قبل نگه دارید.
+// فرانت توسعه روی یک IP شبکه خصوصی (10.x، 172.16-31.x، 192.168.x) و پورت 3000
+static bool IsPrivateNetworkFrontend(string origin)
+{
+    if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri)
+        || uri.Scheme != Uri.UriSchemeHttp
+        || uri.Port != 3000
+        || !System.Net.IPAddress.TryParse(uri.Host, out var ip)
+        || ip.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork)
+        return false;
+
+    var b = ip.GetAddressBytes();
+    return b[0] == 10
+        || (b[0] == 172 && b[1] >= 16 && b[1] <= 31)
+        || (b[0] == 192 && b[1] == 168);
+}
+
 static async Task MigrateDatabaseAsync(WebApplication app)
 {
     using var scope = app.Services.CreateScope();
