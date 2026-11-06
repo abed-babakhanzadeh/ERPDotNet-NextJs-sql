@@ -130,11 +130,20 @@ test.describe("سررسید و تفویض اختیار کارتابل", () => {
     expect(due).toBeLessThan(4.1 * 3600e3);
     expect(reviewTask.isOverdue).toBe(false);
     await page.goto("/workflow/inbox");
-    // ستون سررسید ساعت را هم نشان می‌دهد (ارقام فارسی)
+    // ستون سررسید ساعت را هم نشان می‌دهد (ارقام فارسی)؛ «تاریخ ارجاع» هم ساعت دارد،
+    // پس خود سلول ستون سررسید را می‌گیریم
+    const inboxRow = page
+      .getByRole("row")
+      .filter({ hasText: `بررسی پرونده شماره ${docId}` });
+    await expect(inboxRow).toBeVisible();
+    const dueColumn = (
+      await page.getByRole("columnheader").allInnerTexts()
+    ).findIndex((h) => h.includes("سررسید"));
+    expect(dueColumn).toBeGreaterThanOrEqual(0);
     await expect(
-      page
-        .getByRole("row")
-        .filter({ hasText: `بررسی پرونده شماره ${docId}` })
+      inboxRow
+        .getByRole("cell")
+        .nth(dueColumn)
         .getByText(/[۰-۹]{1,2}:[۰-۹]{2}/),
     ).toBeVisible();
 
