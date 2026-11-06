@@ -1,3 +1,4 @@
+using ERPDotNet.Domain.Modules.UserAccess;
 using ERPDotNet.Application.Common.Attributes;
 using FluentValidation;
 using MediatR;
@@ -22,7 +23,7 @@ public class DeleteRoleHandler : IRequestHandler<DeleteRoleCommand, bool>
         var role = await _roleManager.FindByIdAsync(request.Id);
         if (role == null) throw new KeyNotFoundException("نقش یافت نشد.");
 
-        if (role.Name == "Admin" || role.Name == "User")
+        if (SystemRoles.IsProtected(role.Name))
         {
             throw new ValidationException("حذف نقش‌های سیستمی مجاز نیست.");
         }

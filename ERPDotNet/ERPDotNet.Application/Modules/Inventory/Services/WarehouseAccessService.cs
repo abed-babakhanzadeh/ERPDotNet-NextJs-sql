@@ -1,3 +1,4 @@
+using ERPDotNet.Domain.Modules.UserAccess;
 using ERPDotNet.Application.Common.Exceptions;
 using ERPDotNet.Application.Common.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +19,7 @@ public interface IWarehouseAccessService
 
 public class WarehouseAccessService : IWarehouseAccessService
 {
-    private const string AdminRoleName = "Admin";
+    private const string AdminRoleName = SystemRoles.Admin;
 
     public const string NoWarehouseMessage =
         "هیچ انباری به شما تخصیص داده نشده است. از مدیر سیستم بخواهید شما را در «کاربران مجاز» انبار مورد نیازتان قرار دهد.";

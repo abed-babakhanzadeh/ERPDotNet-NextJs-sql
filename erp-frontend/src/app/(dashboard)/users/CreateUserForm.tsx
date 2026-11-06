@@ -15,6 +15,7 @@ interface Props {
 interface RoleOption {
   id: string;
   name: string;
+  title: string;
 }
 
 export default function CreateUserForm({
@@ -116,15 +117,6 @@ export default function CreateUserForm({
     }
   };
 
-  const getRoleDisplayName = (roleName: string) => {
-    const translations: Record<string, string> = {
-      Admin: "مدیر سیستم",
-      User: "کاربر عادی",
-      Accountant: "حسابدار",
-      WarehouseKeeper: "انباردار",
-    };
-    return translations[roleName] || roleName;
-  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -213,7 +205,7 @@ export default function CreateUserForm({
         >
           {availableRoles.map((role) => (
             <option key={role.id} value={role.name}>
-              {getRoleDisplayName(role.name)}
+              {role.title}
             </option>
           ))}
         </select>

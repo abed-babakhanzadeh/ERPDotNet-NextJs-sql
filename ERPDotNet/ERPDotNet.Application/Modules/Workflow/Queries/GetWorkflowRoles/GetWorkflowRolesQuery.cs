@@ -1,3 +1,4 @@
+using ERPDotNet.Domain.Modules.UserAccess;
 using ERPDotNet.Application.Common.Interfaces;
 using ERPDotNet.Application.Modules.Workflow.DTOs;
 using MediatR;
@@ -19,10 +20,14 @@ public class GetWorkflowRolesQueryHandler : IRequestHandler<GetWorkflowRolesQuer
 
     public async Task<List<TransitionRoleDto>> Handle(GetWorkflowRolesQuery request, CancellationToken cancellationToken)
     {
-        return await _context.Roles
+        var roles = await _context.Roles
             .AsNoTracking()
-            .OrderBy(r => r.Name)
-            .Select(r => new TransitionRoleDto { Id = r.Id, Name = r.Name ?? r.Id })
+            .Select(r => new { r.Id, r.Name })
             .ToListAsync(cancellationToken);
+
+        return roles
+            .Select(r => new TransitionRoleDto { Id = r.Id, Name = r.Name ?? r.Id, Title = SystemRoles.TitleOf(r.Name ?? r.Id) })
+            .OrderBy(r => r.Title)
+            .ToList();
     }
 }

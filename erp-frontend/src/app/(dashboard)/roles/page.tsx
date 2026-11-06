@@ -8,13 +8,10 @@ import Modal from "@/components/ui/Modal";
 import ProtectedPage from "@/components/ui/ProtectedPage";
 import { handleApiError } from "@/lib/error-handling";
 import { roleService, permissionService } from "@/services/userAccessService";
+import type { RoleDto } from "@/types/api";
 import { useConfirm } from "@/providers/ConfirmProvider";
 
-// DTO
-interface Role {
-  id: string;
-  name: string;
-}
+type Role = RoleDto;
 
 // تابع کمکی برای پیدا کردن تمام فرزندان یک نود خاص از داخل کل درخت
 const findNodeAndGetChildrenIds = (nodes: any[], targetId: number): number[] => {
@@ -198,7 +195,7 @@ export default function RolesPage() {
   // حذف نقش
   const handleDeleteRole = async (e: React.MouseEvent, role: Role) => {
     e.stopPropagation(); // جلوگیری از انتخاب شدن نقش موقع کلیک روی حذف
-    if (!(await confirm({ title: `آیا از حذف نقش "${role.name}" اطمینان دارید؟`, tone: "danger", confirmText: "حذف" }))) return;
+    if (!(await confirm({ title: `آیا از حذف نقش «${role.title}» اطمینان دارید؟`, tone: "danger", confirmText: "حذف" }))) return;
 
     try {
       await roleService.remove(role.id);
@@ -262,11 +259,19 @@ return (
                         selectedRole === role.id ? "bg-primary/10 text-primary font-semibold shadow-sm" : "hover:bg-muted text-muted-foreground"
                       }`}
                     >
-                      <span>{role.name}</span>
+                      <span className="flex flex-col items-start">
+                        <span>{role.title}</span>
+                        {/* نام فنی نقش‌های سیستمی، برای مدیر سیستم مرجع است */}
+                        {role.title !== role.name && (
+                          <span dir="ltr" className="text-[11px] font-normal text-muted-foreground">
+                            {role.name}
+                          </span>
+                        )}
+                      </span>
                     </button>
                     
-                    {/* دکمه حذف (فقط برای نقش‌های غیر سیستمی نمایش داده شود بهتر است، ولی بک‌‌اند هم جلویش را می‌گیرد) */}
-                    {role.name !== 'Admin' && role.name !== 'User' && (
+                    {/* نقش‌های حذف‌نشدنی را بک‌اند مشخص می‌کند (و حذفشان را هم رد می‌کند) */}
+                    {!role.isProtected && (
                       <button
                         onClick={(e) => handleDeleteRole(e, role)}
                         className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 text-destructive hover:bg-destructive/10 rounded transition-all"

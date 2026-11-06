@@ -118,7 +118,7 @@ export default function StateSlaDialog({
                 </SelectItem>
                 {roles.map((r) => (
                   <SelectItem key={r.id} value={r.id}>
-                    {r.name}
+                    {r.title}
                   </SelectItem>
                 ))}
               </SelectContent>

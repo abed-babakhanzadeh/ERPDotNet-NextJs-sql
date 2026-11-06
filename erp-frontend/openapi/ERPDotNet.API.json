@@ -15479,7 +15479,9 @@
       "RoleDto": {
         "required": [
           "id",
-          "name"
+          "name",
+          "title",
+          "isProtected"
         ],
         "type": "object",
         "properties": {
@@ -15488,6 +15490,12 @@
           },
           "name": {
             "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "isProtected": {
+            "type": "boolean"
           }
         }
       },
@@ -16390,7 +16398,8 @@
       "TransitionRoleDto": {
         "required": [
           "id",
-          "name"
+          "name",
+          "title"
         ],
         "type": "object",
         "properties": {
@@ -16398,6 +16407,9 @@
             "type": "string"
           },
           "name": {
+            "type": "string"
+          },
+          "title": {
             "type": "string"
           }
         }
@@ -17666,6 +17678,15 @@
             ]
           },
           "roles": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "roleTitles": {
             "type": [
               "null",
               "array"

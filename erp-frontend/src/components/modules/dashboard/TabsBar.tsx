@@ -3,7 +3,7 @@
 import { HOME_PATH, useTabs, type Tab } from "@/providers/TabsProvider";
 import { X, Home } from "lucide-react";
 import { clsx } from "clsx";
-import React, { memo } from "react";
+import React, { memo, useEffect, useRef } from "react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { TabLauncher } from "./TabLauncher";
 
@@ -89,6 +89,13 @@ const TabItem = memo(function TabItem({
 
 export default function TabsBar() {
   const { tabs, activeTabId, closeTab, setActiveTab } = useTabs();
+  const listRef = useRef<HTMLDivElement>(null);
+
+  // تب فعال (باز شده از منو، دکمه + یا بعد از رفرش) همیشه در دید نوار باشد؛ مهم در موبایل و تب‌های زیاد
+  useEffect(() => {
+    const active = listRef.current?.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]');
+    active?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [activeTabId, tabs.length]);
 
   return (
     <div className="flex h-9 items-stretch bg-muted/60" role="tablist" aria-label="صفحه‌های باز">
@@ -106,7 +113,7 @@ export default function TabsBar() {
       </button>
 
       <ScrollArea className="min-w-0 flex-1" dir="rtl">
-        <div className="flex h-9 items-stretch">
+        <div ref={listRef} className="flex h-9 items-stretch">
           {tabs.map((tab) => (
             <TabItem
               key={tab.id}

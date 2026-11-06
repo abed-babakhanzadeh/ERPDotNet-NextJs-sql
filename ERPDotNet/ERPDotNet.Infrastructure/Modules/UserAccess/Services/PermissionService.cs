@@ -1,3 +1,4 @@
+using ERPDotNet.Domain.Modules.UserAccess;
 using ERPDotNet.Application.Modules.UserAccess.DTOs;
 using ERPDotNet.Application.Modules.UserAccess.Interfaces;
 using ERPDotNet.Domain.Modules.UserAccess.Entities;
@@ -57,7 +58,7 @@ public class PermissionService : IPermissionService
         // الف) چک کردن ادمین کل
         var isSuperAdmin = await _context.UserRoles
             .Join(_context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => new { ur.UserId, RoleName = r.Name })
-            .AnyAsync(x => x.UserId == userId && x.RoleName == "Admin");
+            .AnyAsync(x => x.UserId == userId && x.RoleName == SystemRoles.Admin);
 
         if (isSuperAdmin)
         {

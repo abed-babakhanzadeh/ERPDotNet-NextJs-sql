@@ -1,3 +1,4 @@
+using ERPDotNet.Domain.Modules.UserAccess;
 using ERPDotNet.Domain.Modules.UserAccess.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -77,7 +78,7 @@ public class ApplicationDbContextInitialiser
             {
                 // 2. دادن نقش Admin به کاربر
                 // نقش "Admin" قبلاً توسط IdentityConfiguration ساخته شده است
-                await _userManager.AddToRoleAsync(administrator, "Admin");
+                await _userManager.AddToRoleAsync(administrator, SystemRoles.Admin);
             }
         }
     }
