@@ -607,7 +607,8 @@ const SidebarMenuButton = React.forwardRef<
       <Tooltip>
         <TooltipTrigger asChild>{button}</TooltipTrigger>
         <TooltipContent
-          side="right"
+          // منوی این برنامه در سمت راست است؛ تولتیپ رو به محتوا (چپ) باز می‌شود
+          side="left"
           align="center"
           hidden={state !== "collapsed" || isMobile}
           {...tooltip}
