@@ -21,7 +21,7 @@ import {
 // 1. ایمپورت کردن لایوت جدید
 import BaseListLayout from "@/components/layout/BaseListLayout";
 import { handleApiError } from "@/lib/error-handling";
-import { formatNumber } from "@/lib/format";
+import { formatGroupedNumber } from "@/lib/format";
 import { unitService } from "@/services/baseInfoService";
 import type { UnitDto } from "@/types/api";
 import { useConfirm } from "@/providers/ConfirmProvider";
@@ -67,7 +67,7 @@ export default function UnitsPage() {
         type: "number",
         render: (value, row) =>
           row.baseUnitName ? (
-            formatNumber(value)
+            formatGroupedNumber(value)
           ) : (
             <span className="text-muted-foreground text-xs">-</span>
           ),
