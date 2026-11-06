@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { VariantProps, cva } from "class-variance-authority";
-import { PanelLeft } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from "lucide-react";
 
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
@@ -19,8 +19,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-const SIDEBAR_COOKIE_NAME = "sidebar_state";
-const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
+import { SIDEBAR_COOKIE_NAME } from "@/lib/sidebar-state";
+// ترجیح کاربر است، نه داده حساس؛ یک سال نگه داشته می‌شود
+const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 const SIDEBAR_WIDTH = "16rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";
 const SIDEBAR_WIDTH_ICON = "3rem";
@@ -84,7 +85,7 @@ const SidebarProvider = React.forwardRef<
         }
 
         // This sets the cookie to keep the sidebar state.
-        document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+        document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}; SameSite=Lax`;
       },
       [setOpenProp, open]
     );
@@ -99,8 +100,15 @@ const SidebarProvider = React.forwardRef<
     // Adds a keyboard shortcut to toggle the sidebar.
     React.useEffect(() => {
       const handleKeyDown = (event: KeyboardEvent) => {
+        // داخل فیلدهای متنی میانبر سیستم/ویرایشگر (مثل Bold) دست‌نخورده می‌ماند
+        const target = event.target as HTMLElement | null;
+        const isEditable =
+          !!target &&
+          (target.isContentEditable ||
+            ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName));
         if (
-          event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
+          !isEditable &&
+          event.key.toLowerCase() === SIDEBAR_KEYBOARD_SHORTCUT &&
           (event.metaKey || event.ctrlKey)
         ) {
           event.preventDefault();
@@ -198,8 +206,8 @@ const Sidebar = React.forwardRef<
           <SheetContent
             data-sidebar="sidebar"
             data-mobile="true"
-            // تغییر مهم: استفاده از bg-background و text-foreground برای اصلاح رنگ در موبایل
-            className="w-[--sidebar-width] bg-background p-0 text-foreground [&>button]:hidden"
+            // همان سطح و رنگ منوی دسکتاپ، تا هر دو یکدست باشند
+            className="w-[--sidebar-width] bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
             style={
               {
                 "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
@@ -264,9 +272,22 @@ Sidebar.displayName = "Sidebar";
 
 const SidebarTrigger = React.forwardRef<
   React.ElementRef<typeof Button>,
-  React.ComponentProps<typeof Button>
->(({ className, onClick, ...props }, ref) => {
-  const { toggleSidebar } = useSidebar();
+  React.ComponentProps<typeof Button> & {
+    /** سمتی که منو در آن قرار دارد؛ جهت آیکون از آن گرفته می‌شود (پیش‌فرض: راست، برای RTL) */
+    side?: "left" | "right";
+  }
+>(({ className, onClick, side = "right", ...props }, ref) => {
+  const { toggleSidebar, open, openMobile, isMobile } = useSidebar();
+  const expanded = isMobile ? openMobile : open;
+  const label = expanded ? "بستن منو" : "باز کردن منو";
+  const Icon =
+    side === "right"
+      ? expanded
+        ? PanelRightClose
+        : PanelRightOpen
+      : expanded
+        ? PanelLeftClose
+        : PanelLeftOpen;
 
   return (
     <Button
@@ -274,15 +295,17 @@ const SidebarTrigger = React.forwardRef<
       data-sidebar="trigger"
       variant="ghost"
       size="icon"
-      className={cn("h-7 w-7", className)}
+      aria-label={label}
+      aria-expanded={expanded}
+      title={`${label} (Ctrl+B)`}
+      className={cn("h-8 w-8", className)}
       onClick={(event) => {
         onClick?.(event);
         toggleSidebar();
       }}
       {...props}
     >
-      <PanelLeft />
-      <span className="sr-only">Toggle Sidebar</span>
+      <Icon />
     </Button>
   );
 });
@@ -298,10 +321,10 @@ const SidebarRail = React.forwardRef<
     <button
       ref={ref}
       data-sidebar="rail"
-      aria-label="Toggle Sidebar"
+      aria-label="باز/بستن منو"
       tabIndex={-1}
       onClick={toggleSidebar}
-      title="Toggle Sidebar"
+      title="باز/بستن منو (Ctrl+B)"
       className={cn(
         "absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear after:absolute after:inset-y-0 after:left-1/2 after:w-[2px] hover:after:bg-sidebar-border group-data-[side=left]:-right-4 group-data-[side=right]:left-0 sm:flex",
         "[[data-side=left]_&]:cursor-w-resize [[data-side=right]_&]:cursor-e-resize",

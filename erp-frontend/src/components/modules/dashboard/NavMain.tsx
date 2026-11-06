@@ -5,7 +5,15 @@ import { ChevronRight, Circle } from "lucide-react";
 import { usePermissions } from "@/providers/PermissionProvider";
 import { useTabs } from "@/providers/TabsProvider";
 import { MenuItem } from "@/config/menuItems";
-import { filterMenu, findMenuLinkForPath } from "@/lib/menu";
+import { filterMenu, findMenuLinkForPath, flattenMenu } from "@/lib/menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Collapsible,
   CollapsibleContent,
@@ -73,7 +81,7 @@ function NavParamsItem({
   depth: number;
 }) {
   const { addTab } = useTabs();
-  const { setOpen, setOpenMobile, isMobile, state } = useSidebar();
+  const { setOpenMobile, isMobile, state } = useSidebar();
 
   const isCurrentPage = !!item.href && item.href === activeHref;
   const containsCurrentPage = containsHref(item, activeHref);
@@ -81,24 +89,16 @@ function NavParamsItem({
   const isOpen =
     (!!searchQuery && item.submenu && item.submenu.length > 0) || containsCurrentPage;
 
-  const handleClick = (e: React.MouseEvent) => {
-    if (state === "collapsed") {
-      setOpen(true);
-      if (item.submenu) {
-        e.preventDefault();
-        return;
-      }
-    }
+  // باز کردن صفحه در تب. در دسکتاپ منو همان‌طور که کاربر گذاشته می‌ماند؛ فقط منوی کشویی موبایل بسته می‌شود
+  const openPage = (title: string, href: string) => {
+    addTab(title, href);
+    if (isMobile) setOpenMobile(false);
+  };
 
-    if (item.href) {
-      e.preventDefault();
-      addTab(item.title, item.href);
-      if (isMobile) {
-        setOpenMobile(false);
-      } else {
-        setOpen(false);
-      }
-    }
+  const handleClick = (e: React.MouseEvent) => {
+    if (!item.href) return;
+    e.preventDefault();
+    openPage(item.title, item.href);
   };
 
   // یک نشانگر فعال در کل منو: فقط صفحه جاری پس‌زمینه و نوار کناری (لبه شروع = راست در RTL) می‌گیرد؛
@@ -119,6 +119,43 @@ function NavParamsItem({
         : "text-muted-foreground",
   );
 
+  // منوی جمع‌شده (فقط آیکون) در دسکتاپ: زیرمنو به‌صورت شناور کنار آیکون باز می‌شود و عرض صفحه تغییر نمی‌کند
+  if (item.submenu?.length && state === "collapsed" && !isMobile) {
+    return (
+      <SidebarMenuItem>
+        <DropdownMenu dir="rtl">
+          <DropdownMenuTrigger asChild>
+            <SidebarMenuButton aria-label={item.title} className={menuItemClass}>
+              {item.icon && <item.icon className="shrink-0" />}
+              <span className="truncate">{item.title}</span>
+            </SidebarMenuButton>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="left" align="start" sideOffset={8} className="min-w-56">
+            <DropdownMenuLabel>{item.title}</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {flattenMenu(item.submenu).map((link) => {
+              const current = link.href === activeHref;
+              return (
+                <DropdownMenuItem
+                  key={link.href}
+                  aria-current={current ? "page" : undefined}
+                  onSelect={() => openPage(link.title, link.href)}
+                  className={cn("gap-2", current && "bg-primary/10 font-medium text-primary")}
+                >
+                  {link.icon && <link.icon className="h-4 w-4 shrink-0" />}
+                  <span className="truncate">{link.title}</span>
+                  {link.section && (
+                    <span className="ms-auto text-xs text-muted-foreground">{link.section}</span>
+                  )}
+                </DropdownMenuItem>
+              );
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </SidebarMenuItem>
+    );
+  }
+
   if (item.submenu && item.submenu.length > 0) {
     return (
       <Collapsible
@@ -132,12 +169,6 @@ function NavParamsItem({
             <SidebarMenuButton
               tooltip={item.title}
               isActive={false}
-              onClick={(e) => {
-                if (state === "collapsed") {
-                  e.preventDefault();
-                  setOpen(true);
-                }
-              }}
               className={menuItemClass}
             >
               {item.icon && <item.icon className="shrink-0" />}
