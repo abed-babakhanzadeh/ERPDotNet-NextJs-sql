@@ -124,7 +124,7 @@ export function DataTableColumnHeader({
       return c.value !== "" && c.value !== null;
     });
 
-  const isNumeric = column.type === "number";
+  // عنوان همه ستون‌ها (حتی عددی) راست‌چین می‌ماند تا ردیف هدر یکدست خوانده شود
   const sortable = column.sortable !== false;
   const SortIcon =
     sortDirection === "ascending" ? ArrowUp : sortDirection === "descending" ? ArrowDown : ArrowUpDown;
@@ -136,7 +136,7 @@ export function DataTableColumnHeader({
   );
 
   return (
-    <div className={cn("group flex w-full min-w-0 items-center gap-1", isNumeric && "flex-row-reverse")}>
+    <div className="group flex w-full min-w-0 items-center gap-1">
       {sortable ? (
         <button
           type="button"
@@ -145,7 +145,6 @@ export function DataTableColumnHeader({
           className={cn(
             "flex min-w-0 flex-1 items-center gap-1 rounded-sm py-1 text-xs font-medium transition-colors",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-            isNumeric && "flex-row-reverse",
             isSorted ? "text-foreground" : "text-muted-foreground hover:text-foreground",
           )}
         >

@@ -44,6 +44,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useColumnWidths } from "@/hooks/useColumnWidths";
 import { usePathname } from "next/navigation";
 import { toast } from "sonner";
+import { formatNumber } from "@/lib/format";
 
 /** فاصله افقی سلول + آیکون‌های هدر، برای محاسبه عرض خودکار ستون */
 const AUTO_FIT_PADDING = 44;
@@ -304,16 +305,25 @@ export function DataTable<TData extends TableRow>({
   }, [globalFilter, columnFilters, advancedFilters]);
 
   const renderCell = (column: ColumnConfig, row: TData) => {
+    const isNumeric = column.type === "number";
     if (column.render) {
+      // ستون عددی با render سفارشی هم همان تراز و ارقام هم‌عرض را می‌گیرد
       return (
-        <div data-measure className="flex min-w-0 items-center">
+        <div
+          data-measure
+          className={cn(
+            "flex min-w-0 items-center",
+            isNumeric && "justify-end tabular-nums",
+          )}
+        >
           {column.render(row[column.key as keyof TData], row)}
         </div>
       );
     }
     if (column.key === "isActive") return <ActiveBadge active={!!row.isActive} />;
-    const text = String(row[column.key as keyof TData] ?? "—");
-    const isNumeric = column.type === "number";
+    const value = row[column.key as keyof TData];
+    const text =
+      isNumeric && typeof value === "number" ? formatNumber(value) : String(value ?? "—");
     // span بلوکی تا ellipsis درست کار کند؛ متن کامل در title. dir=auto ترتیب متن مختلط فارسی/لاتین را حفظ می‌کند
     // اعداد: تراز انتها (چپ در RTL) با ارقام هم‌عرض تا رقم‌ها زیر هم قرار بگیرند
     return (
