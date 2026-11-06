@@ -5,6 +5,7 @@ import { ChevronRight, Circle } from "lucide-react";
 import { usePermissions } from "@/providers/PermissionProvider";
 import { useTabs } from "@/providers/TabsProvider";
 import { MenuItem } from "@/config/menuItems";
+import { filterMenu } from "@/lib/menu";
 import {
   Collapsible,
   CollapsibleContent,
@@ -28,28 +29,7 @@ interface NavMainProps {
 
 export function NavMain({ items, searchQuery }: NavMainProps) {
   const { hasPermission } = usePermissions();
-
-  const filterItems = (nodes: MenuItem[]): MenuItem[] => {
-    return nodes
-      .filter((item) => {
-        const access = item.permission ? hasPermission(item.permission) : true;
-        if (!access) return false;
-        if (!searchQuery) return true;
-        const matchesSelf = item.title
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase());
-        const hasMatchingChildren = item.submenu
-          ? filterItems(item.submenu).length > 0
-          : false;
-        return matchesSelf || hasMatchingChildren;
-      })
-      .map((item) => ({
-        ...item,
-        submenu: item.submenu ? filterItems(item.submenu) : undefined,
-      }));
-  };
-
-  const filteredItems = filterItems(items);
+  const filteredItems = filterMenu(items, searchQuery, hasPermission);
 
   return (
     <SidebarGroup>

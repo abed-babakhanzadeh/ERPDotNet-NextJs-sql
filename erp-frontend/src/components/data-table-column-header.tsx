@@ -11,7 +11,6 @@ import {
   ArrowUp,
   ArrowUpDown,
   Filter as FilterIcon,
-  FilterX,
   PlusCircle,
   Trash2,
   Calendar,
@@ -43,7 +42,6 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Badge } from "@/components/ui/badge";
 
 interface DataTableColumnHeaderProps {
   column: ColumnConfig;
@@ -126,55 +124,62 @@ export function DataTableColumnHeader({
       return c.value !== "" && c.value !== null;
     });
 
-  const getTypeIcon = () => {
-    switch (column.type) {
-      case "number":
-        return <Hash className="h-3.5 w-3.5 text-muted-foreground" />;
-      case "boolean":
-        return <ToggleLeft className="h-3.5 w-3.5 text-muted-foreground" />;
-      case "date":
-        return <Calendar className="h-3.5 w-3.5 text-muted-foreground" />;
-      default:
-        return <Type className="h-3.5 w-3.5 text-muted-foreground" />;
-    }
-  };
+  const isNumeric = column.type === "number";
+  const sortable = column.sortable !== false;
+  const SortIcon =
+    sortDirection === "ascending" ? ArrowUp : sortDirection === "descending" ? ArrowDown : ArrowUpDown;
+
+  const label = (
+    <span data-measure className="truncate">
+      {column.label}
+    </span>
+  );
 
   return (
-    <div className="flex items-center gap-1 w-full justify-between group">
-      <Button
-        variant="ghost"
-        onClick={() => onSort(column.key)}
-        className={cn(
-          "px-2 py-1 h-auto -mr-2 flex-grow justify-start hover:bg-accent/50 transition-colors",
-          isSorted && "text-primary font-medium",
-        )}
-      >
-        <div className="flex items-center gap-1.5">
-          {getTypeIcon()}
-          <span className="truncate">{column.label}</span>
-        </div>
-
-        <div className="mr-2">
-          {sortDirection === "ascending" ? (
-            <ArrowUp className="h-4 w-4 text-primary" />
-          ) : sortDirection === "descending" ? (
-            <ArrowDown className="h-4 w-4 text-primary" />
-          ) : (
-            <ArrowUpDown className="h-4 w-4 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
+    <div className={cn("group flex w-full min-w-0 items-center gap-1", isNumeric && "flex-row-reverse")}>
+      {sortable ? (
+        <button
+          type="button"
+          onClick={() => onSort(column.key)}
+          title={`مرتب‌سازی بر اساس ${column.label}`}
+          className={cn(
+            "flex min-w-0 flex-1 items-center gap-1 rounded-sm py-1 text-xs font-medium transition-colors",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            isNumeric && "flex-row-reverse",
+            isSorted ? "text-foreground" : "text-muted-foreground hover:text-foreground",
           )}
-        </div>
-      </Button>
-
-      {isFiltered && (
-        <Badge
-          variant="secondary"
-          className="h-5 px-1.5 text-[10px] font-medium bg-primary/10 text-primary border-primary/20"
         >
-          {filter.conditions.length}
-        </Badge>
+          {label}
+          {/* فلش فقط روی ستون مرتب‌شده؛ روی بقیه هنگام hover/focus راهنمای کم‌رنگ */}
+          <SortIcon
+            aria-hidden
+            className={cn(
+              "h-3.5 w-3.5 shrink-0",
+              isSorted
+                ? "text-primary"
+                : "opacity-0 group-hover:opacity-50 group-focus-within:opacity-50",
+            )}
+          />
+        </button>
+      ) : (
+        <span className="flex min-w-0 flex-1 items-center py-1 text-xs font-medium text-muted-foreground">
+          {label}
+        </span>
       )}
 
-      <div className="w-8" />
+      {isFiltered && (
+        <span
+          role="img"
+          aria-label={`فیلتر فعال: ${filter.conditions.length} شرط`}
+          title={`${filter.conditions.length} شرط فیلتر`}
+          className="flex shrink-0 items-center gap-0.5 text-primary"
+        >
+          <FilterIcon aria-hidden className="h-3 w-3" />
+          {filter.conditions.length > 1 && (
+            <span className="text-[11px] tabular-nums">{filter.conditions.length}</span>
+          )}
+        </span>
+      )}
     </div>
   );
 }

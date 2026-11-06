@@ -39,7 +39,14 @@ import { Resizable } from "react-resizable";
 import { ColumnFilter } from "./column-filter";
 import { ActiveBadge } from "./common/StatusBadge";
 import { DataTableMobileCards } from "./data-table-mobile-cards";
+import { ColumnResizeHandle } from "./data-table-resize-handle";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useColumnWidths } from "@/hooks/useColumnWidths";
+import { usePathname } from "next/navigation";
+import { toast } from "sonner";
+
+/** فاصله افقی سلول + آیکون‌های هدر، برای محاسبه عرض خودکار ستون */
+const AUTO_FIT_PADDING = 44;
 
 type PaginationState = {
   pageIndex: number;
@@ -93,6 +100,15 @@ interface DataTableProps<TData extends TableRow> {
 
   onRowDoubleClick?: (row: TData) => void;
   onRefresh?: () => void;
+
+  /**
+   * ظاهر جدول: `default` (ردیف‌های ساده) یا `grid` (خطوط عمودی، مناسب جدول‌های عددی/حسابداری)
+   */
+  variant?: "default" | "grid";
+  /** کلید ذخیره چیدمان ستون‌ها؛ پیش‌فرض: مسیر صفحه (بدون شناسه‌های عددی) */
+  tableId?: string;
+  /** نام فایل خروجی Excel بدون پسوند */
+  exportFileName?: string;
 }
 
 export function DataTable<TData extends TableRow>({
@@ -121,9 +137,15 @@ export function DataTable<TData extends TableRow>({
   permissions = { view: true, edit: true, delete: true },
   onRowDoubleClick,
   onRefresh,
+  variant = "default",
+  tableId,
+  exportFileName = "export",
 }: DataTableProps<TData>) {
   const columns = React.useMemo(() => allColumns.filter((c) => !c.hidden), [allColumns]);
   const isMobile = useIsMobile();
+  const pathname = usePathname();
+  const tableRef = React.useRef<HTMLTableElement>(null);
+  const isGrid = variant === "grid";
   const [contextMenuOpen, setContextMenuOpen] = React.useState(false);
   const [contextMenuRow, setContextMenuRow] = React.useState<TData | null>(
     null
@@ -136,17 +158,23 @@ export function DataTable<TData extends TableRow>({
     number | string | null
   >(null);
 
-  const [columnWidths, setColumnWidths] = React.useState<
-    Record<string, number>
-  >(
-    columns.reduce((acc, col) => ({ ...acc, [col.key]: 150 }), { actions: 140 })
+  const { widthOf, setWidth, minWidthOf } = useColumnWidths(
+    columns,
+    tableId ?? pathname.replace(/\/\d+(?=\/|$)/g, "/:id"),
   );
+  const ACTIONS_WIDTH = 140;
 
-  const handleResize =
-    (key: string) =>
-    (e: any, { size }: any) => {
-      setColumnWidths((prev) => ({ ...prev, [key]: size.width }));
-    };
+  /** عرض ستون به اندازه طولانی‌ترین محتوای قابل مشاهده (هدر + ردیف‌های همین صفحه) */
+  const autoFitColumn = (key: string) => {
+    const cells = tableRef.current?.querySelectorAll<HTMLElement>(
+      `[data-col-key="${CSS.escape(key)}"] [data-measure]`,
+    );
+    let max = 0;
+    cells?.forEach((el) => {
+      max = Math.max(max, el.scrollWidth);
+    });
+    if (max > 0) setWidth(key, max + AUTO_FIT_PADDING);
+  };
 
   const handleSort = (key: string) => {
     onSortChange((prev) => {
@@ -234,8 +262,22 @@ export function DataTable<TData extends TableRow>({
     setContextMenuRow(null);
   };
 
-  const handleExport = () => {
-    console.log("Export triggered");
+  // خروجی ردیف‌های همین صفحه؛ کتابخانه xlsx فقط هنگام نیاز بارگذاری می‌شود
+  const handleExport = async () => {
+    if (data.length === 0) {
+      toast.info("ردیفی برای خروجی گرفتن وجود ندارد");
+      return;
+    }
+    try {
+      const { exportToExcel } = await import("@/utils/export-to-excel");
+      exportToExcel(
+        data,
+        columns.filter((c) => c.type !== "custom"),
+        { filename: `${exportFileName}_${new Date().toISOString().slice(0, 10)}.xlsx` },
+      );
+    } catch {
+      toast.error("ساخت فایل Excel با خطا مواجه شد. دوباره تلاش کنید.");
+    }
   };
 
   const handlePrint = () => {
@@ -264,20 +306,33 @@ export function DataTable<TData extends TableRow>({
   const renderCell = (column: ColumnConfig, row: TData) => {
     if (column.render) {
       return (
-        <div className="flex min-w-0 items-center">
+        <div data-measure className="flex min-w-0 items-center">
           {column.render(row[column.key as keyof TData], row)}
         </div>
       );
     }
     if (column.key === "isActive") return <ActiveBadge active={!!row.isActive} />;
     const text = String(row[column.key as keyof TData] ?? "—");
+    const isNumeric = column.type === "number";
     // span بلوکی تا ellipsis درست کار کند؛ متن کامل در title. dir=auto ترتیب متن مختلط فارسی/لاتین را حفظ می‌کند
+    // اعداد: تراز انتها (چپ در RTL) با ارقام هم‌عرض تا رقم‌ها زیر هم قرار بگیرند
     return (
-      <span dir="auto" title={text} className="block truncate text-start text-sm">
+      <span
+        data-measure
+        dir="auto"
+        title={text}
+        className={cn(
+          "block truncate text-sm",
+          isNumeric ? "text-end tabular-nums" : "text-start",
+        )}
+      >
         {text}
       </span>
     );
   };
+
+  /** کلاس‌های مشترک سلول‌ها (هدر، فیلتر، بدنه) برای نسخه grid */
+  const gridCellClass = isGrid ? "border-l border-border last:border-l-0" : "";
 
   const renderActions = (row: TData) => (
     <TooltipProvider delayDuration={300}>
@@ -341,55 +396,78 @@ export function DataTable<TData extends TableRow>({
       ) : (
       <div className="flex-1 min-h-0 rounded-xl border border-border shadow-sm bg-card overflow-hidden flex flex-col">
         <div className="flex-1 overflow-auto custom-scrollbar">
-          <Table style={{ tableLayout: "fixed", width: "100%" }}>
-            <TableHeader className="sticky top-0 z-20 bg-muted/80 backdrop-blur-sm">
-              <TableRow className="hover:bg-transparent border-b-2 border-border">
-                {columns.map((column) => (
-                  <Resizable
-                    key={column.key}
-                    width={columnWidths[column.key] as number}
-                    height={0}
-                    onResize={handleResize(column.key)}
-                    axis="x"
-                    minConstraints={[80, 0]}
-                    maxConstraints={[600, Infinity]}
-                  >
-                    <TableHead
-                      style={{ width: `${columnWidths[column.key]}px` }}
-                      className="bg-muted/90 text-muted-foreground font-semibold h-9"
+          <Table ref={tableRef} style={{ tableLayout: "fixed", width: "100%" }}>
+            <TableHeader className="sticky top-0 z-20">
+              <TableRow className="border-b border-border hover:bg-transparent even:bg-transparent">
+                {columns.map((column) => {
+                  const width = widthOf(column.key);
+                  const isSorted = sortConfig?.key === column.key;
+                  return (
+                    <Resizable
+                      key={column.key}
+                      width={width}
+                      height={0}
+                      onResize={(_e, { size }) => setWidth(column.key, size.width)}
+                      axis="x"
+                      // در RTL انتهای ستون لبه چپ است؛ دستگیره w کشیدن به چپ را افزایش عرض حساب می‌کند
+                      resizeHandles={["w"]}
+                      minConstraints={[minWidthOf(column.key), 0]}
+                      maxConstraints={[600, Infinity]}
+                      handle={(_axis, ref) => (
+                        <ColumnResizeHandle
+                          ref={ref}
+                          label={column.label}
+                          width={width}
+                          minWidth={minWidthOf(column.key)}
+                          onWidthChange={(w) => setWidth(column.key, w)}
+                          onAutoFit={() => autoFitColumn(column.key)}
+                        />
+                      )}
                     >
-                      <div className="flex items-center justify-between h-full overflow-hidden">
+                      <TableHead
+                        data-col-key={column.key}
+                        aria-sort={
+                          column.sortable === false
+                            ? undefined
+                            : isSorted
+                              ? sortConfig?.direction
+                              : "none"
+                        }
+                        style={{ width: `${width}px` }}
+                        className={cn(
+                          "h-9 bg-muted bg-none px-3 text-start",
+                          gridCellClass,
+                        )}
+                      >
                         <DataTableColumnHeader
                           column={column}
                           sortConfig={sortConfig}
                           onSort={handleSort}
-                          filter={advancedFilters.find(
-                            (f) => f.key === column.key
-                          )}
+                          filter={advancedFilters.find((f) => f.key === column.key)}
                           onFilterChange={onAdvancedFilterChange}
                         />
-                      </div>
-                    </TableHead>
-                  </Resizable>
-                ))}
+                      </TableHead>
+                    </Resizable>
+                  );
+                })}
                 {/* ستون عملیات */}
                 <TableHead
-                  className="no-print text-center sticky top-0 z-10 bg-muted/90 text-muted-foreground font-semibold h-9"
-                  style={{ width: `${columnWidths.actions}px` }}
+                  className="no-print h-9 bg-muted bg-none text-center text-xs font-medium text-muted-foreground"
+                  style={{ width: `${ACTIONS_WIDTH}px` }}
                 >
                   عملیات
                 </TableHead>
               </TableRow>
 
-              <TableRow className="no-print bg-muted/50 hover:bg-muted/50 border-b border-border sticky top-[36px] z-10">
+              <TableRow className="no-print bg-card hover:bg-card even:bg-card border-b border-border sticky top-[36px] z-10">
                 {columns.map((column) => (
                   <TableCell
                     key={column.key}
                     style={{
-                      width: `${columnWidths[column.key]}px`,
-                      maxWidth: `${columnWidths[column.key]}px`,
+                      width: `${widthOf(column.key)}px`,
+                      maxWidth: `${widthOf(column.key)}px`,
                     }}
-                    className="py-1.5"
+                    className={cn("py-1.5", gridCellClass)}
                   >
                     <ColumnFilter
                       column={column}
@@ -419,17 +497,17 @@ export function DataTable<TData extends TableRow>({
                         <TableCell
                           key={column.key}
                           style={{
-                            width: `${columnWidths[column.key]}px`,
-                            maxWidth: `${columnWidths[column.key]}px`,
+                            width: `${widthOf(column.key)}px`,
+                            maxWidth: `${widthOf(column.key)}px`,
                           }}
-                          className="py-1.5 px-3"
+                          className={cn("py-1.5 px-3", gridCellClass)}
                         >
                           <div className="h-5 bg-muted rounded animate-pulse" />
                         </TableCell>
                       ))}
                       <TableCell
                         className="no-print text-center"
-                        style={{ width: `${columnWidths.actions}px` }}
+                        style={{ width: `${ACTIONS_WIDTH}px` }}
                       >
                         <div className="h-6 w-8 bg-muted rounded animate-pulse mx-auto" />
                       </TableCell>
@@ -454,6 +532,8 @@ export function DataTable<TData extends TableRow>({
                     onContextMenu={(e) => handleContextMenu(e, row)}
                     className={cn(
                       "cursor-pointer border-b border-border transition-colors h-9 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                      // راه‌راه فقط در نسخه grid؛ نسخه پیش‌فرض ردیف‌های یکدست (سبک Fiori)
+                      !isGrid && "even:bg-transparent",
 
                       // ۱. حالت انتخاب شده (بالاترین اولویت)
                       selectedRowId === row.id
@@ -468,11 +548,12 @@ export function DataTable<TData extends TableRow>({
                     {columns.map((column) => (
                       <TableCell
                         key={column.key}
+                        data-col-key={column.key}
                         style={{
-                          width: `${columnWidths[column.key]}px`,
-                          maxWidth: `${columnWidths[column.key]}px`,
+                          width: `${widthOf(column.key)}px`,
+                          maxWidth: `${widthOf(column.key)}px`,
                         }}
-                        className="py-1.5 px-3"
+                        className={cn("py-1.5 px-3", gridCellClass)}
                       >
                         {renderCell(column, row)}
                       </TableCell>
@@ -480,7 +561,7 @@ export function DataTable<TData extends TableRow>({
 
                     <TableCell
                       className="no-print text-center"
-                      style={{ width: `${columnWidths.actions}px` }}
+                      style={{ width: `${ACTIONS_WIDTH}px` }}
                     >
                       {renderActions(row)}
                     </TableCell>
@@ -500,9 +581,26 @@ export function DataTable<TData extends TableRow>({
                       <p className="text-sm font-medium text-muted-foreground">
                         هیچ نتیجه‌ای یافت نشد
                       </p>
-                      <p className="text-xs text-muted-foreground/70">
-                        فیلترهای خود را تغییر دهید یا جستجوی جدیدی انجام دهید
-                      </p>
+                      {activeFiltersCount > 0 ? (
+                        <>
+                          <p className="text-xs text-muted-foreground">
+                            فیلترهای فعلی هیچ ردیفی را نشان نمی‌دهند.
+                          </p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={onClearAllFilters}
+                            className="mt-1 h-8 gap-1.5"
+                          >
+                            <FilterX className="h-3.5 w-3.5" />
+                            پاک کردن فیلترها
+                          </Button>
+                        </>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">
+                          هنوز اطلاعاتی ثبت نشده است.
+                        </p>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
