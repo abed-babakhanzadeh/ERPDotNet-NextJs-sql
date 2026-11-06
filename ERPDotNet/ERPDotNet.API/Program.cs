@@ -1,4 +1,5 @@
 using ERPDotNet.API.ErrorHandling;
+using ERPDotNet.API.Serialization;
 using ERPDotNet.API.Services;
 using ERPDotNet.Application;
 using ERPDotNet.Application.Common.Interfaces;
@@ -21,6 +22,7 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IFileService, FileService>();
 
 builder.Services.AddControllers()
+    .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new UtcDateTimeConverter()))
     // خطای تبدیل JSON / نوع داده هم با همان قرارداد فارسی برگردد
     .ConfigureApiBehaviorOptions(o => o.InvalidModelStateResponseFactory = ModelStateProblem.Create);
 
