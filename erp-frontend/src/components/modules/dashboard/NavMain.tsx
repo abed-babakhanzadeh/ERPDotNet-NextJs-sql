@@ -5,7 +5,7 @@ import { ChevronRight, Circle } from "lucide-react";
 import { usePermissions } from "@/providers/PermissionProvider";
 import { useTabs } from "@/providers/TabsProvider";
 import { MenuItem } from "@/config/menuItems";
-import { filterMenu } from "@/lib/menu";
+import { filterMenu, findMenuLinkForPath } from "@/lib/menu";
 import {
   Collapsible,
   CollapsibleContent,
@@ -29,41 +29,57 @@ interface NavMainProps {
 
 export function NavMain({ items, searchQuery }: NavMainProps) {
   const { hasPermission } = usePermissions();
+  const pathname = usePathname();
   const filteredItems = filterMenu(items, searchQuery, hasPermission);
+  // صفحه فعلی؛ صفحه‌های جزئیات/ویرایش هم آیتم فهرست خود را فعال نشان می‌دهند
+  const activeHref = findMenuLinkForPath(pathname)?.href ?? null;
 
   return (
     <SidebarGroup>
       <SidebarGroupLabel>ماژول‌ها</SidebarGroupLabel>
-      <SidebarMenu>
+      <SidebarMenu className="gap-0.5">
         {filteredItems.map((item) => (
           <NavParamsItem
             key={item.title}
             item={item}
             searchQuery={searchQuery}
+            activeHref={activeHref}
+            depth={0}
           />
         ))}
       </SidebarMenu>
+      {filteredItems.length === 0 && (
+        <p role="status" className="px-2 py-6 text-center text-xs text-muted-foreground">
+          موردی با «{searchQuery}» پیدا نشد
+        </p>
+      )}
     </SidebarGroup>
   );
 }
 
+const containsHref = (item: MenuItem, href: string | null): boolean =>
+  !!href && (item.href === href || !!item.submenu?.some((sub) => containsHref(sub, href)));
+
 function NavParamsItem({
   item,
   searchQuery,
+  activeHref,
+  depth,
 }: {
   item: MenuItem;
   searchQuery: string;
+  activeHref: string | null;
+  /** سطح در درخت منو؛ زیرمنوها فشرده‌تر نمایش داده می‌شوند */
+  depth: number;
 }) {
-  const pathname = usePathname();
   const { addTab } = useTabs();
   const { setOpen, setOpenMobile, isMobile, state } = useSidebar();
 
-  const isActive =
-    item.href === pathname ||
-    item.submenu?.some((sub) => sub.href === pathname);
+  const isCurrentPage = !!item.href && item.href === activeHref;
+  const containsCurrentPage = containsHref(item, activeHref);
 
   const isOpen =
-    (!!searchQuery && item.submenu && item.submenu.length > 0) || isActive;
+    (!!searchQuery && item.submenu && item.submenu.length > 0) || containsCurrentPage;
 
   const handleClick = (e: React.MouseEvent) => {
     if (state === "collapsed") {
@@ -85,24 +101,22 @@ function NavParamsItem({
     }
   };
 
-  // --- استایل‌های اصلاح شده ---
+  // یک نشانگر فعال در کل منو: فقط صفحه جاری پس‌زمینه و نوار کناری (لبه شروع = راست در RTL) می‌گیرد؛
+  // ماژول والدِ صفحه جاری فقط پررنگ‌تر می‌شود. بدون جابه‌جایی/سایه در hover (پرهیز از حرکت اضافه)
+  const isSubItem = depth > 0;
   const menuItemClass = cn(
-    // بیس: ارتفاع مناسب و انیمیشن
-    "relative overflow-hidden transition-all duration-200 ease-in-out h-10 mb-1",
-
-    // بوردر و سایه (درخواست قبلی)
-    "border-b border-sidebar-border/40 shadow-[0_1px_1px_rgba(0,0,0,0.02)]",
-
-    // *** اصلاح هاور (درخواست جدید) ***
-    // 1. رنگ پس‌زمینه مشخص‌تر: bg-primary/5 (نه sidebar-accent که شاید بی‌رنگ باشد)
-    // 2. رنگ متن: text-primary (رنگ اصلی برند)
-    // 3. حرکت: حفظ شد
-    "hover:bg-primary/5 hover:text-primary hover:shadow-sm hover:-translate-x-1",
-
-    // حالت فعال (Active)
-    isActive
-      ? "font-semibold text-primary bg-primary/10 border-b-primary/20 shadow-none"
-      : "text-muted-foreground"
+    "relative transition-colors",
+    isSubItem ? "h-8 text-[13px]" : "h-9",
+    "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+    "data-[active=true]:bg-transparent data-[active=true]:font-normal",
+    isCurrentPage
+      ? cn(
+          "!bg-primary/10 !font-medium !text-primary hover:!bg-primary/15",
+          "before:absolute before:inset-y-1.5 before:start-0 before:w-[3px] before:rounded-full before:bg-primary",
+        )
+      : containsCurrentPage
+        ? "font-medium text-foreground [&>svg]:text-primary"
+        : "text-muted-foreground",
   );
 
   if (item.submenu && item.submenu.length > 0) {
@@ -117,7 +131,7 @@ function NavParamsItem({
           <CollapsibleTrigger asChild>
             <SidebarMenuButton
               tooltip={item.title}
-              isActive={isActive}
+              isActive={false}
               onClick={(e) => {
                 if (state === "collapsed") {
                   e.preventDefault();
@@ -140,12 +154,14 @@ function NavParamsItem({
                - border-r: خط درختی در سمت راست
                - pr-2: فاصله محتوا از خط
             */}
-            <SidebarMenuSub className="mr-3.5 border-r border-sidebar-border/60 pr-2 border-l-0 ml-0">
+            <SidebarMenuSub className="mr-3.5 gap-0.5 border-r border-sidebar-border pr-2 border-l-0 ml-0">
               {item.submenu.map((subItem) => (
                 <NavParamsItem
                   key={subItem.title}
                   item={subItem}
                   searchQuery={searchQuery}
+                  activeHref={activeHref}
+                  depth={depth + 1}
                 />
               ))}
             </SidebarMenuSub>
@@ -159,12 +175,12 @@ function NavParamsItem({
     <SidebarMenuItem>
       <SidebarMenuButton
         asChild
-        isActive={isActive}
+        isActive={isCurrentPage}
         tooltip={item.title}
         onClick={handleClick}
         className={menuItemClass}
       >
-        <a href={item.href || "#"}>
+        <a href={item.href || "#"} aria-current={isCurrentPage ? "page" : undefined}>
           {item.icon ? (
             <item.icon className="shrink-0" />
           ) : (

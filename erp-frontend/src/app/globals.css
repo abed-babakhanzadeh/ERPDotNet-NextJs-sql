@@ -55,6 +55,18 @@
 
     --radius: 0.5rem;
 
+    /* منوی کناری: از توکن‌های اصلی ساخته می‌شود تا در همه تم‌ها (روشن/تاریک/سفارشی) خودکار هماهنگ بماند.
+       سطح منو هم‌رنگ کارت است تا از زمینه صفحه جدا دیده شود */
+    --sidebar: var(--card);
+    --sidebar-foreground: var(--foreground);
+    --sidebar-accent: var(--muted);
+    --sidebar-accent-foreground: var(--foreground);
+    --sidebar-border: var(--border);
+    /* حلقه فوکوس با رنگ اصلی؛ --ring در تم تاریک تقریباً نامرئی است */
+    --sidebar-ring: var(--primary);
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: var(--primary-foreground);
+
     /* ... سایر متغیرهای رنگ ... */
     --background: 210 100% 97%;
     /* ادامه کد های قبلی شما... */

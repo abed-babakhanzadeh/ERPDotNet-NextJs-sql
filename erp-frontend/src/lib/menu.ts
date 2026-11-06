@@ -49,15 +49,25 @@ export function flattenMenu(items: MenuItem[], parents: string[] = []): MenuLink
   });
 }
 
-/** عنوان مناسب برای یک مسیر: آیتم منو با طولانی‌ترین پیشوند منطبق (به جز ریشه) */
-export function findMenuTitleForPath(pathname: string): string | null {
+/**
+ * آیتم منوی متناظر با یک مسیر: تطابق دقیق، یا طولانی‌ترین پیشوند
+ * (مثلاً /base-info/products/edit/5 → «مدیریت کالاها»). ریشه فقط با تطابق دقیق.
+ */
+export function findMenuLinkForPath(pathname: string): MenuLink | null {
   let best: MenuLink | null = null;
   for (const link of flattenMenu(MENU_ITEMS)) {
-    if (link.href === "/") continue;
-    const matches = pathname === link.href || pathname.startsWith(`${link.href}/`);
+    const matches =
+      pathname === link.href ||
+      (link.href !== "/" && pathname.startsWith(`${link.href}/`));
     if (matches && (!best || link.href.length > best.href.length)) best = link;
   }
-  return best?.title ?? null;
+  return best;
+}
+
+/** عنوان مناسب برای تب یک مسیر (به جز ریشه) */
+export function findMenuTitleForPath(pathname: string): string | null {
+  const link = findMenuLinkForPath(pathname);
+  return link && link.href !== "/" ? link.title : null;
 }
 
 /** فقط مسیرهای داخلی برنامه مجازند (جلوگیری از هدایت به دامنه دیگر با داده دستکاری‌شده) */
