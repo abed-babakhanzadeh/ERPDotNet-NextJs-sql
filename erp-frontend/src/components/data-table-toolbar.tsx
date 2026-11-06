@@ -116,7 +116,7 @@ export function DataTableToolbar({
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom" className="text-[10px]">
-              {isExporting ? "در حال خروجی..." : "خروجی Excel"}
+              {isExporting ? "در حال خروجی..." : "خروجی Excel (ردیف‌های همین صفحه)"}
             </TooltipContent>
           </Tooltip>
 

@@ -1,19 +1,13 @@
 "use client";
 
+import { ToolbarButton } from "@/components/layout/ToolbarButton";
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
 import { Printer, Download, Network, Box, Layers } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import BOMTreeTable, { BOMTreeNodeDto } from "@/components/bom/BOMTreeTable";
 import { cn } from "@/lib/utils";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 // 1. ایمپورت لایوت جدید
 import BaseListLayout from "@/components/layout/BaseListLayout";
@@ -68,39 +62,8 @@ export default function BOMTreePage() {
   // 2. تعریف دکمه‌های اکشن برای هدر
   const headerActions = (
     <>
-      <TooltipProvider delayDuration={200}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleExport}
-              className="h-8 w-8 p-0 sm:w-auto sm:px-3 bg-background border-dashed text-muted-foreground hover:text-foreground"
-            >
-              <Download className="w-4 h-4 sm:mr-2" />
-              <span className="sr-only sm:not-sr-only text-xs">دانلود</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>دانلود اکسل</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-
-      <TooltipProvider delayDuration={200}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handlePrint}
-              className="h-8 w-8 p-0 sm:w-auto sm:px-3 bg-background border-dashed text-muted-foreground hover:text-foreground"
-            >
-              <Printer className="w-4 h-4 sm:mr-2" />
-              <span className="sr-only sm:not-sr-only text-xs">چاپ</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>چاپ ساختار</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <ToolbarButton intent="secondary" icon={Download} label="دانلود" tooltip="دانلود اکسل" onClick={handleExport} />
+      <ToolbarButton intent="secondary" icon={Printer} label="چاپ" tooltip="چاپ ساختار" onClick={handlePrint} />
     </>
   );
 

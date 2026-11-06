@@ -1,12 +1,12 @@
 "use client";
 
+import { ToolbarIconButton } from "@/components/layout/ToolbarButton";
 import { useEffect, useMemo, useState } from "react";
 import { Coins, RefreshCw } from "lucide-react";
 
 import BaseListLayout from "@/components/layout/BaseListLayout";
 import { DataTable } from "@/components/data-table";
 import ProtectedPage from "@/components/ui/ProtectedPage";
-import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import inventoryService from "@/services/inventoryService";
 import { companyService } from "@/services/baseInfoService";
@@ -78,9 +78,7 @@ export default function StockValuationPage() {
           ))}
         </SelectContent>
       </Select>
-      <Button onClick={refresh} variant="outline" size="icon" className="h-8 w-8 shrink-0" aria-label="بروزرسانی" title="بروزرسانی">
-        <RefreshCw size={14} className="text-muted-foreground" />
-      </Button>
+      <ToolbarIconButton icon={RefreshCw} label="بروزرسانی" onClick={refresh} />
     </div>
   );
 

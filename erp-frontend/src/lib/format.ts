@@ -29,3 +29,14 @@ export function formatDateTime(value: string | Date | null | undefined) {
 export function formatNumber(value: number | null | undefined) {
   return value == null ? "—" : faNumber.format(value);
 }
+
+const groupedNumber = new Intl.NumberFormat("en-US", { maximumFractionDigits: 6 });
+
+/**
+ * عدد با جداکننده هزارگان و ارقام لاتین در متن صفحه (۱۲۳۴ → 1,234).
+ * شکل ارقام (فارسی/لاتین) را فونت طبق تنظیم کاربر نشان می‌دهد؛ متن کپی‌شده در Excel عدد می‌ماند.
+ * برای جدول‌ها و داده‌های عددی؛ formatNumber فقط برای متن‌های نمایشی فارسی.
+ */
+export function formatGroupedNumber(value: number | null | undefined) {
+  return value == null ? "—" : groupedNumber.format(value);
+}

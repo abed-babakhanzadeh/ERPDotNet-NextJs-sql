@@ -1,5 +1,6 @@
 "use client";
 
+import { ToolbarButton } from "@/components/layout/ToolbarButton";
 import { useState } from "react";
 import { User } from "@/types/user";
 import { toast } from "sonner";
@@ -490,13 +491,7 @@ export default function UsersPage() {
         count={totalCount}
         actions={
           <PermissionGuard permission="UserAccess.Create">
-            <Button
-              onClick={handleCreate}
-              className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground h-9"
-            >
-              <Plus size={16} />
-              افزودن کاربر جدید
-            </Button>
+            <ToolbarButton intent="primary" icon={Plus} label="کاربر جدید" onClick={handleCreate} />
           </PermissionGuard>
         }
       >

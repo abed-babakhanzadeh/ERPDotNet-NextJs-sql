@@ -1,5 +1,6 @@
 "use client";
 
+import { ToolbarButton } from "@/components/layout/ToolbarButton";
 import React, { useMemo, useState } from "react";
 import { BOMStatusBadge } from "@/components/bom/BOMStatusBadge";
 import { ColumnConfig } from "@/types";
@@ -224,25 +225,7 @@ export default function BOMsListPage() {
   // --- هدر اکشن‌ها ---
   const headerActions = (
     <PermissionGuard permission="ProductEngineering.BOM.Create">
-      <TooltipProvider delayDuration={200}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              onClick={handleCreate}
-              size="sm"
-              className="h-8 gap-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
-            >
-              <Plus size={16} />
-              <span className="sr-only sm:not-sr-only text-xs font-medium">
-                فرمول جدید
-              </span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="text-[10px] sm:hidden">
-            فرمول جدید
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <ToolbarButton intent="primary" icon={Plus} label="فرمول جدید" onClick={handleCreate} />
     </PermissionGuard>
   );
 

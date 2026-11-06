@@ -1,12 +1,12 @@
 "use client";
 
+import { ToolbarIconButton } from "@/components/layout/ToolbarButton";
 import { useMemo, useState } from "react";
 import { RefreshCw, Scale } from "lucide-react";
 
 import BaseListLayout from "@/components/layout/BaseListLayout";
 import { DataTable } from "@/components/data-table";
 import ProtectedPage from "@/components/ui/ProtectedPage";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -110,9 +110,7 @@ export default function ProductionVariancePage() {
           <SelectItem value={String(PRODUCTION_ORDER_STATUS.completed)}>تکمیل شده</SelectItem>
         </SelectContent>
       </Select>
-      <Button onClick={refresh} variant="outline" size="icon" className="h-8 w-8 shrink-0" title="بروزرسانی" aria-label="بروزرسانی">
-        <RefreshCw size={14} className="text-muted-foreground" />
-      </Button>
+      <ToolbarIconButton icon={RefreshCw} label="بروزرسانی" onClick={refresh} />
     </div>
   );
 

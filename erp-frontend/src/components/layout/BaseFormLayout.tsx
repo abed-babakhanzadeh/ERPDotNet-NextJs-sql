@@ -19,6 +19,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils"; // اضافه شدن cn
+import { ToolbarButton, ToolbarSeparator } from "./ToolbarButton";
 import { DISCARD_CHANGES, useConfirm } from "@/providers/ConfirmProvider";
 
 interface BaseFormLayoutProps {
@@ -123,7 +124,7 @@ export default function BaseFormLayout({
                   size="icon"
                   onClick={handleCancel}
                   className="h-8 w-8 shrink-0 text-muted-foreground"
-                  aria-label="بستن"
+                  aria-label="بازگشت"
                   title="بازگشت"
                 >
                   <ArrowRight size={18} />
@@ -158,65 +159,26 @@ export default function BaseFormLayout({
 
               {showActions && onSubmit && (
                 <>
-                  {/* دکمه انصراف */}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={handleCancel}
-                        disabled={isSubmitting}
-                        className="h-8 gap-2"
-                      >
-                        <X size={15} className="text-muted-foreground" />
-                        <span className="sr-only sm:not-sr-only text-xs">انصراف</span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent
-                      side="bottom"
-                      className="text-[10px] sm:hidden"
-                    >
-                      انصراف
-                    </TooltipContent>
-                  </Tooltip>
-
-                  {/* دکمه ذخیره */}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        type="submit"
-                        form={formId}
-                        size="sm"
-                        disabled={isSubmitting || isLoading}
-                        className="h-8 gap-2"
-                        aria-keyshortcuts="Control+S"
-                      >
-                        {isSubmitting ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            <span className="sr-only sm:not-sr-only text-xs">
-                              در حال ثبت...
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            <Save size={15} />
-                            <span className="sr-only sm:not-sr-only text-xs">
-                              {submitText}
-                            </span>
-                          </>
-                        )}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent
-                      side="bottom"
-                      className="text-[10px] sm:hidden"
-                    >
-                      {submitText}
-                    </TooltipContent>
-                  </Tooltip>
-                  <div className="w-px h-5 bg-border mx-1 hidden sm:block" />
+                  <ToolbarButton
+                    intent="cancel"
+                    icon={X}
+                    label="انصراف"
+                    onClick={handleCancel}
+                    disabled={isSubmitting}
+                  />
+                  <ToolbarButton
+                    intent="submit"
+                    type="submit"
+                    form={formId}
+                    icon={Save}
+                    label={submitText}
+                    tooltip={`${submitText} (Ctrl+S)`}
+                    loading={isSubmitting}
+                    loadingLabel="در حال ثبت..."
+                    disabled={isLoading}
+                    aria-keyshortcuts="Control+S"
+                  />
+                  <ToolbarSeparator />
                   {/* دکمه جدید: تمام صفحه */}
                   <Tooltip>
                     <TooltipTrigger asChild>

@@ -9,8 +9,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Pencil, List, Warehouse } from "lucide-react";
 
+import { ToolbarButton } from "@/components/layout/ToolbarButton";
 import BaseFormLayout from "@/components/layout/BaseFormLayout";
-import { Button } from "@/components/ui/button";
 import LocationTree from "@/components/inventory/LocationTree";
 import { Form } from "@/components/ui/form";
 import { FormSection } from "@/components/form/FormSection";
@@ -181,24 +181,18 @@ export default function WarehousePage() {
       headerActions={
         mode === "view" && (
           <>
-            <Button
-              onClick={() => router.push(`/inventory/warehouses/edit/${id}`)}
-              className="gap-2"
-              size="sm"
-            >
-              <Pencil className="h-4 w-4" />
-              ویرایش
-            </Button>
-
-            <Button
+            <ToolbarButton
+              intent="secondary"
+              icon={List}
+              label="فهرست"
               onClick={() => router.push("/inventory/warehouses")}
-              variant="outline"
-              className="gap-2"
-              size="sm"
-            >
-              <List className="h-4 w-4" />
-              فهرست
-            </Button>
+            />
+            <ToolbarButton
+              intent="primary"
+              icon={Pencil}
+              label="ویرایش"
+              onClick={() => router.push(`/inventory/warehouses/edit/${id}`)}
+            />
           </>
         )
       }

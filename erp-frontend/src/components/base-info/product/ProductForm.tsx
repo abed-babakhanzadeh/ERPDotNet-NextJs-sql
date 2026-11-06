@@ -23,8 +23,8 @@ import { Unit } from "@/types/baseInfo";
 import { Product } from "@/types/product";
 import { InventoryItemProfileDto } from "@/types/inventory";
 
+import { ToolbarButton } from "@/components/layout/ToolbarButton";
 import BaseFormLayout from "@/components/layout/BaseFormLayout";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -261,52 +261,41 @@ export default function ProductForm({ mode, productId }: ProductFormProps) {
   ];
 
   const renderHeaderActions = () => {
-    return (
-      <div className="flex items-center gap-2">
-        {isView && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2 border-warning/30 text-warning hover:bg-warning/10"
-            onClick={() => router.push(`/base-info/products/edit/${productId}`)}
-          >
-            <Pencil size={16} /> ویرایش
-          </Button>
-        )}
-
-        {!isView && (
-          <>
-            {(activeTab === "general" ||
-              activeTab === "units" ||
-              activeTab === "image") && (
-              <Button
-                type="button"
-                onClick={form.handleSubmit(onSubmitGeneral)}
-                size="sm"
-                className="gap-2 bg-success hover:bg-success/90 text-success-foreground"
-                disabled={loading}
-              >
-                {loading ? (
-                  <div className="animate-spin">⌛</div>
-                ) : (
-                  <Save size={16} />
-                )}
-                {isCreate ? "ثبت و ادامه" : "ثبت تغییرات"}
-              </Button>
-            )}
-
-            {activeTab === "inventory" && (
-              <label
-                htmlFor="submit-inventory-profile"
-                className={`cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-success text-success-foreground hover:bg-success/90 h-9 px-4 gap-2 shadow-sm ${loading ? "opacity-50 pointer-events-none" : ""}`}
-              >
-                <Save size={16} /> ثبت تنظیمات انبار
-              </label>
-            )}
-          </>
-        )}
-      </div>
-    );
+    if (isView) {
+      return (
+        <ToolbarButton
+          intent="primary"
+          icon={Pencil}
+          label="ویرایش"
+          onClick={() => router.push(`/base-info/products/edit/${productId}`)}
+        />
+      );
+    }
+    if (activeTab === "general" || activeTab === "units" || activeTab === "image") {
+      return (
+        <ToolbarButton
+          intent="submit"
+          icon={Save}
+          label={isCreate ? "ثبت و ادامه" : "ثبت تغییرات"}
+          loading={loading}
+          loadingLabel="در حال ثبت..."
+          onClick={form.handleSubmit(onSubmitGeneral)}
+        />
+      );
+    }
+    if (activeTab === "inventory") {
+      // فرم تنظیمات انبار دکمه ثبت پنهان خودش را دارد؛ همان را اجرا می‌کنیم
+      return (
+        <ToolbarButton
+          intent="submit"
+          icon={Save}
+          label="ثبت تنظیمات انبار"
+          loading={loading}
+          onClick={() => document.getElementById("submit-inventory-profile")?.click()}
+        />
+      );
+    }
+    return null;
   };
 
   return (

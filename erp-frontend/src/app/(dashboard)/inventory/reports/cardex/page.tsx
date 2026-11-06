@@ -1,5 +1,6 @@
 "use client";
 
+import { ToolbarIconButton } from "@/components/layout/ToolbarButton";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { History, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
@@ -7,14 +8,7 @@ import { toast } from "sonner";
 import BaseListLayout from "@/components/layout/BaseListLayout";
 import { DataTable } from "@/components/data-table";
 import ProtectedPage from "@/components/ui/ProtectedPage";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TableLookupCombobox } from "@/components/ui/TableLookupCombobox";
 
 import inventoryService from "@/services/inventoryService";
@@ -259,16 +253,7 @@ export default function ProductCardexPage() {
         />
       </div>
 
-      <Button
-        onClick={refresh}
-        variant="outline"
-        size="icon"
-        className="h-8 w-8 shrink-0 hover:bg-accent"
-        disabled={!selectedProductId} // فقط انتخاب کالا اجباری است
-        title="بروزرسانی گزارش"
-      >
-        <RefreshCw size={14} className="text-muted-foreground" />
-      </Button>
+      <ToolbarIconButton icon={RefreshCw} label="بروزرسانی" onClick={refresh} disabled={!selectedProductId} />
     </div>
   );
 

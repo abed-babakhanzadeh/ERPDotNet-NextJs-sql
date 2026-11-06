@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowRight, CheckCheck, ExternalLink, Save } from "lucide-react";
+
+import { CheckCheck, ExternalLink, Save } from "lucide-react";
 import { toast } from "sonner";
 
 import MasterDetailForm from "@/components/form/MasterDetailForm";
@@ -13,6 +13,7 @@ import {
   TableLookupCombobox,
   ColumnDef,
 } from "@/components/ui/TableLookupCombobox";
+import { ToolbarButton } from "@/components/layout/ToolbarButton";
 import PermissionGuard from "@/components/ui/PermissionGuard";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -66,7 +67,6 @@ export default function StockCountForm({
   data: StockCountDto;
   onReload: () => Promise<void>;
 }) {
-  const router = useRouter();
   const { addTab } = useTabs();
   const readOnly = data.statusId === STOCK_COUNT_FINALIZED;
   const [rows, setRows] = useState<CountRow[]>(() => toRows(data));
@@ -336,51 +336,33 @@ export default function StockCountForm({
         isDirty={isDirty}
         submitting={saving}
         headerActions={
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.back()}
-              className="h-8 text-muted-foreground"
-            >
-              <ArrowRight className="h-4 w-4 sm:ml-1.5" />
-              <span className="sr-only text-xs sm:not-sr-only">بازگشت</span>
-            </Button>
-            {!readOnly && (
-              <>
-                <PermissionGuard permission="Inventory.StockCounts.Edit">
-                  <Button
-                    size="sm"
-                    onClick={save}
-                    disabled={saving}
-                    className="h-8 gap-1.5"
-                  >
-                    <Save className="h-4 w-4" />
-                    <span className="sr-only text-xs sm:not-sr-only">
-                      ذخیره شمارش
-                    </span>
-                  </Button>
-                </PermissionGuard>
-                <PermissionGuard permission="Inventory.StockCounts.Finalize">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={saving}
-                    onClick={async () => {
-                      if (isDirty && !(await save())) return;
-                      setFinalizing(true);
-                    }}
-                    className="h-8 gap-1.5"
-                  >
-                    <CheckCheck className="h-4 w-4" />
-                    <span className="sr-only text-xs sm:not-sr-only">
-                      نهایی کردن
-                    </span>
-                  </Button>
-                </PermissionGuard>
-              </>
-            )}
-          </div>
+          !readOnly && (
+            <>
+              <PermissionGuard permission="Inventory.StockCounts.Finalize">
+                <ToolbarButton
+                  intent="accent"
+                  icon={CheckCheck}
+                  label="نهایی کردن"
+                  tooltip="ذخیره و نهایی کردن شمارش"
+                  disabled={saving}
+                  onClick={async () => {
+                    if (isDirty && !(await save())) return;
+                    setFinalizing(true);
+                  }}
+                />
+              </PermissionGuard>
+              <PermissionGuard permission="Inventory.StockCounts.Edit">
+                <ToolbarButton
+                  intent="submit"
+                  icon={Save}
+                  label="ذخیره شمارش"
+                  loading={saving}
+                  loadingLabel="در حال ذخیره..."
+                  onClick={save}
+                />
+              </PermissionGuard>
+            </>
+          )
         }
         headerContent={
           <div className="grid gap-3 text-sm sm:grid-cols-4">

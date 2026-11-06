@@ -64,19 +64,19 @@ export function DataTablePagination({
       {/* اطلاعات سمت چپ */}
       <div className="flex items-center gap-3 sm:gap-6 text-xs w-full sm:w-auto justify-center sm:justify-start">
         <div className="flex items-center gap-1.5 sm:gap-2">
-          <span className="text-muted-foreground text-[10px] sm:text-xs">
+          <span className="text-muted-foreground text-xs">
             نمایش
           </span>
-          <span className="font-medium text-foreground text-[10px] sm:text-xs">
+          <span className="font-medium text-foreground text-xs">
             {startRow} تا {endRow}
           </span>
-          <span className="text-muted-foreground text-[10px] sm:text-xs">
+          <span className="text-muted-foreground text-xs">
             از
           </span>
-          <span className="font-medium text-primary text-[10px] sm:text-xs">
+          <span className="font-medium text-primary text-xs">
             {rowCount}
           </span>
-          <span className="text-muted-foreground text-[10px] sm:text-xs">
+          <span className="text-muted-foreground text-xs">
             ردیف
           </span>
         </div>
@@ -85,7 +85,7 @@ export function DataTablePagination({
 
         {/* تعداد ردیف در هر صفحه */}
         <div className="flex items-center gap-2">
-          <p className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">
+          <p className="text-xs text-muted-foreground whitespace-nowrap">
             تعداد در صفحه:
           </p>
           <Select
@@ -96,7 +96,7 @@ export function DataTablePagination({
           >
             <SelectTrigger
               aria-label="تعداد ردیف در صفحه"
-              className="h-7 sm:h-9 w-[60px] sm:w-[75px] text-[10px] sm:text-xs"
+              className="h-7 sm:h-9 w-[60px] sm:w-[75px] text-xs"
             >
               <SelectValue placeholder={pagination.pageSize} />
             </SelectTrigger>
@@ -145,7 +145,7 @@ export function DataTablePagination({
 
         {/* نمایش و ویرایش شماره صفحه - فشرده‌تر در موبایل */}
         <div className="flex items-center gap-1 sm:gap-2">
-          <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap sr-only sm:not-sr-only">
+          <span className="text-xs text-muted-foreground whitespace-nowrap sr-only sm:not-sr-only">
             صفحه
           </span>
           <Input
@@ -155,10 +155,10 @@ export function DataTablePagination({
             value={pageCount > 0 ? pagination.pageIndex + 1 : 1}
             onChange={handlePageInputChange}
             aria-label="شماره صفحه"
-            className="h-7 w-12 sm:h-9 sm:w-16 text-center text-[10px] sm:text-xs font-medium"
+            className="h-7 w-12 sm:h-9 sm:w-16 text-center text-xs font-medium"
             disabled={pageCount <= 1}
           />
-          <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
             از {pageCount}
           </span>
         </div>

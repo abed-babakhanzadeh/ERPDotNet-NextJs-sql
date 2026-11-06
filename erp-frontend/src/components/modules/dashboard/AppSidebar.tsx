@@ -9,6 +9,9 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
   SidebarRail,
   SidebarSeparator,
   useSidebar,
@@ -42,18 +45,45 @@ function TeamSwitcher() {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [searchQuery, setSearchQuery] = React.useState("");
-  const { state } = useSidebar();
+  const { state, setOpen } = useSidebar();
+  const searchRef = React.useRef<HTMLInputElement>(null);
+  const [focusSearchOnOpen, setFocusSearchOnOpen] = React.useState(false);
+
+  // بعد از باز شدن منو با دکمه جستجو، فوکوس به فیلد جستجو می‌رود
+  React.useEffect(() => {
+    if (state === "expanded" && focusSearchOnOpen) {
+      searchRef.current?.focus();
+      setFocusSearchOnOpen(false);
+    }
+  }, [state, focusSearchOnOpen]);
 
   return (
     <Sidebar role="navigation" aria-label="منوی اصلی" collapsible="icon" side="right" variant="sidebar" {...props}>
       <SidebarHeader>
         <TeamSwitcher />
-        {/* فیلد جستجو - فقط وقتی باز است نمایش داده شود */}
+        {/* منوی جمع‌شده: جستجو به‌صورت آیکون؛ کلیک منو را باز و فیلد جستجو را فوکوس می‌کند */}
+        {state === "collapsed" && (
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                tooltip="جستجوی منو"
+                aria-label="جستجوی منو"
+                onClick={() => {
+                  setFocusSearchOnOpen(true);
+                  setOpen(true);
+                }}
+              >
+                <Search />
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        )}
         {state === "expanded" && (
           <div className="px-2 relative">
             <div className="relative">
               <Search className="absolute right-2 top-2.5 size-4 text-muted-foreground pointer-events-none" />
               <Input
+                ref={searchRef}
                 placeholder="جستجوی منو..."
                 aria-label="جستجوی منو"
                 className="pr-8 h-9 bg-background shadow-none focus-visible:ring-1"

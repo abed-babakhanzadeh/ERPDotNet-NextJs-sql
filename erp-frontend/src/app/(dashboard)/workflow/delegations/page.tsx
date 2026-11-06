@@ -1,5 +1,6 @@
 "use client";
 
+import { ToolbarButton } from "@/components/layout/ToolbarButton";
 import { useEffect, useState } from "react";
 import { Loader2, Plus, UserCheck } from "lucide-react";
 import { toast } from "sonner";
@@ -81,13 +82,7 @@ export default function DelegationsPage() {
         icon={UserCheck}
         count={rows.length}
         actions={
-          <Button
-            size="sm"
-            className="h-8 gap-1.5"
-            onClick={() => setDialogOpen(true)}
-          >
-            <Plus size={16} /> تفویض جدید
-          </Button>
+          <ToolbarButton intent="primary" icon={Plus} label="تفویض جدید" onClick={() => setDialogOpen(true)} />
         }
       >
         <div className="rounded-md border bg-card">

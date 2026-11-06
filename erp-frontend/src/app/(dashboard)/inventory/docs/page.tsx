@@ -1,30 +1,21 @@
 "use client";
 
+import { ToolbarButton } from "@/components/layout/ToolbarButton";
 import React, { useMemo } from "react";
 import { Plus, ArrowDownCircle, ArrowUpCircle, FileOutput } from "lucide-react";
 import { toast } from "sonner";
 
 import BaseListLayout from "@/components/layout/BaseListLayout";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/data-table";
 import PermissionGuard from "@/components/ui/PermissionGuard";
 import ProtectedPage from "@/components/ui/ProtectedPage";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { useTabs } from "@/providers/TabsProvider";
 import inventoryService from "@/services/inventoryService";
 import { useServerDataTable } from "@/hooks/useServerDataTable"; // ✅ استفاده صحیح
-import {
-  InventoryDocDto,
-  InventoryDocStatus,
-  InventoryNature,
-} from "@/types/inventory";
+import { InventoryDocDto, InventoryDocStatus, InventoryNature } from "@/types/inventory";
 import { ColumnConfig } from "@/types";
 import { handleApiError } from "@/lib/error-handling";
 import { InventoryDocStatusBadge } from "@/components/inventory/InventoryDocStatusBadge";
@@ -158,21 +149,7 @@ export default function InventoryDocsListPage() {
 
   const headerActions = (
     <PermissionGuard permission="Inventory.Docs.Create">
-      <TooltipProvider delayDuration={200}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              onClick={handleCreate}
-              size="sm"
-              className="h-8 gap-1.5 bg-primary text-primary-foreground"
-            >
-              <Plus size={16} />
-              <span className="sr-only sm:not-sr-only text-xs">سند جدید</span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>ثبت سند جدید</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <ToolbarButton intent="primary" icon={Plus} label="سند جدید" tooltip="ثبت سند جدید" onClick={handleCreate} />
     </PermissionGuard>
   );
 

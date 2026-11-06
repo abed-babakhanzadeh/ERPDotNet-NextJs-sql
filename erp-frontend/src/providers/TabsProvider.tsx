@@ -13,6 +13,10 @@ import {
 import { usePathname, useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { DISCARD_CHANGES, useConfirm } from "@/providers/ConfirmProvider";
+import { findMenuTitleForPath, isInternalPath } from "@/lib/menu";
+
+/** مسیر پیشخوان؛ تب ثابت و غیرقابل بستن نوار تب‌ها */
+export const HOME_PATH = "/";
 
 export interface Tab {
   id: string; // معمولا همان url است
@@ -126,12 +130,21 @@ function TabsProviderContent({ children }: { children: ReactNode }) {
       const savedState = localStorage.getItem(STORAGE_KEY);
       if (savedState) {
         try {
-          const { tabs: savedTabs, activeTabId: savedActiveTabId } =
-            JSON.parse(savedState);
-          setTabs(savedTabs || []);
-          setActiveTabId(savedActiveTabId || "");
-        } catch (error) {
-          console.error("خطا در بارگذاری تب‌های ذخیره‌شده:", error);
+          const parsed = JSON.parse(savedState);
+          // داده localStorage قابل دستکاری است؛ فقط تب‌های سالم با مسیر داخلی پذیرفته می‌شوند
+          const savedTabs: Tab[] = Array.isArray(parsed?.tabs)
+            ? parsed.tabs.filter(
+                (t: Partial<Tab>) =>
+                  isInternalPath(t?.url) &&
+                  t.url !== HOME_PATH &&
+                  t.id === t.url &&
+                  typeof t.title === "string",
+              )
+            : [];
+          setTabs(savedTabs);
+          setActiveTabId(isInternalPath(parsed?.activeTabId) ? parsed.activeTabId : "");
+        } catch {
+          localStorage.removeItem(STORAGE_KEY);
         }
       }
       setIsHydrated(true);
@@ -151,11 +164,23 @@ function TabsProviderContent({ children }: { children: ReactNode }) {
     }
   }, [tabs, activeTabId, isHydrated]);
 
-  // وقتی URL عوض شد، تب فعال را آپدیت کن
+  // آخرین لیست تب‌ها برای callbackهایی که بعد از await اجرا می‌شوند (جلوگیری از state کهنه)
+  const tabsRef = useRef(tabs);
+  tabsRef.current = tabs;
+
+  // وقتی URL عوض شد (مثلاً router.push داخل فرم یا ورود مستقیم آدرس)، تب فعال را هماهنگ کن
+  // و اگر برای این صفحه تبی نیست، از روی منو یک تب بساز تا همیشه تب فعال دیده شود
   useEffect(() => {
-    if (isHydrated) {
-      setActiveTabId(pathname);
-    }
+    if (!isHydrated) return;
+    setActiveTabId(pathname);
+    if (pathname === HOME_PATH) return;
+    const title = findMenuTitleForPath(pathname);
+    if (!title) return;
+    setTabs((prev) =>
+      prev.some((t) => t.id === pathname)
+        ? prev
+        : [...prev, { id: pathname, title, url: pathname }],
+    );
   }, [pathname, isHydrated]);
 
   const addTab = useCallback(
@@ -165,17 +190,18 @@ function TabsProviderContent({ children }: { children: ReactNode }) {
       // ابتدا صفحه هدف را prefetch می‌کنیم تا سریع‌تر باز شود
       try {
         router.prefetch?.(url);
-      } catch (e) {
+      } catch {
         // prefetch اختیاری است، خطا را لاگ نمی‌کنیم که تجربه کاربر خراب نشود
       }
 
-      setTabs((prevTabs) => {
-        const exists = prevTabs.find((t) => t.id === url);
-        if (!exists) {
-          return [...prevTabs, { id: url, title, url }];
-        }
-        return prevTabs;
-      });
+      // پیشخوان تب ثابت نوار است و تب جداگانه نمی‌گیرد
+      if (url !== HOME_PATH) {
+        setTabs((prevTabs) =>
+          prevTabs.some((t) => t.id === url)
+            ? prevTabs
+            : [...prevTabs, { id: url, title, url }],
+        );
+      }
 
       router.push(url);
       setActiveTabId(url);
@@ -187,22 +213,19 @@ function TabsProviderContent({ children }: { children: ReactNode }) {
     async (id: string) => {
       if (!(await confirmLeave(id))) return;
 
-      setTabs((prevTabs) => {
-        const newTabs = prevTabs.filter((t) => t.id !== id);
+      const current = tabsRef.current;
+      const index = current.findIndex((t) => t.id === id);
+      if (index === -1) return;
+      const remaining = current.filter((t) => t.id !== id);
+      setTabs(remaining);
 
-        if (id === activeTabId) {
-          if (newTabs.length > 0) {
-            const lastTab = newTabs[newTabs.length - 1];
-            router.push(lastTab.url);
-            setActiveTabId(lastTab.id);
-          } else {
-            router.push("/");
-            setActiveTabId("/");
-          }
-        }
-
-        return newTabs;
-      });
+      // فقط اگر تب فعال بسته شد جابه‌جا می‌شویم: تب کناری (مثل مرورگر)، وگرنه پیشخوان
+      if (id === activeTabId) {
+        const next = remaining[Math.min(index, remaining.length - 1)];
+        const target = next?.url ?? HOME_PATH;
+        setActiveTabId(target);
+        router.push(target);
+      }
     },
     [activeTabId, router, confirmLeave]
   );

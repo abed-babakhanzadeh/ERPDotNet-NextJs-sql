@@ -55,6 +55,18 @@
 
     --radius: 0.5rem;
 
+    /* منوی کناری: از توکن‌های اصلی ساخته می‌شود تا در همه تم‌ها (روشن/تاریک/سفارشی) خودکار هماهنگ بماند.
+       سطح منو هم‌رنگ کارت است تا از زمینه صفحه جدا دیده شود */
+    --sidebar: var(--card);
+    --sidebar-foreground: var(--foreground);
+    --sidebar-accent: var(--muted);
+    --sidebar-accent-foreground: var(--foreground);
+    --sidebar-border: var(--border);
+    /* حلقه فوکوس با رنگ اصلی؛ --ring در تم تاریک تقریباً نامرئی است */
+    --sidebar-ring: var(--primary);
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: var(--primary-foreground);
+
     /* ... سایر متغیرهای رنگ ... */
     --background: 210 100% 97%;
     /* ادامه کد های قبلی شما... */
@@ -186,37 +198,39 @@
   .react-resizable {
     position: relative;
     background-clip: padding-box;
-    .react-resizable-handle-se {
-      right: auto !important;
-      left: 0 !important;
-      bottom: 0 !important;
-      transform: rotate(90deg);
-    }
   }
 
-  .react-resizable-handle {
+  /* دستگیره تغییر عرض ستون (لبه چپ = انتهای ستون در RTL)؛ ناحیه کلیک ۱۲px، خط نمایشی ۱px */
+  .column-resize-handle {
     position: absolute;
-    width: 20px;
-    height: 100%;
     top: 0;
-    right: -10px;
+    left: -6px;
+    width: 12px;
+    height: 100%;
     cursor: col-resize;
     z-index: 10;
+    outline: none;
+    touch-action: none;
   }
 
-  [dir="rtl"] .react-resizable-handle {
-    right: auto;
-    left: -10px;
-  }
-
-  .react-resizable-handle::after {
+  .column-resize-handle::after {
     content: "";
     position: absolute;
-    top: 0;
-    left: 9px;
-    width: 2px;
-    height: 100%;
+    top: 25%;
+    left: 5.5px;
+    width: 1px;
+    height: 50%;
     background-color: hsl(var(--border));
+    transition: background-color 150ms, top 150ms, height 150ms;
+  }
+
+  .column-resize-handle:hover::after,
+  .column-resize-handle:focus-visible::after {
+    top: 0;
+    height: 100%;
+    width: 2px;
+    left: 5px;
+    background-color: hsl(var(--primary));
   }
 
   .table-header-gradient {
@@ -413,6 +427,25 @@
 
   .animate-loading-bar {
     animation: loading-bar 1s ease-in-out infinite;
+  }
+
+  /* کاربرانی که در سیستم‌عامل «کاهش حرکت» را فعال کرده‌اند: حذف انیمیشن و جابه‌جایی‌ها */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+
+    .animate-loading-bar {
+      animation: none !important;
+      transform: none;
+      width: 100% !important;
+      opacity: 0.6;
+    }
   }
 }
 

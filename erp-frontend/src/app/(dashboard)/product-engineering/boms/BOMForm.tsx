@@ -17,6 +17,7 @@ import {
 
 // Components
 import MasterDetailForm from "@/components/form/MasterDetailForm";
+import { ToolbarButton } from "@/components/layout/ToolbarButton";
 import AutoForm, { FieldConfig } from "@/components/form/AutoForm";
 import EditableGrid, { GridColumn } from "@/components/form/EditableGrid";
 import {
@@ -31,12 +32,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import SubstitutesDialog from "./SubstitutesDialog";
 import BOMOutputsGrid from "./BOMOutputsGrid";
 import BOMOperationsGrid from "./BOMOperationsGrid";
@@ -908,66 +904,32 @@ export default function BOMForm({ mode, bomId }: BOMFormProps) {
           noValidate
           headerContent={headerContent}
           headerActions={
-            <div className="flex items-center gap-2">
+            <>
               {(mode === "view" || mode === "edit") && bomId && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-9 text-primary border-primary/30 hover:bg-primary/10 flex items-center gap-2"
-                      onClick={() =>
-                        addTab(
-                          `درخت کالا/قلم`,
-                          `/product-engineering/boms/tree/${bomId}`
-                        )
-                      }
-                    >
-                      <Network size={16} />
-                      <span className="sr-only sm:not-sr-only">ساختار درختی</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>مشاهده ساختار درختی</TooltipContent>
-                </Tooltip>
+                <ToolbarButton
+                  intent="secondary"
+                  icon={Network}
+                  label="ساختار درختی"
+                  tooltip="مشاهده ساختار درختی"
+                  onClick={() =>
+                    addTab(`درخت کالا/قلم`, `/product-engineering/boms/tree/${bomId}`)
+                  }
+                />
               )}
-
               {(mode === "create" || (mode === "edit" && canEdit)) && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setTemplateDialogOpen(true)}
-                      disabled={submitting}
-                      className="h-9 text-primary border-primary/30 hover:bg-primary/10 flex items-center gap-2"
-                    >
-                      <CopyPlus size={16} />
-                      <span className="sr-only sm:not-sr-only">فراخوانی از الگو</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>کپی اقلام از یک فرمول دیگر</TooltipContent>
-                </Tooltip>
+                <ToolbarButton
+                  intent="secondary"
+                  icon={CopyPlus}
+                  label="فراخوانی از الگو"
+                  tooltip="کپی اقلام از یک فرمول دیگر"
+                  onClick={() => setTemplateDialogOpen(true)}
+                  disabled={submitting}
+                />
               )}
-
               {mode === "view" && canEdit && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={handleGoToEdit}
-                      className="h-9 bg-success hover:bg-success/90 text-success-foreground flex items-center gap-2"
-                    >
-                      <Pencil size={16} />
-                      <span className="sr-only sm:not-sr-only">ویرایش</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>ویرایش اطلاعات</TooltipContent>
-                </Tooltip>
+                <ToolbarButton intent="primary" icon={Pencil} label="ویرایش" onClick={handleGoToEdit} />
               )}
-            </div>
+            </>
           }
           tabs={[
             {

@@ -1,11 +1,23 @@
 "use client";
 
-import { useTabs } from "@/providers/TabsProvider";
-import { X, Home, Plus } from "lucide-react";
+import { HOME_PATH, useTabs, type Tab } from "@/providers/TabsProvider";
+import { X, Home } from "lucide-react";
 import { clsx } from "clsx";
-import React, { useCallback, memo } from "react";
-import { Button } from "@/components/ui/button";
+import React, { memo } from "react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { TabLauncher } from "./TabLauncher";
+
+// سبک «تب جدا با خط رنگی بالا»: جداکننده عمودی بین تب‌ها، تب فعال هم‌رنگ محتوا با خط بالای primary
+const tabBaseClass = clsx(
+  "group relative flex h-9 shrink-0 select-none items-center gap-1 border-l border-border ps-3 pe-1.5 text-xs",
+  "cursor-pointer transition-colors",
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+);
+
+const tabStateClass = (isActive: boolean) =>
+  isActive
+    ? "bg-card font-medium text-foreground shadow-[inset_0_2px_0_hsl(var(--primary))]"
+    : "text-muted-foreground hover:bg-card/60 hover:text-foreground";
 
 // مموایز کردن آیتم تب برای جلوگیری از رندر غیر ضروری
 const TabItem = memo(function TabItem({
@@ -13,63 +25,64 @@ const TabItem = memo(function TabItem({
   isActive,
   onSetActive,
   onClose,
-  showClose,
 }: {
-  tab: { id: string; title: string; url: string };
+  tab: Tab;
   isActive: boolean;
   onSetActive: (id: string) => void;
   onClose: (id: string) => void;
-  showClose: boolean;
 }) {
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Middle click (button 1) = بستن تب
+  // Middle click = بستن تب (روی mousedown تا اسکرول خودکار مرورگر شروع نشود)
+  const handleMouseDown = (e: React.MouseEvent) => {
     if (e.button === 1) {
       e.preventDefault();
       onClose(tab.id);
     }
-    // Left click (button 0) = فعال‌کردن تب
-    else if (e.button === 0) {
-      onSetActive(tab.id);
-    }
   };
 
-  const handleCloseClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation();
-    onClose(tab.id);
+  // Enter/Space = فعال‌سازی، Delete = بستن
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.target !== e.currentTarget) return;
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onSetActive(tab.id);
+    } else if (e.key === "Delete") {
+      e.preventDefault();
+      onClose(tab.id);
+    }
   };
 
   return (
     <div
-      className={clsx(
-        "group flex items-center gap-1 px-2 h-10 text-[12px] font-medium rounded-t",
-        "transition-all duration-200 cursor-pointer min-w-fit max-w-[180px] select-none",
-        "relative border-2",
-        "hover:bg-accent/50",
-        isActive
-          ? "text-foreground bg-card border-b-primary shadow-sm"
-          : "text-muted-foreground border-b-transparent hover:text-foreground"
-      )}
+      role="tab"
+      tabIndex={0}
+      aria-selected={isActive}
+      title={tab.title}
+      className={clsx(tabBaseClass, tabStateClass(isActive), "max-w-[200px]")}
       onMouseDown={handleMouseDown}
+      onClick={() => onSetActive(tab.id)}
+      onKeyDown={handleKeyDown}
     >
-      {/* Tab Title */}
-      <span className="truncate flex-1">{tab.title}</span>
-
-      {/* Close Button */}
-      {showClose && (
-        <Button
-          variant="ghost"
-          size="icon"
-          onMouseDown={handleCloseClick}
-          className={clsx(
-            "h-4 w-4 p-0 rounded transition-all duration-150",
-            "opacity-0 group-hover:opacity-100",
-            "hover:bg-destructive/20 hover:text-destructive"
-          )}
-          title="بستن تب (یا Middle Click)"
-        >
-          <X size={15} />
-        </Button>
-      )}
+      <span className="truncate">{tab.title}</span>
+      <button
+        type="button"
+        tabIndex={-1}
+        // نام ثابت؛ عنوان تب در خود تب (والد) هست. تکرار عنوان در نام دکمه باعث تداخل با
+        // دکمه‌های هم‌نام صفحه می‌شد (مثلاً «حواله مواد» و «بستن حواله مواد …»)
+        aria-label="بستن تب"
+        title={`بستن «${tab.title}» (Delete یا کلیک وسط)`}
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose(tab.id);
+        }}
+        // ناحیه کلیک ۲۴×۲۴ (حداقل WCAG 2.2) با آیکون ۱۲px
+        className={clsx(
+          "flex h-6 w-6 shrink-0 items-center justify-center rounded transition-opacity",
+          "hover:bg-destructive/15 hover:text-destructive hover:opacity-100",
+          isActive ? "opacity-70" : "opacity-0 group-hover:opacity-70 group-focus-visible:opacity-70",
+        )}
+      >
+        <X size={12} />
+      </button>
     </div>
   );
 });
@@ -77,70 +90,39 @@ const TabItem = memo(function TabItem({
 export default function TabsBar() {
   const { tabs, activeTabId, closeTab, setActiveTab } = useTabs();
 
-  const handleSetActive = useCallback(
-    (id: string) => {
-      setActiveTab(id);
-    },
-    [setActiveTab]
-  );
-
-  const handleCloseTab = useCallback(
-    (id: string) => {
-      closeTab(id);
-    },
-    [closeTab]
-  );
-
-  const handleHomeClick = useCallback(() => {
-    setActiveTab("/");
-  }, [setActiveTab]);
-
-  if (tabs.length === 0) return null;
-
   return (
-    <div className="sticky top-0 z-40 flex items-center border-b border-border bg-background/95 backdrop-blur-sm h-7 px-2">
-      {/* Home/Dashboard Tab - سمت راست */}
+    <div className="flex h-9 items-stretch bg-muted/60" role="tablist" aria-label="صفحه‌های باز">
+      {/* پیشخوان: تب ثابت و غیرقابل بستن؛ بعد از بستن آخرین تب، کاربر اینجا برمی‌گردد */}
       <button
-        onClick={handleHomeClick}
-        className={clsx(
-          "flex items-center gap-1 px-2 h-6 text-[11px] font-medium rounded-t shrink-0",
-          "transition-all duration-200 select-none border-b-2 ml-1",
-          "hover:bg-accent/50",
-          activeTabId === "/"
-            ? "text-foreground bg-card border-b-primary shadow-sm"
-            : "text-muted-foreground border-b-transparent hover:text-foreground"
-        )}
+        type="button"
+        role="tab"
+        aria-selected={activeTabId === HOME_PATH}
+        aria-label="پیشخوان"
+        title="پیشخوان"
+        onClick={() => setActiveTab(HOME_PATH)}
+        className={clsx(tabBaseClass, "px-3", tabStateClass(activeTabId === HOME_PATH))}
       >
-        <Home size={12} />
-        <span className="sr-only sm:not-sr-only">پیشخوان</span>
+        <Home size={14} />
       </button>
 
-      {/* Scrollable Tabs - وسط (راست‌چین) */}
-      <ScrollArea className="flex-1" dir="rtl">
-        <div className="flex items-center gap-0.5">
+      <ScrollArea className="min-w-0 flex-1" dir="rtl">
+        <div className="flex h-9 items-stretch">
           {tabs.map((tab) => (
             <TabItem
               key={tab.id}
               tab={tab}
               isActive={activeTabId === tab.id}
-              onSetActive={handleSetActive}
-              onClose={handleCloseTab}
-              showClose={tabs.length > 1}
+              onSetActive={setActiveTab}
+              onClose={closeTab}
             />
           ))}
+          {/* دکمه + بلافاصله بعد از آخرین تب */}
+          <div className="flex items-center px-1.5">
+            <TabLauncher />
+          </div>
         </div>
         <ScrollBar orientation="horizontal" className="h-1" />
       </ScrollArea>
-
-      {/* Add New Tab Button - سمت چپ */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-5 w-5 rounded hover:bg-accent/80 transition-colors shrink-0 mr-1"
-        title="تب جدید"
-      >
-        <Plus size={11} />
-      </Button>
     </div>
   );
 }
