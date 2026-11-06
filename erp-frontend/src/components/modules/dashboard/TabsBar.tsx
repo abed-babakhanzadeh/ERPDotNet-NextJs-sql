@@ -66,8 +66,10 @@ const TabItem = memo(function TabItem({
       <button
         type="button"
         tabIndex={-1}
-        aria-label={`بستن ${tab.title}`}
-        title="بستن تب (Delete یا کلیک وسط)"
+        // نام ثابت؛ عنوان تب در خود تب (والد) هست. تکرار عنوان در نام دکمه باعث تداخل با
+        // دکمه‌های هم‌نام صفحه می‌شد (مثلاً «حواله مواد» و «بستن حواله مواد …»)
+        aria-label="بستن تب"
+        title={`بستن «${tab.title}» (Delete یا کلیک وسط)`}
         onClick={(e) => {
           e.stopPropagation();
           onClose(tab.id);

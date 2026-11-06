@@ -64,10 +64,27 @@ export function findMenuLinkForPath(pathname: string): MenuLink | null {
   return best;
 }
 
-/** عنوان مناسب برای تب یک مسیر (به جز ریشه) */
+/** نام عملیات زیرصفحه‌ها برای عنوان تب (مثلاً /boms/edit/5 → «ویرایش») */
+const SUB_PAGE_LABELS: Record<string, string> = {
+  create: "جدید",
+  edit: "ویرایش",
+  view: "مشاهده",
+  tree: "ساختار درختی",
+};
+
+/**
+ * عنوان مناسب برای تب یک مسیر (به جز ریشه). زیرصفحه‌ها عنوان فهرست را با نام عملیات
+ * و شناسه می‌گیرند تا با تب خود فهرست هم‌نام نشوند: «لیست BOMها - ویرایش ۵۳»
+ */
 export function findMenuTitleForPath(pathname: string): string | null {
   const link = findMenuLinkForPath(pathname);
-  return link && link.href !== "/" ? link.title : null;
+  if (!link || link.href === "/") return null;
+  if (pathname === link.href) return link.title;
+
+  const [action, id] = pathname.slice(link.href.length + 1).split("/");
+  const label = SUB_PAGE_LABELS[action];
+  if (!label) return link.title;
+  return id ? `${link.title} - ${label} ${id}` : `${link.title} - ${label}`;
 }
 
 /** فقط مسیرهای داخلی برنامه مجازند (جلوگیری از هدایت به دامنه دیگر با داده دستکاری‌شده) */

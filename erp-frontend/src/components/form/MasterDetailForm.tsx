@@ -65,7 +65,8 @@ export default function MasterDetailForm({
 
         {/* 2. Details Section (Tabs) */}
         {/* در موبایل overflow-visible باشد تا اسکرول مرورگر کار کند */}
-        <div className="flex-1 bg-card border rounded-lg shadow-sm flex flex-col min-h-[500px] md:min-h-0 md:overflow-hidden">
+        {/* در دسکتاپ هم حداقل ارتفاع دارد: در صفحه‌های کوتاه به جای له شدن جدول جزئیات، خود صفحه اسکرول می‌شود */}
+        <div className="flex-1 bg-card border rounded-lg shadow-sm flex flex-col min-h-[500px] md:min-h-[20rem] md:overflow-hidden">
           <Tabs
             defaultValue={tabs[0]?.key}
             className="flex flex-col h-full"

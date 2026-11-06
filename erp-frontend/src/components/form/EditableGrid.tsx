@@ -148,7 +148,8 @@ export default function EditableGrid<T extends { id?: number | string }>({
 
   return (
     <div className="flex flex-col h-full relative" dir="rtl">
-      <div className="border rounded-lg overflow-hidden flex-1 relative bg-card shadow-sm min-h-0">
+      {/* حداقل ارتفاع: هدر چسبان + چند ردیف؛ وگرنه در صفحه‌های کوتاه هدر روی ردیف‌ها می‌افتد و قابل کلیک نیستند */}
+      <div className="border rounded-lg overflow-hidden flex-1 relative bg-card shadow-sm min-h-[11rem]">
         {/* این div همان کانتینری است که اسکرول می‌شود */}
         <div
           ref={scrollContainerRef}
